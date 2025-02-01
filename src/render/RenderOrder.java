@@ -1,0 +1,30 @@
+package render;
+
+public enum RenderOrder {
+    //Higher up on this list means lower Z-order
+
+    NONE,
+
+    //In-game level
+    BACKGROUND,
+    TILE_BORDER,
+    TILE_HIGHLIGHT,
+    TERRAIN,
+    ACTION_BELOW_UNITS,
+    TILE_UNITS,
+    FOG_OF_WAR,
+    ACTION_ABOVE_UNITS,
+    ACTION_SELECTOR,
+    DAMAGE_UI,
+    UI,
+
+    //Level menus / UI
+    LEVEL_UI,
+
+    //Main menu screen
+    TITLE_SCREEN_BACKGROUND,
+    TITLE_SCREEN_BUTTON_BACKGROUND,
+    TITLE_SCREEN_BUTTONS,
+
+    DEBUG
+}

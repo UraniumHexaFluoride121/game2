@@ -1,0 +1,74 @@
+package render.anim;
+
+import foundation.math.MathUtil;
+
+public class LerpAnimation implements ReversableAnimationTimer {
+    private long startTime, endTime;
+    private final long time;
+    private boolean reversed = false;
+
+    public LerpAnimation(float seconds) {
+        this.time = (long) (seconds * 1000);
+        startTimer();
+    }
+
+    @Override
+    public void startTimer() {
+        startTime = System.currentTimeMillis();
+        endTime = startTime + time;
+    }
+
+    public void startTimer(float delay) {
+        startTime = System.currentTimeMillis() + (long) (delay * 1000);
+        endTime = startTime + time;
+    }
+
+    @Override
+    public void setReversed(boolean reversed) {
+        if (this.reversed != reversed) {
+            long t = System.currentTimeMillis();
+            if (t > endTime) {
+                startTime = t;
+                endTime = t + time;
+            } else {
+                startTime = -endTime + 2 * t;
+                endTime = startTime + time;
+            }
+        }
+        this.reversed = reversed;
+    }
+
+    public LerpAnimation finish() {
+        endTime = System.currentTimeMillis();
+        startTime = endTime - time;
+        return this;
+    }
+
+    @Override
+    public boolean reversed() {
+        return reversed;
+    }
+
+    @Override
+    public boolean finished() {
+        return System.currentTimeMillis() > endTime || System.currentTimeMillis() < startTime;
+    }
+
+    @Override
+    public float normalisedProgress() {
+        float t = Math.clamp(MathUtil.normalise(0, endTime - startTime, System.currentTimeMillis() - startTime), 0, 1);
+        if (reversed) {
+            return 1 - t;
+        } else {
+            return t;
+        }
+    }
+
+    public float triangleProgress() {
+        return 1 - Math.abs(normalisedProgress() * 2 - 1);
+    }
+
+    public float doubleTriangleProgress() {
+        return 1 - Math.abs(triangleProgress() * 2 - 1);
+    }
+}
