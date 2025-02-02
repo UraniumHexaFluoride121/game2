@@ -16,6 +16,7 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
     private final float x, y, height, displayWidth;
     private final int min, max;
     private int value;
+    private UIColourTheme theme = UIColourTheme.GREEN_SELECTED;
 
     public UINumberSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth, int min, int max, int value) {
         super(register, order);
@@ -29,12 +30,12 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
         this.max = max;
         this.value = value;
         left = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x, y, height, height, false)
-                .setColourTheme(UIColourTheme.GREEN_SELECTED)
+                .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleLeft)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_LEFT_CORNERS_CUT)
                 .setOnClick(this::decrement);
         right = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x + height + .5f * 2 + displayWidth, y, height, height, false)
-                .setColourTheme(UIColourTheme.GREEN_SELECTED)
+                .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleRight)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_RIGHT_CORNERS_CUT)
                 .setOnClick(this::increment);
@@ -47,16 +48,28 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
         };
         if (buttonRegister != null)
             buttonRegister.register(this);
+        updateColour();
     }
 
     private void increment() {
         value = Math.min(value + 1, max);
         displayBox.setText(String.valueOf(value));
+        updateColour();
     }
 
     private void decrement() {
         value = Math.max(value - 1, min);
         displayBox.setText(String.valueOf(value));
+        updateColour();
+    }
+
+    private void updateColour() {
+        left.setColourTheme(value == min ? UIColourTheme.GRAYED_OUT : theme);
+        right.setColourTheme(value == max ? UIColourTheme.GRAYED_OUT : theme);
+    }
+
+    public int getValue() {
+        return value;
     }
 
     @Override
@@ -79,13 +92,13 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (enabled)
-            blocking = internal.acceptInput(pos, type, true);
+            blocking = !blocked && internal.acceptInput(pos, type, true);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (enabled)
-            blocking = internal.acceptInput(pos, type, false);
+            blocking = !blocked && internal.acceptInput(pos, type, false);
     }
 
     @Override

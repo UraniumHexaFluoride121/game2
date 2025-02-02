@@ -98,6 +98,11 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         return this;
     }
 
+    public UIShapeButton setBoxCorner(float corner) {
+        box.setCorner(corner);
+        return this;
+    }
+
     @Override
     public boolean posInside(ObjPos pos) {
         return enabled && hitBox.isPositionInside(pos);
@@ -141,7 +146,7 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         return new Polygon(new int[]{
                 (int) ((-size + cx + size / 10) * SCALING),
                 (int) ((size / 2 + cx + size / 10) * SCALING),
-                (int) ((size / 2 + cx + size / 10) * SCALING)
+                (int) ((size / 2 + cx + size / 10) * SCALING),
         }, new int[]{
                 (int) (cy * SCALING),
                 (int) ((size * SIN_60_DEG + cy) * SCALING),
@@ -154,11 +159,73 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         return new Polygon(new int[]{
                 (int) ((size + cx - size / 10) * SCALING),
                 (int) ((-size / 2 + cx - size / 10) * SCALING),
-                (int) ((-size / 2 + cx - size / 10) * SCALING)
+                (int) ((-size / 2 + cx - size / 10) * SCALING),
         }, new int[]{
                 (int) (cy * SCALING),
                 (int) ((size * SIN_60_DEG + cy) * SCALING),
                 (int) ((-size * SIN_60_DEG + cy) * SCALING),
         }, 3);
+    }
+
+    public static Shape plus(UIShapeButton b) {
+        float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f, width = size * .3f;
+        return new Polygon(new int[]{
+                (int) ((cx - size) * SCALING),
+                (int) ((cx - size) * SCALING),
+                (int) ((cx - width) * SCALING),
+                (int) ((cx - width) * SCALING),
+                (int) ((cx + width) * SCALING),
+                (int) ((cx + width) * SCALING),
+                (int) ((cx + size) * SCALING),
+                (int) ((cx + size) * SCALING),
+                (int) ((cx + width) * SCALING),
+                (int) ((cx + width) * SCALING),
+                (int) ((cx - width) * SCALING),
+                (int) ((cx - width) * SCALING),
+        }, new int[]{
+                (int) ((cy - width) * SCALING),
+                (int) ((cy + width) * SCALING),
+                (int) ((cy + width) * SCALING),
+                (int) ((cy + size) * SCALING),
+                (int) ((cy + size) * SCALING),
+                (int) ((cy + width) * SCALING),
+                (int) ((cy + width) * SCALING),
+                (int) ((cy - width) * SCALING),
+                (int) ((cy - width) * SCALING),
+                (int) ((cy - size) * SCALING),
+                (int) ((cy - size) * SCALING),
+                (int) ((cy - width) * SCALING),
+        }, 12);
+    }
+
+    public static Shape x(UIShapeButton b) {
+        float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f, thickness = size * .3f;
+        return new Polygon(new int[]{
+                (int) ((cx - size) * SCALING),
+                (int) ((cx - thickness) * SCALING),
+                (int) ((cx - size) * SCALING),
+                (int) ((cx - size + thickness) * SCALING),
+                (int) ((cx) * SCALING),
+                (int) ((cx + size - thickness) * SCALING),
+                (int) ((cx + size) * SCALING),
+                (int) ((cx + thickness) * SCALING),
+                (int) ((cx + size) * SCALING),
+                (int) ((cx + size - thickness) * SCALING),
+                (int) ((cx) * SCALING),
+                (int) ((cx - size + thickness) * SCALING),
+        }, new int[]{
+                (int) ((cy - size + thickness) * SCALING),
+                (int) ((cy) * SCALING),
+                (int) ((cy + size - thickness) * SCALING),
+                (int) ((cy + size) * SCALING),
+                (int) ((cy + thickness) * SCALING),
+                (int) ((cy + size) * SCALING),
+                (int) ((cy + size - thickness) * SCALING),
+                (int) ((cy) * SCALING),
+                (int) ((cy - size + thickness) * SCALING),
+                (int) ((cy - size) * SCALING),
+                (int) ((cy - thickness) * SCALING),
+                (int) ((cy - size) * SCALING),
+        }, 12);
     }
 }

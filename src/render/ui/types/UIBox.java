@@ -34,6 +34,12 @@ public class UIBox implements Renderable {
         return this;
     }
 
+    public UIBox setCorner(float corner) {
+        this.corner = corner;
+        updateShape();
+        return this;
+    }
+
     private void updateShape() {
         box = shape.create(width, height, corner);
     }

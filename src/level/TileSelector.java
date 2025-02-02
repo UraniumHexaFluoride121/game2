@@ -5,6 +5,7 @@ import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.HexagonalDirection;
+import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
 import unit.Unit;
@@ -154,6 +155,9 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
     public HashSet<Point> pointTerrain(float tilesPerPoint, int radius, TileType generateOn, Function<Integer, Float> generationChance) {
         HashSet<Point> available = allTilesOfType(generateOn);
         int pointCount = (int) (available.size() / tilesPerPoint);
+        float probability = available.size() / tilesPerPoint - pointCount;
+        if (MathUtil.randBoolean(probability, level.random.getDoubleSupplier(RandomType.TILE_GENERATION)))
+            pointCount++;
         HashSet<Point> points = new HashSet<>();
         for (int i = 0; i < pointCount; i++) {
             float x = level.random.generateFloat(RandomType.TILE_GENERATION) * tiles.length;

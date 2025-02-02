@@ -17,11 +17,13 @@ import render.texture.BackgroundTexture;
 import render.texture.FiringRenderer;
 import render.ui.implementation.*;
 import unit.Unit;
+import unit.UnitTeam;
 import unit.weapon.WeaponInstance;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import static level.Tile.*;
@@ -168,9 +170,20 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     private float shakeTimer = 0;
     private final ObjPos cameraPosition = new ObjPos();
 
+    public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
+
     private ObjPos preShakePos = null;
     private ObjPos shakeVector = null;
     private boolean cameraShake = false;
+
+    public void useLastCameraPos(UnitTeam prev, UnitTeam current) {
+        if (prev == null) {
+            setCameraInterpBlockPos(lastCameraPos.get(current));
+        } else {
+            lastCameraPos.put(prev, getCameraInterpBlockPos(cameraPosition.copy()));
+            setCameraInterpBlockPos(lastCameraPos.get(current));
+        }
+    }
 
     public void moveCameraStart() {
         prevMousePos = null;
@@ -223,6 +236,10 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
     public void setCameraInterpBlockPos(ObjPos pos) {
         interpCameraTo = pos.copy().inverse().add(level.tileBound.copy().divide(2));
+    }
+
+    public ObjPos getCameraInterpBlockPos(ObjPos pos) {
+        return pos.copy().subtract(level.tileBound.copy().divide(2)).inverse();
     }
 
     @Override

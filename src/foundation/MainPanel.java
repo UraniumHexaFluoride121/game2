@@ -7,12 +7,15 @@ import foundation.tick.RegisteredTickable;
 import foundation.tick.TickOrder;
 import level.Level;
 import mainScreen.TitleScreen;
+import render.anim.LerpAnimation;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class MainPanel extends JFrame implements KeyListener, MouseListener, MouseWheelListener, RegisteredTickable {
     public static AffineTransform windowTransform = new AffineTransform();
@@ -27,14 +30,38 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     public static InputReceiver activeInputReceiver = null;
 
+    public static LerpAnimation fadeScreen = new LerpAnimation(0.5f);
+
     public static boolean controlHeld = false;
 
     public void init() {
+        fadeScreen.setReversed(true);
+        fadeScreen.finish();
         titleScreen = new TitleScreen();
+        titleScreen.init();
         activeInputReceiver = titleScreen;
         //activeLevel = new Level(Level.allSeparate(), 1);
         //activeInputReceiver = activeLevel.levelRenderer;
         registerTickable();
+    }
+
+    public static void startNewLevel(Supplier<Level> levelCreator) {
+        Level.EXECUTOR.submit(() -> {
+            fadeScreen.setReversed(false);
+            activeInputReceiver = null;
+            Level level = levelCreator.get();
+            level.init();
+            activeLevel = level;
+            activeInputReceiver = level.levelRenderer;
+            while (!level.rendered) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(3);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            fadeScreen.setReversed(true);
+        });
     }
 
     @Override
@@ -44,11 +71,14 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+
         if (activeLevel != null) {
             activeLevel.render(g2d);
         } else {
             titleScreen.render(g2d);
         }
+        g2d.setColor(new Color(0, 0, 0, fadeScreen.normalisedProgress()));
+        g2d.fillRect(0, 0, RENDER_WINDOW_SIZE.xInt(), RENDER_WINDOW_SIZE.yInt());
     }
 
     private static final Vector<Runnable> tasks = new Vector<>();

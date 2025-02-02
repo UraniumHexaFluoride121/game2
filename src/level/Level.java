@@ -23,13 +23,13 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     public static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
     public final long seed;
     public final RandomHandler random;
-    public final int tilesX = 35, tilesY = 20;
-    public final ObjPos tileBound = Tile.getTilesBound(tilesX, tilesY);
+    public final int tilesX, tilesY;
+    public final ObjPos tileBound;
 
     public final TileSelector tileSelector;
-    public Unit selectedUnit = null;
+    public Unit selectedUnit;
 
-    private UnitTeam activeTeam;
+    private UnitTeam activeTeam = null;
 
     public ButtonRegister buttonRegister = new ButtonRegister();
 
@@ -37,18 +37,22 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     private int turn = 1;
 
-    final Tile[][] tiles = new Tile[tilesX][];
-    private Unit[][] unitGrid = new Unit[tilesX][];
+    final Tile[][] tiles;
+    private Unit[][] unitGrid;
     final HashSet<Unit> unitSet = new HashSet<>();
-    private final HashMap<UnitTeam, Integer> teamIndex;
+    private final HashMap<UnitTeam, PlayerTeam> playerTeam;
     public LevelRenderer levelRenderer;
 
-    public Level(HashMap<UnitTeam, Integer> teamIndex, long seed) {
-        this.teamIndex = teamIndex;
+    public Level(HashMap<UnitTeam, PlayerTeam> playerTeam, long seed, int width, int height) {
+        tilesX = width;
+        tilesY = height;
+        tiles = new Tile[tilesX][];
+        unitGrid = new Unit[tilesX][];
+        tileBound = Tile.getTilesBound(tilesX, tilesY);
+        this.playerTeam = playerTeam;
         this.seed = seed;
         random = new RandomHandler(seed);
         activeTeam = getFirstTeam();
-        registerTickable();
         for (int x = 0; x < tilesX; x++) {
             tiles[x] = new Tile[tilesY];
             for (int y = 0; y < tilesY; y++) {
@@ -91,6 +95,11 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         addUnit(new Unit(UnitType.BOMBER, UnitTeam.GREEN, new Point(2, 2), this));
         addUnit(new Unit(UnitType.FIGHTER, UnitTeam.GREEN, new Point(3, 2), this));
         addUnit(new Unit(UnitType.FIGHTER, UnitTeam.RED, new Point(3, 4), this));
+        levelRenderer.useLastCameraPos(null, activeTeam);
+    }
+
+    public void init() {
+        registerTickable();
     }
 
     @Override
@@ -109,6 +118,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             unitSet.add(unit);
             unitGrid[unit.pos.x][unit.pos.y] = unit;
         }
+        levelRenderer.lastCameraPos.putIfAbsent(unit.team, Tile.getCenteredRenderPos(unit.pos));
         updateFoW();
     }
 
@@ -187,6 +197,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public void endTurn() {
         levelRenderer.confirm.makeInvisible();
+        UnitTeam team = activeTeam;
         activeTeam = getNextTeam(activeTeam);
         endAction();
         for (Unit unit : unitSet) {
@@ -197,6 +208,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         levelRenderer.onNextTurn.start("Turn " + turn, activeTeam);
         levelRenderer.turnBox.setNewTurn();
         updateFoW();
+        levelRenderer.useLastCameraPos(team, activeTeam);
     }
 
     public Action getActiveAction() {
@@ -207,22 +219,22 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         this.activeAction = activeAction;
     }
 
-    public static HashMap<UnitTeam, Integer> allSeparate() {
-        HashMap<UnitTeam, Integer> teamIndex = new HashMap<>();
+    public static HashMap<UnitTeam, PlayerTeam> allSeparate() {
+        HashMap<UnitTeam, PlayerTeam> teamIndex = new HashMap<>();
         for (int i = 0; i < UnitTeam.values().length; i++) {
-            teamIndex.put(UnitTeam.values()[i], i);
+            teamIndex.put(UnitTeam.values()[i], PlayerTeam.values()[i]);
         }
         return teamIndex;
     }
 
     public boolean samePlayerTeam(Unit a, Unit b) {
-        return Objects.equals(teamIndex.get(a.team), teamIndex.get(b.team));
+        return Objects.equals(playerTeam.get(a.team), playerTeam.get(b.team));
     }
 
     public UnitTeam getNextTeam(UnitTeam from) {
         for (int i = 1; i <= UnitTeam.values().length; i++) {
             UnitTeam next = UnitTeam.ORDERED_TEAMS[(from.order + i) % UnitTeam.ORDERED_TEAMS.length];
-            if (teamIndex.containsKey(next))
+            if (playerTeam.containsKey(next))
                 return next;
         }
         return null;
@@ -244,9 +256,12 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         });
     }
 
+    public boolean rendered = false;
+
     @Override
     public void render(Graphics2D g) {
         levelRenderer.render(g);
+        rendered = true;
     }
 
     @Override

@@ -13,7 +13,7 @@ public class UITextLabel implements Renderable {
 
     private Polygon label;
     private final Polygon line;
-    private final FixedTextRenderer textRight, textLeft;
+    private final FixedTextRenderer textRight, textLeft, textCenter;
     private final float height, lineWidth;
     private float width, rightOffset = 0, leftOffset = 0;
     private final boolean hasLines;
@@ -32,6 +32,7 @@ public class UITextLabel implements Renderable {
         label = line(width, height, (float) Math.toRadians(60));
         textRight = new FixedTextRenderer(null, height * 0.9f, TEXT_COLOUR).setTextAlign(TextAlign.RIGHT);
         textLeft = new FixedTextRenderer(null, height * 0.9f, TEXT_COLOUR).setTextAlign(TextAlign.LEFT);
+        textCenter = new FixedTextRenderer(null, height * 0.9f, TEXT_COLOUR).setTextAlign(TextAlign.CENTER);
     }
 
     @Override
@@ -56,6 +57,9 @@ public class UITextLabel implements Renderable {
         GameRenderer.renderOffset(width - 0.1f * height - rightOffset, .1f * height, g, () -> {
             textRight.render(g);
         });
+        GameRenderer.renderOffset((0.5f * height + leftOffset + width - 0.1f * height - rightOffset) / 2, .1f * height, g, () -> {
+            textCenter.render(g);
+        });
     }
 
     public UITextLabel updateTextRight(String s) {
@@ -65,6 +69,11 @@ public class UITextLabel implements Renderable {
 
     public UITextLabel updateTextLeft(String s) {
         textLeft.updateIfDifferent(s);
+        return this;
+    }
+
+    public UITextLabel updateTextCenter(String s) {
+        textCenter.updateIfDifferent(s);
         return this;
     }
 
@@ -143,6 +152,11 @@ public class UITextLabel implements Renderable {
 
     public UITextLabel setTextLeftBold() {
         textLeft.setBold(true);
+        return this;
+    }
+
+    public UITextLabel setTextCenterBold() {
+        textCenter.setBold(true);
         return this;
     }
 }

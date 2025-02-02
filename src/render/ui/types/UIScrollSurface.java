@@ -46,8 +46,8 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
     }
 
     public UIScrollSurface setScrollMax(float scrollMax) {
-        this.scrollMax = scrollMax;
-        scrollAmount = Math.clamp(scrollAmount, scrollMin, scrollMax);
+        this.scrollMax = Math.max(scrollMin, scrollMax);
+        scrollAmount = Math.clamp(scrollAmount, scrollMin, this.scrollMax);
         return this;
     }
 

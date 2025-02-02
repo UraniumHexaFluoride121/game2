@@ -20,6 +20,8 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
     private final float x, y, height, displayWidth;
     private T value;
     private final Class<T> enumClass;
+    private UIColourTheme theme = UIColourTheme.GREEN_SELECTED;
+    private Runnable onChanged = null;
 
     public UIEnumSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth, Class<T> enumClass, T initialValue) {
         super(register, order);
@@ -32,12 +34,12 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
         this.enumClass = enumClass;
         value = initialValue;
         left = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x, y, height, height, false)
-                .setColourTheme(UIColourTheme.GREEN_SELECTED)
+                .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleLeft)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_LEFT_CORNERS_CUT)
                 .setOnClick(this::decrement);
         right = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x + height + .5f * 2 + displayWidth, y, height, height, false)
-                .setColourTheme(UIColourTheme.GREEN_SELECTED)
+                .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleRight)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_RIGHT_CORNERS_CUT)
                 .setOnClick(this::increment);
@@ -50,16 +52,39 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
         };
         if (buttonRegister != null)
             buttonRegister.register(this);
+        updateColour();
     }
 
     private void increment() {
+        T prevValue = value;
         value = enumClass.getEnumConstants()[Math.min(value.ordinal() + 1, enumClass.getEnumConstants().length - 1)];
         displayBox.setText(value.getName());
+        updateColour();
+        if (onChanged != null && prevValue != value)
+            onChanged.run();
     }
 
     private void decrement() {
-        value = enumClass.getEnumConstants()[Math.min(value.ordinal() - 1, 0)];
+        T prevValue = value;
+        value = enumClass.getEnumConstants()[Math.max(value.ordinal() - 1, 0)];
         displayBox.setText(value.getName());
+        updateColour();
+        if (onChanged != null && prevValue != value)
+            onChanged.run();
+    }
+
+    private void updateColour() {
+        left.setColourTheme(value.ordinal() == 0 ? UIColourTheme.GRAYED_OUT : theme);
+        right.setColourTheme(value.ordinal() == enumClass.getEnumConstants().length - 1 ? UIColourTheme.GRAYED_OUT : theme);
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public UIEnumSelector<T> setOnChanged(Runnable onChanged) {
+        this.onChanged = onChanged;
+        return this;
     }
 
     @Override
@@ -82,13 +107,13 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (enabled)
-            blocking = internal.acceptInput(pos, type, true);
+            blocking = !blocked && internal.acceptInput(pos, type, true);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (enabled)
-            blocking = internal.acceptInput(pos, type, false);
+            blocking = !blocked && internal.acceptInput(pos, type, false);
     }
 
     @Override
@@ -102,5 +127,6 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
         right.delete();
         displayBox.delete();
         internal.delete();
+        onChanged = null;
     }
 }
