@@ -17,6 +17,13 @@ public class ImageSequenceAnim implements Renderable {
         timer = new LerpAnimation(time);
     }
 
+    public ImageSequenceAnim(CachedImageSequence sequence, float width, float time, float delay) {
+        this.sequence = sequence;
+        this.width = width;
+        timer = new LerpAnimation(time);
+        timer.startTimer(delay);
+    }
+
     @Override
     public void render(Graphics2D g) {
         if (timer.finished())

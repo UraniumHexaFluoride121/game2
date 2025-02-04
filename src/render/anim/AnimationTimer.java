@@ -1,6 +1,8 @@
 package render.anim;
 
-public interface AnimationTimer {
+import network.Writable;
+
+public interface AnimationTimer extends Writable {
     void startTimer();
     boolean finished();
     float normalisedProgress();

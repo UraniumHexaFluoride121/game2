@@ -10,6 +10,7 @@ import level.Level;
 import render.*;
 import render.renderables.text.FixedTextRenderer;
 import render.renderables.text.TextAlign;
+import render.ui.UIColourTheme;
 import render.ui.types.UIBox;
 import render.ui.types.UITextLabel;
 
@@ -33,6 +34,13 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
         };
     }
 
+    private boolean grayedOut = false;
+
+    public void setGrayedOut(boolean grayedOut) {
+        this.grayedOut = grayedOut;
+        box.setColourTheme(grayedOut ? UIColourTheme.GRAYED_OUT : UIColourTheme.LIGHT_BLUE);
+    }
+
     private void onClick() {
         level.levelRenderer.confirm.makeVisible("End Turn?", level::endTurn, level.levelRenderer.confirm::makeInvisible);
     }
@@ -54,11 +62,15 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
+        if (grayedOut || level.levelRenderer.runningAnim())
+            return;
         clickHandler.buttonPressed(pos, inside, blocked, type);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
+        if (grayedOut)
+            return;
         clickHandler.buttonReleased(pos, inside, blocked, type);
     }
 

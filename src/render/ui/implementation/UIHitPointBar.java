@@ -3,7 +3,7 @@ package render.ui.implementation;
 import foundation.math.MathUtil;
 import render.GameRenderer;
 import render.Renderable;
-import render.anim.ExpAnimation;
+import render.anim.PowAnimation;
 import unit.Unit;
 
 import java.awt.*;
@@ -14,7 +14,7 @@ public class UIHitPointBar implements Renderable {
     private final int segments;
     private final Color borderColour, background, bar;
     private float fill = 0, fillTo;
-    private ExpAnimation fillAnimation = null;
+    private PowAnimation fillAnimation = null;
 
     public UIHitPointBar(float border, float width, float height, float spacing, int segments, Color borderColour, Color background, Color bar) {
         this.border = border;
@@ -47,7 +47,7 @@ public class UIHitPointBar implements Renderable {
 
     public UIHitPointBar setFill(float fill, float time, float exponent) {
         fillTo = fill;
-        fillAnimation = new ExpAnimation(time, exponent);
+        fillAnimation = new PowAnimation(time, exponent);
         return this;
     }
 

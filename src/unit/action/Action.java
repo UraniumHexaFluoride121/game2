@@ -8,8 +8,12 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 public class Action {
+    private static final HashMap<String, Action> names = new HashMap<>();
+
     public static final float ACTION_BUTTON_SIZE = 2f;
     public static final float ROUNDING = 1, BORDER = 0.15f;
 
@@ -92,6 +96,7 @@ public class Action {
     public static final StaticHitBox buttonBox = new StaticHitBox(ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, ACTION_BUTTON_SIZE / 2);
 
     public Action(String name, ActionColour colour, Color tileColour, boolean scaled, Renderable iconImageRenderer) {
+        names.put(name, this);
         this.name = name;
         this.colour = colour;
         this.tileColour = tileColour;
@@ -173,5 +178,13 @@ public class Action {
     @Override
     public String toString() {
         return name;
+    }
+
+    public static Action getByName(String name) {
+        for (Map.Entry<String, Action> entry : names.entrySet()) {
+            if (entry.getKey().equals(name))
+                return entry.getValue();
+        }
+        return null;
     }
 }

@@ -82,6 +82,36 @@ public enum UIColourTheme {
             new Color(92, 159, 74, 115),
             new Color(97, 166, 81),
             new Color(107, 175, 88, 128)
+    ),
+    YELLOW(
+            new Color(228, 208, 105),
+            new Color(189, 169, 87, 144),
+            new Color(191, 173, 99),
+            new Color(181, 166, 92, 133),
+            new Color(147, 137, 75),
+            new Color(159, 145, 74, 115),
+            new Color(166, 149, 81),
+            new Color(175, 158, 88, 128)
+    ),
+    RED_UNAVAILABLE(
+            new Color(135, 87, 87),
+            new Color(145, 92, 92, 144),
+            new Color(135, 87, 87),
+            new Color(145, 92, 92, 144),
+            new Color(135, 87, 87),
+            new Color(145, 92, 92, 144),
+            new Color(135, 87, 87),
+            new Color(145, 92, 92, 144)
+    ),
+    GREEN_UNAVAILABLE(
+            new Color(114, 152, 111),
+            new Color(107, 145, 93, 144),
+            new Color(114, 152, 111),
+            new Color(107, 145, 93, 144),
+            new Color(114, 152, 111),
+            new Color(107, 145, 93, 144),
+            new Color(114, 152, 111),
+            new Color(107, 145, 93, 144)
     );
 
     public final Color borderColour;

@@ -1,11 +1,14 @@
 package unit;
 
 import foundation.Deletable;
+import foundation.MainPanel;
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
+import foundation.tick.Tickable;
 import level.Level;
 import level.Tile;
 import level.TileSelector;
+import network.NetworkState;
 import render.GameRenderer;
 import render.Renderable;
 import render.anim.AnimTilePath;
@@ -18,6 +21,7 @@ import render.renderables.text.TextRenderer;
 import render.texture.ImageSequenceGroup;
 import unit.action.Action;
 import unit.action.ActionSelector;
+import unit.action.UnitFiringExplosion;
 import unit.weapon.WeaponInstance;
 import unit.weapon.WeaponTemplate;
 
@@ -28,8 +32,8 @@ import java.util.HashSet;
 import static level.Tile.*;
 import static unit.action.Action.*;
 
-public class Unit implements Deletable {
-    public static final Color HP_BACKGROUND_COLOUR = new Color(67, 67, 67);
+public class Unit implements Deletable, Tickable {
+    private static final Color HP_BACKGROUND_COLOUR = new Color(67, 67, 67);
     public final UnitType type;
     public final UnitTeam team;
     public Point pos;
@@ -43,8 +47,8 @@ public class Unit implements Deletable {
             moveAnimX = new SineAnimation(1f + (float) Math.random() * .3f, (float) Math.random() * 360),
             moveAnimY = new SineAnimation(1.5f + (float) Math.random() * .3f, (float) Math.random() * 360);
 
-    private ActionSelector actionUI = new ActionSelector(this::getRenderPos, () -> {
-        if (getLevel().getActiveTeam() != getTeam())
+    private ActionSelector actionUI = new ActionSelector(this::getAndUpdateRenderPos, () -> {
+        if (getLevel().getThisTeam() != getLevel().getActiveTeam() || getLevel().getThisTeam() != getTeam())
             return false;
         if (getLevel().getActiveAction() != null)
             return false;
@@ -79,6 +83,8 @@ public class Unit implements Deletable {
     }
 
     public void renderTile(Graphics2D g) {
+        if (level == null)
+            return;
         if (explosion != null)
             return;
         GameRenderer.renderOffset(getShipRenderPos(), g, () -> {
@@ -86,7 +92,7 @@ public class Unit implements Deletable {
             type.tileRenderer(team, getPose()).render(g);
         });
         if (path == null) {
-            GameRenderer.renderOffset(getRenderPos(), g, () -> {
+            GameRenderer.renderOffset(getAndUpdateRenderPos(), g, () -> {
                 g.translate(TILE_SIZE / 4.5f, TILE_SIZE / 15);
                 hitPointText.render(g);
             });
@@ -94,14 +100,18 @@ public class Unit implements Deletable {
     }
 
     public void renderActions(Graphics2D g) {
+        if (level == null)
+            return;
         if (level.levelRenderer.runningAnim())
             return;
-        GameRenderer.renderOffset(getRenderPos(), g, () -> {
+        GameRenderer.renderOffset(getAndUpdateRenderPos(), g, () -> {
             actionUI.render(g);
         });
     }
 
     public void renderActionBelowUnits(Graphics2D g) {
+        if (level == null)
+            return;
         if (level.selectedUnit == this) {
             if (movePath != null) {
                 if (selector().mouseOverTile != null)
@@ -118,9 +128,11 @@ public class Unit implements Deletable {
     private final SineAnimation targetAnim = new SineAnimation(2, 90);
 
     private ImageSequenceAnim explosion = null;
-
+    private UnitFiringExplosion firingExplosion = null;
 
     public void renderActionAboveUnits(Graphics2D g) {
+        if (level == null)
+            return;
         if (level.selectedUnit == this) {
             if (level.getActiveAction() == Action.FIRE) {
                 if (selector().mouseOverTile != null) {
@@ -141,8 +153,16 @@ public class Unit implements Deletable {
                     targetAnim.startTimer();
             }
         }
+        if (firingExplosion != null) {
+            firingExplosion.render(g);
+            if (firingExplosion.finished()) {
+                level.levelRenderer.removeAnimBlock(firingExplosion);
+                firingExplosion.delete();
+                firingExplosion = null;
+            }
+        }
         if (explosion != null) {
-            GameRenderer.renderOffset(getRenderPos().copy().add(0, TILE_SIZE * SIN_60_DEG / 2), g, () -> {
+            GameRenderer.renderOffset(getAndUpdateRenderPos().copy().add(0, TILE_SIZE * SIN_60_DEG / 2), g, () -> {
                 explosion.render(g);
             });
             if (explosion.timer.normalisedProgress() > 0.5f)
@@ -170,14 +190,17 @@ public class Unit implements Deletable {
 
     //Called when there is an active action and this unit is selected
     public void onTileClicked(Tile tile, Action action) {
-        if (tile == null)
+        if (tile == null || level == null)
             return;
+        if (level.networkState == NetworkState.CLIENT) {
+            onTileClickedAsClient(tile, action);
+            return;
+        }
         if (selectableTiles.contains(tile.pos)) {
             if (action == Action.MOVE) {
                 if (tile.isFoW || level.canUnitBeMoved(tile.pos)) {
-                    path = movePath.getAnimPath(t -> {
-                        return level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this);
-                    });
+                    path = movePath.getAnimPath(t ->
+                            level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this));
                     if (path.length() != movePath.length() + 1) {
                         illegalTile = movePath.getTile(path.length() - 1);
                     } else
@@ -185,9 +208,16 @@ public class Unit implements Deletable {
                     performedActions.add(MOVE);
                     level.levelRenderer.registerAnimBlock(path);
                     level.endAction();
+                    if (level.networkState == NetworkState.SERVER) {
+                        level.server.sendUnitMovePacket(path, illegalTile, this);
+                    }
                 }
             } else if (action == FIRE) {
-                attack(level.getUnit(tile.pos));
+                Unit other = level.getUnit(tile.pos);
+                if (level.networkState == NetworkState.SERVER) {
+                    level.server.sendUnitShootPacket(this, other);
+                }
+                attack(other);
                 performedActions.add(FIRE);
                 performedActions.add(MOVE);
                 level.endAction();
@@ -196,10 +226,48 @@ public class Unit implements Deletable {
         }
     }
 
+    public void onTileClickedAsClient(Tile tile, Action action) {
+        if (selectableTiles.contains(tile.pos)) {
+            if (action == Action.MOVE) {
+                if (tile.isFoW || level.canUnitBeMoved(tile.pos)) {
+                    AnimTilePath path = movePath.getAnimPath(t ->
+                            level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this));
+                    Point illegalTile;
+                    if (path.length() != movePath.length() + 1) {
+                        illegalTile = movePath.getTile(path.length() - 1);
+                    } else
+                        illegalTile = null;
+                    MainPanel.client.sendMoveUnitRequest(path, illegalTile, this);
+                    level.endAction();
+                }
+            } else if (action == FIRE) {
+                MainPanel.client.sendShootUnitRequest(this, level.getUnit(tile.pos));
+                level.endAction();
+                selector().deselect();
+            }
+        }
+    }
+
+    public void startMove(AnimTilePath path, Point illegalTile) {
+        this.path = path;
+        this.illegalTile = illegalTile;
+        performedActions.add(MOVE);
+        level.levelRenderer.registerAnimBlock(path);
+    }
+
     public boolean canFireAt(Unit other) {
         if (other == null)
             return false;
         return !level.samePlayerTeam(this, other);
+    }
+
+    public void clientAttack(Unit other) {
+        if (level.networkState == NetworkState.SERVER) {
+            level.server.sendUnitShootPacket(this, other);
+        }
+        attack(other);
+        performedActions.add(FIRE);
+        performedActions.add(MOVE);
     }
 
     public void attack(Unit other) {
@@ -208,7 +276,18 @@ public class Unit implements Deletable {
         if (other.firingTempHP > 0) {
             otherWeapon = getBestWeaponAgainst(other, this, true);
         }
-        level.levelRenderer.beginFiring(this, other, thisWeapon, otherWeapon);
+        boolean thisFoW = isRenderFoW(), otherFoW = other.isRenderFoW();
+        if (!thisFoW && !otherFoW) {
+            level.levelRenderer.beginFiring(this, other, thisWeapon, otherWeapon);
+        } else if (!otherFoW) {
+            firingExplosion = new UnitFiringExplosion(level.getTile(other.pos).renderPosCentered, this, other);
+            level.levelRenderer.registerAnimBlock(firingExplosion);
+        } else {
+            postFiring(other);
+            other.postFiring(this);
+        }
+        if (!otherFoW && level.getThisTeam() != level.getActiveTeam())
+            level.levelRenderer.setCameraInterpBlockPos(level.getTile(other.pos).renderPosCentered);
     }
 
     public void postFiring(Unit other) {
@@ -299,27 +378,48 @@ public class Unit implements Deletable {
         return UnitPose.FORWARD;
     }
 
-    private ObjPos getRenderPos() {
+    private ObjPos getAndUpdateRenderPos() {
         if (path != null) {
             if (path.finished()) {
                 renderPos = path.getEnd();
-                level.moveUnit(this, path.getLastTile(), true);
+                level.moveUnit(this, path.getLastTile(), level.getThisTeam() == level.getActiveTeam());
                 level.levelRenderer.removeAnimBlock(path);
                 path = null;
                 if (illegalTile != null)
                     level.getTile(illegalTile).setIllegalTile();
             } else {
                 renderPos = path.getPos();
-                level.levelRenderer.setCameraInterpBlockPos(renderPos.copy().addY(TILE_SIZE / 2 * SIN_60_DEG));
             }
+            if (!isRenderFoW())
+                level.levelRenderer.setCameraInterpBlockPos(renderPos.copy().addY(TILE_SIZE / 2 * SIN_60_DEG));
         }
         return renderPos;
     }
 
+    private ObjPos getRenderPos() {
+        if (path != null) {
+            if (path.finished())
+                renderPos = path.getEnd();
+            else
+                renderPos = path.getPos();
+        }
+        return renderPos;
+    }
+
+    public boolean isRenderFoW() {
+        if (path == null) {
+            return level.getTile(pos).isFoW;
+        }
+        Tile renderTile = selector().tileAtPos(getRenderPos().copy().addY(0.5f * SIN_60_DEG * TILE_SIZE));
+        if (renderTile == null)
+            return true;
+        return renderTile.isFoW;
+    }
+
     private ObjPos getShipRenderPos() {
         if (path != null)
-            return getRenderPos().copy().add(moveAnimX.normalisedProgress() / 6, moveAnimY.normalisedProgress() / 4);
-        return getRenderPos().copy().add(idleAnimX.normalisedProgress() / 6, idleAnimY.normalisedProgress() / 4);
+            return getAndUpdateRenderPos().copy().add(moveAnimX.normalisedProgress() / 6, moveAnimY.normalisedProgress() / 4);
+        return getAndUpdateRenderPos().copy().add(idleAnimX.normalisedProgress() / 6, idleAnimY.normalisedProgress() / 4);
     }
 
     public float getTileDamageMultiplier() {
@@ -348,13 +448,13 @@ public class Unit implements Deletable {
         this.pos = pos;
     }
 
-    public void update() {
+    public void updateActionUI() {
         actionUI.updateActions(this);
     }
 
     public void turnEnded() {
         performedActions.clear();
-        update();
+        updateActionUI();
     }
 
     public TileSelector selector() {
@@ -369,5 +469,10 @@ public class Unit implements Deletable {
         actionUI = null;
         movePath = null;
         hitPointText.delete();
+    }
+
+    @Override
+    public void tick(float deltaTime) {
+        getAndUpdateRenderPos();
     }
 }

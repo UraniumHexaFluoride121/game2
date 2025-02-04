@@ -7,6 +7,7 @@ import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import foundation.tick.Tickable;
+import network.NetworkState;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
@@ -52,6 +53,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     public UIOnNextTurn onNextTurn = null;
     public UITurnBox turnBox = null;
     public UIDamage damageUI = null;
+    public UIEndTurn endTurn = null;
 
     private void createRenderers() {
         createTiles();
@@ -94,7 +96,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         //Units
         new RenderElement(mainRenderer, RenderOrder.TILE_UNITS, g -> {
             level.unitSet.forEach(u -> {
-                if (!level.getTile(u.pos).isFoW)
+                if (!u.isRenderFoW())
                     u.renderTile(g);
             });
         });
@@ -123,7 +125,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         UIUnitInfo unitInfo = new UIUnitInfo(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(unitInfo);
 
-        UIEndTurn endTurn = new UIEndTurn(levelUIRenderer, RenderOrder.LEVEL_UI, level);
+        endTurn = new UIEndTurn(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(endTurn);
 
         confirm = new UIConfirm(topUIRenderer, RenderOrder.LEVEL_UI, level);
@@ -171,18 +173,28 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     private final ObjPos cameraPosition = new ObjPos();
 
     public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
+    public boolean clientHasInitialCameraPos = false;
 
     private ObjPos preShakePos = null;
     private ObjPos shakeVector = null;
     private boolean cameraShake = false;
 
     public void useLastCameraPos(UnitTeam prev, UnitTeam current) {
-        if (prev == null) {
-            setCameraInterpBlockPos(lastCameraPos.get(current));
-        } else {
-            lastCameraPos.put(prev, getCameraInterpBlockPos(cameraPosition.copy()));
-            setCameraInterpBlockPos(lastCameraPos.get(current));
+        if (level.networkState == NetworkState.LOCAL) {
+            if (prev == null) {
+                setCameraInterpBlockPos(lastCameraPos.get(current));
+            } else {
+                lastCameraPos.put(prev, getCameraInterpBlockPos(cameraPosition.copy()));
+                setCameraInterpBlockPos(lastCameraPos.get(current));
+            }
         }
+    }
+
+    public void useLastCameraPos(UnitTeam team) {
+        ObjPos pos = lastCameraPos.get(team);
+        if (pos == null)
+            return;
+        setCameraInterpBlockPos(pos);
     }
 
     public void moveCameraStart() {
@@ -333,8 +345,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
     public void endFiring(Unit a, Unit b) {
         isFiring = false;
-        removeAnimBlock(firingAnimRenderer);
         a.postFiring(b);
         b.postFiring(a);
+        removeAnimBlock(firingAnimRenderer);
     }
 }

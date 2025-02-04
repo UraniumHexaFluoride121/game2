@@ -109,4 +109,8 @@ public class FixedTextRenderer implements Renderable {
             boxBounds = bounds.copy().expand(renderBoxBorder * 20);
         }
     }
+
+    public String getText() {
+        return text;
+    }
 }

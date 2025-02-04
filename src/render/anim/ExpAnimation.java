@@ -1,36 +1,43 @@
 package render.anim;
 
-import foundation.math.MathUtil;
+import network.PacketWriter;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class ExpAnimation implements ReversableAnimationTimer {
-    private long startTime, endTime;
-    private final long time;
+    private long startTime;
+    private final float cutoff;
     private boolean reversed = false;
-    private final float exponent;
+    private final float decayConstant;
 
-    public ExpAnimation(float seconds, float exponent) {
-        this.time = (long) (seconds * 1000);
-        this.exponent = exponent;
+    public ExpAnimation(float cutoff, float decayConstant) {
+        this.cutoff = cutoff;
+        this.decayConstant = decayConstant;
         startTimer();
+    }
+
+    public ExpAnimation(DataInputStream reader) throws IOException {
+        startTime = reader.readLong();
+        cutoff = reader.readFloat();
+        reversed = reader.readBoolean();
+        decayConstant = reader.readFloat();
     }
 
     @Override
     public void startTimer() {
         startTime = System.currentTimeMillis();
-        endTime = startTime + time;
     }
 
     @Override
     public void setReversed(boolean reversed) {
         if (this.reversed != reversed) {
-            long t = System.currentTimeMillis();
-            if (t > endTime) {
-                startTime = t;
-                endTime = t + time;
-            } else {
-                startTime = -endTime + 2 * t;
-                endTime = startTime + time;
-            }
+            float progress = normalisedProgress();
+            if (reversed) {
+                startTime = System.currentTimeMillis() - (long) ((-Math.log(progress) / decayConstant) * 1000f);
+            } else
+                startTime = System.currentTimeMillis() - (long) ((-Math.log(1 - progress) / decayConstant) * 1000f);
         }
         this.reversed = reversed;
     }
@@ -42,16 +49,23 @@ public class ExpAnimation implements ReversableAnimationTimer {
 
     @Override
     public boolean finished() {
-        return System.currentTimeMillis() > endTime;
+        return normalisedProgress() >= cutoff;
     }
 
     @Override
     public float normalisedProgress() {
-        float t = ((float) Math.pow(Math.clamp(MathUtil.normalise(0, endTime - startTime, System.currentTimeMillis() - startTime), 0, 1), exponent));
-        if (reversed) {
-            return 1 - t;
-        } else {
-            return t;
-        }
+        float exp = (float) Math.exp(-decayConstant * (System.currentTimeMillis() - startTime) / 1000f);
+        if (reversed)
+            return exp;
+        return 1 - exp;
+    }
+
+    @Override
+    public void write(DataOutputStream w) throws IOException {
+        PacketWriter.writeEnum(AnimationType.EXP, w);
+        w.writeLong(startTime);
+        w.writeFloat(cutoff);
+        w.writeBoolean(reversed);
+        w.writeFloat(decayConstant);
     }
 }

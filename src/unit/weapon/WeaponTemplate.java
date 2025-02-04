@@ -14,7 +14,7 @@ public class WeaponTemplate {
     public int ammoCapacity = 0;
     public final HashMap<UnitType, AttackData> data = new HashMap<>();
     public final ProjectileType projectileType;
-    public Function<Unit, HashSet<Point>> tilesInFiringRange = u -> u.selector().withEnemyUnits(u.selector().tilesInRadius(u.pos, 1), u);
+    public Function<Unit, HashSet<Point>> tilesInFiringRange = u -> range(u, 1);
 
     public WeaponTemplate(ProjectileType projectileType) {
         this.projectileType = projectileType;
@@ -39,5 +39,9 @@ public class WeaponTemplate {
     public WeaponTemplate runAnim() {
         runsAnim = true;
         return this;
+    }
+
+    public static HashSet<Point> range(Unit u, int range) {
+        return u.selector().withEnemyUnits(u.selector().tilesInRadius(u.pos, range), u);
     }
 }

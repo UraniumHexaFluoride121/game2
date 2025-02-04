@@ -3,13 +3,13 @@ package unit;
 import render.ui.UIColourTheme;
 
 public enum UnitTeam {
-    GREEN("green", 0, UIColourTheme.GREEN),
-    RED("red", 1, UIColourTheme.RED);
+    GREEN("green", 0, UIColourTheme.GREEN, UIColourTheme.GREEN_UNAVAILABLE),
+    RED("red", 1, UIColourTheme.RED, UIColourTheme.RED_UNAVAILABLE);
 
     public static final UnitTeam[] ORDERED_TEAMS = new UnitTeam[values().length];
     public final String s;
     public final int order;
-    public final UIColourTheme uiColour;
+    public final UIColourTheme uiColour, unavailableColour;
 
     static {
         for (UnitTeam team : values()) {
@@ -17,9 +17,10 @@ public enum UnitTeam {
         }
     }
 
-    UnitTeam(String s, int order, UIColourTheme uiColour) {
+    UnitTeam(String s, int order, UIColourTheme uiColour, UIColourTheme unavailableColour) {
         this.s = s;
         this.order = order;
         this.uiColour = uiColour;
+        this.unavailableColour = unavailableColour;
     }
 }

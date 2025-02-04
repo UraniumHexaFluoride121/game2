@@ -8,7 +8,7 @@ import level.Tile;
 import level.TileSelector;
 import render.Renderable;
 import render.anim.AnimTilePath;
-import render.anim.ExpAnimation;
+import render.anim.PowAnimation;
 import unit.UnitType;
 
 import java.awt.*;
@@ -124,7 +124,7 @@ public class TilePath implements Renderable {
                 break;
             anim.addTile(t);
         }
-        anim.setTimer(new ExpAnimation(anim.length() * 0.3f, 0.8f));
+        anim.setTimer(new PowAnimation(anim.length() * 0.3f, 0.8f));
         return anim;
     }
 }

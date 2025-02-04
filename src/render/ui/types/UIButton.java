@@ -98,6 +98,10 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
         return this;
     }
 
+    public String getText() {
+        return text.getText();
+    }
+
     @Override
     public boolean posInside(ObjPos pos) {
         return enabled && hitBox.isPositionInside(pos);

@@ -1,11 +1,14 @@
 package level;
 
 import foundation.Deletable;
+import foundation.MainPanel;
 import foundation.input.ButtonRegister;
 import foundation.math.ObjPos;
 import foundation.math.RandomHandler;
 import foundation.tick.RegisteredTickable;
 import foundation.tick.TickOrder;
+import network.NetworkState;
+import network.Server;
 import render.Renderable;
 import unit.Unit;
 import unit.UnitTeam;
@@ -20,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Level implements Renderable, Deletable, RegisteredTickable {
+    public Server server;
     public static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
     public final long seed;
     public final RandomHandler random;
@@ -30,6 +34,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     public Unit selectedUnit;
 
     private UnitTeam activeTeam = null;
+    public UnitTeam thisTeam = null;
 
     public ButtonRegister buttonRegister = new ButtonRegister();
 
@@ -37,13 +42,20 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     private int turn = 1;
 
-    final Tile[][] tiles;
+    public final Tile[][] tiles;
     private Unit[][] unitGrid;
-    final HashSet<Unit> unitSet = new HashSet<>();
-    private final HashMap<UnitTeam, PlayerTeam> playerTeam;
+    public final HashSet<Unit> unitSet = new HashSet<>();
+    public final HashMap<UnitTeam, PlayerTeam> playerTeam;
     public LevelRenderer levelRenderer;
 
-    public Level(HashMap<UnitTeam, PlayerTeam> playerTeam, long seed, int width, int height) {
+    public final NetworkState networkState;
+
+    public Level(HashMap<UnitTeam, PlayerTeam> playerTeam, long seed, int width, int height, NetworkState networkState) {
+        this.networkState = networkState;
+        if (networkState == NetworkState.SERVER) {
+            server = new Server(this);
+            thisTeam = UnitTeam.GREEN;
+        }
         tilesX = width;
         tilesY = height;
         tiles = new Tile[tilesX][];
@@ -60,6 +72,17 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             }
         }
         tileSelector = new TileSelector(tiles, this);
+        buttonRegister.register(tileSelector);
+        for (int x = 0; x < tilesX; x++) {
+            unitGrid[x] = new Unit[tilesY];
+            for (int y = 0; y < tilesY; y++) {
+                unitGrid[x][y] = null;
+            }
+        }
+        levelRenderer = new LevelRenderer(this);
+    }
+
+    public Level generateDefaultTerrain() {
         HashSet<Point> nebula = tileSelector.pointTerrain(40, 3, TileType.EMPTY, r -> switch (r) {
             case 0 -> .7f;
             case 1 -> .3f;
@@ -84,18 +107,14 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         for (Point p : asteroids) {
             getTile(p).setTileType(TileType.ASTEROIDS, this);
         }
-        buttonRegister.register(tileSelector);
-        for (int x = 0; x < tilesX; x++) {
-            unitGrid[x] = new Unit[tilesY];
-            for (int y = 0; y < tilesY; y++) {
-                unitGrid[x][y] = null;
-            }
-        }
-        levelRenderer = new LevelRenderer(this);
         addUnit(new Unit(UnitType.BOMBER, UnitTeam.GREEN, new Point(2, 2), this));
         addUnit(new Unit(UnitType.FIGHTER, UnitTeam.GREEN, new Point(3, 2), this));
         addUnit(new Unit(UnitType.FIGHTER, UnitTeam.RED, new Point(3, 4), this));
-        levelRenderer.useLastCameraPos(null, activeTeam);
+        if (networkState == NetworkState.LOCAL)
+            levelRenderer.useLastCameraPos(null, activeTeam);
+        if (networkState == NetworkState.SERVER)
+            levelRenderer.useLastCameraPos(thisTeam);
+        return this;
     }
 
     public void init() {
@@ -105,6 +124,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     @Override
     public void tick(float deltaTime) {
         levelRenderer.tick(deltaTime);
+        unitSet.forEach(u -> u.tick(deltaTime));
         removeUnits();
     }
 
@@ -117,8 +137,19 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         if (unitGrid[unit.pos.x][unit.pos.y] == null) {
             unitSet.add(unit);
             unitGrid[unit.pos.x][unit.pos.y] = unit;
-        }
+            levelRenderer.lastCameraPos.putIfAbsent(unit.team, Tile.getCenteredRenderPos(unit.pos));
+        } else
+            unit.delete();
+        updateFoW();
+    }
+
+    public void forceAddUnit(Unit unit) {
+        Unit prevUnit = unitGrid[unit.pos.x][unit.pos.y];
+        unitSet.add(unit);
+        unitGrid[unit.pos.x][unit.pos.y] = unit;
         levelRenderer.lastCameraPos.putIfAbsent(unit.team, Tile.getCenteredRenderPos(unit.pos));
+        if (prevUnit != null)
+            qRemoveUnit(prevUnit);
         updateFoW();
     }
 
@@ -131,7 +162,9 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     private void removeUnits() {
         qRemoveUnit.forEach(unit -> {
             unitSet.remove(unit);
-            unitGrid[unit.pos.x][unit.pos.y] = null;
+            Unit unitAtPos = unitGrid[unit.pos.x][unit.pos.y];
+            if (unitAtPos == unit)
+                unitGrid[unit.pos.x][unit.pos.y] = null;
             if (selectedUnit == unit)
                 selectedUnit = null;
         });
@@ -151,7 +184,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         if (selectNewTile)
             tileSelector.selectedTile = getTile(newPos);
         updateFoW();
-        unit.update();
+        unit.updateActionUI();
     }
 
     public Tile getTile(Point pos) {
@@ -177,7 +210,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         }
         selectedUnit = getUnit(tileSelector.selectedTile.pos);
         if (selectedUnit != null)
-            selectedUnit.update();
+            selectedUnit.updateActionUI();
     }
 
     public UnitTeam getActiveTeam() {
@@ -192,11 +225,15 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         activeAction = null;
         if (levelRenderer.highlightTileRenderer != null)
             levelRenderer.highlightTileRenderer.close();
-        unitSet.forEach(Unit::update);
+        unitSet.forEach(Unit::updateActionUI);
     }
 
     public void endTurn() {
         levelRenderer.confirm.makeInvisible();
+        if (networkState == NetworkState.CLIENT) {
+            MainPanel.client.sendEndTurn();
+            return;
+        }
         UnitTeam team = activeTeam;
         activeTeam = getNextTeam(activeTeam);
         endAction();
@@ -209,6 +246,22 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         levelRenderer.turnBox.setNewTurn();
         updateFoW();
         levelRenderer.useLastCameraPos(team, activeTeam);
+        levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
+        if (networkState == NetworkState.SERVER)
+            server.sendTurnUpdatePacket();
+    }
+
+    public void setTurn(UnitTeam activeTeam, int turn) {
+        if (this.activeTeam != activeTeam || this.turn != turn) {
+            levelRenderer.onNextTurn.start("Turn " + turn, activeTeam);
+            for (Unit unit : unitSet) {
+                unit.turnEnded();
+            }
+        }
+        this.activeTeam = activeTeam;
+        this.turn = turn;
+        levelRenderer.turnBox.setNewTurn();
+        levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
     }
 
     public Action getActiveAction() {
@@ -240,20 +293,37 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         return null;
     }
 
+    public UnitTeam getThisTeam() {
+        if (networkState == NetworkState.LOCAL) {
+            return activeTeam;
+        }
+        return thisTeam;
+    }
+
     public UnitTeam getFirstTeam() {
         return getNextTeam(UnitTeam.ORDERED_TEAMS[UnitTeam.ORDERED_TEAMS.length - 1]);
+    }
+
+    public int playerCount() {
+        return playerTeam.size();
     }
 
     public void updateFoW() {
         tileSelector.tileSet.forEach(t -> t.isFoW = true);
         HashSet<Point> visible = new HashSet<>();
+        UnitTeam team = getThisTeam();
         unitSet.forEach(u -> {
-            if (u.team == activeTeam)
+            if (u.team == team)
                 visible.addAll(u.getVisibleTiles());
         });
         visible.forEach(p -> {
             getTile(p).isFoW = false;
         });
+    }
+
+    public void setThisTeam(UnitTeam team) {
+        thisTeam = team;
+        levelRenderer.useLastCameraPos(team);
     }
 
     public boolean rendered = false;

@@ -7,6 +7,7 @@ import foundation.tick.RegisteredTickable;
 import foundation.tick.TickOrder;
 import level.Level;
 import mainScreen.TitleScreen;
+import network.Client;
 import render.anim.LerpAnimation;
 
 import javax.swing.*;
@@ -15,15 +16,20 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public class MainPanel extends JFrame implements KeyListener, MouseListener, MouseWheelListener, RegisteredTickable {
+    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = true;
+
     public static AffineTransform windowTransform = new AffineTransform();
 
     public static ObjPos DEVICE_WINDOW_SIZE; //the physical screen size, in pixels
     public static ObjPos RENDER_WINDOW_SIZE; //the size of the render box, in pixels
     public static ObjPos BLOCK_DIMENSIONS; //the size of the render box, in blocks
     public static ObjPos INSETS_OFFSET = new ObjPos(); //The offset added to account for frame borders in windowed mode
+
+    public static Client client = null;
 
     public static Level activeLevel;
     public static TitleScreen titleScreen;
@@ -32,7 +38,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     public static LerpAnimation fadeScreen = new LerpAnimation(0.5f);
 
-    public static boolean controlHeld = false;
+    public static boolean controlHeld = false, shiftHeld = false;
 
     public void init() {
         fadeScreen.setReversed(true);
@@ -40,8 +46,6 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         titleScreen = new TitleScreen();
         titleScreen.init();
         activeInputReceiver = titleScreen;
-        //activeLevel = new Level(Level.allSeparate(), 1);
-        //activeInputReceiver = activeLevel.levelRenderer;
         registerTickable();
     }
 
@@ -64,6 +68,57 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         });
     }
 
+    public static void startNewLevel(Supplier<Level> levelCreator, Runnable onLevelCreated) {
+        Level.EXECUTOR.submit(() -> {
+            fadeScreen.setReversed(false);
+            activeInputReceiver = null;
+            Level level = levelCreator.get();
+            level.init();
+            activeLevel = level;
+            activeInputReceiver = level.levelRenderer;
+            while (!level.rendered) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(3);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            fadeScreen.setReversed(true);
+            onLevelCreated.run();
+        });
+    }
+
+    public static void removeClient() {
+        if (client != null)
+            client.delete();
+        client = null;
+    }
+
+    public static boolean startClient(String ip) {
+        client = new Client(ip);
+        if (client.failed) {
+            client = null;
+            return false;
+        }
+        return true;
+    }
+
+    public static void clientDisconnect() {
+        addTask(() -> {
+            removeClient();
+            toTitleScreen();
+        });
+    }
+
+    public static void toTitleScreen() {
+        if (activeLevel != null) {
+            activeLevel.delete();
+            activeLevel = null;
+        }
+        activeInputReceiver = titleScreen;
+        titleScreen.reset();
+    }
+
     @Override
     public void paintComponents(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
@@ -77,11 +132,22 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         } else {
             titleScreen.render(g2d);
         }
-        g2d.setColor(new Color(0, 0, 0, fadeScreen.normalisedProgress()));
-        g2d.fillRect(0, 0, RENDER_WINDOW_SIZE.xInt(), RENDER_WINDOW_SIZE.yInt());
+        float a = fadeScreen.normalisedProgress();
+        if (a != 0) {
+            g2d.setColor(new Color(0, 0, 0, a));
+            g2d.fillRect(0, 0, RENDER_WINDOW_SIZE.xInt(), RENDER_WINDOW_SIZE.yInt());
+        }
     }
 
-    private static final Vector<Runnable> tasks = new Vector<>();
+    private static final Vector<Runnable> tasks = new Vector<>(), noAnimBlockTasks = new Vector<>();
+
+    public static void addTask(Runnable task) {
+        tasks.add(task);
+    }
+
+    public static void addTaskAfterAnimBlock(Runnable task) {
+        noAnimBlockTasks.add(task);
+    }
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -92,6 +158,8 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         tasks.add(() -> {
             if (e.getKeyCode() == KeyEvent.VK_CONTROL)
                 controlHeld = true;
+            if (e.getKeyCode() == KeyEvent.VK_SHIFT)
+                shiftHeld = true;
             if (activeInputReceiver != null)
                 activeInputReceiver.acceptPressed(InputType.getInputType(e));
         });
@@ -102,6 +170,8 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         tasks.add(() -> {
             if (e.getKeyCode() == KeyEvent.VK_CONTROL)
                 controlHeld = false;
+            if (e.getKeyCode() == KeyEvent.VK_SHIFT)
+                shiftHeld = false;
             if (activeInputReceiver != null)
                 activeInputReceiver.acceptReleased(InputType.getInputType(e));
         });
@@ -154,6 +224,21 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public synchronized void tick(float deltaTime) {
         tasks.forEach(Runnable::run);
         tasks.clear();
+        if (activeLevel == null)
+            noAnimBlockTasks.clear();
+        else {
+            if (!activeLevel.levelRenderer.runningAnim()) {
+                AtomicBoolean blocked = new AtomicBoolean(false);
+                noAnimBlockTasks.removeIf(task -> {
+                    if (blocked.get() || activeLevel.levelRenderer.runningAnim()) {
+                        blocked.set(true);
+                        return false;
+                    }
+                    task.run();
+                    return true;
+                });
+            }
+        }
     }
 
     @Override

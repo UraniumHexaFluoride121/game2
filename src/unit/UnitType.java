@@ -63,6 +63,7 @@ public enum UnitType {
         WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BOMBER_MISSILE).consumeAmmo(1).runAnim();
         w1.addData("fighter", new AttackData(0.8f));
         w1.addData("bomber", new AttackData(0.7f));
+        w1.tilesInFiringRange = u -> WeaponTemplate.range(u, 3);
         list.add(w1);
         WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BOMBER_PLASMA);
         w2.addData("fighter", new AttackData(2.4f));

@@ -3,11 +3,17 @@ package render.anim;
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
 import level.Tile;
+import network.PacketReceiver;
+import network.PacketWriter;
+import network.Writable;
 
 import java.awt.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class AnimTilePath {
+public class AnimTilePath implements Writable {
     private final ArrayList<Point> tiles = new ArrayList<>();
     public final ArrayList<HexagonalDirection> directions = new ArrayList<>();
     private final ArrayList<ObjPos> points = new ArrayList<>();
@@ -15,6 +21,13 @@ public class AnimTilePath {
 
     public AnimTilePath(ArrayList<Point> tiles) {
         tiles.forEach(this::addTile);
+    }
+
+    public AnimTilePath(DataInputStream reader) throws IOException {
+        ArrayList<Point> tiles = PacketReceiver.readCollection(new ArrayList<>(), () -> PacketReceiver.readPoint(reader), reader);
+        tiles.forEach(this::addTile);
+        timer = AnimationType.readTimer(reader);
+        timer.startTimer();
     }
 
     public AnimTilePath() {
@@ -72,5 +85,11 @@ public class AnimTilePath {
             return directions.getFirst();
         int segment = (int) (t * segments);
         return directions.get(segment);
+    }
+
+    @Override
+    public void write(DataOutputStream w) throws IOException {
+        PacketWriter.writeCollection(tiles, p -> PacketWriter.writePoint(p, w), w);
+        timer.write(w);
     }
 }

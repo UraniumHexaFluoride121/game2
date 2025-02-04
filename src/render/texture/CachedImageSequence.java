@@ -59,6 +59,11 @@ public class CachedImageSequence implements ImageSequence {
     }
 
     @Override
+    public ImageRenderer getRandomImage(double random) {
+        return images[(int) (random * images.length)];
+    }
+
+    @Override
     public int imageCount() {
         return frames;
     }

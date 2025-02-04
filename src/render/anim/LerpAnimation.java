@@ -1,6 +1,11 @@
 package render.anim;
 
 import foundation.math.MathUtil;
+import network.PacketWriter;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class LerpAnimation implements ReversableAnimationTimer {
     private long startTime, endTime;
@@ -10,6 +15,13 @@ public class LerpAnimation implements ReversableAnimationTimer {
     public LerpAnimation(float seconds) {
         this.time = (long) (seconds * 1000);
         startTimer();
+    }
+
+    public LerpAnimation(DataInputStream reader) throws IOException {
+        startTime = reader.readLong();
+        endTime = reader.readLong();
+        time = reader.readLong();
+        reversed = reader.readBoolean();
     }
 
     @Override
@@ -51,7 +63,7 @@ public class LerpAnimation implements ReversableAnimationTimer {
 
     @Override
     public boolean finished() {
-        return System.currentTimeMillis() > endTime || System.currentTimeMillis() < startTime;
+        return System.currentTimeMillis() > endTime;
     }
 
     @Override
@@ -70,5 +82,14 @@ public class LerpAnimation implements ReversableAnimationTimer {
 
     public float doubleTriangleProgress() {
         return 1 - Math.abs(triangleProgress() * 2 - 1);
+    }
+
+    @Override
+    public void write(DataOutputStream w) throws IOException {
+        PacketWriter.writeEnum(AnimationType.LERP, w);
+        w.writeLong(startTime);
+        w.writeLong(endTime);
+        w.writeLong(time);
+        w.writeBoolean(reversed);
     }
 }

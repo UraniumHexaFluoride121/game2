@@ -1,11 +1,5 @@
 package render.texture;
 
-import foundation.Main;
-import foundation.MainPanel;
-
-import java.awt.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import static level.Level.*;
@@ -47,6 +41,11 @@ public class AsyncImageSequence implements ImageSequence {
     @Override
     public ImageRenderer getRandomImage(Supplier<Double> random) {
         return getImage(images[(int) (random.get() * images.length)]);
+    }
+
+    @Override
+    public ImageRenderer getRandomImage(double random) {
+        return getImage(images[(int) (random * images.length)]);
     }
 
     private ImageRenderer getImage(ResourceLocation location) {

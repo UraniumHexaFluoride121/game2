@@ -2,7 +2,7 @@ package render.ui.implementation;
 
 import level.Level;
 import render.*;
-import render.anim.ExpAnimation;
+import render.anim.PowAnimation;
 import render.anim.LerpAnimation;
 import render.ui.types.UITextLabel;
 import unit.UnitTeam;
@@ -12,7 +12,7 @@ public class UIOnNextTurn extends AbstractRenderElement {
     private Level level;
     private boolean enabled = false;
     private String text = null;
-    private ExpAnimation anim = new ExpAnimation(0.3f, 1.5f);
+    private PowAnimation anim = new PowAnimation(0.3f, 1.5f);
     private LerpAnimation holdTimer = new LerpAnimation(0.8f);
     private HOLD_STATE holdState = HOLD_STATE.FINISHED;
 

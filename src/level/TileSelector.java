@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.function.Function;
 
+import static foundation.input.InputType.*;
+
 public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
     public final Tile[][] tiles;
     public final HashSet<Tile> tileSet = new HashSet<>();
@@ -216,7 +218,7 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         return false;
     }
 
-    public Tile tileAtPos(ObjPos pos) {
+    public Tile tileAtSelectablePos(ObjPos pos) {
         if (level.hasActiveAction()) {
             for (Point p : level.selectedUnit.selectableTiles()) {
                 Tile tile = tiles[p.x][p.y];
@@ -234,6 +236,15 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         return null;
     }
 
+    public Tile tileAtPos(ObjPos pos) {
+        for (Tile tile : tileSet) {
+            if (tile.posInside(pos)) {
+                return tile;
+            }
+        }
+        return null;
+    }
+
     public void deselect() {
         selectedTile = null;
         level.updateSelectedUnit();
@@ -241,40 +252,35 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        switch (type) {
-            case MOUSE_RIGHT -> {
-                if (!blocked)
-                    level.levelRenderer.moveCameraStart();
+        if (type == MOUSE_RIGHT) {
+            if (!blocked)
+                level.levelRenderer.moveCameraStart();
+        } else if (type == MOUSE_LEFT) {
+            if (blocked || level.levelRenderer.runningAnim())
+                return;
+            if (!level.hasActiveAction()) {
+                Tile newTile = tileAtSelectablePos(pos);
+                if (newTile == selectedTile) {
+                    level.levelRenderer.setCameraInterpBlockPos(newTile.renderPosCentered);
+                } else
+                    selectedTile = newTile;
+            } else {
+                level.selectedUnit.onTileClicked(tileAtSelectablePos(pos), level.getActiveAction());
             }
-            case MOUSE_LEFT -> {
-                if (blocked || level.levelRenderer.runningAnim())
-                    return;
-                if (!level.hasActiveAction()) {
-                    Tile newTile = tileAtPos(pos);
-                    if (newTile == selectedTile) {
-                        level.levelRenderer.setCameraInterpBlockPos(newTile.renderPosCentered);
-                    } else
-                        selectedTile = newTile;
-                } else {
-                    level.selectedUnit.onTileClicked(tileAtPos(pos), level.getActiveAction());
-                }
-                level.updateSelectedUnit();
-            }
-            case MOUSE_OVER -> {
-                if (!blocked)
-                    mouseOverTile = tileAtPos(pos);
-                else
-                    mouseOverTile = null;
-            }
-            case ESCAPE -> {
-                if (!blocked) {
-                    if (level.hasActiveAction()) {
-                        if (level.levelRenderer.highlightTileRenderer != null)
-                            level.levelRenderer.highlightTileRenderer.close();
-                        level.setActiveAction(null);
-                    } else
-                        deselect();
-                }
+            level.updateSelectedUnit();
+        } else if (type == MOUSE_OVER) {
+            if (!blocked)
+                mouseOverTile = tileAtSelectablePos(pos);
+            else
+                mouseOverTile = null;
+        } else if (type == ESCAPE) {
+            if (!blocked) {
+                if (level.hasActiveAction()) {
+                    if (level.levelRenderer.highlightTileRenderer != null)
+                        level.levelRenderer.highlightTileRenderer.close();
+                    level.setActiveAction(null);
+                } else
+                    deselect();
             }
         }
     }

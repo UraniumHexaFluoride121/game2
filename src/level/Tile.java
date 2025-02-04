@@ -2,14 +2,20 @@ package level;
 
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
+import network.PacketReceiver;
+import network.PacketWriter;
+import network.Writable;
 import render.GameRenderer;
 import render.anim.LerpAnimation;
 import render.renderables.HexagonRenderer;
 import render.texture.ImageRenderer;
 
 import java.awt.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
-public class Tile {
+public class Tile implements Writable {
     public static final float STROKE_WIDTH = 0.1f, HIGHLIGHT_STROKE_WIDTH = 0.2f;
     public static final float SCREEN_STROKE_WIDTH_MARGIN = GameRenderer.scaleFloatToScreen(HIGHLIGHT_STROKE_WIDTH), BLOCK_STROKE_WIDTH_MARGIN = HIGHLIGHT_STROKE_WIDTH;
 
@@ -18,7 +24,7 @@ public class Tile {
             BLUE_HIGHLIGHT_COLOUR = new Color(87, 177, 225),
             BLUE_TRANSPARENT_COLOUR = new Color(122, 151, 248, 142),
             FOW_COLOUR = new Color(0, 0, 0, 128), ILLEGAL_TILE_COLOUR = new Color(227, 90, 90);
-    public static final float TILE_SIZE = 6;
+    public static final float TILE_SIZE = 5;
     public static final float SIN_60_DEG = ((float) Math.sin(Math.toRadians(60)));
 
     public static final HexagonRenderer
@@ -31,6 +37,7 @@ public class Tile {
     public final Point pos;
     public final ObjPos renderPos, renderPosCentered;
     public TileType type;
+    public double randomValue = 0;
     public ImageRenderer imageRenderer;
 
     public LerpAnimation illegalTileTimer = new LerpAnimation(0.8f).finish();
@@ -42,8 +49,10 @@ public class Tile {
         renderPosCentered = getCenteredRenderPos(x, y);
         if (type.tileTextures == null)
             imageRenderer = null;
-        else
-            imageRenderer = type.tileTextures.getRandomImage(level.random.getDoubleSupplier(RandomType.TILE_TEXTURE));
+        else {
+            randomValue = level.random.getDoubleSupplier(RandomType.TILE_TEXTURE).get();
+            imageRenderer = type.tileTextures.getRandomImage(randomValue);
+        }
     }
 
     public boolean posInside(ObjPos pos) {
@@ -83,10 +92,36 @@ public class Tile {
 
     public void setTileType(TileType type, Level level) {
         this.type = type;
-        if (type.tileTextures == null)
+        if (type.tileTextures == null) {
             imageRenderer = null;
-        else
-            imageRenderer = type.tileTextures.getRandomImage(level.random.getDoubleSupplier(RandomType.TILE_TEXTURE));
+        } else {
+            randomValue = level.random.getDoubleSupplier(RandomType.TILE_TEXTURE).get();
+            imageRenderer = type.tileTextures.getRandomImage(randomValue);
+        }
+    }
+
+    public void setTileType(TileType type, double randomValue) {
+        this.randomValue = randomValue;
+        this.type = type;
+        if (type.tileTextures == null) {
+            imageRenderer = null;
+        } else {
+            imageRenderer = type.tileTextures.getRandomImage(randomValue);
+        }
+    }
+
+    public void setTileType(TileData data) {
+        setTileType(data.type(), data.randomValue());
+    }
+
+    @Override
+    public void write(DataOutputStream writer) throws IOException {
+        PacketWriter.writeEnum(type, writer);
+        writer.writeDouble(randomValue);
+    }
+
+    public static TileData read(DataInputStream reader) throws IOException {
+        return new TileData(PacketReceiver.readEnum(TileType.class, reader), reader.readDouble());
     }
 
     public static ObjPos getRenderPos(Point pos) {

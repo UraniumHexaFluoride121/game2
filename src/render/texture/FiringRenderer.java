@@ -6,7 +6,7 @@ import level.Level;
 import render.*;
 import render.anim.ImageSequenceAnim;
 import render.anim.LerpAnimation;
-import render.anim.PowAnimation;
+import render.anim.ExpAnimation;
 import render.anim.SineAnimation;
 import render.ui.implementation.UIHitPointBar;
 import unit.Unit;
@@ -284,7 +284,7 @@ public class FiringRenderer extends AbstractRenderElement {
         private LerpAnimation explosionTimer = null;
         private final SineAnimation animX = new SineAnimation(MathUtil.randFloatBetween(5, 8, Math::random), MathUtil.randFloatBetween(0, 360, Math::random));
         private final SineAnimation animY = new SineAnimation(MathUtil.randFloatBetween(5, 8, Math::random), MathUtil.randFloatBetween(0, 360, Math::random));
-        private final PowAnimation forwardAnim = new PowAnimation(0.99f, 1.5f);
+        private final ExpAnimation forwardAnim = new ExpAnimation(0.99f, 1.5f);
         private final ArrayList<Projectile> projectiles;
         private final boolean toBeDestroyed, isAttacking;
         private boolean enabled = true, exploding = false;

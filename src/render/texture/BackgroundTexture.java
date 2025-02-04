@@ -22,6 +22,6 @@ public class BackgroundTexture {
 
     public BackgroundTexture(float scale, float cameraMultiplier, ResourceLocation resource) {
         this.cameraMultiplier = cameraMultiplier;
-        renderable = Renderable.renderImage(resource, true, true, 200 / scale, false);
+        renderable = Renderable.renderImage(resource, true, true, 250 / scale, false);
     }
 }

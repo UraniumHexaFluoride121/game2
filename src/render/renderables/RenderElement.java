@@ -9,6 +9,8 @@ public class RenderElement extends AbstractRenderElement {
     public RenderElement(RenderRegister<OrderedRenderable> register, RenderOrder order, Renderable... renderables) {
         super(register, order);
         renderable = g -> {
+            if (!enabled)
+                return;
             for (Renderable r : renderables) {
                 r.render(g);
             }

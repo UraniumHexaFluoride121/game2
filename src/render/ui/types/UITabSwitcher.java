@@ -53,6 +53,11 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
         };
     }
 
+    public UITabSwitcher selectTab(int index) {
+        tabs.get(index).select();
+        return this;
+    }
+
     public UITabSwitcher addTab(float width, String text, BiConsumer<GameRenderer, ButtonRegister> tabElementsRenderer) {
         float x = tabs.isEmpty() ? 0.7f : tabs.getLast().x + tabs.getLast().width;
         Tab t = new Tab(x, height, width, 1, 0.7f, tabs.size(), text, this);

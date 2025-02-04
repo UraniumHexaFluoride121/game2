@@ -4,7 +4,7 @@ import level.Level;
 import level.Tile;
 import render.Renderable;
 import render.anim.ReversableAnimationTimer;
-import render.anim.ExpAnimation;
+import render.anim.PowAnimation;
 
 import java.awt.*;
 import java.util.HashSet;
@@ -26,7 +26,7 @@ public class HighlightTileRenderer implements Renderable {
 
     public HighlightTileRenderer(Color tileColour, HashSet<Point> positions, Level l) {
         this.tileColour = tileColour;
-        this.timer = new ExpAnimation(0.2f, 0.3f);
+        this.timer = new PowAnimation(0.2f, 0.3f);
         timer.setReversed(true);
         timer.startTimer();
         positions.forEach(p -> tiles.add(l.getTile(p)));
