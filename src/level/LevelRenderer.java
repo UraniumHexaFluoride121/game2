@@ -3,6 +3,7 @@ package level;
 import foundation.Deletable;
 import foundation.Main;
 import foundation.MainPanel;
+import foundation.input.ButtonOrder;
 import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
@@ -19,6 +20,7 @@ import render.texture.BackgroundRenderer;
 import render.texture.BackgroundTexture;
 import render.texture.FiringRenderer;
 import render.ui.implementation.*;
+import render.ui.types.UIContainer;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -58,6 +60,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     public UITurnBox turnBox = null;
     public UIDamage damageUI = null;
     public UIEndTurn endTurn = null;
+    public UITileInfo tileInfo = null;
 
     private void createRenderers() {
         createTiles();
@@ -108,8 +111,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
             if (unitTileBorderRenderer != null) {
                 unitTileBorderRenderer.render(g);
-            } else if (level.tileSelector.selectedTile != null)
-                level.tileSelector.selectedTile.renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
+            } else if (level.tileSelector.getSelectedTile() != null)
+                level.tileSelector.getSelectedTile().renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
         });
         new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
             if (level.tileSelector.mouseOverTile != null && level.getActiveAction() != Action.FIRE)
@@ -133,6 +136,9 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
         UIUnitInfo unitInfo = new UIUnitInfo(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(unitInfo);
+
+        tileInfo = new UITileInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() - 15, .5f, level);
+        tileInfo.setEnabled(false);
 
         endTurn = new UIEndTurn(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(endTurn);

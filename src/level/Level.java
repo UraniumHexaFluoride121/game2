@@ -201,7 +201,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         unitGrid[newPos.x][newPos.y] = unit;
         unit.updateLocation(newPos);
         if (selectNewTile)
-            tileSelector.selectedTile = getTile(newPos);
+            tileSelector.select(getTile(newPos));
         updateFoW();
         unit.updateActionUI();
     }
@@ -223,11 +223,11 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     }
 
     public void updateSelectedUnit() {
-        if (tileSelector.selectedTile == null) {
+        if (tileSelector.getSelectedTile() == null) {
             selectedUnit = null;
             return;
         }
-        selectedUnit = getUnit(tileSelector.selectedTile.pos);
+        selectedUnit = getUnit(tileSelector.getSelectedTile().pos);
         if (selectedUnit != null)
             selectedUnit.updateActionUI();
     }
@@ -254,6 +254,9 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         if (networkState == NetworkState.CLIENT) {
             MainPanel.client.sendEndTurn();
             return;
+        }
+        if (networkState == NetworkState.LOCAL) {
+            tileSelector.deselect();
         }
         UnitTeam team = activeTeam;
         activeTeam = getNextTeam(activeTeam);

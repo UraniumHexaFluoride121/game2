@@ -24,7 +24,8 @@ import static foundation.input.InputType.*;
 public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
     public final Tile[][] tiles;
     public final HashSet<Tile> tileSet = new HashSet<>();
-    public Tile selectedTile = null, mouseOverTile = null;
+    private Tile selectedTile = null;
+    public Tile mouseOverTile = null;
 
     private Level level;
 
@@ -279,7 +280,22 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
 
     public void deselect() {
         selectedTile = null;
+        level.levelRenderer.tileInfo.setEnabled(false);
         level.updateSelectedUnit();
+    }
+
+    public void select(Tile tile) {
+        if (tile == null) {
+            deselect();
+            return;
+        }
+        selectedTile = tile;
+        level.levelRenderer.tileInfo.setTile(tile);
+        level.levelRenderer.tileInfo.setEnabled(true);
+    }
+
+    public Tile getSelectedTile() {
+        return selectedTile;
     }
 
     @Override
@@ -292,10 +308,10 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
                 return;
             if (!level.hasActiveAction()) {
                 Tile newTile = tileAtSelectablePos(pos);
-                if (newTile == selectedTile) {
+                if (newTile == getSelectedTile() && newTile != null) {
                     level.levelRenderer.setCameraInterpBlockPos(newTile.renderPosCentered);
                 } else
-                    selectedTile = newTile;
+                    select(newTile);
             } else {
                 level.selectedUnit.onTileClicked(tileAtSelectablePos(pos), level.getActiveAction());
             }

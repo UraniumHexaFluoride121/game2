@@ -14,6 +14,7 @@ public class UIHitPointBar implements Renderable {
     private final int segments;
     private final Color borderColour, background, bar;
     private float fill = 0, fillTo;
+    private float rounding = 0;
     private PowAnimation fillAnimation = null;
 
     public UIHitPointBar(float border, float width, float height, float spacing, int segments, Color borderColour, Color background, Color bar) {
@@ -40,12 +41,18 @@ public class UIHitPointBar implements Renderable {
         this.bar = unit.team.uiColour.borderColour;
     }
 
+    public UIHitPointBar setRounding(float rounding) {
+        this.rounding = rounding;
+        return this;
+    }
+
     public UIHitPointBar setFill(float fill) {
         this.fill = fill;
         return this;
     }
 
     public UIHitPointBar setFill(float fill, float time, float exponent) {
+        this.fill = fillAnimation == null ? this.fill : MathUtil.lerp(this.fill, fillTo, fillAnimation.normalisedProgress());
         fillTo = fill;
         fillAnimation = new PowAnimation(time, exponent);
         return this;
@@ -55,10 +62,10 @@ public class UIHitPointBar implements Renderable {
     public void render(Graphics2D g) {
         GameRenderer.renderScaled(1f / SCALING, g, () -> {
             g.setColor(background);
-            g.fillRect(0, 0, (int) (width * SCALING), (int) (height * SCALING));
+            g.fillRoundRect(0, 0, (int) (width * SCALING), (int) (height * SCALING), (int) (rounding * SCALING), (int) (rounding * SCALING));
             g.setColor(borderColour);
             g.setStroke(stroke);
-            g.drawRect(0, 0, (int) (width * SCALING), (int) (height * SCALING));
+            g.drawRoundRect(0, 0, (int) (width * SCALING), (int) (height * SCALING), (int) (rounding * SCALING), (int) (rounding * SCALING));
             g.setColor(bar);
             if (fillAnimation != null && fillAnimation.finished()) {
                 fill = fillTo;
@@ -66,12 +73,13 @@ public class UIHitPointBar implements Renderable {
             }
             float fill = fillAnimation == null ? this.fill : MathUtil.lerp(this.fill, fillTo, fillAnimation.normalisedProgress());
             int lastSegment = (int) fill;
+            float total = width - border - spacing * 2, segmentWidth = (total - (segments - 1) * spacing) / segments;
             for (int i = 0; i < lastSegment; i++) {
-                g.fillRect((int) ((spacing + (width - spacing - border / 2) / segments * i) * SCALING), (int) (spacing * SCALING), (int) (((width - spacing - border / 2) / segments - border) * SCALING), (int) ((height - spacing * 2) * SCALING));
+                g.fillRoundRect((int) ((border / 2 + spacing + (segmentWidth + spacing) * i) * SCALING), (int) ((border / 2 + spacing) * SCALING), (int) (segmentWidth * SCALING), (int) ((height - border - spacing * 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING));
             }
             float lastSegmentFill = fill - lastSegment;
             if (lastSegmentFill > 0) {
-                g.fillRect((int) ((spacing + (width - spacing - border / 2) / segments * lastSegment) * SCALING), (int) (spacing * SCALING), (int) (((width - spacing - border / 2) / segments - border) * lastSegmentFill * SCALING), (int) ((height - spacing * 2) * SCALING));
+                g.fillRoundRect((int) ((border / 2 + spacing + (segmentWidth + spacing) * lastSegment) * SCALING), (int) ((border / 2 + spacing) * SCALING), (int) (segmentWidth * lastSegmentFill * SCALING), (int) ((height - border - spacing * 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING));
             }
         });
     }

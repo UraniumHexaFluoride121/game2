@@ -53,7 +53,7 @@ public class Unit implements Deletable, Tickable {
             return false;
         if (getLevel().getActiveAction() != null)
             return false;
-        Tile selectedTile = getLevel().tileSelector.selectedTile;
+        Tile selectedTile = getLevel().tileSelector.getSelectedTile();
         return selectedTile != null && selectedTile.pos.equals(getPos());
     });
 

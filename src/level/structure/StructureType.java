@@ -10,10 +10,13 @@ import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
 public enum StructureType {
-    BASE("structures/base/base_");
+    BASE("structures/base/base_", "Base");
+
+    public final String displayName;
     private final HashMap<UnitTeam, ImageRenderer> renderers = new HashMap<>();
 
-    StructureType(String path) {
+    StructureType(String path, String displayName) {
+        this.displayName = displayName;
         RescaleOp op = new RescaleOp(0.7f, 0, null);
         for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
             BufferedImage image = AssetManager.getImage(new ResourceLocation(path + team.s + ".png"), true);

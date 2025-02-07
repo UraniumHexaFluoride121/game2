@@ -250,8 +250,8 @@ public class FiringRenderer extends AbstractRenderElement {
         rightProjectiles.clear();
         overlayTimer.setReversed(false);
         overlayTimer.startTimer();
-        hitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.3f, leftUnit).setFill(leftUnit.hitPoints);
-        hitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.3f, rightUnit).setFill(rightUnit.hitPoints);
+        hitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints);
+        hitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints);
         preRender();
     }
 

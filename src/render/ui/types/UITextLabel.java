@@ -10,6 +10,7 @@ import java.awt.*;
 
 public class UITextLabel implements Renderable {
     public static final Color TEXT_COLOUR = new Color(181, 204, 216);
+    public static final float DEFAULT_LINE_WIDTH = 0.17f;
 
     private Polygon label;
     private final Polygon line;
@@ -20,7 +21,7 @@ public class UITextLabel implements Renderable {
     private Color lineColour = UIColourTheme.LIGHT_BLUE.borderColour, backgroundColour = UIColourTheme.LIGHT_BLUE.backgroundColour;
 
     public UITextLabel(float width, float height, boolean hasLines) {
-        this(width, height, hasLines, 0.17f);
+        this(width, height, hasLines, DEFAULT_LINE_WIDTH);
     }
 
     public UITextLabel(float width, float height, boolean hasLines, float lineWidth) {
