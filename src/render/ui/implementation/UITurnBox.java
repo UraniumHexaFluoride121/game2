@@ -14,7 +14,7 @@ import render.ui.types.UITextLabel;
 
 public class UITurnBox extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private final FixedTextRenderer text = new FixedTextRenderer(null, 1.5f, UITextLabel.TEXT_COLOUR)
-            .setTextAlign(TextAlign.CENTER);
+            .setTextAlign(TextAlign.CENTER).setBold(true);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, Renderable.top() - 2.5f, 7, 2);
     private Level level;
     private final UIBox box = new UIBox(10, 2);

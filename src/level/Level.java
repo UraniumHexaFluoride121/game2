@@ -7,9 +7,14 @@ import foundation.math.ObjPos;
 import foundation.math.RandomHandler;
 import foundation.tick.RegisteredTickable;
 import foundation.tick.TickOrder;
+import level.structure.StructureType;
+import level.tile.Tile;
+import level.tile.TileSelector;
+import level.tile.TileType;
 import network.NetworkState;
 import network.Server;
 import render.Renderable;
+import render.renderables.HexagonBorder;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.UnitType;
@@ -32,6 +37,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public final TileSelector tileSelector;
     public Unit selectedUnit;
+
+    public HashMap<UnitTeam, Point> basePositions = new HashMap<>();
 
     private UnitTeam activeTeam = null;
     public UnitTeam thisTeam = null;
@@ -82,43 +89,54 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         levelRenderer = new LevelRenderer(this);
     }
 
-    public Level generateDefaultTerrain() {
-        HashSet<Point> nebula = tileSelector.pointTerrain(40, 3, TileType.EMPTY, r -> switch (r) {
-            case 0 -> .7f;
-            case 1 -> .3f;
-            case 2 -> .1f;
-            default -> 0f;
-        });
-        for (Point p : nebula) {
-            getTile(p).setTileType(TileType.NEBULA, this);
+    public Level generateDefaultTerrain(TeamSpawner spawner) {
+        while (true) {
+            HashSet<Point> nebula = tileSelector.pointTerrain(40, 3, TileType.EMPTY, r -> switch (r) {
+                case 0 -> .7f;
+                case 1 -> .3f;
+                case 2 -> .1f;
+                default -> 0f;
+            });
+            for (Point p : nebula) {
+                getTile(p).setTileType(TileType.NEBULA, this);
+            }
+            HashSet<Point> denseNebula = tileSelector.pointTerrain(10, 1, TileType.NEBULA, r -> switch (r) {
+                case 0 -> .1f;
+                default -> 0f;
+            });
+            for (Point p : denseNebula) {
+                getTile(p).setTileType(TileType.DENSE_NEBULA, this);
+            }
+            HashSet<Point> asteroids = tileSelector.pointTerrain(18, 2, TileType.EMPTY, r -> switch (r) {
+                case 0 -> .25f;
+                case 1 -> .12f;
+                default -> 0f;
+            });
+            for (Point p : asteroids) {
+                getTile(p).setTileType(TileType.ASTEROIDS, this);
+            }
+
+            if (spawner.generateTeams(this))
+                break;
+            tileSelector.tileSet.forEach(t -> t.setTileType(TileType.EMPTY, this));
         }
-        HashSet<Point> denseNebula = tileSelector.pointTerrain(10, 1, TileType.NEBULA, r -> switch (r) {
-            case 0 -> .1f;
-            default -> 0f;
-        });
-        for (Point p : denseNebula) {
-            getTile(p).setTileType(TileType.DENSE_NEBULA, this);
-        }
-        HashSet<Point> asteroids = tileSelector.pointTerrain(18, 2, TileType.EMPTY, r -> switch (r) {
-            case 0 -> .25f;
-            case 1 -> .12f;
-            default -> 0f;
-        });
-        for (Point p : asteroids) {
-            getTile(p).setTileType(TileType.ASTEROIDS, this);
-        }
-        addUnit(new Unit(UnitType.BOMBER, UnitTeam.GREEN, new Point(2, 2), this));
-        addUnit(new Unit(UnitType.FIGHTER, UnitTeam.GREEN, new Point(3, 2), this));
-        addUnit(new Unit(UnitType.FIGHTER, UnitTeam.RED, new Point(3, 4), this));
-        if (networkState == NetworkState.LOCAL)
-            levelRenderer.useLastCameraPos(null, activeTeam);
-        if (networkState == NetworkState.SERVER)
-            levelRenderer.useLastCameraPos(thisTeam);
         return this;
     }
 
     public void init() {
         registerTickable();
+    }
+
+    public void setBasePositions(HashMap<UnitTeam, Point> basePositions) {
+        this.basePositions.values().forEach(p -> getTile(p).removeStructure());
+        this.basePositions = basePositions;
+        basePositions.forEach(((team, p) -> {
+            Tile tile = getTile(p);
+            tile.setStructure(StructureType.BASE, team);
+            levelRenderer.lastCameraPos.putIfAbsent(team, tile.renderPosCentered);
+        }));
+        if (basePositions.containsKey(getThisTeam()))
+            levelRenderer.setCameraInterpBlockPos(getTile(basePositions.get(getThisTeam())).renderPosCentered);
     }
 
     @Override
@@ -137,7 +155,6 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         if (unitGrid[unit.pos.x][unit.pos.y] == null) {
             unitSet.add(unit);
             unitGrid[unit.pos.x][unit.pos.y] = unit;
-            levelRenderer.lastCameraPos.putIfAbsent(unit.team, Tile.getCenteredRenderPos(unit.pos));
         } else
             unit.delete();
         updateFoW();
@@ -167,7 +184,9 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
                 unitGrid[unit.pos.x][unit.pos.y] = null;
             if (selectedUnit == unit)
                 selectedUnit = null;
+            unit.delete();
         });
+        qRemoveUnit.clear();
         updateFoW();
     }
 
@@ -223,8 +242,10 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public void endAction() {
         activeAction = null;
-        if (levelRenderer.highlightTileRenderer != null)
+        if (levelRenderer.highlightTileRenderer != null) {
             levelRenderer.highlightTileRenderer.close();
+        }
+        levelRenderer.unitTileBorderRenderer = null;
         unitSet.forEach(Unit::updateActionUI);
     }
 
@@ -308,6 +329,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         return playerTeam.size();
     }
 
+    private static final Color FOW_TILE_BORDER_COLOUR = new Color(67, 67, 67, 255);
+
     public void updateFoW() {
         tileSelector.tileSet.forEach(t -> t.isFoW = true);
         HashSet<Point> visible = new HashSet<>();
@@ -319,6 +342,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         visible.forEach(p -> {
             getTile(p).isFoW = false;
         });
+        levelRenderer.fowTileBorder = new HexagonBorder(visible, FOW_TILE_BORDER_COLOUR);
     }
 
     public void setThisTeam(UnitTeam team) {

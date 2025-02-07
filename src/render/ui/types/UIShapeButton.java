@@ -9,7 +9,7 @@ import render.ui.UIColourTheme;
 import java.awt.*;
 import java.util.function.Function;
 
-import static level.Tile.*;
+import static level.tile.Tile.*;
 
 public class UIShapeButton extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private Shape renderShape = null;
@@ -101,6 +101,10 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
     public UIShapeButton setBoxCorner(float corner) {
         box.setCorner(corner);
         return this;
+    }
+
+    public boolean isSelected() {
+        return clickHandler.isSelected();
     }
 
     @Override

@@ -1,7 +1,7 @@
 package render.renderables;
 
 import level.Level;
-import level.Tile;
+import level.tile.Tile;
 import render.Renderable;
 import render.anim.ReversableAnimationTimer;
 import render.anim.PowAnimation;
@@ -9,7 +9,7 @@ import render.anim.PowAnimation;
 import java.awt.*;
 import java.util.HashSet;
 
-import static level.Tile.*;
+import static level.tile.Tile.*;
 
 public class HighlightTileRenderer implements Renderable {
     private final HashSet<Tile> tiles = new HashSet<>();

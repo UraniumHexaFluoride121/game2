@@ -17,10 +17,12 @@ import java.awt.geom.AffineTransform;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class MainPanel extends JFrame implements KeyListener, MouseListener, MouseWheelListener, RegisteredTickable {
-    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = true;
+    //TODO: Set to true when not testing
+    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = false;
 
     public static AffineTransform windowTransform = new AffineTransform();
 
@@ -68,7 +70,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         });
     }
 
-    public static void startNewLevel(Supplier<Level> levelCreator, Runnable onLevelCreated) {
+    public static void startNewLevel(Supplier<Level> levelCreator, Consumer<Level> onLevelCreated) {
         Level.EXECUTOR.submit(() -> {
             fadeScreen.setReversed(false);
             activeInputReceiver = null;
@@ -84,7 +86,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
                 }
             }
             fadeScreen.setReversed(true);
-            onLevelCreated.run();
+            onLevelCreated.accept(level);
         });
     }
 

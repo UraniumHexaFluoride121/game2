@@ -41,6 +41,11 @@ public class WeaponTemplate {
         return this;
     }
 
+    public WeaponTemplate firingRange(int range) {
+        tilesInFiringRange = u -> range(u, range);
+        return this;
+    }
+
     public static HashSet<Point> range(Unit u, int range) {
         return u.selector().withEnemyUnits(u.selector().tilesInRadius(u.pos, range), u);
     }

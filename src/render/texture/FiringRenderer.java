@@ -129,6 +129,10 @@ public class FiringRenderer extends AbstractRenderElement {
                     leftUnitRenderer = null;
                     rightUnitRenderer = null;
                     level.levelRenderer.endFiring(leftUnit, rightUnit);
+                    leftUnit = null;
+                    rightUnit = null;
+                    attackedUnit = null;
+                    attackingUnit = null;
                 }
             }
         };

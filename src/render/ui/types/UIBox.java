@@ -9,11 +9,11 @@ import java.awt.*;
 
 public class UIBox implements Renderable {
     private static final BasicStroke STROKE = Renderable.sharpCornerStroke(0.17f * SCALING);
-    private Polygon box;
+    protected Polygon box;
     private ButtonClickHandler clickHandler = null;
     private UIColourTheme colourTheme = UIColourTheme.LIGHT_BLUE;
-    private boolean borderOnly = false;
-    private float width, height, corner;
+    private boolean borderOnly = false, centerOnly = false;
+    protected float width, height, corner;
     private BoxShape shape;
 
     public UIBox(float width, float height) {
@@ -56,6 +56,13 @@ public class UIBox implements Renderable {
 
     public UIBox borderOnly() {
         borderOnly = true;
+        centerOnly = false;
+        return this;
+    }
+
+    public UIBox centerOnly() {
+        centerOnly = true;
+        borderOnly = false;
         return this;
     }
 
@@ -66,9 +73,11 @@ public class UIBox implements Renderable {
                 g.setColor(getBackgroundColour());
                 g.fill(box);
             }
-            g.setColor(getBorderColour());
-            g.setStroke(STROKE);
-            g.draw(box);
+            if (!centerOnly) {
+                g.setColor(getBorderColour());
+                g.setStroke(STROKE);
+                g.draw(box);
+            }
         });
     }
 

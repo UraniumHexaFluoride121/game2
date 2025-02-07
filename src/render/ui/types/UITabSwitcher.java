@@ -64,7 +64,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
         tabs.add(t);
         if (tabs.size() == 1)
             t.select();
-        tabElementsRenderer.accept(t.renderer, t.buttonRegister);
+        tabElementsRenderer.accept(t.renderer, t.internal);
         return this;
     }
 
@@ -94,14 +94,14 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (!enabled || tabs.isEmpty())
             return;
-        blocking = tabs.get(selectedTab).buttonRegister.acceptInput(pos.copy().subtract(x, y), type, true);
+        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, true);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (!enabled || tabs.isEmpty())
             return;
-        blocking = tabs.get(selectedTab).buttonRegister.acceptInput(pos.copy().subtract(x, y), type, false);
+        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, false);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
     }
 
     private static class Tab implements Renderable, RegisteredButtonInputReceiver, Deletable {
-        public ButtonRegister buttonRegister;
+        public ButtonRegister internal;
         public GameRenderer renderer;
         public final StaticHitBox hitBox;
         public final UIBox box;
@@ -135,7 +135,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
             this.parent = parent;
             this.index = index;
             renderer = new GameRenderer(new AffineTransform(), null);
-            buttonRegister = new ButtonRegister();
+            internal = new ButtonRegister();
             if (parent.buttonRegister != null)
                 parent.buttonRegister.register(this);
             clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, true, () -> {
@@ -144,6 +144,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
                     if (t.index != parent.selectedTab)
                         t.deselect();
                 });
+                internal.acceptInput(new ObjPos(), InputType.TAB_ON_SWITCH_TO, true);
             }).noDeselect();
             hitBox = StaticHitBox.createFromOriginAndSize(x + parent.x, y + parent.y, width, height);
             box = new UIBox(width, height, 0.4f, UIBox.BoxShape.RECTANGLE_TOP_CORNERS_CUT).setClickHandler(clickHandler).setColourTheme(UIColourTheme.GREEN_SELECTED_TAB);
@@ -199,7 +200,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
             if (parent.buttonRegister != null)
                 parent.buttonRegister.remove(this);
             renderer.delete();
-            buttonRegister.delete();
+            internal.delete();
         }
     }
 }

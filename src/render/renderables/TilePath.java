@@ -4,8 +4,8 @@ import foundation.MainPanel;
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
 import level.Level;
-import level.Tile;
-import level.TileSelector;
+import level.tile.Tile;
+import level.tile.TileSelector;
 import render.Renderable;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
@@ -124,7 +124,7 @@ public class TilePath implements Renderable {
                 break;
             anim.addTile(t);
         }
-        anim.setTimer(new PowAnimation(anim.length() * 0.3f, 0.8f));
+        anim.setTimer(new PowAnimation(anim.length() * 0.25f, 0.8f));
         return anim;
     }
 }

@@ -1,6 +1,8 @@
 package foundation.math;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
@@ -35,5 +37,33 @@ public class RandomHandler {
 
     public float generateFloat(RandomType type) {
         return getRandom(type).nextFloat();
+    }
+
+    public <T> T randomFromArray(T[] array, RandomType type) {
+        return array[(int) (array.length * generateFloat(type))];
+    }
+
+    public <T> T[] randomise(T[] array, RandomType type) {
+        ArrayList<T> list = new ArrayList<>(List.of(array));
+        for (int i = 0; i < array.length; i++) {
+            array[i] = list.remove((int) (generateFloat(type) * list.size()));
+        }
+        return array;
+    }
+
+    public <T> ArrayList<T> randomise(ArrayList<T> array, RandomType type) {
+        ArrayList<T> list = new ArrayList<>(array);
+        for (int i = 0; i < array.size(); i++) {
+            array.set(i, list.remove((int) (generateFloat(type) * list.size())));
+        }
+        return array;
+    }
+
+    public <T> ArrayList<T> randomSelection(ArrayList<T> array, int count, RandomType type) {
+        ArrayList<T> list = new ArrayList<>(array), newList = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            newList.add(list.remove((int) (generateFloat(type) * list.size())));
+        }
+        return newList;
     }
 }

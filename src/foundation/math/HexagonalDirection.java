@@ -29,6 +29,39 @@ public enum HexagonalDirection {
         };
     }
 
+    public HexagonCorner clockwiseCorner() {
+        return switch (this) {
+            case DOWN -> HexagonCorner.BOTTOM_LEFT;
+            case DOWN_LEFT -> HexagonCorner.MID_LEFT;
+            case UP_LEFT -> HexagonCorner.TOP_LEFT;
+            case UP -> HexagonCorner.TOP_RIGHT;
+            case UP_RIGHT -> HexagonCorner.MID_RIGHT;
+            case DOWN_RIGHT -> HexagonCorner.BOTTOM_RIGHT;
+        };
+    }
+
+    public HexagonCorner counterClockwiseCorner() {
+        return switch (this) {
+            case DOWN -> HexagonCorner.BOTTOM_RIGHT;
+            case DOWN_LEFT -> HexagonCorner.BOTTOM_LEFT;
+            case UP_LEFT -> HexagonCorner.MID_LEFT;
+            case UP -> HexagonCorner.TOP_LEFT;
+            case UP_RIGHT -> HexagonCorner.TOP_RIGHT;
+            case DOWN_RIGHT -> HexagonCorner.MID_RIGHT;
+        };
+    }
+
+    public HexagonalDirection clockwise() {
+        return switch (this) {
+            case DOWN -> DOWN_LEFT;
+            case DOWN_LEFT -> UP_LEFT;
+            case UP_LEFT -> UP;
+            case UP -> UP_RIGHT;
+            case UP_RIGHT -> DOWN_RIGHT;
+            case DOWN_RIGHT -> DOWN;
+        };
+    }
+
     public static boolean isNextTo(Point p1, Point p2) {
         for (HexagonalDirection d : values()) {
             if (d.offset(p1).equals(p2))

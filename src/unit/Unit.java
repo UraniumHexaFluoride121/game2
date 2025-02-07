@@ -6,14 +6,15 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.tick.Tickable;
 import level.Level;
-import level.Tile;
-import level.TileSelector;
+import level.tile.Tile;
+import level.tile.TileSelector;
 import network.NetworkState;
 import render.GameRenderer;
 import render.Renderable;
 import render.anim.AnimTilePath;
 import render.anim.ImageSequenceAnim;
 import render.anim.SineAnimation;
+import render.renderables.HexagonBorder;
 import render.renderables.HighlightTileRenderer;
 import render.renderables.TilePath;
 import render.renderables.text.TextAlign;
@@ -29,7 +30,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import static level.Tile.*;
+import static level.tile.Tile.*;
 import static unit.action.Action.*;
 
 public class Unit implements Deletable, Tickable {
@@ -130,13 +131,14 @@ public class Unit implements Deletable, Tickable {
     private ImageSequenceAnim explosion = null;
     private UnitFiringExplosion firingExplosion = null;
 
-    public void renderActionAboveUnits(Graphics2D g) {
+    public synchronized void renderActionAboveUnits(Graphics2D g) {
         if (level == null)
             return;
         if (level.selectedUnit == this) {
             if (level.getActiveAction() == Action.FIRE) {
-                if (selector().mouseOverTile != null) {
-                    GameRenderer.renderOffsetScaled(Tile.getCenteredRenderPos(selector().mouseOverTile.pos), Tile.TILE_SIZE / Renderable.SCALING, g, () -> {
+                Tile tile = selector().mouseOverTile;
+                if (tile != null && selectableTiles.contains(tile.pos)) {
+                    GameRenderer.renderOffsetScaled(Tile.getCenteredRenderPos(tile.pos), Tile.TILE_SIZE / Renderable.SCALING, g, () -> {
                         g.setStroke(AIM_TARGET_STROKE);
                         g.setColor(AIM_TARGET_COLOUR);
                         float anim = MathUtil.map(-1, 1, 1f, 1.2f, targetAnim.normalisedProgress());
@@ -148,7 +150,7 @@ public class Unit implements Deletable, Tickable {
                         g.drawLine(0, (int) (-0.53f * Renderable.SCALING * anim), 0, (int) (-0.27f * Renderable.SCALING * anim));
                         g.drawLine(0, (int) (0.53f * Renderable.SCALING * anim), 0, (int) (0.27f * Renderable.SCALING * anim));
                     });
-                    level.levelRenderer.damageUI.show(this, level.getUnit(selector().mouseOverTile.pos));
+                    level.levelRenderer.damageUI.show(this, level.getUnit(tile.pos));
                 } else
                     targetAnim.startTimer();
             }
@@ -174,22 +176,27 @@ public class Unit implements Deletable, Tickable {
         }
     }
 
-    public void onActionSelect(Action action) {
-        level.setActiveAction(action);
+    private static final Color MOVE_TILE_BORDER_COLOUR = new Color(107, 184, 248, 192),
+            FIRE_TILE_BORDER_COLOUR = new Color(243, 103, 103, 118);
+
+    public synchronized void onActionSelect(Action action) {
         if (action == Action.MOVE) {
             selectableTiles = selector().tilesInRange(pos, selector().tilesWithoutEnemies(selector().allTiles(), team), type.tileMovementCostFunction, type.maxMovement);
             movePath = new TilePath(type, selectableTiles, pos, selector());
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
+            level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, MOVE_TILE_BORDER_COLOUR);
         } else if (action == Action.FIRE) {
             selectableTiles = tilesInFiringRange();
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
+            level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
         } else {
             selectableTiles = new HashSet<>();
         }
+        level.setActiveAction(action);
     }
 
     //Called when there is an active action and this unit is selected
-    public void onTileClicked(Tile tile, Action action) {
+    public synchronized void onTileClicked(Tile tile, Action action) {
         if (tile == null || level == null)
             return;
         if (level.networkState == NetworkState.CLIENT) {
@@ -226,7 +233,7 @@ public class Unit implements Deletable, Tickable {
         }
     }
 
-    public void onTileClickedAsClient(Tile tile, Action action) {
+    public synchronized void onTileClickedAsClient(Tile tile, Action action) {
         if (selectableTiles.contains(tile.pos)) {
             if (action == Action.MOVE) {
                 if (tile.isFoW || level.canUnitBeMoved(tile.pos)) {
@@ -407,6 +414,8 @@ public class Unit implements Deletable, Tickable {
     }
 
     public boolean isRenderFoW() {
+        if (level.getThisTeam() == team)
+            return false;
         if (path == null) {
             return level.getTile(pos).isFoW;
         }
@@ -459,6 +468,16 @@ public class Unit implements Deletable, Tickable {
 
     public TileSelector selector() {
         return level.tileSelector;
+    }
+
+    public void updateFromData(UnitData d) {
+        performedActions.clear();
+        performedActions.addAll(d.performedActions);
+        hitPoints = d.hitPoints;
+        firingTempHP = d.hitPoints;
+        for (int i = 0; i < d.weaponAmmo.size(); i++) {
+            weapons.get(i).ammo = d.weaponAmmo.get(i);
+        }
     }
 
     @Override

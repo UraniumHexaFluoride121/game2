@@ -25,8 +25,8 @@ public class UIUnitInfo extends AbstractRenderElement implements RegisteredButto
     public UIUnitInfo(RenderRegister<OrderedRenderable> register, RenderOrder order, Level level) {
         super(register, order);
         this.level = level;
-        hp.updateTextLeft("HP:");
-        ammo.updateTextLeft("Ammo:");
+        hp.updateTextLeft("HP:").setTextLeftBold().setTextRightBold();
+        ammo.updateTextLeft("Ammo:").setTextLeftBold().setTextRightBold();
         renderable = g -> {
             if (!isVisible())
                 return;

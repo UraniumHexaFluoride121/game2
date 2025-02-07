@@ -7,10 +7,12 @@ import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import foundation.tick.Tickable;
+import level.tile.Tile;
 import network.NetworkState;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
+import render.renderables.HexagonBorder;
 import render.renderables.HighlightTileRenderer;
 import render.renderables.RenderElement;
 import render.texture.BackgroundRenderer;
@@ -19,6 +21,7 @@ import render.texture.FiringRenderer;
 import render.ui.implementation.*;
 import unit.Unit;
 import unit.UnitTeam;
+import unit.action.Action;
 import unit.weapon.WeaponInstance;
 
 import java.awt.*;
@@ -27,13 +30,14 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import static level.Tile.*;
+import static level.tile.Tile.*;
 
 public class LevelRenderer implements Deletable, Renderable, Tickable, InputReceiver {
     private Level level;
     private final GameRenderer mainRenderer, backgroundRenderer, levelUIRenderer, firingAnimRenderer, topUIRenderer;
     private BufferedImage borderImage;
     public HighlightTileRenderer highlightTileRenderer = null;
+    public HexagonBorder unitTileBorderRenderer = null, fowTileBorder = null;
 
     //Object in this set indicate that they are running an animation
     private final HashSet<Object> animationBlocks = new HashSet<>();
@@ -57,27 +61,19 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
     private void createRenderers() {
         createTiles();
-        new BackgroundRenderer(backgroundRenderer,
-                RenderOrder.BACKGROUND, this::getCameraPosition).setTextures(BackgroundTexture.NORMAL_1);
+        new BackgroundRenderer(backgroundRenderer, RenderOrder.BACKGROUND, this::getCameraPosition).setTextures(BackgroundTexture.NORMAL_1);
 
-        //Tile borders
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER, Renderable.renderImage(borderImage, false, false, -1).translate(-Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f, -Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f));
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER, g -> {
-            if (level.tileSelector.mouseOverTile != null)
-                level.tileSelector.mouseOverTile.renderTile(g, Tile.BLUE_TRANSPARENT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
-        }).setZOrder(1);
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER, g -> {
-            if (level.tileSelector.selectedTile != null)
-                level.tileSelector.selectedTile.renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
-        }).setZOrder(2);
-
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER, g -> {
+        //Terrain
+        new RenderElement(mainRenderer, RenderOrder.TERRAIN, g -> {
             for (Tile[] tileColumn : level.tiles) {
                 for (Tile tile : tileColumn) {
                     tile.renderTerrain(g);
                 }
             }
-        }).setZOrder(-1);
+        });
+
+        //Tile borders
+        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER, Renderable.renderImage(borderImage, false, false, -1).translate(-Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f, -Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f));
 
         //Tile highlight
         new RenderElement(mainRenderer, RenderOrder.TILE_HIGHLIGHT, g -> {
@@ -105,7 +101,20 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
             level.tileSelector.tileSet.forEach(t -> {
                 t.renderFogOfWar(g);
             });
+            if (fowTileBorder != null)
+                fowTileBorder.render(g);
         });
+
+        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
+            if (unitTileBorderRenderer != null) {
+                unitTileBorderRenderer.render(g);
+            } else if (level.tileSelector.selectedTile != null)
+                level.tileSelector.selectedTile.renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
+        });
+        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
+            if (level.tileSelector.mouseOverTile != null && level.getActiveAction() != Action.FIRE)
+                level.tileSelector.mouseOverTile.renderTile(g, Tile.BLUE_TRANSPARENT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
+        }).setZOrder(1);
 
 
         //Action render below units
@@ -154,7 +163,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
             }
         }
         g.dispose();
-        Renderable.transparency(borderImage, 0.2f);
+        Renderable.transparency(borderImage, 0.1f);
     }
 
     @Override
@@ -173,7 +182,6 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     private final ObjPos cameraPosition = new ObjPos();
 
     public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
-    public boolean clientHasInitialCameraPos = false;
 
     private ObjPos preShakePos = null;
     private ObjPos shakeVector = null;
@@ -313,15 +321,18 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         Point p = Main.window.getMousePosition();
         if (interpCameraTo != null) {
             cameraPosition.expTo(interpCameraTo, 4f, deltaTime);
-            cameraPosition.lerpTo(interpCameraTo, 1.5f, deltaTime);
+            cameraPosition.lerpTo(interpCameraTo, 2f, deltaTime);
             if (interpCameraTo.equals(cameraPosition))
                 interpCameraTo = null;
         }
         if (p != null && !runningAnim()) {
             ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
             ObjPos cameraTransformedPos = transformMousePosToCamera(p);
-            if (moveCameraEnabled && interpCameraTo == null) {
+            if (moveCameraEnabled && (interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4)) {
                 if (prevMousePos != null) {
+                    if (interpCameraTo != null) {
+                        interpCameraTo = null;
+                    }
                     cameraPosition.add(mousePos.copy().subtract(prevMousePos).scaleToBlocks().flipY());
                     cameraPosition.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
                 }

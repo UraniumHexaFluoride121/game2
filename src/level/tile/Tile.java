@@ -1,7 +1,11 @@
-package level;
+package level.tile;
 
+import foundation.math.HexagonCorner;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
+import level.Level;
+import level.structure.Structure;
+import level.structure.StructureType;
 import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
@@ -9,6 +13,7 @@ import render.GameRenderer;
 import render.anim.LerpAnimation;
 import render.renderables.HexagonRenderer;
 import render.texture.ImageRenderer;
+import unit.UnitTeam;
 
 import java.awt.*;
 import java.io.DataInputStream;
@@ -24,7 +29,7 @@ public class Tile implements Writable {
             BLUE_HIGHLIGHT_COLOUR = new Color(87, 177, 225),
             BLUE_TRANSPARENT_COLOUR = new Color(122, 151, 248, 142),
             FOW_COLOUR = new Color(0, 0, 0, 128), ILLEGAL_TILE_COLOUR = new Color(227, 90, 90);
-    public static final float TILE_SIZE = 5;
+    public static final float TILE_SIZE = 4.5f;
     public static final float SIN_60_DEG = ((float) Math.sin(Math.toRadians(60)));
 
     public static final HexagonRenderer
@@ -37,6 +42,7 @@ public class Tile implements Writable {
     public final Point pos;
     public final ObjPos renderPos, renderPosCentered;
     public TileType type;
+    public Structure structure = null;
     public double randomValue = 0;
     public ImageRenderer imageRenderer;
 
@@ -69,9 +75,12 @@ public class Tile implements Writable {
     }
 
     public void renderTerrain(Graphics2D g) {
-        if (imageRenderer == null)
-            return;
-        GameRenderer.renderOffset(renderPosCentered, g, () -> imageRenderer.render(g, TILE_SIZE));
+        GameRenderer.renderOffset(renderPosCentered, g, () -> {
+            if (imageRenderer != null)
+                imageRenderer.render(g, TILE_SIZE);
+            if (structure != null)
+                structure.renderer.render(g, TILE_SIZE);
+        });
     }
 
     public void renderFogOfWar(Graphics2D g) {
@@ -114,14 +123,30 @@ public class Tile implements Writable {
         setTileType(data.type(), data.randomValue());
     }
 
+    public void setStructure(StructureType type, UnitTeam team) {
+        structure = new Structure(pos, type, team);
+    }
+
+    public void setStructure(Structure structure) {
+        this.structure = structure;
+    }
+
+    public void removeStructure() {
+        structure = null;
+    }
+
     @Override
-    public void write(DataOutputStream writer) throws IOException {
-        PacketWriter.writeEnum(type, writer);
-        writer.writeDouble(randomValue);
+    public void write(DataOutputStream w) throws IOException {
+        PacketWriter.writeEnum(type, w);
+        w.writeDouble(randomValue);
+        w.writeBoolean(structure != null);
+        if (structure != null) {
+            structure.write(w);
+        }
     }
 
     public static TileData read(DataInputStream reader) throws IOException {
-        return new TileData(PacketReceiver.readEnum(TileType.class, reader), reader.readDouble());
+        return new TileData(PacketReceiver.readEnum(TileType.class, reader), reader.readDouble(), reader.readBoolean());
     }
 
     public static ObjPos getRenderPos(Point pos) {
@@ -142,5 +167,17 @@ public class Tile implements Writable {
 
     public static ObjPos getTilesBound(int tilesX, int tilesY) {
         return new ObjPos(tilesX * TILE_SIZE * 1.5f / 2 + TILE_SIZE / 4, (tilesY + 0.5f) * SIN_60_DEG * TILE_SIZE);
+    }
+
+    public static ObjPos getCornerRenderPos(Point pos, HexagonCorner corner) {
+        ObjPos renderPos = getRenderPos(pos);
+        return switch (corner) {
+            case BOTTOM_LEFT -> renderPos.add(-TILE_SIZE / 4, 0);
+            case MID_LEFT -> renderPos.add(-TILE_SIZE / 2, TILE_SIZE / 2 * SIN_60_DEG);
+            case TOP_LEFT -> renderPos.add(-TILE_SIZE / 4, TILE_SIZE * SIN_60_DEG);
+            case TOP_RIGHT -> renderPos.add(TILE_SIZE / 4, TILE_SIZE * SIN_60_DEG);
+            case MID_RIGHT -> renderPos.add(TILE_SIZE / 2, TILE_SIZE / 2 * SIN_60_DEG);
+            case BOTTOM_RIGHT -> renderPos.add(TILE_SIZE / 4, 0);
+        };
     }
 }

@@ -1,4 +1,4 @@
-package level;
+package level.tile;
 
 import foundation.Deletable;
 import foundation.input.ButtonOrder;
@@ -8,6 +8,7 @@ import foundation.math.HexagonalDirection;
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
+import level.Level;
 import unit.Unit;
 import unit.UnitTeam;
 
@@ -59,6 +60,15 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         return points;
     }
 
+    public HashSet<Point> allTilesExceptType(TileType type) {
+        HashSet<Point> points = new HashSet<>();
+        tileSet.forEach(t -> {
+            if (t.type != type)
+                points.add(t.pos);
+        });
+        return points;
+    }
+
     public HashSet<Point> tilesInRadius(Point origin, int radius) {
         HashSet<Point> tileSet = new HashSet<>();
         tileSet.add(origin);
@@ -74,6 +84,28 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
             tileSet.addAll(newTiles);
         }
         return tileSet;
+    }
+
+    public ArrayList<Point> tilesInRadiusDeterministic(Point origin, int radius) {
+        ArrayList<Point> tileSet = new ArrayList<>();
+        tileSet.add(origin);
+        for (int i = 0; i < radius; i++) {
+            ArrayList<Point> newTiles = new ArrayList<>();
+            for (Point tile : tileSet) {
+                for (HexagonalDirection d : HexagonalDirection.values()) {
+                    Point p = d.offset(tile);
+                    if (validCoordinate(p))
+                        newTiles.add(p);
+                }
+            }
+            tileSet.addAll(newTiles);
+        }
+        ArrayList<Point> noDuplicates = new ArrayList<>();
+        tileSet.forEach(t -> {
+            if (!noDuplicates.contains(t))
+                noDuplicates.add(t);
+        });
+        return noDuplicates;
     }
 
     public HashSet<Point> tilesWithoutEnemies(HashSet<Point> tiles, UnitTeam team) {
@@ -278,6 +310,7 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
                 if (level.hasActiveAction()) {
                     if (level.levelRenderer.highlightTileRenderer != null)
                         level.levelRenderer.highlightTileRenderer.close();
+                    level.levelRenderer.unitTileBorderRenderer = null;
                     level.setActiveAction(null);
                 } else
                     deselect();

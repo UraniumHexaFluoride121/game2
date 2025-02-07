@@ -2,7 +2,7 @@ package render.ui.implementation;
 
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
-import level.Tile;
+import level.tile.Tile;
 import render.*;
 import render.ui.types.UITextLabel;
 import unit.Unit;
@@ -10,8 +10,6 @@ import unit.Unit;
 import java.awt.*;
 
 public class UIDamage extends AbstractRenderElement {
-    private static final BasicStroke BORDER_STROKE = new BasicStroke(0.2f * SCALING, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
-    private static final Color BACKGROUND_COLOUR = new Color(23, 23, 23, 255), BORDER_COLOUR = new Color(90, 90, 90);
     private final UITextLabel label = new UITextLabel(7, 1, false);
     private ObjPos offset;
 

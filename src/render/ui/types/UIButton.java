@@ -17,6 +17,8 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
     protected final ButtonOrder buttonOrder;
     protected ButtonRegister buttonRegister;
 
+    protected boolean clickEnabled = true;
+
     public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected) {
         this(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, null);
     }
@@ -88,6 +90,11 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
         return this;
     }
 
+    public UIButton setClickEnabled(boolean clickEnabled) {
+        this.clickEnabled = clickEnabled;
+        return this;
+    }
+
     public UIButton select() {
         clickHandler.select();
         return this;
@@ -96,6 +103,15 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
     public UIButton setBoxShape(UIBox.BoxShape shape) {
         box.setShape(shape);
         return this;
+    }
+
+    public UIButton setBoxCorner(float corner) {
+        box.setCorner(corner);
+        return this;
+    }
+
+    public boolean isSelected() {
+        return clickHandler.isSelected();
     }
 
     public String getText() {
@@ -119,13 +135,13 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
+        if (enabled && clickEnabled)
             clickHandler.buttonPressed(pos, inside, blocked, type);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
+        if (enabled && clickEnabled)
             clickHandler.buttonReleased(pos, inside, blocked, type);
     }
 

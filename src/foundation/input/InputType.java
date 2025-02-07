@@ -6,11 +6,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 public class InputType {
-    public static final InputType NONE = new InputType(false, ' '),
-    MOUSE_RIGHT = new InputType(false, ' '), MOUSE_LEFT = new InputType(false, ' '), MOUSE_OVER = new InputType(false, ' '),
-    ESCAPE = new InputType(false, ' '), BACKSPACE = new InputType(false, ' '),
+    public static final InputType
+            NONE = new InputType(false, ' '), TAB_ON_SWITCH_TO = new InputType(false, ' '),
 
-    MOUSE_SCROLL_UP = new InputType(false, ' '), MOUSE_SCROLL_DOWN = new InputType(false, ' ');
+            MOUSE_RIGHT = new InputType(false, ' '), MOUSE_LEFT = new InputType(false, ' '), MOUSE_OVER = new InputType(false, ' '),
+            ESCAPE = new InputType(false, ' '), BACKSPACE = new InputType(false, ' '),
+
+            MOUSE_SCROLL_UP = new InputType(false, ' '), MOUSE_SCROLL_DOWN = new InputType(false, ' ');
 
     public final boolean isCharInput;
     public final char c;
@@ -45,7 +47,7 @@ public class InputType {
                 case KeyEvent.VK_BACK_SPACE -> {
                     return BACKSPACE;
                 }
-            };
+            }
             char c = k.getKeyChar();
             if (c == KeyEvent.CHAR_UNDEFINED)
                 return NONE;

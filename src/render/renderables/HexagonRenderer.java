@@ -1,7 +1,7 @@
 package render.renderables;
 
 import foundation.math.ObjPos;
-import level.Tile;
+import level.tile.Tile;
 import render.Renderable;
 
 import java.awt.*;

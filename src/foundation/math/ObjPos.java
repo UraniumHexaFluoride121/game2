@@ -143,6 +143,14 @@ public class ObjPos {
         return ((int) Math.ceil(y));
     }
 
+    public int xIntRound() {
+        return Math.round(x);
+    }
+
+    public int yIntRound() {
+        return Math.round(y);
+    }
+
     public static ObjPos rotated(float value, float radians) {
         return new ObjPos((float) (Math.cos(radians) * value), (float) (Math.sin(radians) * value));
     }
@@ -375,6 +383,10 @@ public class ObjPos {
 
     public Point toPoint() {
         return new Point((int) x, (int) y);
+    }
+
+    public Point roundToPoint() {
+        return new Point(xIntRound(), yIntRound());
     }
 
     public float dotProduct(ObjPos other) {

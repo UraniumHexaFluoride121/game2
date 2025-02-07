@@ -15,8 +15,8 @@ import render.ui.types.UIBox;
 import render.ui.types.UITextLabel;
 
 public class UIEndTurn extends AbstractRenderElement implements RegisteredButtonInputReceiver {
-    private final FixedTextRenderer text = new FixedTextRenderer("End Turn", 1.5f, UITextLabel.TEXT_COLOUR)
-            .setTextAlign(TextAlign.CENTER);
+    private final FixedTextRenderer text = new FixedTextRenderer("End Turn", 1.4f, UITextLabel.TEXT_COLOUR)
+            .setTextAlign(TextAlign.CENTER).setBold(true);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, Renderable.top() - 2.5f, 7, 2);
     private Level level;
     private final ButtonClickHandler clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, this::onClick);

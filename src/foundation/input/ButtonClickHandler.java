@@ -55,9 +55,9 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
         if (type == clickInput) {
             if (staySelected && inside && !blocked && pressed) {
                 pressed = false;
+                state = ButtonState.SELECTED;
                 if (onClick != null)
                     onClick.run();
-                state = ButtonState.SELECTED;
             } else {
                 if (state == ButtonState.PRESSED && mouseHover) {
                     if (onClick != null)
@@ -95,6 +95,10 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
     public void runOnClick() {
         if (onClick != null)
             onClick.run();
+    }
+
+    public boolean isSelected() {
+        return state == ButtonState.SELECTED;
     }
 
     @Override

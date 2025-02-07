@@ -4,8 +4,10 @@ import foundation.Deletable;
 import foundation.MainPanel;
 import level.Level;
 import level.PlayerTeam;
-import level.Tile;
-import level.TileData;
+import level.structure.Structure;
+import level.structure.StructureType;
+import level.tile.Tile;
+import level.tile.TileData;
 import render.anim.AnimTilePath;
 import unit.Unit;
 import unit.UnitData;
@@ -96,19 +98,9 @@ public class Client implements Deletable {
                             u = new Unit(d.type, d.team, d.pos, l);
                             l.forceAddUnit(u);
                         }
-                        u.performedActions.clear();
-                        u.performedActions.addAll(d.performedActions);
-                        u.hitPoints = d.hitPoints;
-                        u.firingTempHP = d.hitPoints;
-                        for (int i = 0; i < d.weaponAmmo.size(); i++) {
-                            u.weapons.get(i).ammo = d.weaponAmmo.get(i);
-                        }
+                        u.updateFromData(d);
                     }
                     unitsUnaccountedFor.forEach(l::qRemoveUnit);
-                    if (!l.levelRenderer.clientHasInitialCameraPos) {
-                        l.levelRenderer.useLastCameraPos(l.thisTeam);
-                        l.levelRenderer.clientHasInitialCameraPos = true;
-                    }
                 });
             }
             case CLIENT_INIT -> {
@@ -126,23 +118,43 @@ public class Client implements Deletable {
                 int width = reader.readInt(), height = reader.readInt();
                 UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                 TileData[][] data = new TileData[width][];
+                Structure[][] structures = new Structure[width][];
                 for (int x = 0; x < width; x++) {
                     data[x] = new TileData[height];
+                    structures[x] = new Structure[height];
                     for (int y = 0; y < height; y++) {
-                        data[x][y] = Tile.read(reader);
+                        TileData d = Tile.read(reader);
+                        data[x][y] = d;
+                        if (d.hasStructure()) {
+                            structures[x][y] = new Structure(reader);
+                        } else {
+                            structures[x][y] = null;
+                        }
                     }
                 }
                 MainPanel.addTask(() -> {
                     MainPanel.startNewLevel(() -> {
                         Level l = new Level(playerTeams, seed, width, height, NetworkState.CLIENT);
                         l.setThisTeam(team);
+                        HashMap<UnitTeam, Point> basePositions = new HashMap<>();
                         for (int x = 0; x < width; x++) {
                             for (int y = 0; y < height; y++) {
                                 l.getTile(x, y).setTileType(data[x][y]);
+                                Structure structure = structures[x][y];
+                                if (structure != null) {
+                                    if (structure.type == StructureType.BASE) {
+                                        basePositions.put(structure.team, structure.pos);
+                                    } else {
+                                        l.getTile(x, y).setStructure(structure);
+                                    }
+                                }
                             }
                         }
+                        l.setBasePositions(basePositions);
                         return l;
-                    }, this::requestLevelData);
+                    }, l -> {
+                        requestLevelData();
+                    });
                 });
             }
             case SERVER_MOVE_UNIT -> {

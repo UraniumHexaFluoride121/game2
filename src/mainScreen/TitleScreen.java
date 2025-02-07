@@ -6,6 +6,7 @@ import foundation.input.ButtonRegister;
 import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import level.Level;
+import level.TeamSpawner;
 import network.NetworkState;
 import render.GameRenderer;
 import render.RenderOrder;
@@ -14,6 +15,7 @@ import render.renderables.RenderElement;
 import render.texture.ResourceLocation;
 import render.ui.UIColourTheme;
 import render.ui.implementation.UIPlayerBoxes;
+import render.ui.implementation.UIPlayerShipSettings;
 import render.ui.types.*;
 import unit.UnitTeam;
 
@@ -40,6 +42,10 @@ public class TitleScreen implements Renderable, InputReceiver {
     public UIButton[] colourSelectorButtons;
     public UIButton joinButton;
     public RenderElement colourSelectorBox;
+
+    public UIContainer playerShipSettingsContainer;
+    public UIPlayerShipSettings playerShipSettings;
+    public UIButton pasteSettingsButton;
 
     public TitleScreen() {
     }
@@ -135,11 +141,9 @@ public class TitleScreen implements Renderable, InputReceiver {
         newGameTabs = new UITabSwitcher(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 37, 3.5f, 18, 15)
                 .addTab(4.65f, "Map Layout", (r, b) -> {
-
                     UIButton seed = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                             1, 12, 7, 1.5f, 1f, true)
                             .setColourTheme(UIColourTheme.GREEN_SELECTED).noDeselect().select().setText("From seed").setBold();
-
                     widthSelector = new UINumberSelector(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                             1, 7.5f, 1.5f, 2.5f, 10, 45, 20);
                     RenderElement widthLabel = new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
@@ -165,6 +169,33 @@ public class TitleScreen implements Renderable, InputReceiver {
                     playerBoxScrollWindow = new UIScrollSurface(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, 0.5f, 17, 14, (r2, b2) -> {
                         playerBoxes = new UIPlayerBoxes(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0);
                     });
+                    playerShipSettingsContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, -20, 0, (r2, b2) -> {
+                        new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(18, Renderable.top() - 10)
+                                .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)
+                                .centerOnly())
+                                .translate(0, 4);
+                        new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS, new UIBox(18, Renderable.top() - 10)
+                                .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)
+                                .borderOnly())
+                                .translate(0, 4).setZOrder(1);
+                        new UIScrollSurface(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 4, 17, Renderable.top() - 10, (r3, b3) -> {
+                            playerShipSettings = new UIPlayerShipSettings(r3, b3, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS);
+                        }).setScrollMax(playerShipSettings.scrollDistance() - (Renderable.top() - 10));
+                        new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 2, 8.5f, 1.5f, 0.9f, false, () -> {
+                            UIPlayerShipSettings.clipboardPreset = playerShipSettings.getCurrentPreset();
+                            boolean canPaste = UIPlayerShipSettings.clipboardPreset != null;
+                            pasteSettingsButton.setClickEnabled(canPaste).setColourTheme(canPaste ? UIColourTheme.LIGHT_BLUE : UIColourTheme.GRAYED_OUT);
+                        }).setText("Copy Settings").setBold();
+                        pasteSettingsButton = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 9.5f, 2, 8.5f, 1.5f, 0.9f, false, () -> {
+                            playerShipSettings.loadPresetForCurrentTeam(UIPlayerShipSettings.clipboardPreset);
+                        }).setText("Paste Settings").setBold().setColourTheme(UIColourTheme.GRAYED_OUT);
+                        new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0, 18, 1.5f, 0.9f, false, () -> {
+                            playerShipSettings.loadPreset(playerShipSettings.getCurrentPreset());
+                        }).setText("Copy settings to all players").setBold();
+                        new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, -2, 18, 1.5f, 0.9f, false, () -> {
+                            playerShipSettings.loadPreset(UIPlayerShipSettings.DEFAULT_PRESET);
+                        }).setText("Reset all settings to default").setBold();
+                    }).setEnabled(false);
                 }).setEnabled(false);
     }
 
@@ -238,12 +269,12 @@ public class TitleScreen implements Renderable, InputReceiver {
 
     private Level getNewLocalMultiplayerLevel() {
         long seed = enterSeedBox.s.isEmpty() ? new Random().nextLong() : Long.parseLong(enterSeedBox.s.toString());
-        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), NetworkState.LOCAL).generateDefaultTerrain();
+        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), NetworkState.LOCAL).generateDefaultTerrain(new TeamSpawner().setUnits(playerShipSettings.getUnits()));
     }
 
     private Level getNewServerMultiplayerLevel() {
         long seed = enterSeedBox.s.isEmpty() ? new Random().nextLong() : Long.parseLong(enterSeedBox.s.toString());
-        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), NetworkState.SERVER).generateDefaultTerrain();
+        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), NetworkState.SERVER).generateDefaultTerrain(new TeamSpawner().setUnits(playerShipSettings.getUnits()));
     }
 
     @Override

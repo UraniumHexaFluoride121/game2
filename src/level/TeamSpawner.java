@@ -1,0 +1,95 @@
+package level;
+
+import foundation.math.MathUtil;
+import foundation.math.ObjPos;
+import foundation.math.RandomType;
+import level.tile.TileType;
+import unit.Unit;
+import unit.UnitTeam;
+import unit.UnitType;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
+public class TeamSpawner {
+    private static final ObjPos[][] TWO_TEAMS = new ObjPos[][]{
+            new ObjPos[]{
+                    new ObjPos(0.15f, 0.5f),
+                    new ObjPos(0.85f, 0.5f)
+            },
+            new ObjPos[]{
+                    new ObjPos(0.15f, 0.15f),
+                    new ObjPos(0.85f, 0.85f)
+            },
+            new ObjPos[]{
+                    new ObjPos(0.15f, 0.85f),
+                    new ObjPos(0.85f, 0.15f)
+            }
+    };
+
+    private HashMap<UnitTeam, ArrayList<UnitType>> units;
+
+    public TeamSpawner(HashMap<UnitTeam, ArrayList<UnitType>> units) {
+        this.units = units;
+    }
+
+    public TeamSpawner() {
+        units = new HashMap<>();
+    }
+
+    public boolean generateTeams(Level level) {
+        ObjPos[] teamPositions = level.random.randomFromArray(switch (level.playerCount()) {
+            default -> TWO_TEAMS;
+        }, RandomType.TEAM_SPAWNING);
+
+        Point[] basePositions = new Point[level.playerCount()];
+        for (int i = 0; i < level.playerCount(); i++) {
+            basePositions[i] = teamPositions[i].copy().multiply(level.tilesX, level.tilesY).add(
+                            MathUtil.randFloatBetween(-0.1f, 0.1f, level.random.getDoubleSupplier(RandomType.TEAM_SPAWNING)),
+                            MathUtil.randFloatBetween(-0.1f, 0.1f, level.random.getDoubleSupplier(RandomType.TEAM_SPAWNING)))
+                    .roundToPoint();
+        }
+        level.random.randomise(basePositions, RandomType.TEAM_SPAWNING);
+        HashSet<Point> connectedPoints = new HashSet<>();
+        HashMap<UnitTeam, Point> basePositionsByTeam = new HashMap<>();
+        HashMap<UnitTeam, ArrayList<Point>> unitPositions = new HashMap<>();
+        for (int i = 0; i < basePositions.length; i++) {
+            UnitTeam team = UnitTeam.ORDERED_TEAMS[i];
+            basePositionsByTeam.put(team, basePositions[i]);
+            connectedPoints.add(basePositions[i]);
+            int radius = 1;
+            ArrayList<Point> tiles;
+            do {
+                tiles = level.tileSelector.tilesInRadiusDeterministic(basePositions[i], radius);
+                tiles.removeIf(t -> level.getTile(t).type == TileType.ASTEROIDS);
+                radius++;
+            } while (tiles.size() * 0.7f < units.get(team).size());
+            ArrayList<Point> spawnPoints = level.random.randomSelection(tiles, units.get(team).size(), RandomType.TEAM_SPAWNING);
+            connectedPoints.addAll(spawnPoints);
+            unitPositions.put(team, spawnPoints);
+        }
+        if (level.getTile(basePositions[0]).type == TileType.ASTEROIDS)
+            return false;
+        HashSet<Point> dfsResult = level.tileSelector.tilesInRange(basePositions[0], level.tileSelector.allTilesExceptType(TileType.ASTEROIDS), type -> 0f, 1);
+        for (Point point : connectedPoints) {
+            if (!dfsResult.contains(point))
+                return false;
+        }
+        for (int i = 0; i < basePositions.length; i++) {
+            UnitTeam team = UnitTeam.ORDERED_TEAMS[i];
+            ArrayList<Point> spawnPoints = level.random.randomise(unitPositions.get(team), RandomType.TEAM_SPAWNING);
+            for (int j = 0; j < spawnPoints.size(); j++) {
+                level.addUnit(new Unit(units.get(team).get(j), team, spawnPoints.get(j), level));
+            }
+            level.setBasePositions(basePositionsByTeam);
+        }
+        return true;
+    }
+
+    public TeamSpawner setUnits(HashMap<UnitTeam, ArrayList<UnitType>> units) {
+        this.units = units;
+        return this;
+    }
+}

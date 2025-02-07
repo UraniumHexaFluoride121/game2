@@ -2,7 +2,7 @@ package render.anim;
 
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
-import level.Tile;
+import level.tile.Tile;
 import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;

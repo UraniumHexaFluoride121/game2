@@ -7,12 +7,13 @@ public enum RenderOrder {
 
     //In-game level
     BACKGROUND,
+    TERRAIN,
     TILE_BORDER,
     TILE_HIGHLIGHT,
-    TERRAIN,
     ACTION_BELOW_UNITS,
     TILE_UNITS,
     FOG_OF_WAR,
+    TILE_BORDER_HIGHLIGHTS,
     ACTION_ABOVE_UNITS,
     ACTION_SELECTOR,
     DAMAGE_UI,

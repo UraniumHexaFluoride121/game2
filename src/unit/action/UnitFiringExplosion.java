@@ -11,7 +11,7 @@ import unit.Unit;
 import java.awt.*;
 import java.util.ArrayList;
 
-import static level.Tile.*;
+import static level.tile.Tile.*;
 
 public class UnitFiringExplosion implements Renderable, Deletable {
     private final ObjPos center;

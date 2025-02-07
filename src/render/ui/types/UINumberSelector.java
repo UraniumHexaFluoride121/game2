@@ -17,6 +17,7 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
     private final int min, max;
     private int value;
     private UIColourTheme theme = UIColourTheme.GREEN_SELECTED;
+    private Runnable onChanged = null;
 
     public UINumberSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth, int min, int max, int value) {
         super(register, order);
@@ -52,20 +53,40 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
     }
 
     private void increment() {
+        int prevValue = value;
         value = Math.min(value + 1, max);
         displayBox.setText(String.valueOf(value));
         updateColour();
+        if (onChanged != null && prevValue != value)
+            onChanged.run();
     }
 
     private void decrement() {
+        int prevValue = value;
         value = Math.max(value - 1, min);
         displayBox.setText(String.valueOf(value));
         updateColour();
+        if (onChanged != null && prevValue != value)
+            onChanged.run();
+    }
+
+    public void setValue(int newValue, boolean triggerOnChanged) {
+        int prevValue = value;
+        value = Math.clamp(newValue, min, max);
+        displayBox.setText(String.valueOf(value));
+        updateColour();
+        if (triggerOnChanged && onChanged != null && prevValue != value)
+            onChanged.run();
     }
 
     private void updateColour() {
         left.setColourTheme(value == min ? UIColourTheme.GRAYED_OUT : theme);
         right.setColourTheme(value == max ? UIColourTheme.GRAYED_OUT : theme);
+    }
+
+    public UINumberSelector setOnChanged(Runnable onChanged) {
+        this.onChanged = onChanged;
+        return this;
     }
 
     public int getValue() {
@@ -112,5 +133,6 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
         right.delete();
         displayBox.delete();
         internal.delete();
+        onChanged = null;
     }
 }

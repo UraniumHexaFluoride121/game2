@@ -1,7 +1,7 @@
 package unit;
 
 import foundation.math.ObjPos;
-import level.TileType;
+import level.tile.TileType;
 import render.Renderable;
 import render.texture.*;
 import unit.action.Action;
@@ -16,10 +16,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static level.Tile.*;
+import static level.tile.Tile.*;
 
 public enum UnitType {
-    FIGHTER("fighter", "Fighter", 8, 5f, 3.5f, type -> switch (type) {
+    FIGHTER("fighter", "Fighter", 8, 7f, 3.5f, type -> switch (type) {
         case EMPTY -> 1f;
         case NEBULA -> 1.8f;
         case DENSE_NEBULA -> 2f;
@@ -31,18 +31,18 @@ public enum UnitType {
         case ASTEROIDS -> 1.5f;
     }, type -> switch (type) {
         case EMPTY -> 1f;
-        case NEBULA -> 0.85f;
-        case DENSE_NEBULA -> 0.75f;
-        case ASTEROIDS -> 0.65f;
+        case NEBULA -> 0.88f;
+        case DENSE_NEBULA -> 0.82f;
+        case ASTEROIDS -> 0.72f;
     }, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA);
-        w.addData("fighter", new AttackData(3.2f));
-        w.addData("bomber", new AttackData(2.7f));
+        w.addData("fighter", new AttackData(3.8f));
+        w.addData("bomber", new AttackData(3.2f));
         list.add(w);
     }, FiringRenderer.THREE_UNITS),
-    BOMBER("bomber", "Bomber", 7, 4f, 3f, type -> switch (type) {
+    BOMBER("bomber", "Bomber", 7, 5.5f, 3.5f, type -> switch (type) {
         case EMPTY -> 1f;
         case NEBULA -> 1.9f;
         case DENSE_NEBULA -> 2.1f;
@@ -54,20 +54,19 @@ public enum UnitType {
         case ASTEROIDS -> 1.5f;
     }, type -> switch (type) {
         case EMPTY -> 1f;
-        case NEBULA -> 0.85f;
-        case DENSE_NEBULA -> 0.75f;
-        case ASTEROIDS -> 0.65f;
+        case NEBULA -> 0.88f;
+        case DENSE_NEBULA -> 0.82f;
+        case ASTEROIDS -> 0.72f;
     }, new Action[]{
             Action.FIRE, Action.MOVE
     }, 3, list -> {
         WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BOMBER_MISSILE).consumeAmmo(1).runAnim();
         w1.addData("fighter", new AttackData(0.8f));
         w1.addData("bomber", new AttackData(0.7f));
-        w1.tilesInFiringRange = u -> WeaponTemplate.range(u, 3);
         list.add(w1);
         WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BOMBER_PLASMA);
-        w2.addData("fighter", new AttackData(2.4f));
-        w2.addData("bomber", new AttackData(2f));
+        w2.addData("fighter", new AttackData(3.2f));
+        w2.addData("bomber", new AttackData(2.6f));
         list.add(w2);
     }, FiringRenderer.THREE_UNITS);
 
@@ -88,6 +87,10 @@ public enum UnitType {
     public final Supplier<ObjPos[]> firingPositions;
     public final HashMap<UnitTeam, ImageSequence> firingSequenceLeft = new HashMap<>();
     public final HashMap<UnitTeam, ImageSequence> firingSequenceRight = new HashMap<>();
+
+    public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
+            FIGHTER, BOMBER
+    };
 
     UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Function<TileType, Float> damageReduction, Action[] actions, int firingAnimFrames, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Supplier<ObjPos[]> firingPositions) {
         this.name = name;

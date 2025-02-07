@@ -59,15 +59,20 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
     public void verifyTeams() {
         PlayerTeam team = null;
         boolean verified = false;
+        boolean playerTeamsVerified = false;
         for (PlayerBox box : boxes) {
             if (team == null)
                 team = box.playerTeamSelector.getValue();
             else if (box.playerTeamSelector.getValue() != team) {
                 verified = true;
+                playerTeamsVerified = true;
                 break;
             }
         }
         if (boxes.size() <= 1)
+            verified = false;
+        boolean unitsVerified = MainPanel.titleScreen.playerShipSettings == null || MainPanel.titleScreen.playerShipSettings.verifyTeams();
+        if (!unitsVerified)
             verified = false;
         if (MainPanel.titleScreen.newGameTabs != null && MainPanel.titleScreen.newGameTabs.enabled) {
             MainPanel.titleScreen.startLanGame.setEnabled(verified);
@@ -76,8 +81,10 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             box.setEnabled(!verified);
             if (boxes.size() <= 1)
                 box.setText("At least 2 players are needed to start game");
-            else
+            else if (!playerTeamsVerified)
                 box.setText("At least 2 teams are needed to start game");
+            else if (!unitsVerified)
+                box.setText("Every player must start with at least one unit");
         }
     }
 
@@ -93,6 +100,10 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             }
         }
         return verified;
+    }
+
+    public int getTeamCount() {
+        return boxes.size();
     }
 
     private void addBox() {
@@ -121,6 +132,14 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         return (boxes.size() == MAX_PLAYERS ? boxes.size() * 4 : (boxes.size() + 1) * 4) - 14;
     }
 
+    public UnitTeam getEditShipsTeam() {
+        for (PlayerBox b : boxes) {
+            if (b.editShips.isSelected())
+                return UnitTeam.ORDERED_TEAMS[b.index];
+        }
+        return null;
+    }
+
     @Override
     public boolean posInside(ObjPos pos) {
         return true;
@@ -140,6 +159,10 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
+        if (type == InputType.TAB_ON_SWITCH_TO) {
+            boxes.forEach(b -> b.editShips.deselect());
+            return;
+        }
         if (!enabled)
             return;
         blocking = !blocked && internal.acceptInput(pos.copy(), type, true);
@@ -168,6 +191,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         private final UITextDisplayBox numberBox;
         private final UIBox mainBox;
         private final UIShapeButton deleteButton;
+        private final UIButton editShips;
         public final UIEnumSelector<PlayerTeam> playerTeamSelector;
         private ButtonRegister parent, internal = new ButtonRegister();
         private int index;
@@ -180,8 +204,15 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             this.y = y;
             numberBox = new UITextDisplayBox(null, RenderOrder.NONE, 0.1f, 1, 2, 2, 1.7f);
             mainBox = new UIBox(13, 3.5f, 0, UIBox.BoxShape.RECTANGLE);
-            playerTeamSelector = new UIEnumSelector<>(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 5, 0.7f, 1.3f, 2, PlayerTeam.class, PlayerTeam.values()[index])
+            playerTeamSelector = new UIEnumSelector<>(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 4, 0.7f, 1.3f, 2, PlayerTeam.class, PlayerTeam.values()[index])
                     .setOnChanged(parentContainer::verifyTeams);
+            editShips = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 0.7f, 5, 1.3f, 0.7f, true)
+                    .setBold().noDeselect().setBoxCorner(0.35f).setText("Edit Units").setOnClick(() -> {
+                        parentContainer.boxes.forEach(b -> {
+                            if (b != this)
+                                b.editShips.deselect();
+                        });
+                    }).setOnDeselect(() -> MainPanel.titleScreen.playerShipSettings.updateTeam());
             playerTeamLabel = new UITextLabel(5, 0.7f, false)
                     .updateTextCenter("Player Team").setTextCenterBold();
             deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.5f, 2.25f, 1, 1, false, () -> {
@@ -197,9 +228,10 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                         GameRenderer.renderOffset(3, 0.25f, g, () -> {
                             mainBox.render(g);
                         });
-                        GameRenderer.renderOffset(5.2f, 2.3f, g, () -> {
+                        GameRenderer.renderOffset(4.2f, 2.3f, g, () -> {
                             playerTeamLabel.render(g);
                         });
+                        editShips.render(g);
                         playerTeamSelector.render(g);
                         deleteButton.render(g);
                     });
@@ -227,6 +259,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             parent.remove(this);
             parent = null;
             deleteButton.delete();
+            editShips.delete();
         }
 
         @Override

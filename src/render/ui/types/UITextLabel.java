@@ -24,15 +24,19 @@ public class UITextLabel implements Renderable {
     }
 
     public UITextLabel(float width, float height, boolean hasLines, float lineWidth) {
+        this(width, height, hasLines, lineWidth, 0.9f);
+    }
+
+    public UITextLabel(float width, float height, boolean hasLines, float lineWidth, float textSizeFactor) {
         this.width = width;
         this.height = height;
         this.lineWidth = lineWidth;
-        line = line(lineWidth, height * 1.1f, height * 0.1f, (float) Math.toRadians(60));
         this.hasLines = hasLines;
+        line = line(lineWidth, height * 1.1f, height * 0.1f, (float) Math.toRadians(60));
         label = line(width, height, (float) Math.toRadians(60));
-        textRight = new FixedTextRenderer(null, height * 0.9f, TEXT_COLOUR).setTextAlign(TextAlign.RIGHT);
-        textLeft = new FixedTextRenderer(null, height * 0.9f, TEXT_COLOUR).setTextAlign(TextAlign.LEFT);
-        textCenter = new FixedTextRenderer(null, height * 0.9f, TEXT_COLOUR).setTextAlign(TextAlign.CENTER);
+        textRight = new FixedTextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.RIGHT);
+        textLeft = new FixedTextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.LEFT);
+        textCenter = new FixedTextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.CENTER);
     }
 
     @Override

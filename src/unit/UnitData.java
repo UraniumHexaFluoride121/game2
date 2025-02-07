@@ -66,13 +66,7 @@ public class UnitData implements Writable {
                 MainPanel.client.requestLevelData();
             });
         }
-        u.performedActions.clear();
-        u.performedActions.addAll(performedActions);
-        u.hitPoints = hitPoints;
-        u.firingTempHP = hitPoints;
-        for (int i = 0; i < weaponAmmo.size(); i++) {
-            u.weapons.get(i).ammo = weaponAmmo.get(i);
-        }
+        u.updateFromData(this);
         return u;
     }
 }
