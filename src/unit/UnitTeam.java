@@ -3,8 +3,9 @@ package unit;
 import render.ui.UIColourTheme;
 
 public enum UnitTeam {
-    GREEN("green", 0, UIColourTheme.GREEN, UIColourTheme.GREEN_UNAVAILABLE),
-    RED("red", 1, UIColourTheme.RED, UIColourTheme.RED_UNAVAILABLE);
+    BLUE("blue", 0, UIColourTheme.BLUE, UIColourTheme.BLUE_UNAVAILABLE),
+    RED("red", 1, UIColourTheme.RED, UIColourTheme.RED_UNAVAILABLE),
+    GREEN("green", 2, UIColourTheme.GREEN, UIColourTheme.GREEN_UNAVAILABLE);
 
     public static final UnitTeam[] ORDERED_TEAMS = new UnitTeam[values().length];
     public final String s;

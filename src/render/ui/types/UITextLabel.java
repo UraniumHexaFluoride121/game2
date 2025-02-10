@@ -68,17 +68,17 @@ public class UITextLabel implements Renderable {
     }
 
     public UITextLabel updateTextRight(String s) {
-        textRight.updateIfDifferent(s);
+        textRight.updateText(s);
         return this;
     }
 
     public UITextLabel updateTextLeft(String s) {
-        textLeft.updateIfDifferent(s);
+        textLeft.updateText(s);
         return this;
     }
 
     public UITextLabel updateTextCenter(String s) {
-        textCenter.updateIfDifferent(s);
+        textCenter.updateText(s);
         return this;
     }
 

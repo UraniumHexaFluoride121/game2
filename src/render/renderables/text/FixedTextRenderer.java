@@ -8,13 +8,13 @@ import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
 
 public class FixedTextRenderer implements Renderable {
-    private StaticHitBox bounds, boxBounds;
+    protected StaticHitBox bounds, boxBounds;
     private Shape textShape;
-    private String text;
-    private final float textSize;
+    protected String text;
+    protected float textSize;
     private boolean isBold = false;
     private boolean hasOutline = false;
-    private TextAlign textAlign = TextAlign.CENTER;
+    protected TextAlign textAlign = TextAlign.CENTER;
     private final Color main;
     private Color border, renderBoxColour;
     private BasicStroke stroke;
@@ -30,6 +30,11 @@ public class FixedTextRenderer implements Renderable {
     public FixedTextRenderer setBold(boolean isBold) {
         this.isBold = isBold;
         update();
+        return this;
+    }
+
+    public FixedTextRenderer setTextSize(float textSize) {
+        this.textSize = textSize / 20;
         return this;
     }
 
@@ -68,9 +73,9 @@ public class FixedTextRenderer implements Renderable {
         g.scale(textSize, -textSize);
 
         if (textAlign == TextAlign.CENTER)
-            g.translate(-bounds.width() / 2f, 0);
+            g.translate(-bounds.middleX(), 0);
         if (textAlign == TextAlign.RIGHT)
-            g.translate(-bounds.width(), 0);
+            g.translate(-bounds.getRight(), 0);
 
         if (hasOutline) {
             g.setStroke(stroke);
@@ -91,17 +96,19 @@ public class FixedTextRenderer implements Renderable {
         update = true;
     }
 
-    public void updateIfDifferent(String text) {
+    public void updateText(String text) {
         if (this.text == null || !this.text.equals(text)) {
             this.text = text;
             update = true;
         }
     }
 
-    private void updateText(Graphics2D g) {
+    protected Font font;
+
+    protected void updateText(Graphics2D g) {
         if (text == null)
             return;
-        Font font = new Font(null, isBold ? Font.BOLD : Font.PLAIN, 20);
+        font = new Font(null, isBold ? Font.BOLD : Font.PLAIN, 20);
         textShape = new TextLayout(text, font, g.getFontRenderContext()).getOutline(null);
         Rectangle2D b = textShape.getBounds2D();
         bounds = StaticHitBox.createFromOriginAndSize((float) b.getX(), (float) b.getY(), (float) b.getWidth(), (float) b.getHeight());

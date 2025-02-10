@@ -94,11 +94,11 @@ public class StaticHitBox implements HitBox {
     }
 
     public float middleX() {
-        return (right - left) / 2;
+        return (right + left) / 2;
     }
 
     public float middleY() {
-        return (up - down) / 2;
+        return (up + down) / 2;
     }
 
     public float width() {

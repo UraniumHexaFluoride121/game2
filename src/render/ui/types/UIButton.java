@@ -24,6 +24,12 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
     }
 
     public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick) {
+        this(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, onClick,
+                new FixedTextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
+                        .setTextAlign(TextAlign.CENTER));
+    }
+
+    protected UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick, FixedTextRenderer text) {
         super(register, order);
         this.x = x;
         this.y = y;
@@ -31,27 +37,26 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
         this.width = width;
         this.buttonOrder = buttonOrder;
         this.buttonRegister = buttonRegister;
+        this.text = text;
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
         clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, staySelected, onClick);
         box = new UIBox(width, height).setClickHandler(clickHandler);
-        text = new FixedTextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
-                .setTextAlign(TextAlign.CENTER);
         hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
         renderable = g -> {
             if (!enabled)
                 return;
             GameRenderer.renderOffset(x, y, g, () -> {
                 box.render(g);
-                g.translate(width / 2f - textSize * 0.03f, height / 2 - textSize * 0.75 / 2);
+                g.translate(width / 2f, height / 2 - textSize * 0.75 / 2);
                 text.render(g);
             });
         };
     }
 
     public UIButton setText(String text) {
-        this.text.updateIfDifferent(text);
+        this.text.updateText(text);
         return this;
     }
 

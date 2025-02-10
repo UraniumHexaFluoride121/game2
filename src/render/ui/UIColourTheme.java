@@ -83,6 +83,16 @@ public enum UIColourTheme {
             new Color(97, 166, 81),
             new Color(107, 175, 88, 128)
     ),
+    BLUE(
+            new Color(85, 121, 211),
+            new Color(87, 111, 189, 144),
+            new Color(92, 119, 186),
+            new Color(92, 117, 181, 133),
+            new Color(75, 95, 147),
+            new Color(74, 94, 159, 115),
+            new Color(81, 108, 166),
+            new Color(88, 116, 175, 128)
+    ),
     YELLOW(
             new Color(228, 208, 105),
             new Color(189, 169, 87, 144),
@@ -112,7 +122,17 @@ public enum UIColourTheme {
             new Color(107, 145, 93, 144),
             new Color(114, 152, 111),
             new Color(107, 145, 93, 144)
-    );
+    ),
+    BLUE_UNAVAILABLE(
+            new Color(87, 95, 135),
+            new Color(92, 99, 145, 144),
+            new Color(87, 95, 135),
+            new Color(92, 99, 145, 144),
+            new Color(87, 95, 135),
+            new Color(92, 99, 145, 144),
+            new Color(87, 95, 135),
+            new Color(92, 99, 145, 144)
+    ),;
 
     public final Color borderColour;
     public final Color backgroundColour;

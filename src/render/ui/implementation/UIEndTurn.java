@@ -17,10 +17,11 @@ import render.ui.types.UITextLabel;
 public class UIEndTurn extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private final FixedTextRenderer text = new FixedTextRenderer("End Turn", 1.4f, UITextLabel.TEXT_COLOUR)
             .setTextAlign(TextAlign.CENTER).setBold(true);
-    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, Renderable.top() - 2.5f, 7, 2);
+    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, Renderable.top() - 2.5f, 9, 2);
     private Level level;
     private final ButtonClickHandler clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, this::onClick);
-    private final UIBox box = new UIBox(7, 2).setClickHandler(clickHandler);
+    private final UIBox box = new UIBox(9, 2).setClickHandler(clickHandler);
+    private float textOffset = 0.5f;
 
     public UIEndTurn(RenderRegister<OrderedRenderable> register, RenderOrder order, Level level) {
         super(register, order);
@@ -28,7 +29,7 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
         renderable = g -> {
             GameRenderer.renderOffset(0.5f, Renderable.top() - 2.5f, g, () -> {
                 box.render(g);
-                g.translate(7 / 2f, 0.5);
+                g.translate(9 / 2f, textOffset);
                 text.render(g);
             });
         };
@@ -39,6 +40,9 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
     public void setGrayedOut(boolean grayedOut) {
         this.grayedOut = grayedOut;
         box.setColourTheme(grayedOut ? UIColourTheme.GRAYED_OUT : UIColourTheme.LIGHT_BLUE);
+        text.setTextSize(grayedOut ? 1 : 1.4f);
+        text.updateText(grayedOut ? "Waiting for turn..." : "End Turn");
+        textOffset = grayedOut ? 0.62f : 0.5f;
     }
 
     private void onClick() {

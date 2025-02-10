@@ -323,15 +323,20 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
                 mouseOverTile = null;
         } else if (type == ESCAPE) {
             if (!blocked) {
-                if (level.hasActiveAction()) {
-                    if (level.levelRenderer.highlightTileRenderer != null)
-                        level.levelRenderer.highlightTileRenderer.close();
-                    level.levelRenderer.unitTileBorderRenderer = null;
-                    level.setActiveAction(null);
-                } else
-                    deselect();
+                deselectAction();
             }
         }
+    }
+
+    public void deselectAction() {
+        level.levelRenderer.exitActionButton.setEnabled(false);
+        if (level.hasActiveAction()) {
+            if (level.levelRenderer.highlightTileRenderer != null)
+                level.levelRenderer.highlightTileRenderer.close();
+            level.levelRenderer.unitTileBorderRenderer = null;
+            level.setActiveAction(null);
+        } else
+            deselect();
     }
 
     @Override

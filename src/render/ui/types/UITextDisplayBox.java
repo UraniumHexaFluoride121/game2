@@ -24,14 +24,14 @@ public class UITextDisplayBox extends AbstractRenderElement {
                 return;
             GameRenderer.renderOffset(x, y, g, () -> {
                 box.render(g);
-                g.translate(width / 2f - textSize * 0.03f, height / 2 - textSize * 0.75 / 2);
+                g.translate(width / 2f, height / 2 - textSize * 0.75 / 2);
                 text.render(g);
             });
         };
     }
 
     public UITextDisplayBox setText(String text) {
-        this.text.updateIfDifferent(text);
+        this.text.updateText(text);
         return this;
     }
 

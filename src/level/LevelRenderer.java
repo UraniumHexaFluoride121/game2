@@ -19,7 +19,10 @@ import render.renderables.RenderElement;
 import render.texture.BackgroundRenderer;
 import render.texture.BackgroundTexture;
 import render.texture.FiringRenderer;
+import render.ui.UIColourTheme;
 import render.ui.implementation.*;
+import render.ui.types.LevelUIButton;
+import render.ui.types.UIButton;
 import render.ui.types.UIContainer;
 import unit.Unit;
 import unit.UnitTeam;
@@ -61,6 +64,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     public UIDamage damageUI = null;
     public UIEndTurn endTurn = null;
     public UITileInfo tileInfo = null;
+    public UIButton exitActionButton = null;
 
     private void createRenderers() {
         createTiles();
@@ -148,6 +152,11 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
         onNextTurn = new UIOnNextTurn(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         turnBox = new UITurnBox(levelUIRenderer, RenderOrder.LEVEL_UI, level);
+        level.buttonRegister.register(turnBox);
+
+        exitActionButton = new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                0.5f, Renderable.top() - 4.5f, 7, 1.5f, 0.9f, false, level, () -> level.tileSelector.deselectAction())
+                .setText("Exit Action").setBold().setColourTheme(UIColourTheme.RED).setEnabled(false);
 
         firingRenderer = new FiringRenderer(firingAnimRenderer, RenderOrder.BACKGROUND, level);
     }

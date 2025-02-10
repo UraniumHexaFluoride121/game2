@@ -3,6 +3,8 @@ package render.ui.implementation;
 import foundation.MainPanel;
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
+import foundation.input.InputType;
+import foundation.math.ObjPos;
 import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
@@ -19,6 +21,7 @@ import java.util.HashMap;
 
 public class UIPlayerShipSettings extends UIContainer {
     public static final HashMap<UnitType, Integer> DEFAULT_PRESET = new HashMap<>();
+    public static final float TOP_MARGIN = 11;
 
     static {
         DEFAULT_PRESET.put(UnitType.FIGHTER, 3);
@@ -134,6 +137,16 @@ public class UIPlayerShipSettings extends UIContainer {
                 preset.put(type, selectors.get(type).getValue());
             }
             return preset;
+        }
+
+        @Override
+        public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
+            super.buttonPressed(pos.copy().addY(-0.2f), inside, blocked, type);
+        }
+
+        @Override
+        public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
+            super.buttonReleased(pos.copy().addY(-0.2f), inside, blocked, type);
         }
 
         @Override

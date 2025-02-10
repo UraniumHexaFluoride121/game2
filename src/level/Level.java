@@ -61,7 +61,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         this.networkState = networkState;
         if (networkState == NetworkState.SERVER) {
             server = new Server(this);
-            thisTeam = UnitTeam.GREEN;
+            thisTeam = UnitTeam.ORDERED_TEAMS[0];
         }
         tilesX = width;
         tilesY = height;
@@ -339,7 +339,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         HashSet<Point> visible = new HashSet<>();
         UnitTeam team = getThisTeam();
         unitSet.forEach(u -> {
-            if (u.team == team)
+            if (playerTeam.get(u.team) == playerTeam.get(team))
                 visible.addAll(u.getVisibleTiles());
         });
         visible.forEach(p -> {

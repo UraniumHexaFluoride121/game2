@@ -185,10 +185,12 @@ public class Unit implements Deletable, Tickable {
             movePath = new TilePath(type, selectableTiles, pos, selector());
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, MOVE_TILE_BORDER_COLOUR);
+            level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == Action.FIRE) {
             selectableTiles = tilesInFiringRange();
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
+            level.levelRenderer.exitActionButton.setEnabled(true);
         } else {
             selectableTiles = new HashSet<>();
         }

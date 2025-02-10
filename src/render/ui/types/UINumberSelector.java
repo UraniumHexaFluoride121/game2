@@ -5,7 +5,11 @@ import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
-import render.*;
+import foundation.math.StaticHitBox;
+import render.AbstractRenderElement;
+import render.OrderedRenderable;
+import render.RenderOrder;
+import render.RenderRegister;
 import render.ui.UIColourTheme;
 
 public class UINumberSelector extends AbstractRenderElement implements RegisteredButtonInputReceiver {
@@ -18,6 +22,7 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
     private int value;
     private UIColourTheme theme = UIColourTheme.GREEN_SELECTED;
     private Runnable onChanged = null;
+    private final StaticHitBox hitBox;
 
     public UINumberSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth, int min, int max, int value) {
         super(register, order);
@@ -30,6 +35,7 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
         this.min = min;
         this.max = max;
         this.value = value;
+        hitBox = StaticHitBox.createFromOriginAndSize(x, y, 2 * height + .5f * 2 + displayWidth, height);
         left = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x, y, height, height, false)
                 .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleLeft)
@@ -95,7 +101,7 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
 
     @Override
     public boolean posInside(ObjPos pos) {
-        return enabled;
+        return enabled && hitBox.isPositionInside(pos);
     }
 
     private boolean blocking = false;
@@ -112,8 +118,15 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
-            blocking = !blocked && internal.acceptInput(pos, type, true);
+        if (enabled) {
+            if (!blocked && inside && type.isScrollInputOnce()) {
+                if (type == InputType.MOUSE_SCROLL_UP_ONCE) {
+                    increment();
+                } else
+                    decrement();
+            } else
+                blocking = !blocked && internal.acceptInput(pos, type, true);
+        }
     }
 
     @Override

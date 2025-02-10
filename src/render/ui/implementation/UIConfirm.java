@@ -65,7 +65,7 @@ public class UIConfirm extends AbstractRenderElement implements RegisteredButton
 
     public void makeVisible(String text, Runnable onConfirm, Runnable onCancel) {
         visible = true;
-        this.text.updateIfDifferent(text);
+        this.text.updateText(text);
         confirmButtonHandler.setOnClick(onConfirm);
         cancelButtonHandler.setOnClick(onCancel);
     }

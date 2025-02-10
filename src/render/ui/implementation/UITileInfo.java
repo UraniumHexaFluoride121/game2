@@ -34,9 +34,9 @@ public class UITileInfo extends UIContainer {
                     defence.translate(0.5f, 2.8f),
                     movement.translate(0.5f, 0.8f)
             ).setZOrder(1);
-            new RenderElement(r, RenderOrder.LEVEL_UI, visibilityBar.translate(7, 5)).setZOrder(2);
-            new RenderElement(r, RenderOrder.LEVEL_UI, defenceBar.translate(7, 3)).setZOrder(2);
-            new RenderElement(r, RenderOrder.LEVEL_UI, movementBar.translate(7, 1)).setZOrder(2);
+            new RenderElement(r, RenderOrder.LEVEL_UI, visibilityBar.translate(7, 4.8f)).setZOrder(2);
+            new RenderElement(r, RenderOrder.LEVEL_UI, defenceBar.translate(7, 2.8f)).setZOrder(2);
+            new RenderElement(r, RenderOrder.LEVEL_UI, movementBar.translate(7, 0.8f)).setZOrder(2);
         });
     }
 

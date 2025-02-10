@@ -32,14 +32,8 @@ public class Server implements Deletable {
     public ConcurrentHashMap<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
     public ConcurrentHashMap<InetAddress, ClientHandler> clientsByAddress = new ConcurrentHashMap<>();
 
-    public HashSet<Integer> getClientIDs() {
-        HashSet<Integer> ids = new HashSet<>();
-        clients.forEach((id, c) -> ids.add(id));
-        return ids;
-    }
-
     public Server(Level level) {
-        teamClientIDs.put(UnitTeam.GREEN, 0);
+        teamClientIDs.put(UnitTeam.ORDERED_TEAMS[0], 0);
         this.level = level;
         ServerSocket serverSocket;
         try {
