@@ -17,7 +17,6 @@ import render.Renderable;
 import render.renderables.HexagonBorder;
 import unit.Unit;
 import unit.UnitTeam;
-import unit.UnitType;
 import unit.action.Action;
 
 import java.awt.*;
@@ -199,6 +198,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             throw new RuntimeException("Unit could not be moved to tile " + newPos);
         unitGrid[unit.pos.x][unit.pos.y] = null;
         unitGrid[newPos.x][newPos.y] = unit;
+        unit.stopCapture();
         unit.updateLocation(newPos);
         if (selectNewTile)
             tileSelector.select(getTile(newPos));
@@ -241,7 +241,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     }
 
     public void endAction() {
-        activeAction = null;
+        setActiveAction(null);
         if (levelRenderer.highlightTileRenderer != null) {
             levelRenderer.highlightTileRenderer.close();
         }
@@ -277,6 +277,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public void setTurn(UnitTeam activeTeam, int turn) {
         if (this.activeTeam != activeTeam || this.turn != turn) {
+            endAction();
             levelRenderer.onNextTurn.start("Turn " + turn, activeTeam);
             for (Unit unit : unitSet) {
                 unit.turnEnded();
@@ -293,6 +294,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     }
 
     public void setActiveAction(Action activeAction) {
+        if (activeAction == null)
+            levelRenderer.exitActionButton.setEnabled(false);
         this.activeAction = activeAction;
     }
 
@@ -306,6 +309,10 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public boolean samePlayerTeam(Unit a, Unit b) {
         return Objects.equals(playerTeam.get(a.team), playerTeam.get(b.team));
+    }
+
+    public boolean samePlayerTeam(UnitTeam a, UnitTeam b) {
+        return Objects.equals(playerTeam.get(a), playerTeam.get(b));
     }
 
     public UnitTeam getNextTeam(UnitTeam from) {
@@ -332,9 +339,28 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         return playerTeam.size();
     }
 
+    public void removePlayer(UnitTeam team) {
+        levelRenderer.onTeamEliminated.start(team.getName() + " Eliminated!", team);
+        basePositions.remove(team);
+        playerTeam.remove(team);
+        unitSet.forEach(u -> {
+            if (u.team == team) {
+                u.onDestroyed(null);
+            }
+        });
+        updateFoW();
+        if (!isThisPlayerAlive())
+            levelRenderer.endTurn.setGrayedOut(true);
+    }
+
     private static final Color FOW_TILE_BORDER_COLOUR = new Color(67, 67, 67, 255);
 
     public void updateFoW() {
+        if (!isThisPlayerAlive()) {
+            tileSelector.tileSet.forEach(t -> t.isFoW = false);
+            levelRenderer.fowTileBorder = null;
+            return;
+        }
         tileSelector.tileSet.forEach(t -> t.isFoW = true);
         HashSet<Point> visible = new HashSet<>();
         UnitTeam team = getThisTeam();
@@ -342,15 +368,29 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             if (playerTeam.get(u.team) == playerTeam.get(team))
                 visible.addAll(u.getVisibleTiles());
         });
+        tileSelector.tileSet.forEach(t -> {
+            if (t.hasStructure() && samePlayerTeam(t.structure.team, team))
+                visible.add(t.pos);
+        });
         visible.forEach(p -> {
             getTile(p).isFoW = false;
         });
         levelRenderer.fowTileBorder = new HexagonBorder(visible, FOW_TILE_BORDER_COLOUR);
     }
 
+    public void setCaptureProgressBars() {
+        unitSet.forEach(u -> {
+            u.setCaptureProgress(u.getCaptureProgress());
+        });
+    }
+
     public void setThisTeam(UnitTeam team) {
         thisTeam = team;
         levelRenderer.useLastCameraPos(team);
+    }
+
+    public boolean isThisPlayerAlive() {
+        return playerTeam.containsKey(getThisTeam());
     }
 
     public boolean rendered = false;

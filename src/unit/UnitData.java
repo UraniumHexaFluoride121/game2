@@ -19,6 +19,7 @@ public class UnitData implements Writable {
     public final UnitType type;
     public final UnitTeam team;
     public final float hitPoints;
+    public final int captureProgress;
     public final HashSet<Action> performedActions = new HashSet<>();
     public final ArrayList<Integer> weaponAmmo = new ArrayList<>();
 
@@ -27,7 +28,8 @@ public class UnitData implements Writable {
         type = unit.type;
         team = unit.team;
         hitPoints = unit.hitPoints;
-        performedActions.addAll(unit.performedActions);
+        captureProgress = unit.getCaptureProgress();
+        performedActions.addAll(unit.getPerformedActions());
         unit.weapons.forEach(w -> {
             weaponAmmo.add(w.ammo);
         });
@@ -38,6 +40,7 @@ public class UnitData implements Writable {
         type = PacketReceiver.readEnum(UnitType.class, reader);
         team = PacketReceiver.readEnum(UnitTeam.class, reader);
         hitPoints = reader.readFloat();
+        captureProgress = reader.readInt();
         PacketReceiver.readCollection(performedActions, () -> Action.getByName(reader.readUTF()), reader);
         PacketReceiver.readCollection(weaponAmmo, reader::readInt, reader);
     }
@@ -48,6 +51,7 @@ public class UnitData implements Writable {
         PacketWriter.writeEnum(type, w);
         PacketWriter.writeEnum(team, w);
         w.writeFloat(hitPoints);
+        w.writeInt(captureProgress);
         PacketWriter.writeCollection(performedActions, v -> w.writeUTF(v.toString()), w);
         PacketWriter.writeCollection(weaponAmmo, w::writeInt, w);
     }

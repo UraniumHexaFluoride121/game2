@@ -101,6 +101,7 @@ public class Client implements Deletable {
                         u.updateFromData(d);
                     }
                     unitsUnaccountedFor.forEach(l::qRemoveUnit);
+                    l.setCaptureProgressBars();
                 });
             }
             case CLIENT_INIT -> {
@@ -139,15 +140,17 @@ public class Client implements Deletable {
                         HashMap<UnitTeam, Point> basePositions = new HashMap<>();
                         for (int x = 0; x < width; x++) {
                             for (int y = 0; y < height; y++) {
-                                l.getTile(x, y).setTileType(data[x][y]);
+                                Tile tile = l.getTile(x, y);
+                                tile.setTileType(data[x][y]);
                                 Structure structure = structures[x][y];
                                 if (structure != null) {
                                     if (structure.type == StructureType.BASE) {
                                         basePositions.put(structure.team, structure.pos);
                                     } else {
-                                        l.getTile(x, y).setStructure(structure);
+                                        tile.setStructure(structure);
                                     }
-                                }
+                                } else
+                                    tile.removeStructure();
                             }
                         }
                         l.setBasePositions(basePositions);
@@ -171,7 +174,7 @@ public class Client implements Deletable {
                 UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Unit unit = MainPanel.activeLevel.getUnit(unitPos);
-                    if (unit == null || unit.type != type || unit.team != team || unit.performedActions.contains(Action.MOVE)) {
+                    if (unit == null || unit.type != type || unit.team != team || unit.hasPerformedAction(Action.MOVE)) {
                         requestLevelData();
                         return;
                     }
@@ -184,8 +187,52 @@ public class Client implements Deletable {
                     Level l = MainPanel.activeLevel;
                     Unit fromUnit = from.getUnit(l), toUnit = to.getUnit(l);
                     fromUnit.attack(toUnit);
-                    fromUnit.performedActions.add(Action.FIRE);
-                    fromUnit.performedActions.add(Action.MOVE);
+                    fromUnit.addPerformedAction(Action.FIRE);
+                });
+            }
+            case SERVER_CAPTURE_UNIT -> {
+                Point pos = PacketReceiver.readPoint(reader);
+                int progress = reader.readInt();
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.activeLevel;
+                    Unit u = l.getUnit(pos);
+                    if (u == null) {
+                        requestLevelData();
+                        return;
+                    }
+                    u.capture(progress, true);
+                });
+            }
+            case SERVER_STRUCTURE_UPDATE -> {
+                Point pos = PacketReceiver.readPoint(reader);
+                boolean hasStructure = reader.readBoolean();
+                Structure structure;
+                if (hasStructure)
+                    structure = new Structure(reader);
+                else
+                    structure = null;
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.activeLevel;
+                    Tile tile = l.getTile(pos);
+                    if (tile.hasStructure()) {
+                        if (hasStructure) {
+                            if (!structure.equals(tile.structure)) {
+                                tile.setStructure(structure);
+                                l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+                            }
+                        } else {
+                            if (tile.structure.type == StructureType.BASE)
+                                l.removePlayer(tile.structure.team);
+                            tile.explodeStructure();
+                            l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+                        }
+                    } else if (hasStructure) {
+                        l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+                        tile.setStructure(structure);
+                    }
+                    Unit u = l.getUnit(pos);
+                    if (!u.canCapture())
+                        u.stopCapture();
                 });
             }
         }
@@ -220,7 +267,7 @@ public class Client implements Deletable {
         }));
     }
 
-    public void sendMoveUnitRequest(AnimTilePath path, Point illegalTile, Unit unit) {
+    public void sendUnitMoveRequest(AnimTilePath path, Point illegalTile, Unit unit) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_MOVE_UNIT, w -> {
             path.write(w);
             w.writeBoolean(illegalTile != null);
@@ -233,10 +280,16 @@ public class Client implements Deletable {
         }));
     }
 
-    public void sendShootUnitRequest(Unit from, Unit to) {
+    public void sendUnitShootRequest(Unit from, Unit to) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_SHOOT_UNIT, w -> {
             PacketWriter.writePoint(from.pos, w);
             PacketWriter.writePoint(to.pos, w);
+        }));
+    }
+
+    public void sendUnitCaptureRequest(Unit unit) {
+        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_CAPTURE_UNIT, w -> {
+            PacketWriter.writePoint(unit.pos, w);
         }));
     }
 

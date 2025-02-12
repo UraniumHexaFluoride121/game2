@@ -24,7 +24,7 @@ public class FiringRenderer extends AbstractRenderElement {
     private static final Color SEPARATOR_BORDER_COLOUR = new Color(69, 69, 69);
     private static final BasicStroke SEPARATOR_STROKE = Renderable.sharpCornerStroke(2f), SEPARATOR_TEAM_STROKE = Renderable.sharpCornerStroke(0.3f);
     private WeaponInstance leftWeapon, rightWeapon;
-    private Unit leftUnit, rightUnit, attackingUnit, attackedUnit;
+    private Unit leftUnit, rightUnit, attackingUnit, defendingUnit;
     private UnitRenderer[] leftUnitRenderer, rightUnitRenderer;
     private UIHitPointBar hitPointBarLeft, hitPointBarRight;
     private final ArrayList<Projectile> leftProjectiles = new ArrayList<>(), rightProjectiles = new ArrayList<>();
@@ -76,7 +76,7 @@ public class FiringRenderer extends AbstractRenderElement {
                         for (UnitRenderer unit : rightUnitRenderer) {
                             unit.onHit();
                         }
-                        hitPointBarRight.setFill(rightUnit.firingTempHP, 1, 0.5f);
+                        hitPointBarRight.setFill(rightUnit.firingTempHP, 1, 0.6f);
                         rightHit = true;
                         break;
                     }
@@ -88,7 +88,7 @@ public class FiringRenderer extends AbstractRenderElement {
                         for (UnitRenderer unit : leftUnitRenderer) {
                             unit.onHit();
                         }
-                        hitPointBarLeft.setFill(leftUnit.firingTempHP, 1, 0.5f);
+                        hitPointBarLeft.setFill(leftUnit.firingTempHP, 1, 0.6f);
                         leftHit = true;
                         break;
                     }
@@ -128,10 +128,10 @@ public class FiringRenderer extends AbstractRenderElement {
                     rightImage = null;
                     leftUnitRenderer = null;
                     rightUnitRenderer = null;
-                    level.levelRenderer.endFiring(leftUnit, rightUnit);
+                    level.levelRenderer.endFiring(attackingUnit, defendingUnit);
                     leftUnit = null;
                     rightUnit = null;
-                    attackedUnit = null;
+                    defendingUnit = null;
                     attackingUnit = null;
                 }
             }
@@ -209,7 +209,7 @@ public class FiringRenderer extends AbstractRenderElement {
 
     public void start(Unit a, Unit b, WeaponInstance weaponA, WeaponInstance weaponB) {
         attackingUnit = a;
-        attackedUnit = b;
+        defendingUnit = b;
         boolean aIsLeft;
         if (a.pos.x > b.pos.x) {
             aIsLeft = false;
@@ -260,7 +260,7 @@ public class FiringRenderer extends AbstractRenderElement {
         super.delete();
         leftUnit = null;
         rightUnit = null;
-        attackedUnit = null;
+        defendingUnit = null;
         attackingUnit = null;
         leftProjectiles.clear();
         rightProjectiles.clear();

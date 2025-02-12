@@ -38,10 +38,11 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
     private boolean grayedOut = false;
 
     public void setGrayedOut(boolean grayedOut) {
-        this.grayedOut = grayedOut;
+        boolean playerAlive = level.isThisPlayerAlive();
+        this.grayedOut = grayedOut || !playerAlive;
         box.setColourTheme(grayedOut ? UIColourTheme.GRAYED_OUT : UIColourTheme.LIGHT_BLUE);
         text.setTextSize(grayedOut ? 1 : 1.4f);
-        text.updateText(grayedOut ? "Waiting for turn..." : "End Turn");
+        text.updateText(playerAlive ? grayedOut ? "Waiting for turn..." : "End Turn" : "You've lost!");
         textOffset = grayedOut ? 0.62f : 0.5f;
     }
 

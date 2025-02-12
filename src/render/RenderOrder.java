@@ -14,6 +14,7 @@ public enum RenderOrder {
     TILE_UNITS,
     FOG_OF_WAR,
     TILE_BORDER_HIGHLIGHTS,
+    CAPTURE_BAR,
     ACTION_ABOVE_UNITS,
     ACTION_SELECTOR,
     DAMAGE_UI,

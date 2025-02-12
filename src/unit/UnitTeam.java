@@ -1,14 +1,16 @@
 package unit;
 
+import foundation.NamedEnum;
 import render.ui.UIColourTheme;
 
-public enum UnitTeam {
-    BLUE("blue", 0, UIColourTheme.BLUE, UIColourTheme.BLUE_UNAVAILABLE),
-    RED("red", 1, UIColourTheme.RED, UIColourTheme.RED_UNAVAILABLE),
-    GREEN("green", 2, UIColourTheme.GREEN, UIColourTheme.GREEN_UNAVAILABLE);
+public enum UnitTeam implements NamedEnum {
+    BLUE("blue", "Blue", 0, UIColourTheme.BLUE, UIColourTheme.BLUE_UNAVAILABLE),
+    RED("red", "Red", 1, UIColourTheme.RED, UIColourTheme.RED_UNAVAILABLE),
+    GREEN("green", "Green", 2, UIColourTheme.GREEN, UIColourTheme.GREEN_UNAVAILABLE);
 
     public static final UnitTeam[] ORDERED_TEAMS = new UnitTeam[values().length];
     public final String s;
+    private final String displayName;
     public final int order;
     public final UIColourTheme uiColour, unavailableColour;
 
@@ -18,10 +20,16 @@ public enum UnitTeam {
         }
     }
 
-    UnitTeam(String s, int order, UIColourTheme uiColour, UIColourTheme unavailableColour) {
+    UnitTeam(String s, String displayName, int order, UIColourTheme uiColour, UIColourTheme unavailableColour) {
         this.s = s;
+        this.displayName = displayName;
         this.order = order;
         this.uiColour = uiColour;
         this.unavailableColour = unavailableColour;
+    }
+
+    @Override
+    public String getName() {
+        return displayName;
     }
 }

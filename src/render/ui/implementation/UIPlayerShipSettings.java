@@ -113,7 +113,7 @@ public class UIPlayerShipSettings extends UIContainer {
                         selector.scale(1, -1).translate(0, 3.8f);
                         selector.setOnChanged(() -> MainPanel.titleScreen.playerBoxes.verifyTeams());
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS, new UITextLabel(9, 0.7f, false, 0, 0.85f)
-                                .updateTextCenter(UnitType.ORDERED_UNIT_TYPES[finalI].displayName + " Units").setTextCenterBold())
+                                .updateTextCenter(UnitType.ORDERED_UNIT_TYPES[finalI].getName() + " Units").setTextCenterBold())
                                 .scale(1, -1).translate(4.7f, 1);
                     });
                 }

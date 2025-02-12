@@ -141,14 +141,15 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         }
     }
 
+    private static final Vector<Runnable> tasksQ = new Vector<>(), noAnimBlockTasksQ = new Vector<>();
     private static final Vector<Runnable> tasks = new Vector<>(), noAnimBlockTasks = new Vector<>();
 
     public static void addTask(Runnable task) {
-        tasks.add(task);
+        tasksQ.add(task);
     }
 
     public static void addTaskAfterAnimBlock(Runnable task) {
-        noAnimBlockTasks.add(task);
+        noAnimBlockTasksQ.add(task);
     }
 
     @Override
@@ -226,8 +227,13 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     @Override
     public synchronized void tick(float deltaTime) {
+        tasks.addAll(tasksQ);
+        tasksQ.clear();
         tasks.forEach(Runnable::run);
         tasks.clear();
+
+        noAnimBlockTasks.addAll(noAnimBlockTasksQ);
+        noAnimBlockTasksQ.clear();
         if (activeLevel == null)
             noAnimBlockTasks.clear();
         else {

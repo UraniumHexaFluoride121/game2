@@ -202,7 +202,8 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             super(register, order);
             this.x = x;
             this.y = y;
-            numberBox = new UITextDisplayBox(null, RenderOrder.NONE, 0.1f, 1, 2, 2, 1.7f);
+            numberBox = new UITextDisplayBox(null, RenderOrder.NONE, 0.1f, 1, 2, 2, 1.7f)
+                    .setBold();
             mainBox = new UIBox(13, 3.5f, 0, UIBox.BoxShape.RECTANGLE);
             playerTeamSelector = new UIEnumSelector<>(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 4, 0.7f, 1.3f, 2, PlayerTeam.class, PlayerTeam.values()[index])
                     .setOnChanged(parentContainer::verifyTeams);

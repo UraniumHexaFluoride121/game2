@@ -3,6 +3,7 @@ package network;
 import foundation.Deletable;
 import foundation.MainPanel;
 import level.Level;
+import level.tile.Tile;
 import render.anim.AnimTilePath;
 import unit.Unit;
 import unit.UnitData;
@@ -100,6 +101,24 @@ public class Server implements Deletable {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHOOT_UNIT, w -> {
             new UnitData(from).write(w);
             new UnitData(to).write(w);
+        })));
+    }
+
+    public void sendUnitCapturePacket(Unit unit) {
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_CAPTURE_UNIT, w -> {
+            PacketWriter.writePoint(unit.pos, w);
+            w.writeInt(unit.getCaptureProgress());
+        })));
+    }
+
+    public void sendStructurePacket(Tile tile) {
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STRUCTURE_UPDATE, w -> {
+            PacketWriter.writePoint(tile.pos, w);
+            boolean hasStructure = tile.hasStructure();
+            w.writeBoolean(hasStructure);
+            if (hasStructure) {
+                tile.structure.write(w);
+            }
         })));
     }
 
@@ -237,7 +256,7 @@ public class Server implements Deletable {
                     UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit unit = server.level.getUnit(unitPos);
-                        if (unit == null || unit.type != type || unit.team != team || unit.performedActions.contains(Action.MOVE)) {
+                        if (unit == null || unit.type != type || unit.team != team || unit.hasPerformedAction(Action.MOVE)) {
                             queueUnitUpdatePacket();
                             return;
                         }
@@ -249,11 +268,23 @@ public class Server implements Deletable {
                     Point from = PacketReceiver.readPoint(reader), to = PacketReceiver.readPoint(reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit fromUnit = server.level.getUnit(from), toUnit = server.level.getUnit(to);
-                        if (fromUnit == null || toUnit == null || server.teamClientIDs.get(fromUnit.team) != clientID || fromUnit.performedActions.contains(Action.FIRE)) {
+                        if (fromUnit == null || toUnit == null || server.teamClientIDs.get(fromUnit.team) != clientID || fromUnit.hasPerformedAction(Action.FIRE)) {
                             queueUnitUpdatePacket();
                             return;
                         }
                         fromUnit.clientAttack(toUnit);
+                    });
+                }
+                case CLIENT_REQUEST_CAPTURE_UNIT -> {
+                    Point pos = PacketReceiver.readPoint(reader);
+                    MainPanel.addTaskAfterAnimBlock(() -> {
+                        Unit u = server.level.getUnit(pos);
+                        if (u == null || u.hasPerformedAction(Action.CAPTURE) || !u.canCapture()) {
+                            queueUnitUpdatePacket();
+                            return;
+                        }
+                        u.incrementCapture();
+                        server.sendUnitCapturePacket(u);
                     });
                 }
             }

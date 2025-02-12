@@ -1,5 +1,6 @@
 package unit;
 
+import foundation.NamedEnum;
 import foundation.math.ObjPos;
 import level.tile.TileType;
 import render.Renderable;
@@ -18,7 +19,7 @@ import java.util.function.Supplier;
 
 import static level.tile.Tile.*;
 
-public enum UnitType {
+public enum UnitType implements NamedEnum {
     FIGHTER("fighter", "Fighter", 8, 7f, 3.5f, type -> switch (type) {
         case EMPTY -> 1f;
         case NEBULA -> 1.8f;
@@ -76,7 +77,7 @@ public enum UnitType {
 
     private final HashMap<UnitTeam, HashMap<UnitPose, Renderable>> tileRenderers = new HashMap<>();
     private final HashMap<UnitTeam, HashMap<UnitPose, BufferedImage>> images = new HashMap<>();
-    public final String name, displayName;
+    private final String name, displayName;
     public final float hitPoints, maxMovement, maxViewRange;
     public final Function<TileType, Float> tileMovementCostFunction, tileViewRangeCostFunction;
     public final Function<TileType, Float> damageReduction;
@@ -141,5 +142,10 @@ public enum UnitType {
         for (UnitType type : values()) {
             type.weaponGenerator.accept(type.weapons);
         }
+    }
+
+    @Override
+    public String getName() {
+        return displayName;
     }
 }

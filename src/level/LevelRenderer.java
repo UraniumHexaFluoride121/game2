@@ -13,6 +13,7 @@ import network.NetworkState;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
+import render.anim.AnimationTimer;
 import render.renderables.HexagonBorder;
 import render.renderables.HighlightTileRenderer;
 import render.renderables.RenderElement;
@@ -23,7 +24,6 @@ import render.ui.UIColourTheme;
 import render.ui.implementation.*;
 import render.ui.types.LevelUIButton;
 import render.ui.types.UIButton;
-import render.ui.types.UIContainer;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -46,6 +46,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
     //Object in this set indicate that they are running an animation
     private final HashSet<Object> animationBlocks = new HashSet<>();
+    private final HashMap<AnimationTimer, Runnable> animationTimerBlocks = new HashMap<>();
     public FiringRenderer firingRenderer;
 
     public LevelRenderer(Level level) {
@@ -59,7 +60,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     }
 
     public UIConfirm confirm = null;
-    public UIOnNextTurn onNextTurn = null;
+    public UITextNotification onNextTurn = null, onTeamEliminated = null;
     public UITurnBox turnBox = null;
     public UIDamage damageUI = null;
     public UIEndTurn endTurn = null;
@@ -112,6 +113,13 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
                 fowTileBorder.render(g);
         });
 
+        //Capture bar
+        new RenderElement(mainRenderer, RenderOrder.CAPTURE_BAR, g -> {
+            for (Tile tile : level.tileSelector.tileSet) {
+                tile.renderCaptureBar(g, level);
+            }
+        });
+
         new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
             if (unitTileBorderRenderer != null) {
                 unitTileBorderRenderer.render(g);
@@ -150,7 +158,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         confirm = new UIConfirm(topUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(confirm);
 
-        onNextTurn = new UIOnNextTurn(levelUIRenderer, RenderOrder.LEVEL_UI, level);
+        onNextTurn = new UITextNotification(levelUIRenderer, RenderOrder.LEVEL_UI, level, 20, 3);
+        onTeamEliminated = new UITextNotification(levelUIRenderer, RenderOrder.LEVEL_UI, level, 25, 2f);
         turnBox = new UITurnBox(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(turnBox);
 
@@ -286,6 +295,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         firingAnimRenderer.delete();
         topUIRenderer.delete();
         animationBlocks.clear();
+        animationTimerBlocks.clear();
     }
 
     @Override
@@ -310,7 +320,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     }
 
     public boolean runningAnim() {
-        return !animationBlocks.isEmpty();
+        return !animationBlocks.isEmpty() || !animationTimerBlocks.isEmpty();
     }
 
     public void registerAnimBlock(Object o) {
@@ -321,10 +331,21 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         animationBlocks.remove(o);
     }
 
+    public void registerTimerBlock(AnimationTimer t, Runnable r) {
+        animationTimerBlocks.putIfAbsent(t, r);
+    }
+
     public ObjPos interpCameraTo = null;
 
     @Override
     public void tick(float deltaTime) {
+        animationTimerBlocks.entrySet().removeIf(entry -> {
+            if (entry.getKey().finished()) {
+                entry.getValue().run();
+                return true;
+            }
+            return false;
+        });
         if (cameraShake) {
             shakeTimer += deltaTime;
             if (shakeTimer > 0.05f) {
@@ -369,10 +390,10 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         firingRenderer.start(a, b, weaponA, weaponB);
     }
 
-    public void endFiring(Unit a, Unit b) {
+    public void endFiring(Unit attacking, Unit defending) {
         isFiring = false;
-        a.postFiring(b);
-        b.postFiring(a);
+        attacking.postFiring(defending, true);
+        defending.postFiring(attacking, false);
         removeAnimBlock(firingAnimRenderer);
     }
 }

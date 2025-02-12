@@ -4,6 +4,7 @@ import foundation.math.MathUtil;
 import render.GameRenderer;
 import render.Renderable;
 import render.anim.PowAnimation;
+import render.ui.UIColourTheme;
 import unit.Unit;
 
 import java.awt.*;
@@ -12,7 +13,7 @@ public class UIHitPointBar implements Renderable {
     private final BasicStroke stroke;
     private final float border, width, height, spacing;
     private final int segments;
-    private final Color borderColour, background, bar;
+    private Color borderColour, background, bar;
     private float fill = 0, fillTo;
     private float rounding = 0;
     private PowAnimation fillAnimation = null;
@@ -29,6 +30,18 @@ public class UIHitPointBar implements Renderable {
         this.bar = bar;
     }
 
+    public UIHitPointBar(float border, float width, float height, float spacing, int segments, UIColourTheme theme) {
+        this.border = border;
+        this.width = width;
+        this.height = height;
+        this.spacing = spacing;
+        stroke = Renderable.sharpCornerStroke(border * SCALING);
+        this.segments = segments;
+        borderColour = theme.borderColour;
+        background = theme.backgroundColour;
+        bar = theme.borderColour;
+    }
+
     public UIHitPointBar(float border, float width, float height, float spacing, Unit unit) {
         this.border = border;
         this.width = width;
@@ -36,9 +49,15 @@ public class UIHitPointBar implements Renderable {
         this.spacing = spacing;
         stroke = Renderable.sharpCornerStroke(border * SCALING);
         this.segments = (int) unit.type.hitPoints;
-        this.borderColour = unit.team.uiColour.borderColour;
-        this.background = unit.team.uiColour.backgroundColourSelected;
-        this.bar = unit.team.uiColour.borderColour;
+        borderColour = unit.team.uiColour.borderColour;
+        background = unit.team.uiColour.backgroundColourSelected;
+        bar = unit.team.uiColour.borderColour;
+    }
+
+    public void setColour(UIColourTheme theme) {
+        borderColour = theme.borderColour;
+        background = theme.backgroundColour;
+        bar = theme.borderColour;
     }
 
     public UIHitPointBar setRounding(float rounding) {
@@ -47,15 +66,19 @@ public class UIHitPointBar implements Renderable {
     }
 
     public UIHitPointBar setFill(float fill) {
-        this.fill = fill;
+        this.fill = Math.clamp(fill, 0, segments);
         return this;
     }
 
     public UIHitPointBar setFill(float fill, float time, float exponent) {
         this.fill = fillAnimation == null ? this.fill : MathUtil.lerp(this.fill, fillTo, fillAnimation.normalisedProgress());
-        fillTo = fill;
+        fillTo = Math.clamp(fill, 0, segments);
         fillAnimation = new PowAnimation(time, exponent);
         return this;
+    }
+
+    public PowAnimation getFillAnimation() {
+        return fillAnimation;
     }
 
     @Override

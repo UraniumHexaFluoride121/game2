@@ -112,7 +112,7 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
     public HashSet<Point> tilesWithoutEnemies(HashSet<Point> tiles, UnitTeam team) {
         HashSet<Point> newTiles = new HashSet<>();
         for (Point tile : tiles) {
-            if (level.getUnit(tile) == null || level.getUnit(tile).team == team || getTile(tile).isFoW)
+            if (level.getUnit(tile) == null || level.samePlayerTeam(level.getUnit(tile).team, team) || getTile(tile).isFoW)
                 newTiles.add(tile);
         }
         return newTiles;
@@ -329,7 +329,6 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
     }
 
     public void deselectAction() {
-        level.levelRenderer.exitActionButton.setEnabled(false);
         if (level.hasActiveAction()) {
             if (level.levelRenderer.highlightTileRenderer != null)
                 level.levelRenderer.highlightTileRenderer.close();

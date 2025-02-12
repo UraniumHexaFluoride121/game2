@@ -7,33 +7,37 @@ import render.anim.LerpAnimation;
 import render.ui.types.UITextLabel;
 import unit.UnitTeam;
 
-public class UIOnNextTurn extends AbstractRenderElement {
-    private final UITextLabel label = new UITextLabel(20, 3, true, 0.5f).setTextLeftBold();
+public class UITextNotification extends AbstractRenderElement {
+    private final UITextLabel label;
     private Level level;
     private boolean enabled = false;
     private String text = null;
+    private final float width, height;
     private PowAnimation anim = new PowAnimation(0.3f, 1.5f);
     private LerpAnimation holdTimer = new LerpAnimation(0.8f);
-    private HOLD_STATE holdState = HOLD_STATE.FINISHED;
+    private HoldState holdState = HoldState.FINISHED;
 
-    public UIOnNextTurn(RenderRegister<OrderedRenderable> register, RenderOrder order, Level level) {
+    public UITextNotification(RenderRegister<OrderedRenderable> register, RenderOrder order, Level level, float width, float height) {
         super(register, order);
         this.level = level;
+        this.width = width;
+        this.height = height;
+        label = new UITextLabel(width, height, true, 0.5f).setTextLeftBold();
         renderable = g -> {
             if (!enabled)
                 return;
-            label.updateLabelWidth(20 * anim.normalisedProgress());
+            label.updateLabelWidth(width * anim.normalisedProgress());
             label.updateTextLeft(text);
             switch (holdState) {
                 case STARTED -> {
                     if (anim.finished()) {
-                        holdState = HOLD_STATE.HELD;
+                        holdState = HoldState.HELD;
                         holdTimer.startTimer();
                     }
                 }
                 case HELD -> {
                     if (holdTimer.finished()) {
-                        holdState = HOLD_STATE.FINISHED;
+                        holdState = HoldState.FINISHED;
                         anim.setReversed(true);
                         anim.startTimer();
                     }
@@ -46,12 +50,12 @@ public class UIOnNextTurn extends AbstractRenderElement {
                     }
                 }
             }
-            GameRenderer.renderOffset(Renderable.right() / 2 - 10, Renderable.top() / 2 - 3 / 2f, g, () -> label.render(g));
+            GameRenderer.renderOffset(Renderable.right() / 2 - width / 2, Renderable.top() / 2 - height / 2, g, () -> label.render(g));
         };
     }
 
     public void start(String text, UnitTeam team) {
-        holdState = HOLD_STATE.STARTED;
+        holdState = HoldState.STARTED;
         this.text = text;
         level.levelRenderer.registerAnimBlock(this);
         anim.startTimer();
@@ -65,7 +69,7 @@ public class UIOnNextTurn extends AbstractRenderElement {
         level = null;
     }
 
-    private enum HOLD_STATE {
+    private enum HoldState {
         STARTED,
         HELD,
         FINISHED

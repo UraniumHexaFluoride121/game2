@@ -38,7 +38,7 @@ public class UIUnitInfo extends AbstractRenderElement implements RegisteredButto
                     Renderable.renderImage(unit.type.getImage(unit.team, UnitPose.INFO), false, true, 11).render(g);
                 });
                 GameRenderer.renderOffset(-0.2f, 14.5f, g, () -> {
-                    title.updateTextLeft(unit.type.displayName);
+                    title.updateTextLeft(unit.type.getName());
                     title.render(g);
                 });
                 GameRenderer.renderOffset(0.5f, 4.5f, g, () -> {

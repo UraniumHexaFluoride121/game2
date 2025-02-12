@@ -13,12 +13,17 @@ import render.GameRenderer;
 import render.anim.LerpAnimation;
 import render.renderables.HexagonRenderer;
 import render.texture.ImageRenderer;
+import render.ui.UIColourTheme;
+import render.ui.implementation.UIHitPointBar;
 import unit.UnitTeam;
+import unit.action.ActionShapes;
 
 import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+
+import static unit.action.Action.*;
 
 public class Tile implements Writable {
     public static final float STROKE_WIDTH = 0.1f, HIGHLIGHT_STROKE_WIDTH = 0.2f;
@@ -45,6 +50,7 @@ public class Tile implements Writable {
     public Structure structure = null;
     public double randomValue = 0;
     public ImageRenderer imageRenderer;
+    private UIHitPointBar captureBar = null;
 
     public LerpAnimation illegalTileTimer = new LerpAnimation(0.8f).finish();
 
@@ -78,8 +84,11 @@ public class Tile implements Writable {
         GameRenderer.renderOffset(renderPosCentered, g, () -> {
             if (imageRenderer != null)
                 imageRenderer.render(g, TILE_SIZE);
-            if (structure != null)
+            if (hasAnyStructure()) {
                 structure.renderer.render(g, TILE_SIZE);
+                if (structure.exploding())
+                    structure.renderExplosion(g, this);
+            }
         });
     }
 
@@ -93,6 +102,23 @@ public class Tile implements Writable {
                 GameRenderer.renderOffset(renderPos, g, () -> HIGHLIGHT_RENDERER.render(g));
             }
         }
+    }
+
+    public static final BasicStroke ICON_STROKE = new BasicStroke(0.02f * TILE_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
+
+    public void renderCaptureBar(Graphics2D g, Level level) {
+        if (isFoW || !hasStructure() || captureBar == null || level.getUnit(pos) == null || level.getUnit(pos).getCaptureProgress() == -1)
+            return;
+        GameRenderer.renderOffset(renderPos.x - TILE_SIZE * 0.5f / 2, renderPos.y + TILE_SIZE * 0.7f, g, () -> {
+            captureBar.render(g);
+            g.translate(TILE_SIZE * 0.32f, -TILE_SIZE * 0.06f);
+            g.setColor(ICON_COLOUR);
+            g.setStroke(ICON_STROKE);
+            GameRenderer.renderScaled(TILE_SIZE / 4, g, () -> {
+                g.fill(ActionShapes.FLAG);
+                g.draw(ActionShapes.FLAG);
+            });
+        });
     }
 
     public void setIllegalTile() {
@@ -124,15 +150,53 @@ public class Tile implements Writable {
     }
 
     public void setStructure(StructureType type, UnitTeam team) {
-        structure = new Structure(pos, type, team);
+        setStructure(new Structure(pos, type, team));
     }
 
     public void setStructure(Structure structure) {
         this.structure = structure;
+        captureBar = new UIHitPointBar(
+                TILE_SIZE * 0.02f, TILE_SIZE * 0.35f, TILE_SIZE * 0.1f, TILE_SIZE * 0.02f,
+                structure.type.captureSteps, UIColourTheme.GRAYED_OUT).setRounding(TILE_SIZE * 0.1f * 0.75f);
     }
 
     public void removeStructure() {
         structure = null;
+        captureBar = null;
+    }
+
+    public void explodeStructure() {
+        structure.explode();
+    }
+
+    public boolean hasStructure() {
+        return structure != null && !structure.exploding();
+    }
+
+    public boolean hasExplodingStructure() {
+        return structure != null && structure.exploding();
+    }
+
+    public boolean hasAnyStructure() {
+        return structure != null;
+    }
+
+    public void startCapturing(UIColourTheme theme) {
+        captureBar.setFill(0);
+        captureBar.setColour(theme);
+    }
+
+    public void instantSetProgress(int progress) {
+        captureBar.setFill(progress);
+    }
+
+    public void setProgress(int progress) {
+        captureBar.setFill(progress, 1, 0.8f);
+    }
+
+    public void setProgress(int progress, Level level, Runnable onFillComplete) {
+        setProgress(progress);
+        level.levelRenderer.registerTimerBlock(captureBar.getFillAnimation(), onFillComplete);
     }
 
     @Override

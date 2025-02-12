@@ -19,9 +19,9 @@ public class UITileInfo extends UIContainer {
     private final UITextLabel visibility = new UITextLabel(5f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextCenter("Visibility:").setTextCenterBold();
     private final UITextLabel defence = new UITextLabel(5f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextCenter("Defence:").setTextCenterBold();
     private final UITextLabel movement = new UITextLabel(5f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextCenter("Movement:").setTextCenterBold();
-    private final UIHitPointBar visibilityBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE.borderColour, UIColourTheme.LIGHT_BLUE.backgroundColour, UIColourTheme.LIGHT_BLUE.borderColour).setRounding(0.5f);
-    private final UIHitPointBar defenceBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE.borderColour, UIColourTheme.LIGHT_BLUE.backgroundColour, UIColourTheme.LIGHT_BLUE.borderColour).setRounding(0.5f);
-    private final UIHitPointBar movementBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE.borderColour, UIColourTheme.LIGHT_BLUE.backgroundColour, UIColourTheme.LIGHT_BLUE.borderColour).setRounding(0.5f);
+    private final UIHitPointBar visibilityBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
+    private final UIHitPointBar defenceBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
+    private final UIHitPointBar movementBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     public UITileInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Level level) {
         super(register, buttonRegister, order, buttonOrder, x, y);
         addRenderables((r, b) -> {

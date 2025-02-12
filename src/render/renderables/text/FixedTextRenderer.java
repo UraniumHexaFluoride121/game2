@@ -118,6 +118,8 @@ public class FixedTextRenderer implements Renderable {
     }
 
     public String getText() {
+        if (text == null)
+            return "";
         return text;
     }
 }

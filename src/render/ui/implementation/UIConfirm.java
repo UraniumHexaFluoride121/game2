@@ -18,11 +18,11 @@ public class UIConfirm extends AbstractRenderElement implements RegisteredButton
     private static final float width = 12, height = 5;
     private final FixedTextRenderer
             text = new FixedTextRenderer(null, 1.5f, UITextLabel.TEXT_COLOUR)
-                    .setTextAlign(TextAlign.CENTER),
+                    .setTextAlign(TextAlign.CENTER).setBold(true),
             confirmText = new FixedTextRenderer("Confirm", 0.85f, UITextLabel.TEXT_COLOUR)
-                    .setTextAlign(TextAlign.CENTER),
+                    .setTextAlign(TextAlign.CENTER).setBold(true),
             cancelText = new FixedTextRenderer("Cancel", 0.85f, UITextLabel.TEXT_COLOUR)
-                    .setTextAlign(TextAlign.CENTER);
+                    .setTextAlign(TextAlign.CENTER).setBold(true);
     private final StaticHitBox
             confirmBox = StaticHitBox.createFromOriginAndSize(Renderable.right() / 2 + width / 2f - 1.5f - width / 3, Renderable.top() / 2 - height / 2f + 0.5f,
             width / 3, 1.5f),

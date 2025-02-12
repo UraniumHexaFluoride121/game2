@@ -6,6 +6,7 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.tick.Tickable;
 import level.Level;
+import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileSelector;
 import network.NetworkState;
@@ -38,6 +39,7 @@ public class Unit implements Deletable, Tickable {
     public final UnitType type;
     public final UnitTeam team;
     public Point pos;
+    private int captureProgress = -1;
 
     private ObjPos renderPos;
 
@@ -58,7 +60,7 @@ public class Unit implements Deletable, Tickable {
     });
 
     public final ArrayList<WeaponInstance> weapons = new ArrayList<>();
-    public final HashSet<Action> performedActions = new HashSet<>();
+    private final HashSet<Action> performedActions = new HashSet<>();
 
     public float hitPoints, firingTempHP;
     private final TextRenderer hitPointText = new TextRenderer(() -> MathUtil.floatToString((float) Math.ceil(hitPoints), 0), 0.7f, Color.WHITE)
@@ -191,6 +193,18 @@ public class Unit implements Deletable, Tickable {
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
+        } else if (action == CAPTURE) {
+            MainPanel.addTask(level::endAction);
+            level.tileSelector.deselect();
+            if (level.networkState == NetworkState.CLIENT) {
+                addPerformedAction(CAPTURE);
+                MainPanel.client.sendUnitCaptureRequest(this);
+                return;
+            }
+            incrementCapture();
+            if (level.networkState == NetworkState.SERVER)
+                level.server.sendUnitCapturePacket(this);
+            return;
         } else {
             selectableTiles = new HashSet<>();
         }
@@ -214,8 +228,7 @@ public class Unit implements Deletable, Tickable {
                         illegalTile = movePath.getTile(path.length() - 1);
                     } else
                         illegalTile = null;
-                    performedActions.add(MOVE);
-                    level.levelRenderer.registerAnimBlock(path);
+                    addPerformedAction(MOVE);
                     level.endAction();
                     if (level.networkState == NetworkState.SERVER) {
                         level.server.sendUnitMovePacket(path, illegalTile, this);
@@ -227,8 +240,7 @@ public class Unit implements Deletable, Tickable {
                     level.server.sendUnitShootPacket(this, other);
                 }
                 attack(other);
-                performedActions.add(FIRE);
-                performedActions.add(MOVE);
+                addPerformedAction(FIRE);
                 level.endAction();
                 selector().deselect();
             }
@@ -246,21 +258,97 @@ public class Unit implements Deletable, Tickable {
                         illegalTile = movePath.getTile(path.length() - 1);
                     } else
                         illegalTile = null;
-                    MainPanel.client.sendMoveUnitRequest(path, illegalTile, this);
+                    MainPanel.client.sendUnitMoveRequest(path, illegalTile, this);
                     level.endAction();
                 }
             } else if (action == FIRE) {
-                MainPanel.client.sendShootUnitRequest(this, level.getUnit(tile.pos));
+                MainPanel.client.sendUnitShootRequest(this, level.getUnit(tile.pos));
                 level.endAction();
                 selector().deselect();
             }
         }
     }
 
+    public void capture(int captureProgress, boolean action) {
+        Tile tile = level.getTile(pos);
+        if (this.captureProgress == -1 && captureProgress != -1)
+            tile.startCapturing(team.uiColour);
+        if (captureProgress != -1) {
+            if (tile.isFoW) {
+                tile.instantSetProgress(captureProgress);
+                finishCapture(tile);
+            } else {
+                tile.setProgress(captureProgress, level, () -> {
+                    finishCapture(tile);
+                });
+            }
+        }
+        if (action) {
+            if (!isRenderFoW())
+                level.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+            addPerformedAction(CAPTURE);
+        }
+        this.captureProgress = captureProgress;
+    }
+
+    private void finishCapture(Tile tile) {
+        if (level.networkState == NetworkState.CLIENT)
+            return;
+        if (captureProgress >= tile.structure.type.captureSteps) {
+            level.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+            if (tile.structure.type == StructureType.BASE) {
+                level.removePlayer(tile.structure.team);
+            }
+            if (tile.structure.type.destroyedOnCapture) {
+                tile.explodeStructure();
+            } else {
+                tile.structure.setTeam(team);
+            }
+            stopCapture();
+            if (level.networkState == NetworkState.SERVER) {
+                level.server.sendStructurePacket(tile);
+            }
+        }
+    }
+
+    public void incrementCapture() {
+        int newCaptureProgress = captureProgress;
+        if (newCaptureProgress == -1)
+            newCaptureProgress = 1;
+        else
+            newCaptureProgress++;
+        capture(newCaptureProgress, true);
+    }
+
+    public void decrementCapture() {
+        int newCaptureProgress = captureProgress;
+        if (newCaptureProgress <= 0)
+            return;
+        newCaptureProgress--;
+        capture(newCaptureProgress, false);
+    }
+
+    public void setCaptureProgress(int captureProgress) {
+        capture(captureProgress, false);
+    }
+
+    public boolean canCapture() {
+        Tile tile = level.getTile(pos);
+        return tile.hasStructure() && !level.samePlayerTeam(tile.structure.team, team) && tile.structure.canBeCaptured;
+    }
+
+    public void stopCapture() {
+        captureProgress = -1;
+    }
+
+    public int getCaptureProgress() {
+        return captureProgress;
+    }
+
     public void startMove(AnimTilePath path, Point illegalTile) {
         this.path = path;
         this.illegalTile = illegalTile;
-        performedActions.add(MOVE);
+        addPerformedAction(MOVE);
         level.levelRenderer.registerAnimBlock(path);
     }
 
@@ -275,8 +363,7 @@ public class Unit implements Deletable, Tickable {
             level.server.sendUnitShootPacket(this, other);
         }
         attack(other);
-        performedActions.add(FIRE);
-        performedActions.add(MOVE);
+        addPerformedAction(FIRE);
     }
 
     public void attack(Unit other) {
@@ -292,20 +379,23 @@ public class Unit implements Deletable, Tickable {
             firingExplosion = new UnitFiringExplosion(level.getTile(other.pos).renderPosCentered, this, other);
             level.levelRenderer.registerAnimBlock(firingExplosion);
         } else {
-            postFiring(other);
-            other.postFiring(this);
+            postFiring(other, true);
+            other.postFiring(this, false);
         }
         if (!otherFoW && level.getThisTeam() != level.getActiveTeam())
             level.levelRenderer.setCameraInterpBlockPos(level.getTile(other.pos).renderPosCentered);
     }
 
-    public void postFiring(Unit other) {
+    public void postFiring(Unit other, boolean isThisAttacking) {
         hitPoints = firingTempHP;
         if (hitPoints <= 0)
             onDestroyed(other);
+        else if (!isThisAttacking) {
+            decrementCapture();
+        }
     }
 
-    private void onDestroyed(Unit destroyedBy) {
+    public void onDestroyed(Unit destroyedBy) { //destroyedBy is null if not destroyed by a unit
         explosion = new ImageSequenceAnim(ImageSequenceGroup.EXPLOSION.getRandomSequence(), TILE_SIZE * 2f, 0.5f);
         level.levelRenderer.registerAnimBlock(explosion);
         level.levelRenderer.enableCameraShake(new ObjPos(0.2f, 0.2f));
@@ -394,13 +484,21 @@ public class Unit implements Deletable, Tickable {
                 level.moveUnit(this, path.getLastTile(), level.getThisTeam() == level.getActiveTeam());
                 level.levelRenderer.removeAnimBlock(path);
                 path = null;
-                if (illegalTile != null)
-                    level.getTile(illegalTile).setIllegalTile();
+                if (illegalTile != null) {
+                    Tile tile = level.getTile(illegalTile);
+                    if ((!isRenderFoW() && !tile.isFoW) || level.samePlayerTeam(level.getThisTeam(), team)) {
+                        tile.setIllegalTile();
+                    }
+                }
             } else {
                 renderPos = path.getPos();
+                if (!isRenderFoW()) {
+                    level.levelRenderer.registerAnimBlock(path);
+                    level.levelRenderer.setCameraInterpBlockPos(renderPos.copy().addY(TILE_SIZE / 2 * SIN_60_DEG));
+                } else {
+                    level.levelRenderer.removeAnimBlock(path);
+                }
             }
-            if (!isRenderFoW())
-                level.levelRenderer.setCameraInterpBlockPos(renderPos.copy().addY(TILE_SIZE / 2 * SIN_60_DEG));
         }
         return renderPos;
     }
@@ -464,7 +562,7 @@ public class Unit implements Deletable, Tickable {
     }
 
     public void turnEnded() {
-        performedActions.clear();
+        clearPerformedActions();
         updateActionUI();
     }
 
@@ -473,13 +571,32 @@ public class Unit implements Deletable, Tickable {
     }
 
     public void updateFromData(UnitData d) {
-        performedActions.clear();
-        performedActions.addAll(d.performedActions);
+        clearPerformedActions();
+        d.performedActions.forEach(this::addPerformedAction);
         hitPoints = d.hitPoints;
         firingTempHP = d.hitPoints;
+        if (captureProgress != d.captureProgress) {
+            setCaptureProgress(d.captureProgress);
+        }
         for (int i = 0; i < d.weaponAmmo.size(); i++) {
             weapons.get(i).ammo = d.weaponAmmo.get(i);
         }
+    }
+
+    public boolean hasPerformedAction(Action action) {
+        return performedActions.contains(action);
+    }
+
+    public void addPerformedAction(Action action) {
+        performedActions.add(action);
+    }
+
+    public HashSet<Action> getPerformedActions() {
+        return performedActions;
+    }
+
+    public void clearPerformedActions() {
+        performedActions.clear();
     }
 
     @Override
