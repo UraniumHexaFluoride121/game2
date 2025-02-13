@@ -5,7 +5,6 @@ import render.GameRenderer;
 import render.Renderable;
 import render.anim.ImageSequenceAnim;
 import render.anim.LerpAnimation;
-import render.texture.ImageSequence;
 
 import java.awt.*;
 
@@ -16,7 +15,7 @@ public class Projectile implements Renderable {
     private final LerpAnimation holdAnim = new LerpAnimation(1);
     private boolean end = false, exploding = false;
     private float endDistance = 15;
-    private final ImageSequenceAnim explosion;
+    private final ImageSequenceAnim explosion, spawnAnim;
 
     public Projectile(ProjectileType type, float x, float y) {
         this.type = type;
@@ -24,10 +23,15 @@ public class Projectile implements Renderable {
         this.y = y;
         forwardAnim = new LerpAnimation((30 - x) / type.velocity);
         explosion = type.hitAnim();
+        spawnAnim = type.spawnAnim();
     }
 
     @Override
     public void render(Graphics2D g) {
+        if (spawnAnim != null)
+            GameRenderer.renderOffset(x, y, g, () -> {
+                spawnAnim.render(g);
+            });
         if (!end && holdAnim.finished()) {
             end = true;
             endDistance = MathUtil.randFloatBetween(40, 50, Math::random);

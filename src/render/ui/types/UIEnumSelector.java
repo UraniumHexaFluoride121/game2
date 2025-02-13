@@ -92,7 +92,7 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
 
     @Override
     public boolean posInside(ObjPos pos) {
-        return enabled && hitBox.isPositionInside(pos);
+        return isEnabled() && hitBox.isPositionInside(pos);
     }
 
     private boolean blocking = false;
@@ -109,21 +109,21 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled) {
+        if (isEnabled()) {
             if (!blocked && inside && type.isScrollInputOnce()) {
                 if (type == InputType.MOUSE_SCROLL_UP_ONCE) {
                     increment();
                 } else
                     decrement();
             } else
-                blocking = !blocked && internal.acceptInput(pos, type, true);
+                blocking = internal.acceptInput(pos, type, true, blocked);
         }
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
-            blocking = !blocked && internal.acceptInput(pos, type, false);
+        if (isEnabled())
+            blocking = internal.acceptInput(pos, type, false, blocked);
     }
 
     @Override

@@ -43,6 +43,26 @@ public enum UIColourTheme {
             new Color(99, 193, 93),
             new Color(88, 175, 105, 128)
     ),
+    DEEP_GREEN(
+            new Color(106, 220, 68),
+            new Color(92, 193, 58, 144),
+            new Color(106, 193, 71),
+            new Color(82, 184, 54, 133),
+            new Color(64, 145, 41),
+            new Color(79, 163, 46, 115),
+            new Color(76, 172, 49),
+            new Color(74, 179, 51, 128)
+    ),
+    DEEP_YELLOW(
+            new Color(220, 185, 68),
+            new Color(193, 171, 58, 144),
+            new Color(193, 163, 71),
+            new Color(184, 152, 54, 133),
+            new Color(145, 119, 41),
+            new Color(163, 134, 46, 115),
+            new Color(172, 147, 49),
+            new Color(179, 153, 51, 128)
+    ),
     DEEP_RED(
             new Color(220, 68, 68),
             new Color(193, 58, 58, 144),
@@ -82,6 +102,16 @@ public enum UIColourTheme {
             new Color(92, 159, 74, 115),
             new Color(97, 166, 81),
             new Color(107, 175, 88, 128)
+    ),
+    GREEN_TRANSPARENT_CENTER(
+            new Color(121, 228, 105),
+            new Color(101, 189, 87, 71),
+            new Color(122, 191, 99),
+            new Color(114, 181, 92, 65),
+            new Color(99, 147, 75),
+            new Color(92, 159, 74, 60),
+            new Color(97, 166, 81),
+            new Color(107, 175, 88, 61)
     ),
     BLUE(
             new Color(85, 121, 211),

@@ -43,12 +43,7 @@ public class Unit implements Deletable, Tickable {
 
     private ObjPos renderPos;
 
-    private final SineAnimation
-            idleAnimX = new SineAnimation(5f + (float) Math.random(), (float) Math.random() * 360),
-            idleAnimY = new SineAnimation(7f + (float) Math.random(), (float) Math.random() * 360);
-    private final SineAnimation
-            moveAnimX = new SineAnimation(1f + (float) Math.random() * .3f, (float) Math.random() * 360),
-            moveAnimY = new SineAnimation(1.5f + (float) Math.random() * .3f, (float) Math.random() * 360);
+    private final SineAnimation idleAnimX, idleAnimY, moveAnimX, moveAnimY;
 
     private ActionSelector actionUI = new ActionSelector(this::getAndUpdateRenderPos, () -> {
         if (getLevel().getThisTeam() != getLevel().getActiveTeam() || getLevel().getThisTeam() != getTeam())
@@ -83,6 +78,10 @@ public class Unit implements Deletable, Tickable {
         for (WeaponTemplate template : type.weapons) {
             weapons.add(new WeaponInstance(template));
         }
+        idleAnimX = new SineAnimation((5f + (float) Math.random()) * type.bobbingRate, (float) Math.random() * 360);
+        idleAnimY = new SineAnimation((7f + (float) Math.random()) * type.bobbingRate, (float) Math.random() * 360);
+        moveAnimX = new SineAnimation((1f + (float) Math.random() * .3f) * type.bobbingRate, (float) Math.random() * 360);
+        moveAnimY = new SineAnimation((1.5f + (float) Math.random() * .3f) * type.bobbingRate, (float) Math.random() * 360);
     }
 
     public void renderTile(Graphics2D g) {
@@ -527,8 +526,8 @@ public class Unit implements Deletable, Tickable {
 
     private ObjPos getShipRenderPos() {
         if (path != null)
-            return getAndUpdateRenderPos().copy().add(moveAnimX.normalisedProgress() / 6, moveAnimY.normalisedProgress() / 4);
-        return getAndUpdateRenderPos().copy().add(idleAnimX.normalisedProgress() / 6, idleAnimY.normalisedProgress() / 4);
+            return getAndUpdateRenderPos().copy().add(moveAnimX.normalisedProgress() / 6 * type.bobbingAmount, moveAnimY.normalisedProgress() / 4 * type.bobbingAmount);
+        return getAndUpdateRenderPos().copy().add(idleAnimX.normalisedProgress() / 6 * type.bobbingAmount, idleAnimY.normalisedProgress() / 4 * type.bobbingAmount);
     }
 
     public float getTileDamageMultiplier() {

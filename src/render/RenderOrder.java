@@ -22,11 +22,11 @@ public enum RenderOrder {
 
     //Level menus / UI
     LEVEL_UI,
+    UNIT_INFO_SCREEN_BACKGROUND,
+    UNIT_INFO_SCREEN,
 
     //Main menu screen
     TITLE_SCREEN_BACKGROUND,
     TITLE_SCREEN_BUTTON_BACKGROUND,
-    TITLE_SCREEN_BUTTONS,
-
-    DEBUG
+    TITLE_SCREEN_BUTTONS
 }

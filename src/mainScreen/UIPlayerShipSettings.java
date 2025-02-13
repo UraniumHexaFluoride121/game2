@@ -1,4 +1,4 @@
-package render.ui.implementation;
+package mainScreen;
 
 import foundation.MainPanel;
 import foundation.input.ButtonOrder;
@@ -22,10 +22,12 @@ import java.util.HashMap;
 public class UIPlayerShipSettings extends UIContainer {
     public static final HashMap<UnitType, Integer> DEFAULT_PRESET = new HashMap<>();
     public static final float TOP_MARGIN = 11;
+    private static final float SIZE = 4;
 
     static {
         DEFAULT_PRESET.put(UnitType.FIGHTER, 3);
         DEFAULT_PRESET.put(UnitType.BOMBER, 1);
+        DEFAULT_PRESET.put(UnitType.CORVETTE, 1);
     }
 
     private final HashMap<UnitTeam, TeamSettings> teamSettingsMap = new HashMap<>();
@@ -51,7 +53,7 @@ public class UIPlayerShipSettings extends UIContainer {
     }
 
     public float scrollDistance() {
-        return UnitType.ORDERED_UNIT_TYPES.length * 3.8f + 1.2f;
+        return UnitType.ORDERED_UNIT_TYPES.length * (SIZE + .8f) + 1.2f;
     }
 
     public boolean verifyTeams() {
@@ -102,19 +104,19 @@ public class UIPlayerShipSettings extends UIContainer {
             addRenderables((r, b) -> {
                 for (int i = 0; i < UnitType.ORDERED_UNIT_TYPES.length; i++) {
                     int finalI = i;
-                    new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(12, 3f).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER))
-                            .translate(3.5f, i * 3.8f);
-                    new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIImageBox(3, 3, ImageRenderer.renderImageCentered(UnitType.ORDERED_UNIT_TYPES[i].getImage(team, UnitPose.INFO), false))
+                    new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(15 - SIZE, SIZE).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER))
+                            .translate(4.5f, i * (SIZE + .8f));
+                    new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIImageBox(SIZE, SIZE, ImageRenderer.renderImageCentered(UnitType.ORDERED_UNIT_TYPES[i].getImage(team, UnitPose.INFO), false))
                             .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER))
-                            .translate(0, i * 3.8f).setZOrder(1);
-                    new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, i * 3.8f, (r2, b2) -> {
-                        UINumberSelector selector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 6f, 1.15f, 1.3f, 3, 0, 10, 0);
+                            .translate(0, i * (SIZE + .8f)).setZOrder(1);
+                    new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, i * (SIZE + .8f), (r2, b2) -> {
+                        UINumberSelector selector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 4.5f + SIZE / 2, 1.25f, 1.5f, 3, 0, 10, 0);
                         selectors.put(UnitType.ORDERED_UNIT_TYPES[finalI], selector);
-                        selector.scale(1, -1).translate(0, 3.8f);
+                        selector.scale(1, -1).translate(0, (SIZE + .8f));
                         selector.setOnChanged(() -> MainPanel.titleScreen.playerBoxes.verifyTeams());
-                        new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS, new UITextLabel(9, 0.7f, false, 0, 0.85f)
+                        new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS, new UITextLabel(9, 1.f, false, 0, 0.85f)
                                 .updateTextCenter(UnitType.ORDERED_UNIT_TYPES[finalI].getName() + " Units").setTextCenterBold())
-                                .scale(1, -1).translate(4.7f, 1);
+                                .scale(1, -1).translate(3.2f + SIZE / 2, 1.2f);
                     });
                 }
             });
@@ -141,12 +143,12 @@ public class UIPlayerShipSettings extends UIContainer {
 
         @Override
         public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-            super.buttonPressed(pos.copy().addY(-0.2f), inside, blocked, type);
+            super.buttonPressed(pos.copy().addY(-0.8f), inside, blocked, type);
         }
 
         @Override
         public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-            super.buttonReleased(pos.copy().addY(-0.2f), inside, blocked, type);
+            super.buttonReleased(pos.copy().addY(-0.8f), inside, blocked, type);
         }
 
         @Override

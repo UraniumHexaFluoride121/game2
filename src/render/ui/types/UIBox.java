@@ -6,10 +6,11 @@ import render.Renderable;
 import render.ui.UIColourTheme;
 
 import java.awt.*;
+import java.awt.geom.Path2D;
 
 public class UIBox implements Renderable {
     private static final BasicStroke STROKE = Renderable.sharpCornerStroke(0.17f * SCALING);
-    protected Polygon box;
+    protected Shape box;
     private ButtonClickHandler clickHandler = null;
     private UIColourTheme colourTheme = UIColourTheme.LIGHT_BLUE;
     private boolean borderOnly = false, centerOnly = false;
@@ -202,7 +203,7 @@ public class UIBox implements Renderable {
 
         private final ShapeSupplier shapeSupplier;
 
-        public Polygon create(float width, float height, float corner) {
+        public Shape create(float width, float height, float corner) {
             return shapeSupplier.create(width, height, corner);
         }
 
@@ -213,6 +214,6 @@ public class UIBox implements Renderable {
 
     @FunctionalInterface
     private interface ShapeSupplier {
-        Polygon create(float width, float height, float corner);
+        Shape create(float width, float height, float corner);
     }
 }

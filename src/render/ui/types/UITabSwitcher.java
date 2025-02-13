@@ -5,6 +5,7 @@ import foundation.input.*;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import render.*;
+import render.renderables.RenderElement;
 import render.renderables.text.FixedTextRenderer;
 import render.renderables.text.TextAlign;
 import render.ui.UIColourTheme;
@@ -14,7 +15,7 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
-public class UITabSwitcher extends AbstractRenderElement implements RegisteredButtonInputReceiver {
+public class UITabSwitcher extends UIContainer {
     public final float x, y, height, width;
     private final UIBox box;
     private ButtonRegister buttonRegister;
@@ -25,7 +26,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
     private final ArrayList<Tab> tabs = new ArrayList<>();
 
     public UITabSwitcher(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height) {
-        super(register, order);
+        super(register, buttonRegister, order, buttonOrder, x, y);
         this.x = x;
         this.y = y;
         this.height = height;
@@ -36,10 +37,10 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
             buttonRegister.register(this);
         }
         box = new UIBox(width, height).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER);
-        renderable = g -> {
-            if (!enabled)
-                return;
-            GameRenderer.renderOffset(x, y, g, () -> {
+        addRenderables((r, b) -> {
+            new RenderElement(r, RenderOrder.LEVEL_UI, g -> {
+                if (!isEnabled())
+                    return;
                 tabs.forEach(t -> {
                     if (t.index != selectedTab)
                         t.render(g);
@@ -50,7 +51,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
                 if (!tabs.isEmpty())
                     tabs.get(selectedTab).renderer.render(g);
             });
-        };
+        });
     }
 
     public UITabSwitcher selectTab(int index) {
@@ -75,7 +76,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
 
     @Override
     public boolean posInside(ObjPos pos) {
-        return enabled;
+        return isEnabled();
     }
 
     private boolean blocking = false;
@@ -92,16 +93,16 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (!enabled || tabs.isEmpty())
+        if (!isEnabled() || tabs.isEmpty())
             return;
-        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, true);
+        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, true, blocked);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (!enabled || tabs.isEmpty())
+        if (!isEnabled() || tabs.isEmpty())
             return;
-        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, false);
+        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, false, blocked);
     }
 
     @Override
@@ -144,7 +145,7 @@ public class UITabSwitcher extends AbstractRenderElement implements RegisteredBu
                     if (t.index != parent.selectedTab)
                         t.deselect();
                 });
-                internal.acceptInput(new ObjPos(), InputType.TAB_ON_SWITCH_TO, true);
+                internal.acceptInput(new ObjPos(), InputType.TAB_ON_SWITCH_TO, true, false);
             }).noDeselect();
             hitBox = StaticHitBox.createFromOriginAndSize(x + parent.x, y + parent.y, width, height);
             box = new UIBox(width, height, 0.4f, UIBox.BoxShape.RECTANGLE_TOP_CORNERS_CUT).setClickHandler(clickHandler).setColourTheme(UIColourTheme.GREEN_SELECTED_TAB);

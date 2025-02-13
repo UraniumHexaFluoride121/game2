@@ -10,6 +10,7 @@ import render.anim.ExpAnimation;
 import render.anim.SineAnimation;
 import render.ui.implementation.UIHitPointBar;
 import unit.Unit;
+import unit.UnitType;
 import unit.weapon.Projectile;
 import unit.weapon.ProjectileSpawner;
 import unit.weapon.WeaponInstance;
@@ -231,11 +232,11 @@ public class FiringRenderer extends AbstractRenderElement {
         rightUnitRenderer = new UnitRenderer[rightUnitCount];
         for (int i = 0; i < leftUnitCount; i++) {
             ImageCounter image = new CachedImageCounter(leftUnit.type.firingSequenceLeft.get(leftUnit.team));
-            leftUnitRenderer[i] = new UnitRenderer(image, leftWeapon, leftUnit.getFireAnimState(leftWeapon), leftProjectiles, i >= leftUnitCountRemaining, leftUnit == attackingUnit, leftPositions[i].x, leftPositions[i].y);
+            leftUnitRenderer[i] = new UnitRenderer(image, leftWeapon, leftUnit.getFireAnimState(leftWeapon), leftProjectiles, i >= leftUnitCountRemaining, leftUnit == attackingUnit, leftPositions[i].x, leftPositions[i].y, leftUnit.type);
         }
         for (int i = 0; i < rightUnitCount; i++) {
             ImageCounter image = new CachedImageCounter(rightUnit.type.firingSequenceLeft.get(rightUnit.team));
-            rightUnitRenderer[i] = new UnitRenderer(image, rightWeapon, rightUnit.getFireAnimState(rightWeapon), rightProjectiles, i >= rightUnitCountRemaining, rightUnit == attackingUnit, rightPositions[i].x, rightPositions[i].y);
+            rightUnitRenderer[i] = new UnitRenderer(image, rightWeapon, rightUnit.getFireAnimState(rightWeapon), rightProjectiles, i >= rightUnitCountRemaining, rightUnit == attackingUnit, rightPositions[i].x, rightPositions[i].y, rightUnit.type);
         }
         leftImage = level.getTile(leftUnit.pos).type.firingTexturesLeft.getRandomImage();
         rightImage = level.getTile(rightUnit.pos).type.firingTexturesRight.getRandomImage();
@@ -279,6 +280,11 @@ public class FiringRenderer extends AbstractRenderElement {
             new ObjPos(12, Renderable.top() * 0.2f)
     };
 
+    public static Supplier<ObjPos[]> TWO_UNITS = () -> new ObjPos[]{
+            new ObjPos(14, Renderable.top() * 0.7f),
+            new ObjPos(17, Renderable.top() * 0.3f)
+    };
+
     private static class UnitRenderer implements Renderable {
         private ImageSequenceAnim explosion = null;
         private final ImageCounter unit;
@@ -294,8 +300,9 @@ public class FiringRenderer extends AbstractRenderElement {
         private boolean enabled = true, exploding = false;
         private final float x, y;
         private LerpAnimation shakeDuration = null;
+        private final UnitType type;
 
-        private UnitRenderer(ImageCounter unit, WeaponInstance weapon, WeaponInstance.FireAnimState fireAnimState, ArrayList<Projectile> projectiles, boolean toBeDestroyed, boolean isAttacking, float x, float y) {
+        private UnitRenderer(ImageCounter unit, WeaponInstance weapon, WeaponInstance.FireAnimState fireAnimState, ArrayList<Projectile> projectiles, boolean toBeDestroyed, boolean isAttacking, float x, float y, UnitType type) {
             this.unit = unit;
             this.weapon = weapon;
             this.fireState = fireAnimState;
@@ -304,6 +311,7 @@ public class FiringRenderer extends AbstractRenderElement {
             this.isAttacking = isAttacking;
             this.x = x;
             this.y = y;
+            this.type = type;
             if (fireAnimState == WeaponInstance.FireAnimState.EMPTY)
                 unit.end();
         }
@@ -318,7 +326,7 @@ public class FiringRenderer extends AbstractRenderElement {
                 return;
             }
             if (spawner != null) {
-                ArrayList<Projectile> spawnedProjectiles = spawner.getSpawnedProjectiles(x + xOffset(), y + yOffset());
+                ArrayList<Projectile> spawnedProjectiles = spawner.getSpawnedProjectiles(x + xOffset(), y + yOffset(), type.firingAnimUnitWidth);
                 if (fireState == WeaponInstance.FireAnimState.FIRE)
                     unit.increment(spawnedProjectiles.size());
                 projectiles.addAll(spawnedProjectiles);
@@ -327,7 +335,7 @@ public class FiringRenderer extends AbstractRenderElement {
                 g.translate(0.2, 0.2);
             }
             g.translate(xOffset(), yOffset());
-            unit.render(g, 15);
+            unit.render(g, type.firingAnimUnitWidth);
         }
 
         public void renderExplosions(Graphics2D g) {

@@ -7,6 +7,8 @@ import render.*;
 import render.ui.UIColourTheme;
 
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Path2D;
 import java.util.function.Function;
 
 import static level.tile.Tile.*;
@@ -39,7 +41,7 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         box = new UIBox(width, height).setClickHandler(clickHandler);
         hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
         renderable = g -> {
-            if (!enabled)
+            if (!isEnabled())
                 return;
             GameRenderer.renderOffset(x, y, g, () -> {
                 box.render(g);
@@ -51,6 +53,25 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
                 }
             });
         };
+    }
+
+    public UIShapeButton drawShape(float width) {
+        BasicStroke stroke = Renderable.roundedStroke(width * SCALING);
+        renderable = g -> {
+            if (!isEnabled())
+                return;
+            GameRenderer.renderOffset(x, y, g, () -> {
+                box.render(g);
+                g.setColor(UITextLabel.TEXT_COLOUR);
+                if (renderShape != null) {
+                    GameRenderer.renderScaled(1f / SCALING, g, () -> {
+                        g.setStroke(stroke);
+                        g.draw(renderShape);
+                    });
+                }
+            });
+        };
+        return this;
     }
 
     public UIShapeButton noDeselect() {
@@ -88,8 +109,8 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         return this;
     }
 
-    public UIShapeButton setShape(Function<UIShapeButton, Shape> shapeGenerator) {
-        renderShape = shapeGenerator.apply(this);
+    public UIShapeButton setShape(Function<UIBox, Shape> shapeGenerator) {
+        renderShape = shapeGenerator.apply(box);
         return this;
     }
 
@@ -109,7 +130,7 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
 
     @Override
     public boolean posInside(ObjPos pos) {
-        return enabled && hitBox.isPositionInside(pos);
+        return isEnabled() && hitBox.isPositionInside(pos);
     }
 
     @Override
@@ -124,13 +145,13 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
+        if (isEnabled())
             clickHandler.buttonPressed(pos, inside, blocked, type);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
+        if (isEnabled())
             clickHandler.buttonReleased(pos, inside, blocked, type);
     }
 
@@ -145,7 +166,7 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         }
     }
 
-    public static Shape triangleLeft(UIShapeButton b) {
+    public static Shape triangleLeft(UIBox b) {
         float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f;
         return new Polygon(new int[]{
                 (int) ((-size + cx + size / 10) * SCALING),
@@ -158,7 +179,7 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         }, 3);
     }
 
-    public static Shape triangleRight(UIShapeButton b) {
+    public static Shape triangleRight(UIBox b) {
         float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f;
         return new Polygon(new int[]{
                 (int) ((size + cx - size / 10) * SCALING),
@@ -171,7 +192,7 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         }, 3);
     }
 
-    public static Shape plus(UIShapeButton b) {
+    public static Shape plus(UIBox b) {
         float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f, width = size * .3f;
         return new Polygon(new int[]{
                 (int) ((cx - size) * SCALING),
@@ -202,7 +223,22 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         }, 12);
     }
 
-    public static Shape x(UIShapeButton b) {
+    public static Shape minus(UIBox b) {
+        float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f, width = size * .3f;
+        return new Polygon(new int[]{
+                (int) ((cx - size) * SCALING),
+                (int) ((cx - size) * SCALING),
+                (int) ((cx + size) * SCALING),
+                (int) ((cx + size) * SCALING),
+        }, new int[]{
+                (int) ((cy - width) * SCALING),
+                (int) ((cy + width) * SCALING),
+                (int) ((cy + width) * SCALING),
+                (int) ((cy - width) * SCALING),
+        }, 4);
+    }
+
+    public static Shape x(UIBox b) {
         float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f, thickness = size * .3f;
         return new Polygon(new int[]{
                 (int) ((cx - size) * SCALING),
@@ -231,5 +267,22 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
                 (int) ((cy - thickness) * SCALING),
                 (int) ((cy - size) * SCALING),
         }, 12);
+    }
+
+    public static Shape i(UIBox b) {
+        float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.7f;
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(cx, cy - size * 0.8f);
+        path.lineTo(cx, cy + size * 0.1f);
+        path.closePath();
+        path.moveTo(cx, cy + size * 0.8f);
+        path.lineTo(cx, cy + size * 0.801f);
+        path.closePath();
+        return path;
+    }
+
+    public static Shape dot(UIBox b) {
+        float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.4f;
+        return new Ellipse2D.Float(cx - size, cy - size, size * 2, size * 2);
     }
 }

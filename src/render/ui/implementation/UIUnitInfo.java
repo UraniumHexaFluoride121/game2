@@ -1,20 +1,23 @@
 package render.ui.implementation;
 
 import foundation.input.ButtonOrder;
+import foundation.input.ButtonRegister;
 import foundation.input.InputType;
-import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.Level;
 import render.*;
+import render.renderables.RenderElement;
+import render.ui.types.LevelUIContainer;
 import render.ui.types.UIBox;
+import render.ui.types.UIShapeButton;
 import render.ui.types.UITextLabel;
 import unit.Unit;
 import unit.UnitPose;
 import unit.weapon.WeaponInstance;
 
-public class UIUnitInfo extends AbstractRenderElement implements RegisteredButtonInputReceiver {
+public class UIUnitInfo extends LevelUIContainer {
     private final UITextLabel title = new UITextLabel(11f, 0.9f, true).setTextLeftBold();
     private final UITextLabel hp = new UITextLabel(9.4f, 1, false);
     private final UITextLabel ammo = new UITextLabel(9.4f, 1, false);
@@ -22,42 +25,49 @@ public class UIUnitInfo extends AbstractRenderElement implements RegisteredButto
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, 0.5f, 11, 14);
     private Level level;
 
-    public UIUnitInfo(RenderRegister<OrderedRenderable> register, RenderOrder order, Level level) {
-        super(register, order);
+    public UIUnitInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
+        super(register, buttonRegister, order, buttonOrder, 0, 0, level);
         this.level = level;
         hp.updateTextLeft("HP:").setTextLeftBold().setTextRightBold();
         ammo.updateTextLeft("Ammo:").setTextLeftBold().setTextRightBold();
-        renderable = g -> {
-            if (!isVisible())
-                return;
-            GameRenderer.renderTransformed(g, () -> {
-                Unit unit = level.selectedUnit;
-                g.translate(0.5, 0.5);
-                box.render(g);
-                GameRenderer.renderOffset(0, 4, g, () -> {
-                    Renderable.renderImage(unit.type.getImage(unit.team, UnitPose.INFO), false, true, 11).render(g);
+        addRenderables((r, b) -> {
+            new RenderElement(r, RenderOrder.LEVEL_UI, g -> {
+                GameRenderer.renderTransformed(g, () -> {
+                    Unit unit = level.selectedUnit;
+                    g.translate(0.5, 0.5);
+                    box.render(g);
+                    GameRenderer.renderOffset(0, 4, g, () -> {
+                        Renderable.renderImage(unit.type.getImage(unit.team, UnitPose.INFO), false, true, 11).render(g);
+                    });
+                    GameRenderer.renderOffset(-0.2f, 14.5f, g, () -> {
+                        title.updateTextLeft(unit.type.getName());
+                        title.render(g);
+                    });
+                    GameRenderer.renderOffset(0.5f, 4.5f, g, () -> {
+                        hp.updateTextRight(MathUtil.floatToString(unit.hitPoints, 1));
+                        hp.render(g);
+                        if (!unit.weapons.isEmpty()) {
+                            g.translate(0, -1);
+                            WeaponInstance weapon = unit.getAmmoWeapon();
+                            ammo.setRightOffset(weapon == null ? 0.4f : 0);
+                            ammo.updateTextRight(weapon == null ? "--" : weapon.ammo + "/" + weapon.ammoCapacity);
+                            ammo.render(g);
+                        }
+                    });
                 });
-                GameRenderer.renderOffset(-0.2f, 14.5f, g, () -> {
-                    title.updateTextLeft(unit.type.getName());
-                    title.render(g);
-                });
-                GameRenderer.renderOffset(0.5f, 4.5f, g, () -> {
-                    hp.updateTextRight(MathUtil.floatToString(unit.hitPoints, 1));
-                    hp.render(g);
-                    if (!unit.weapons.isEmpty()) {
-                        g.translate(0, -1);
-                        WeaponInstance weapon = unit.getAmmoWeapon();
-                        ammo.setRightOffset(weapon == null ? 0.4f : 0);
-                        ammo.updateTextRight(weapon == null ? "--" : weapon.ammo + "/" + weapon.ammoCapacity);
-                        ammo.render(g);
-                    }
-                });
-            });
-        };
+            }).setZOrder(-1);
+            new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 9.5f, 12.5f, 1.5f, 1.5f, false)
+                    .setShape(UIShapeButton::i).drawShape(0.25f).setBoxCorner(0.3f).setOnClick(() -> {
+                        Unit unit = level.selectedUnit;
+                        if (unit != null)
+                            level.levelRenderer.unitInfoScreen.enable(unit);
+                    });
+        });
     }
 
-    private boolean isVisible() {
-        return level.selectedUnit != null && enabled;
+    @Override
+    public boolean isEnabled() {
+        return level.selectedUnit != null && super.isEnabled();
     }
 
     @Override
@@ -68,27 +78,12 @@ public class UIUnitInfo extends AbstractRenderElement implements RegisteredButto
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
-        return isVisible() && hitBox.isPositionInside(level.levelRenderer.transformCameraPosToBlock(pos));
+    public boolean posInsideLevelOffset(ObjPos pos) {
+        return hitBox.isPositionInside(pos);
     }
 
     @Override
     public boolean blocking(InputType type) {
-        return type.isMouseInput();
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return ButtonOrder.LEVEL_UI;
-    }
-
-    @Override
-    public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-
-    }
-
-    @Override
-    public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-
+        return super.blocking(type) || type.isMouseInput();
     }
 }

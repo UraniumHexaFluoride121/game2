@@ -31,7 +31,7 @@ public class UIContainer extends AbstractRenderElement implements RegisteredButt
             buttonRegister.register(this);
         }
         renderable = g -> {
-            if (!enabled)
+            if (!isEnabled())
                 return;
             GameRenderer.renderOffset(x, y, g, () -> {
                 renderer.render(g);
@@ -51,7 +51,7 @@ public class UIContainer extends AbstractRenderElement implements RegisteredButt
 
     @Override
     public boolean posInside(ObjPos pos) {
-        return enabled;
+        return isEnabled();
     }
 
     private boolean blocking = false;
@@ -68,14 +68,14 @@ public class UIContainer extends AbstractRenderElement implements RegisteredButt
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
-            blocking = internal.acceptInput(pos.copy().subtract(x, y), type, true);
+        if (isEnabled())
+            blocking = internal.acceptInput(pos.copy().subtract(x, y), type, true, blocked);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled)
-            blocking = internal.acceptInput(pos.copy().subtract(x, y), type, false);
+        if (isEnabled())
+            blocking = internal.acceptInput(pos.copy().subtract(x, y), type, false, blocked);
     }
 
     @Override

@@ -15,8 +15,7 @@ public class FixedTextRenderer implements Renderable {
     private boolean isBold = false;
     private boolean hasOutline = false;
     protected TextAlign textAlign = TextAlign.CENTER;
-    private final Color main;
-    private Color border, renderBoxColour;
+    private Color main, border, renderBoxColour;
     private BasicStroke stroke;
     private float renderBoxBorder = -1, renderBoxRounding;
 
@@ -25,6 +24,11 @@ public class FixedTextRenderer implements Renderable {
         this.textSize = textSize / 20;
         this.main = main;
         update();
+    }
+
+    public FixedTextRenderer setTextColour(Color colour) {
+        main = colour;
+        return this;
     }
 
     public FixedTextRenderer setBold(boolean isBold) {

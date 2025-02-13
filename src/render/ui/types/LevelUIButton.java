@@ -10,7 +10,7 @@ import render.RenderOrder;
 import render.RenderRegister;
 
 public class LevelUIButton extends UIButton {
-    private Level level;
+    public Level level;
     public LevelUIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Level level, Runnable onClick) {
         super(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, onClick);
         this.level = level;

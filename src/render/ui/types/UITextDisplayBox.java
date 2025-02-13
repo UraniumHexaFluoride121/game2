@@ -20,7 +20,7 @@ public class UITextDisplayBox extends AbstractRenderElement {
         text = new FixedTextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
                 .setTextAlign(TextAlign.CENTER);
         renderable = g -> {
-            if (!enabled)
+            if (!isEnabled())
                 return;
             GameRenderer.renderOffset(x, y, g, () -> {
                 box.render(g);

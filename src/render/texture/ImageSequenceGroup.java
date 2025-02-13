@@ -1,7 +1,13 @@
 package render.texture;
 
 public enum ImageSequenceGroup {
-    PLASMA_HIT(
+    BULLET_HIT(
+            CachedImageSequence.BULLET_HIT_SEED_0,
+            CachedImageSequence.BULLET_HIT_SEED_1,
+            CachedImageSequence.BULLET_HIT_SEED_2,
+            CachedImageSequence.BULLET_HIT_SEED_3,
+            CachedImageSequence.BULLET_HIT_SEED_4
+    ), PLASMA_HIT(
             CachedImageSequence.PLASMA_HIT_SEED_0,
             CachedImageSequence.PLASMA_HIT_SEED_1,
             CachedImageSequence.PLASMA_HIT_SEED_2,

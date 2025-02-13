@@ -46,7 +46,7 @@ public class UIClickBlockingBox extends RenderElement implements RegisteredButto
 
     @Override
     public boolean posInside(ObjPos pos) {
-        return enabled && hitBox.isPositionInside(posTransformer.apply(pos));
+        return isEnabled() && hitBox.isPositionInside(posTransformer.apply(pos));
     }
 
     @Override

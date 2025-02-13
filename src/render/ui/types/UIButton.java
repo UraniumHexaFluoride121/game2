@@ -45,7 +45,7 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
         box = new UIBox(width, height).setClickHandler(clickHandler);
         hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
         renderable = g -> {
-            if (!enabled)
+            if (!isEnabled())
                 return;
             GameRenderer.renderOffset(x, y, g, () -> {
                 box.render(g);
@@ -125,7 +125,7 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
 
     @Override
     public boolean posInside(ObjPos pos) {
-        return enabled && hitBox.isPositionInside(pos);
+        return isEnabled() && hitBox.isPositionInside(pos);
     }
 
     @Override
@@ -140,13 +140,13 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled && clickEnabled)
+        if (isEnabled() && clickEnabled)
             clickHandler.buttonPressed(pos, inside, blocked, type);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (enabled && clickEnabled)
+        if (isEnabled() && clickEnabled)
             clickHandler.buttonReleased(pos, inside, blocked, type);
     }
 

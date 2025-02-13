@@ -10,6 +10,7 @@ import java.awt.*;
 
 public class UITextLabel implements Renderable {
     public static final Color TEXT_COLOUR = new Color(181, 204, 216);
+    public static final Color TEXT_COLOUR_DARK = new Color(153, 188, 200);
     public static final float DEFAULT_LINE_WIDTH = 0.17f;
 
     private Polygon label;
@@ -101,6 +102,21 @@ public class UITextLabel implements Renderable {
 
     public UITextLabel setBackgroundColour(Color backgroundColour) {
         this.backgroundColour = backgroundColour;
+        return this;
+    }
+
+    public UITextLabel setRightColour(Color colour) {
+        textRight.setTextColour(colour);
+        return this;
+    }
+
+    public UITextLabel setCenterColour(Color colour) {
+        textCenter.setTextColour(colour);
+        return this;
+    }
+
+    public UITextLabel setLeftColour(Color colour) {
+        textLeft.setTextColour(colour);
         return this;
     }
 

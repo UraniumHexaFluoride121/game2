@@ -1,4 +1,4 @@
-package render.ui.implementation;
+package mainScreen;
 
 import foundation.MainPanel;
 import foundation.input.ButtonOrder;
@@ -74,7 +74,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         boolean unitsVerified = MainPanel.titleScreen.playerShipSettings == null || MainPanel.titleScreen.playerShipSettings.verifyTeams();
         if (!unitsVerified)
             verified = false;
-        if (MainPanel.titleScreen.newGameTabs != null && MainPanel.titleScreen.newGameTabs.enabled) {
+        if (MainPanel.titleScreen.newGameTabs != null && MainPanel.titleScreen.newGameTabs.isEnabled()) {
             MainPanel.titleScreen.startLanGame.setEnabled(verified);
             MainPanel.titleScreen.startLocalGame.setEnabled(verified);
             UITextDisplayBox box = MainPanel.titleScreen.gameCannotBeStarted;
@@ -163,16 +163,16 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             boxes.forEach(b -> b.editShips.deselect());
             return;
         }
-        if (!enabled)
+        if (!isEnabled())
             return;
-        blocking = !blocked && internal.acceptInput(pos.copy(), type, true);
+        blocking = internal.acceptInput(pos.copy(), type, true, blocked);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (!enabled)
+        if (!isEnabled())
             return;
-        blocking = !blocked && internal.acceptInput(pos.copy(), type, false);
+        blocking = internal.acceptInput(pos.copy(), type, false, blocked);
     }
 
     @Override
@@ -282,16 +282,16 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
 
         @Override
         public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-            if (!enabled)
+            if (!isEnabled())
                 return;
-            blocking = !blocked && internal.acceptInput(pos.copy().subtract(0, 4).multiply(1, -1).subtract(x, -index * 4 + y), type, true);
+            blocking = internal.acceptInput(pos.copy().subtract(0, 4).multiply(1, -1).subtract(x, -index * 4 + y), type, true, blocked);
         }
 
         @Override
         public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-            if (!enabled)
+            if (!isEnabled())
                 return;
-            blocking = !blocked && internal.acceptInput(pos.copy().subtract(0, 4).multiply(1, -1).subtract(x, -index * 4 + y), type, false);
+            blocking = internal.acceptInput(pos.copy().subtract(0, 4).multiply(1, -1).subtract(x, -index * 4 + y), type, false, blocked);
         }
     }
 }

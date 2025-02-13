@@ -47,7 +47,7 @@ public class ButtonRegister implements IButtonRegister, Deletable {
     public void input(boolean pressed, InputType type, Function<Point, ObjPos> mousePositionTransformer) {
         Point p = Main.window.getMousePosition();
         if (p != null) {
-            acceptInput(mousePositionTransformer.apply(p), type, pressed);
+            acceptInput(mousePositionTransformer.apply(p), type, pressed, false);
         }
     }
 
@@ -57,7 +57,7 @@ public class ButtonRegister implements IButtonRegister, Deletable {
             ObjPos pos = new ObjPos(p);
             pos.subtract(MainPanel.INSETS_OFFSET);
             pos.scaleToBlocks().flipY().addY(MainPanel.BLOCK_DIMENSIONS.y); //Scale to world block grid
-            acceptInput(mousePositionTransformer.apply(pos), type, pressed);
+            acceptInput(mousePositionTransformer.apply(pos), type, pressed, false);
         }
     }
 
@@ -67,7 +67,7 @@ public class ButtonRegister implements IButtonRegister, Deletable {
             ObjPos pos = new ObjPos(p);
             pos.subtract(MainPanel.INSETS_OFFSET);
             pos.scaleToBlocks().flipY().addY(MainPanel.BLOCK_DIMENSIONS.y); //Scale to world block grid
-            acceptInput(pos, type, pressed);
+            acceptInput(pos, type, pressed, false);
         }
     }
 
@@ -86,9 +86,9 @@ public class ButtonRegister implements IButtonRegister, Deletable {
     }
 
     @Override
-    public synchronized boolean acceptInput(ObjPos pos, InputType type, boolean pressed) {
+    public synchronized boolean acceptInput(ObjPos pos, InputType type, boolean pressed, boolean alreadyBlocked) {
         processQueued();
-        AtomicBoolean blocked = new AtomicBoolean(false);
+        AtomicBoolean blocked = new AtomicBoolean(alreadyBlocked);
         buttons.forEach((_, zSet) -> zSet.forEach((_, set) -> set.forEach(b -> {
             boolean inside = b.posInside(pos);
             if (pressed)
@@ -99,28 +99,6 @@ public class ButtonRegister implements IButtonRegister, Deletable {
                 blocked.set(true);
         })));
         return blocked.get();
-    }
-
-    public static Consumer<AffineTransform> renderScaledToBlocks() {
-        double s = MainPanel.windowTransform.getScaleX();
-        return t -> {
-            t.scale(1 / s, 1 / s);
-        };
-    }
-
-    public static Consumer<AffineTransform> renderScaledToScreen() {
-        double s = MainPanel.windowTransform.getScaleX();
-        return t -> {
-            t.scale(s, s);
-        };
-    }
-
-    public static float scaleFloatToBlocks(float v) {
-        return v / MainPanel.RENDER_WINDOW_SIZE.x * Main.BLOCKS_X;
-    }
-
-    public static float scaleFloatToScreen(float v) {
-        return v / Main.BLOCKS_X * MainPanel.RENDER_WINDOW_SIZE.x;
     }
 
     public static void renderOffset(ObjPos pos, Graphics2D g, Consumer<Graphics2D> render) {
@@ -138,6 +116,15 @@ public class ButtonRegister implements IButtonRegister, Deletable {
     public synchronized void delete() {
         deleted = true;
         processQueued();
+        HashSet<Deletable> deletables = new HashSet<>();
+        buttons.forEach((_, zSet) -> zSet.forEach((_, set) -> {
+            set.forEach(r -> {
+                if (r instanceof Deletable d)
+                    deletables.add(d);
+            });
+            set.clear();
+        }));
         buttons.clear();
+        deletables.forEach(Deletable::delete);
     }
 }

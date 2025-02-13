@@ -1,10 +1,7 @@
 package mainScreen;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
-import foundation.input.ButtonRegister;
-import foundation.input.InputReceiver;
-import foundation.input.InputType;
+import foundation.input.*;
 import level.Level;
 import level.TeamSpawner;
 import network.NetworkState;
@@ -14,15 +11,13 @@ import render.Renderable;
 import render.renderables.RenderElement;
 import render.texture.ResourceLocation;
 import render.ui.UIColourTheme;
-import render.ui.implementation.UIPlayerBoxes;
-import render.ui.implementation.UIPlayerShipSettings;
 import render.ui.types.*;
 import unit.UnitTeam;
 
 import java.awt.*;
 import java.util.Random;
 
-import static render.ui.implementation.UIPlayerShipSettings.*;
+import static mainScreen.UIPlayerShipSettings.*;
 
 public class TitleScreen implements Renderable, InputReceiver {
     private static final Renderable TITLE_SCREEN_IMAGE = Renderable.renderImage(new ResourceLocation("title_screen.png"), false, true, 60, true);
@@ -55,7 +50,7 @@ public class TitleScreen implements Renderable, InputReceiver {
 
     public void init() {
         new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, () -> System.exit(0))
-                .setText("Quit Game").setColourTheme(UIColourTheme.RED).setBold();
+                .setText("Quit Game").setColourTheme(UIColourTheme.DEEP_RED).setBold();
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BACKGROUND, TITLE_SCREEN_IMAGE);
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(12, 18).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(Renderable.right() - 16, 2));
         newGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
@@ -114,6 +109,12 @@ public class TitleScreen implements Renderable, InputReceiver {
                             .translate(Renderable.right() - 36, 4.2f)
             );
             colourSelectorBox.setEnabled(false);
+            new OnButtonInput(b, ButtonOrder.MAIN_BUTTONS, t -> t == InputType.ENTER, () -> {
+                if (joinButton.isEnabled())
+                    joinButton.select();
+                else if (enterIPLabel.isEnabled() && !connectButton.getText().equals("Connected!"))
+                    connectButton.select();
+            });
         }).setEnabled(false);
         createColourSelectorButtons();
 
@@ -230,7 +231,7 @@ public class TitleScreen implements Renderable, InputReceiver {
     public UnitTeam selectedTeam = null;
 
     public void updateColourSelectorVisibility() {
-        if (MainPanel.client != null && MainPanel.client.connected && connectContainer.enabled) {
+        if (MainPanel.client != null && MainPanel.client.connected && connectContainer.isEnabled()) {
             for (UIButton colourSelectorButton : colourSelectorButtons) {
                 colourSelectorButton.setEnabled(true);
             }

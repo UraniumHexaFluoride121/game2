@@ -28,7 +28,7 @@ public class WeaponInstance {
     }
 
     public float getDamageAgainst(Unit thisUnit, Unit other) {
-        return data.get(other.type).damage * Math.max(0.05f, thisUnit.firingTempHP / thisUnit.type.hitPoints) * other.getTileDamageMultiplier();
+        return data.get(other.type).damage * Math.max(0.1f, thisUnit.firingTempHP / thisUnit.type.hitPoints) * other.getTileDamageMultiplier();
     }
 
     public void fire(Unit thisUnit, Unit otherUnit) {

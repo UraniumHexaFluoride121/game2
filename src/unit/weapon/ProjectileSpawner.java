@@ -13,12 +13,12 @@ public class ProjectileSpawner {
         this.getSpawnPoints = getSpawnPoints.get();
     }
 
-    public ArrayList<Projectile> getSpawnedProjectiles(float x, float y) {
+    public ArrayList<Projectile> getSpawnedProjectiles(float x, float y, float width) {
         ArrayList<Projectile> projectiles = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
         getSpawnPoints.removeIf(spawnPoint -> {
             if (currentTime - startTime > spawnPoint.time()) {
-                projectiles.add(new Projectile(type, x + spawnPoint.x(), y + spawnPoint.y()));
+                projectiles.add(new Projectile(type, x + spawnPoint.x() * width, y + spawnPoint.y() * width));
                 return true;
             }
             return false;

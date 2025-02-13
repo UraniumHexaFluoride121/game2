@@ -11,7 +11,7 @@ public abstract class AbstractRenderElement implements OrderedRenderable, Deleta
     protected final RenderOrder order;
     protected Renderable renderable;
 
-    public boolean enabled = true;
+    private boolean enabled = true;
 
     protected int zOrder = 0;
 
@@ -30,6 +30,10 @@ public abstract class AbstractRenderElement implements OrderedRenderable, Deleta
     public AbstractRenderElement setEnabled(boolean enabled) {
         this.enabled = enabled;
         return this;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Override

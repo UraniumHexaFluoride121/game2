@@ -14,6 +14,8 @@ import render.ui.UIColourTheme;
 import render.ui.types.UIBox;
 import render.ui.types.UITextLabel;
 
+import java.awt.*;
+
 public class UIEndTurn extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private final FixedTextRenderer text = new FixedTextRenderer("End Turn", 1.4f, UITextLabel.TEXT_COLOUR)
             .setTextAlign(TextAlign.CENTER).setBold(true);
@@ -33,6 +35,12 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
                 text.render(g);
             });
         };
+    }
+
+    @Override
+    public void render(Graphics2D g) {
+        if (isEnabled())
+            super.render(g);
     }
 
     private boolean grayedOut = false;

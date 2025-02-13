@@ -4,6 +4,13 @@ import java.util.function.Supplier;
 
 public class CachedImageSequence implements ImageSequence {
     public static final CachedImageSequence
+            BULLET_HIT_SEED_0 = new CachedImageSequence("effects/bullet_hit/seed_0/", 20, 1, 5, true),
+            BULLET_HIT_SEED_1 = new CachedImageSequence("effects/bullet_hit/seed_1/", 20, 1, 5, true),
+            BULLET_HIT_SEED_2 = new CachedImageSequence("effects/bullet_hit/seed_2/", 20, 1, 5, true),
+            BULLET_HIT_SEED_3 = new CachedImageSequence("effects/bullet_hit/seed_3/", 20, 1, 5, true),
+            BULLET_HIT_SEED_4 = new CachedImageSequence("effects/bullet_hit/seed_4/", 20, 1, 5, true);
+
+    public static final CachedImageSequence
             PLASMA_HIT_SEED_0 = new CachedImageSequence("effects/plasma_hit/seed_0/", 20, 1, 5, true),
             PLASMA_HIT_SEED_1 = new CachedImageSequence("effects/plasma_hit/seed_1/", 20, 1, 5, true),
             PLASMA_HIT_SEED_2 = new CachedImageSequence("effects/plasma_hit/seed_2/", 20, 1, 5, true),

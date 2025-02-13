@@ -4,8 +4,10 @@ public enum ButtonOrder {
     //Orders higher on the list block ones lower down
 
     //Level
-    DEBUG,
     CONFIRM_UI,
+
+    UNIT_INFO_SCREEN,
+
     LEVEL_UI,
     ACTION_SELECTOR,
     HEXAGON,

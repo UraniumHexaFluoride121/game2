@@ -66,6 +66,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     public UIEndTurn endTurn = null;
     public UITileInfo tileInfo = null;
     public UIButton exitActionButton = null;
+    public UnitInfoScreen unitInfoScreen = null;
 
     private void createRenderers() {
         createTiles();
@@ -146,8 +147,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         //Damage UI
         damageUI = new UIDamage(mainRenderer, RenderOrder.DAMAGE_UI);
 
-        UIUnitInfo unitInfo = new UIUnitInfo(levelUIRenderer, RenderOrder.LEVEL_UI, level);
-        level.buttonRegister.register(unitInfo);
+        new UIUnitInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, level);
 
         tileInfo = new UITileInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() - 15, .5f, level);
         tileInfo.setEnabled(false);
@@ -168,6 +168,9 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
                 .setText("Exit Action").setBold().setColourTheme(UIColourTheme.RED).setEnabled(false);
 
         firingRenderer = new FiringRenderer(firingAnimRenderer, RenderOrder.BACKGROUND, level);
+
+        unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, level);
+        unitInfoScreen.setEnabled(false);
     }
 
     private void createTiles() {
@@ -374,7 +377,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
                 }
                 prevMousePos = mousePos;
             }
-            level.buttonRegister.acceptInput(cameraTransformedPos, InputType.MOUSE_OVER, true);
+            level.buttonRegister.acceptInput(cameraTransformedPos, InputType.MOUSE_OVER, true, false);
         }
     }
 

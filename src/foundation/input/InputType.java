@@ -7,14 +7,14 @@ import java.awt.event.MouseWheelEvent;
 
 public class InputType {
     public static final InputType
-            NONE = new InputType(false, ' '), TAB_ON_SWITCH_TO = new InputType(false, ' '),
+            NONE = new InputType(), TAB_ON_SWITCH_TO = new InputType(),
 
-            MOUSE_RIGHT = new InputType(false, ' '), MOUSE_LEFT = new InputType(false, ' '), MOUSE_OVER = new InputType(false, ' '),
-            ESCAPE = new InputType(false, ' '), BACKSPACE = new InputType(false, ' '),
-            LEFT_ARROW = new InputType(false, ' '), RIGHT_ARROW = new InputType(false, ' '),
+            MOUSE_RIGHT = new InputType(), MOUSE_LEFT = new InputType(), MOUSE_OVER = new InputType(),
+            ESCAPE = new InputType(), BACKSPACE = new InputType(), ENTER = new InputType(),
+            LEFT_ARROW = new InputType(), RIGHT_ARROW = new InputType(),
 
-    MOUSE_SCROLL_UP = new InputType(false, ' '), MOUSE_SCROLL_DOWN = new InputType(false, ' '),
-            MOUSE_SCROLL_UP_ONCE = new InputType(false, ' '), MOUSE_SCROLL_DOWN_ONCE = new InputType(false, ' ');
+    MOUSE_SCROLL_UP = new InputType(), MOUSE_SCROLL_DOWN = new InputType(),
+            MOUSE_SCROLL_UP_ONCE = new InputType(), MOUSE_SCROLL_DOWN_ONCE = new InputType();
 
     public final boolean isCharInput;
     public final char c;
@@ -22,6 +22,10 @@ public class InputType {
     InputType(boolean isCharInput, char c) {
         this.isCharInput = isCharInput;
         this.c = c;
+    }
+
+    InputType() {
+        this(false, ' ');
     }
 
     public boolean isIPChar() {
@@ -62,6 +66,9 @@ public class InputType {
                 }
                 case KeyEvent.VK_RIGHT -> {
                     return RIGHT_ARROW;
+                }
+                case KeyEvent.VK_ENTER -> {
+                    return ENTER;
                 }
             }
             char c = k.getKeyChar();
