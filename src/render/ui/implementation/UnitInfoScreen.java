@@ -61,7 +61,7 @@ public class UnitInfoScreen extends LevelUIContainer {
                                 g.translate(0, -1.5f);
                                 classText.render(g);
                             });
-                        }, new UITextLabel(25, 1, false).setTextLeftBold().updateTextLeft("Features overview").translate(2, 15.5f))
+                        }, new UITextLabel(25, 1, false).setTextLeftBold().updateTextLeft("Feature overview").translate(2, 15.5f))
                                 .setZOrder(-1);
                         attributesScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, 1, 0, 27, 15, false, (r3, b3) -> {
                             attributeRenderer = new AttributeRenderer(r3);

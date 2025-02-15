@@ -82,6 +82,9 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         if (actionMap.containsKey(MOVE)) {
             actionMap.get(MOVE).enabled = true;
         }
+        if (actionMap.containsKey(SHIELD_REGEN)) {
+            actionMap.get(SHIELD_REGEN).enabled = true;
+        }
         if (unit.canCapture()) {
             addActionEnabled(CAPTURE, unit);
             actionMap.get(CAPTURE).enabled = !unit.hasPerformedAction(CAPTURE);

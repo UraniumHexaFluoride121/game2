@@ -6,7 +6,7 @@ import foundation.math.RandomType;
 import level.tile.TileType;
 import unit.Unit;
 import unit.UnitTeam;
-import unit.UnitType;
+import unit.type.UnitType;
 
 import java.awt.*;
 import java.util.ArrayList;

@@ -12,7 +12,7 @@ import render.anim.AnimTilePath;
 import unit.Unit;
 import unit.UnitData;
 import unit.UnitTeam;
-import unit.UnitType;
+import unit.type.UnitType;
 import unit.action.Action;
 
 import java.awt.*;
@@ -170,7 +170,7 @@ public class Client implements Deletable {
                     illegalTile = null;
                 }
                 Point unitPos = PacketReceiver.readPoint(reader);
-                UnitType type = PacketReceiver.readEnum(UnitType.class, reader);
+                UnitType type = UnitType.read(reader);
                 UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Unit unit = MainPanel.activeLevel.getUnit(unitPos);
@@ -235,6 +235,20 @@ public class Client implements Deletable {
                         u.stopCapture();
                 });
             }
+            case SERVER_SHIELD_REGEN -> {
+                Point pos = PacketReceiver.readPoint(reader);
+                float shieldHP = reader.readFloat();
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.activeLevel;
+                    Unit u = l.getUnit(pos);
+                    if (u == null) {
+                        requestLevelData();
+                        return;
+                    }
+                    u.addPerformedAction(Action.SHIELD_REGEN);
+                    u.setShieldHP(shieldHP);
+                });
+            }
         }
     }
 
@@ -275,7 +289,7 @@ public class Client implements Deletable {
                 PacketWriter.writePoint(illegalTile, w);
             }
             PacketWriter.writePoint(unit.pos, w);
-            PacketWriter.writeEnum(unit.type, w);
+            unit.type.write(w);
             PacketWriter.writeEnum(unit.team, w);
         }));
     }
@@ -289,6 +303,12 @@ public class Client implements Deletable {
 
     public void sendUnitCaptureRequest(Unit unit) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_CAPTURE_UNIT, w -> {
+            PacketWriter.writePoint(unit.pos, w);
+        }));
+    }
+
+    public void sendUnitShieldRegenRequest(Unit unit) {
+        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_SHIELD_REGEN, w -> {
             PacketWriter.writePoint(unit.pos, w);
         }));
     }

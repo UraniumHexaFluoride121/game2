@@ -40,6 +40,14 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(832), y(462), 350));
         spawnPoints.add(new ProjectileSpawnPoint(x(932), y(432), 450));
         return spawnPoints;
+    }), DEFENDER_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
+            90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
+        ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
+        spawnPoints.add(new ProjectileSpawnPoint(x(800), y(333), 0));
+        spawnPoints.add(new ProjectileSpawnPoint(x(808), y(233), 150));
+        spawnPoints.add(new ProjectileSpawnPoint(x(888), y(484), 300));
+        spawnPoints.add(new ProjectileSpawnPoint(x(914), y(381), 450));
+        return spawnPoints;
     });
 
     private final Renderable image;

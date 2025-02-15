@@ -22,6 +22,7 @@ public class Action {
     public static final BasicStroke ICON_STROKE = new BasicStroke(0.2f * SCALING, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     public static final BasicStroke ICON_STROKE_NARROW = new BasicStroke(0.15f * SCALING, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     public static final BasicStroke ICON_STROKE_NARROW_NON_SCALED = new BasicStroke(0.15f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
+    public static final BasicStroke ICON_STROKE_EXTRA_NARROW_NON_SCALED = new BasicStroke(0.04f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     public static final Color ICON_COLOUR = new Color(214, 214, 214);
 
     public static final Color
@@ -73,6 +74,16 @@ public class Action {
         GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
             g.draw(ActionShapes.FLAG);
             g.fill(ActionShapes.FLAG);
+        });
+    }, -1), SHIELD_REGEN = new Action("SHIELD_REGEN", ActionColour.LIGHT_BLUE, FIRE_ACTION_HIGHLIGHT, false, g -> {
+        g.setStroke(ICON_STROKE_EXTRA_NARROW_NON_SCALED);
+        GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
+            g.draw(ActionShapes.SHIELD);
+            g.fill(ActionShapes.SHIELD);
+            g.scale(.8, .8);
+            g.translate(.15, .12);
+            g.draw(ActionShapes.SHIP);
+            g.fill(ActionShapes.SHIP);
         });
     }, 0);
 

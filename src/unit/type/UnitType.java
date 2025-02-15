@@ -1,0 +1,150 @@
+package unit.type;
+
+import foundation.NamedEnum;
+import foundation.math.ObjPos;
+import level.tile.TileType;
+import render.Renderable;
+import render.texture.*;
+import unit.ShipClass;
+import unit.UnitPose;
+import unit.UnitTeam;
+import unit.action.Action;
+import unit.info.AttributeData;
+import unit.info.UnitCharacteristic;
+import unit.info.UnitCharacteristicValue;
+import unit.weapon.WeaponTemplate;
+
+import java.awt.image.BufferedImage;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import static level.tile.Tile.*;
+import static unit.type.CorvetteType.*;
+import static unit.type.FighterType.*;
+
+public abstract class UnitType implements NamedEnum {
+    private final HashMap<UnitTeam, HashMap<UnitPose, Renderable>> tileRenderers = new HashMap<>();
+    private final HashMap<UnitTeam, HashMap<UnitPose, BufferedImage>> images = new HashMap<>();
+
+    private final String name, displayName;
+    public final ShipClass shipClass;
+    public final float hitPoints, maxMovement, maxViewRange;
+
+    public final Function<TileType, Float> tileMovementCostFunction, tileViewRangeCostFunction;
+    public final Function<TileType, Float> damageReduction;
+
+    public final Action[] actions;
+    public final int firingAnimFrames;
+    public float shieldHP = 0, shieldRegen = 0, firingAnimShieldWidth = 0;
+    public final float firingAnimUnitWidth;
+
+    public final ArrayList<WeaponTemplate> weapons = new ArrayList<>();
+    private final Consumer<ArrayList<WeaponTemplate>> weaponGenerator;
+
+    public final HashMap<UnitCharacteristic, UnitCharacteristicValue> unitCharacteristics = new HashMap<>();
+    public final AttributeData[] infoAttributes;
+
+    public final Supplier<ObjPos[]> firingPositions;
+
+    public final HashMap<UnitTeam, ImageSequence> firingSequenceLeft = new HashMap<>();
+    public final HashMap<UnitTeam, ImageSequence> firingSequenceRight = new HashMap<>();
+
+    public ImageRenderer shieldRenderer = null;
+
+    public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
+            FIGHTER, BOMBER, CORVETTE, DEFENDER
+    };
+
+    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+        this.name = name;
+        this.displayName = displayName;
+        this.hitPoints = hitPoints;
+        this.maxMovement = maxMovement;
+        this.maxViewRange = maxViewRange;
+        this.tileMovementCostFunction = tileMovementCostFunction;
+        this.tileViewRangeCostFunction = tileViewRangeCostFunction;
+        this.actions = actions;
+        this.firingAnimFrames = firingAnimFrames;
+        this.firingAnimUnitWidth = firingAnimUnitWidth;
+        this.weaponGenerator = weaponGenerator;
+        this.infoAttributes = infoAttributes;
+        this.firingPositions = firingPositions;
+        shipClass = getShipClass();
+        damageReduction = getDamageReduction();
+        unitCharacteristicSetter.accept(unitCharacteristics);
+        for (UnitTeam team : UnitTeam.values()) {
+            tileRenderers.put(team, new HashMap<>());
+            images.put(team, new HashMap<>());
+            for (UnitPose pose : UnitPose.values()) {
+                if (!pose.load)
+                    continue;
+                ResourceLocation resource = new ResourceLocation("ships/" + name + "/" + team.s + "/" + pose.s + ".png");
+                BufferedImage image = AssetManager.getImage(resource, true);
+                tileRenderers.get(team).put(pose, Renderable.renderImage(image, false, true, TILE_SIZE));
+                images.get(team).put(pose, image);
+            }
+            firingSequenceLeft.put(team, new AsyncImageSequence("ships/" + name + "/" + team.s + "/firing_left", firingAnimFrames, true));
+            firingSequenceRight.put(team, new AsyncImageSequence("ships/" + name + "/" + team.s + "/firing_right", firingAnimFrames, true));
+        }
+    }
+
+    public UnitType addShield(float shieldHP, float shieldRegen, float firingAnimShieldWidth) {
+        this.shieldHP = shieldHP;
+        this.shieldRegen = shieldRegen;
+        this.firingAnimShieldWidth = firingAnimShieldWidth;
+        shieldRenderer = ImageRenderer.renderImage(new ResourceLocation("ships/" + name + "/shield.png"), true, true);
+        return this;
+    }
+
+    public Renderable tileRenderer(UnitTeam team, UnitPose pose) {
+        return tileRenderers.get(team).get(pose);
+    }
+
+    public BufferedImage getImage(UnitTeam team, UnitPose pose) {
+        return images.get(team).get(pose);
+    }
+
+    public static UnitType getTypeByName(String name) {
+        for (UnitType type : ORDERED_UNIT_TYPES) {
+            if (type.name.equals(name))
+                return type;
+        }
+        throw new RuntimeException("Unrecognised UnitType: " + name);
+    }
+
+    public static UnitType read(DataInputStream reader) throws IOException {
+        return getTypeByName(reader.readUTF());
+    }
+
+    public void write(DataOutputStream writer) throws IOException {
+        writer.writeUTF(name);
+    }
+
+    public static void generateWeapons() {
+        for (UnitType type : ORDERED_UNIT_TYPES) {
+            type.weaponGenerator.accept(type.weapons);
+        }
+    }
+
+    protected abstract Function<TileType, Float> getDamageReduction();
+    protected abstract ShipClass getShipClass();
+
+    public float getBobbingAmount() {
+        return 1;
+    }
+
+    public float getBobbingRate() {
+        return 1;
+    }
+
+    @Override
+    public String getName() {
+        return displayName;
+    }
+}

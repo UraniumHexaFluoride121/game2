@@ -10,6 +10,7 @@ public class ImageSequenceAnim implements Renderable {
     public final LerpAnimation timer;
     private final CachedImageSequence sequence;
     public final float width;
+    private boolean renderLastWhenFinished = false;
 
     public ImageSequenceAnim(CachedImageSequence sequence, float width, float time) {
         this.sequence = sequence;
@@ -26,9 +27,17 @@ public class ImageSequenceAnim implements Renderable {
 
     @Override
     public void render(Graphics2D g) {
-        if (timer.finished())
+        if (timer.finished()) {
+            if (renderLastWhenFinished)
+                sequence.images[sequence.images.length - 1].render(g, width);
             return;
+        }
         sequence.images[(int) Math.min(timer.normalisedProgress() * sequence.frames, sequence.frames - 1)].render(g, width);
+    }
+
+    public ImageSequenceAnim renderLastWhenFinished() {
+        renderLastWhenFinished = true;
+        return this;
     }
 
     public void start() {
@@ -37,5 +46,9 @@ public class ImageSequenceAnim implements Renderable {
 
     public boolean finished() {
         return timer.finished();
+    }
+
+    public void finish() {
+        timer.finish();
     }
 }

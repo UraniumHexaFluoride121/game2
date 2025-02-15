@@ -9,7 +9,7 @@ import level.tile.TileSelector;
 import render.Renderable;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
-import unit.UnitType;
+import unit.type.UnitType;
 
 import java.awt.*;
 import java.util.ArrayList;

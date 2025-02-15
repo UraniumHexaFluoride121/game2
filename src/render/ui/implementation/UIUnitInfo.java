@@ -21,6 +21,7 @@ public class UIUnitInfo extends LevelUIContainer {
     private final UITextLabel title = new UITextLabel(11f, 0.9f, true).setTextLeftBold();
     private final UITextLabel hp = new UITextLabel(9.4f, 1, false);
     private final UITextLabel ammo = new UITextLabel(9.4f, 1, false);
+    private final UITextLabel shield = new UITextLabel(9.4f, 1, false);
     private final UIBox box = new UIBox(11, 14);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, 0.5f, 11, 14);
     private Level level;
@@ -30,6 +31,7 @@ public class UIUnitInfo extends LevelUIContainer {
         this.level = level;
         hp.updateTextLeft("HP:").setTextLeftBold().setTextRightBold();
         ammo.updateTextLeft("Ammo:").setTextLeftBold().setTextRightBold();
+        shield.updateTextLeft("Shield HP:").setTextLeftBold().setTextRightBold();
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.LEVEL_UI, g -> {
                 GameRenderer.renderTransformed(g, () -> {
@@ -46,6 +48,11 @@ public class UIUnitInfo extends LevelUIContainer {
                     GameRenderer.renderOffset(0.5f, 4.5f, g, () -> {
                         hp.updateTextRight(MathUtil.floatToString(unit.hitPoints, 1));
                         hp.render(g);
+                        if (unit.type.shieldHP != 0) {
+                            g.translate(0, -1);
+                            shield.updateTextRight(MathUtil.floatToString(unit.shieldHP, 1));
+                            shield.render(g);
+                        }
                         if (!unit.weapons.isEmpty()) {
                             g.translate(0, -1);
                             WeaponInstance weapon = unit.getAmmoWeapon();

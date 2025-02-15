@@ -8,7 +8,7 @@ import render.anim.AnimTilePath;
 import unit.Unit;
 import unit.UnitData;
 import unit.UnitTeam;
-import unit.UnitType;
+import unit.type.UnitType;
 import unit.action.Action;
 
 import java.awt.*;
@@ -92,7 +92,7 @@ public class Server implements Deletable {
                 PacketWriter.writePoint(illegalTile, w);
             }
             PacketWriter.writePoint(unit.pos, w);
-            PacketWriter.writeEnum(unit.type, w);
+            unit.type.write(w);
             PacketWriter.writeEnum(unit.team, w);
         })));
     }
@@ -108,6 +108,13 @@ public class Server implements Deletable {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_CAPTURE_UNIT, w -> {
             PacketWriter.writePoint(unit.pos, w);
             w.writeInt(unit.getCaptureProgress());
+        })));
+    }
+
+    public void sendUnitShieldRegenPacket(Unit unit) {
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHIELD_REGEN, w -> {
+            PacketWriter.writePoint(unit.pos, w);
+            w.writeFloat(unit.shieldHP);
         })));
     }
 
@@ -252,7 +259,7 @@ public class Server implements Deletable {
                         illegalTile = null;
                     }
                     Point unitPos = PacketReceiver.readPoint(reader);
-                    UnitType type = PacketReceiver.readEnum(UnitType.class, reader);
+                    UnitType type = UnitType.read(reader);
                     UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit unit = server.level.getUnit(unitPos);
@@ -285,6 +292,19 @@ public class Server implements Deletable {
                         }
                         u.incrementCapture();
                         server.sendUnitCapturePacket(u);
+                    });
+                }
+                case CLIENT_REQUEST_SHIELD_REGEN -> {
+                    Point pos = PacketReceiver.readPoint(reader);
+                    MainPanel.addTaskAfterAnimBlock(() -> {
+                        Unit u = server.level.getUnit(pos);
+                        if (u == null || u.hasPerformedAction(Action.SHIELD_REGEN)) {
+                            queueUnitUpdatePacket();
+                            return;
+                        }
+                        u.addPerformedAction(Action.SHIELD_REGEN);
+                        u.setShieldHP(u.shieldHP + u.type.shieldRegen);
+                        server.sendUnitShieldRegenPacket(u);
                     });
                 }
             }

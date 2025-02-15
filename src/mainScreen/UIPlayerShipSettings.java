@@ -14,7 +14,9 @@ import render.ui.UIColourTheme;
 import render.ui.types.*;
 import unit.UnitPose;
 import unit.UnitTeam;
-import unit.UnitType;
+import unit.type.CorvetteType;
+import unit.type.FighterType;
+import unit.type.UnitType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,9 +27,10 @@ public class UIPlayerShipSettings extends UIContainer {
     private static final float SIZE = 4;
 
     static {
-        DEFAULT_PRESET.put(UnitType.FIGHTER, 3);
-        DEFAULT_PRESET.put(UnitType.BOMBER, 1);
-        DEFAULT_PRESET.put(UnitType.CORVETTE, 1);
+        DEFAULT_PRESET.put(FighterType.FIGHTER, 3);
+        DEFAULT_PRESET.put(FighterType.BOMBER, 1);
+        DEFAULT_PRESET.put(CorvetteType.CORVETTE, 1);
+        DEFAULT_PRESET.put(CorvetteType.DEFENDER, 1);
     }
 
     private final HashMap<UnitTeam, TeamSettings> teamSettingsMap = new HashMap<>();

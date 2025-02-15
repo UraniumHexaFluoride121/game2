@@ -8,6 +8,8 @@ import render.texture.ResourceLocation;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.util.function.Consumer;
@@ -186,5 +188,21 @@ public interface Renderable {
 
     static float right() {
         return MainPanel.BLOCK_DIMENSIONS.x;
+    }
+
+    static Area fullArea() {
+        return new Area(new Rectangle2D.Float(0, 0, right(), top()));
+    }
+
+    static Area inverseShape(Shape... shapes) {
+        Area area = fullArea();
+        for (Shape shape : shapes) {
+            area.subtract(new Area(shape));
+        }
+        return area;
+    }
+
+    static Shape outlineShape(Shape shape, float width) {
+        return roundedStroke(width).createStrokedShape(shape);
     }
 }

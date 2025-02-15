@@ -24,6 +24,8 @@ public class CachedImageSequence implements ImageSequence {
             EXPLOSION_SEED_3 = new CachedImageSequence("effects/explosion/seed_3/", 20, 1, 5, true),
             EXPLOSION_SEED_4 = new CachedImageSequence("effects/explosion/seed_4/", 20, 1, 5, true);
 
+    public static final CachedImageSequence SHIELD = new CachedImageSequence("effects/shield/shield", 8, true);
+
     public final ImageRenderer[] images;
     public final int frames;
 

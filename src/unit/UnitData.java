@@ -6,6 +6,7 @@ import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
 import unit.action.Action;
+import unit.type.UnitType;
 
 import java.awt.*;
 import java.io.DataInputStream;
@@ -18,7 +19,7 @@ public class UnitData implements Writable {
     public final Point pos;
     public final UnitType type;
     public final UnitTeam team;
-    public final float hitPoints;
+    public final float hitPoints, shieldHP;
     public final int captureProgress;
     public final HashSet<Action> performedActions = new HashSet<>();
     public final ArrayList<Integer> weaponAmmo = new ArrayList<>();
@@ -28,6 +29,7 @@ public class UnitData implements Writable {
         type = unit.type;
         team = unit.team;
         hitPoints = unit.hitPoints;
+        shieldHP = unit.shieldHP;
         captureProgress = unit.getCaptureProgress();
         performedActions.addAll(unit.getPerformedActions());
         unit.weapons.forEach(w -> {
@@ -37,9 +39,10 @@ public class UnitData implements Writable {
 
     public UnitData(DataInputStream reader) throws IOException {
         pos = PacketReceiver.readPoint(reader);
-        type = PacketReceiver.readEnum(UnitType.class, reader);
+        type = UnitType.read(reader);
         team = PacketReceiver.readEnum(UnitTeam.class, reader);
         hitPoints = reader.readFloat();
+        shieldHP = reader.readFloat();
         captureProgress = reader.readInt();
         PacketReceiver.readCollection(performedActions, () -> Action.getByName(reader.readUTF()), reader);
         PacketReceiver.readCollection(weaponAmmo, reader::readInt, reader);
@@ -48,9 +51,10 @@ public class UnitData implements Writable {
     @Override
     public void write(DataOutputStream w) throws IOException {
         PacketWriter.writePoint(pos, w);
-        PacketWriter.writeEnum(type, w);
+        type.write(w);
         PacketWriter.writeEnum(team, w);
         w.writeFloat(hitPoints);
+        w.writeFloat(shieldHP);
         w.writeInt(captureProgress);
         PacketWriter.writeCollection(performedActions, v -> w.writeUTF(v.toString()), w);
         PacketWriter.writeCollection(weaponAmmo, w::writeInt, w);

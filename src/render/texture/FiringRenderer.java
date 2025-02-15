@@ -4,13 +4,14 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import level.Level;
 import render.*;
+import render.anim.ExpAnimation;
 import render.anim.ImageSequenceAnim;
 import render.anim.LerpAnimation;
-import render.anim.ExpAnimation;
 import render.anim.SineAnimation;
+import render.ui.UIColourTheme;
 import render.ui.implementation.UIHitPointBar;
 import unit.Unit;
-import unit.UnitType;
+import unit.type.UnitType;
 import unit.weapon.Projectile;
 import unit.weapon.ProjectileSpawner;
 import unit.weapon.WeaponInstance;
@@ -28,9 +29,11 @@ public class FiringRenderer extends AbstractRenderElement {
     private Unit leftUnit, rightUnit, attackingUnit, defendingUnit;
     private UnitRenderer[] leftUnitRenderer, rightUnitRenderer;
     private UIHitPointBar hitPointBarLeft, hitPointBarRight;
+    private UIHitPointBar hitPointBarBorderLeft, hitPointBarBorderRight;
+    private UIHitPointBar shieldHitPointBarLeft, shieldHitPointBarRight;
     private final ArrayList<Projectile> leftProjectiles = new ArrayList<>(), rightProjectiles = new ArrayList<>();
     private final LerpAnimation shootTimerAttacking = new LerpAnimation(1.7f), shootTimerAttacked = new LerpAnimation(2.2f), endTimer = new LerpAnimation(1);
-    private boolean firingLeft = false, firingRight = false, finished = false, leftHit = false, rightHit = false;
+    private boolean firingLeft = false, firingRight = false, finished = false, leftHit = false, rightHit = false, rightShieldStarted = false, leftShieldStarted = false;
     private Level level;
     private LerpAnimation overlayTimer = new LerpAnimation(1);
 
@@ -77,11 +80,15 @@ public class FiringRenderer extends AbstractRenderElement {
                         for (UnitRenderer unit : rightUnitRenderer) {
                             unit.onHit();
                         }
-                        hitPointBarRight.setFill(rightUnit.firingTempHP, 1, 0.6f);
+                        shieldHitPointBarRight.setFill(rightUnit.shieldFiringTempHP, rightShieldBarTime, 0.6f);
                         rightHit = true;
                         break;
                     }
                 }
+            }
+            if (rightHit && !rightShieldStarted && shieldHitPointBarRight.finished()) {
+                rightShieldStarted = true;
+                hitPointBarRight.setFill(rightUnit.firingTempHP, 1 - rightShieldBarTime, 0.6f);
             }
             if (!leftHit) {
                 for (Projectile projectile : rightProjectiles) {
@@ -89,11 +96,21 @@ public class FiringRenderer extends AbstractRenderElement {
                         for (UnitRenderer unit : leftUnitRenderer) {
                             unit.onHit();
                         }
-                        hitPointBarLeft.setFill(leftUnit.firingTempHP, 1, 0.6f);
+                        shieldHitPointBarLeft.setFill(leftUnit.shieldFiringTempHP, leftShieldBarTime, 0.6f);
                         leftHit = true;
                         break;
                     }
                 }
+            }
+            if (leftHit && !leftShieldStarted && shieldHitPointBarLeft.finished()) {
+                leftShieldStarted = true;
+                hitPointBarLeft.setFill(leftUnit.firingTempHP, 1 - leftShieldBarTime, 0.6f);
+            }
+            for (UnitRenderer unitRenderer : leftUnitRenderer) {
+                unitRenderer.renderShield = !shieldHitPointBarLeft.empty();
+            }
+            for (UnitRenderer unitRenderer : rightUnitRenderer) {
+                unitRenderer.renderShield = !shieldHitPointBarRight.empty();
             }
             if (!finished && firingLeft && firingRight) {
                 for (UnitRenderer unit : leftUnitRenderer) {
@@ -200,13 +217,35 @@ public class FiringRenderer extends AbstractRenderElement {
                 g.scale(-1, 1);
             }
             g.translate(1, 1);
+            Shape prevClip = g.getClip();
             if (right) {
+                if (!shieldHitPointBarRight.empty()) {
+                    hitPointBarBorderRight.setColour(UIColourTheme.LIGHT_BLUE);
+                    hitPointBarBorderRight.render(g);
+                    shieldHitPointBarRight.render(g);
+                    g.clip(Renderable.inverseShape(shieldHitPointBarRight.getBarClip()));
+                } else {
+                    hitPointBarBorderRight.setColour(rightUnit.team.uiColour);
+                    hitPointBarBorderRight.render(g);
+                }
                 hitPointBarRight.render(g);
             } else {
+                if (!shieldHitPointBarLeft.empty()) {
+                    hitPointBarBorderLeft.setColour(UIColourTheme.LIGHT_BLUE);
+                    hitPointBarBorderLeft.render(g);
+                    shieldHitPointBarLeft.render(g);
+                    g.clip(Renderable.inverseShape(shieldHitPointBarLeft.getBarClip()));
+                } else {
+                    hitPointBarBorderLeft.setColour(leftUnit.team.uiColour);
+                    hitPointBarBorderLeft.render(g);
+                }
                 hitPointBarLeft.render(g);
             }
+            g.setClip(prevClip);
         });
     }
+
+    private float leftShieldBarTime = 0, rightShieldBarTime = 0;
 
     public void start(Unit a, Unit b, WeaponInstance weaponA, WeaponInstance weaponB) {
         attackingUnit = a;
@@ -222,6 +261,8 @@ public class FiringRenderer extends AbstractRenderElement {
         rightUnit = aIsLeft ? b : a;
         leftWeapon = aIsLeft ? weaponA : weaponB;
         rightWeapon = aIsLeft ? weaponB : weaponA;
+        leftShieldBarTime = (leftUnit.shieldHP - leftUnit.shieldFiringTempHP) / (leftUnit.hitPoints - leftUnit.firingTempHP + leftUnit.shieldHP - leftUnit.shieldFiringTempHP);
+        rightShieldBarTime = (rightUnit.shieldHP - rightUnit.shieldFiringTempHP) / (rightUnit.hitPoints - rightUnit.firingTempHP + rightUnit.shieldHP - rightUnit.shieldFiringTempHP);
         ObjPos[] leftPositions = leftUnit.type.firingPositions.get();
         ObjPos[] rightPositions = rightUnit.type.firingPositions.get();
         int leftUnitCount = (int) Math.ceil((leftUnit.hitPoints / leftUnit.type.hitPoints) * leftPositions.length);
@@ -247,12 +288,18 @@ public class FiringRenderer extends AbstractRenderElement {
         finished = false;
         leftHit = false;
         rightHit = false;
+        rightShieldStarted = false;
+        leftShieldStarted = false;
         leftProjectiles.clear();
         rightProjectiles.clear();
         overlayTimer.setReversed(false);
         overlayTimer.startTimer();
-        hitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints);
-        hitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints);
+        hitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints).barOnly();
+        hitPointBarBorderLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints).borderOnly();
+        shieldHitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) leftUnit.type.shieldHP, UIColourTheme.LIGHT_BLUE).barOnly().setFill(leftUnit.shieldHP);
+        hitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints).barOnly();
+        hitPointBarBorderRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints).borderOnly();
+        shieldHitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) rightUnit.type.shieldHP, UIColourTheme.LIGHT_BLUE).barOnly().setFill(rightUnit.shieldHP);
         preRender();
     }
 
@@ -286,6 +333,7 @@ public class FiringRenderer extends AbstractRenderElement {
     };
 
     private static class UnitRenderer implements Renderable {
+        private final ImageSequenceAnim shield;
         private ImageSequenceAnim explosion = null;
         private final ImageCounter unit;
         private final WeaponInstance weapon;
@@ -299,8 +347,9 @@ public class FiringRenderer extends AbstractRenderElement {
         private final boolean toBeDestroyed, isAttacking;
         private boolean enabled = true, exploding = false;
         private final float x, y;
-        private LerpAnimation shakeDuration = null;
+        private LerpAnimation shakeDuration = null, shieldTimer;
         private final UnitType type;
+        public boolean renderShield = false;
 
         private UnitRenderer(ImageCounter unit, WeaponInstance weapon, WeaponInstance.FireAnimState fireAnimState, ArrayList<Projectile> projectiles, boolean toBeDestroyed, boolean isAttacking, float x, float y, UnitType type) {
             this.unit = unit;
@@ -312,8 +361,11 @@ public class FiringRenderer extends AbstractRenderElement {
             this.x = x;
             this.y = y;
             this.type = type;
+            shield = new ImageSequenceAnim(CachedImageSequence.SHIELD, type.firingAnimShieldWidth, (float) (0.1f + Math.random() * 0.07f)).renderLastWhenFinished();
+            shield.finish();
             if (fireAnimState == WeaponInstance.FireAnimState.EMPTY)
                 unit.end();
+            shieldTimer = new LerpAnimation((float) (0.25f + Math.random() * 0.1f));
         }
 
         @Override
@@ -331,11 +383,19 @@ public class FiringRenderer extends AbstractRenderElement {
                     unit.increment(spawnedProjectiles.size());
                 projectiles.addAll(spawnedProjectiles);
             }
-            if (shakeDuration != null && !shakeDuration.finished() && (int) (shakeDuration.normalisedProgress() * 10) % 2 == 0) {
-                g.translate(0.2, 0.2);
+            if (shakeDuration != null && !shakeDuration.finished()) {
+                if (shieldTimer.finished()) {
+                    shieldTimer.startTimer();
+                    shield.start();
+                }
+                if ((int) (shakeDuration.normalisedProgress() * 10) % 2 == 0) {
+                    g.translate(0.2, 0.2);
+                }
             }
             g.translate(xOffset(), yOffset());
             unit.render(g, type.firingAnimUnitWidth);
+            if (renderShield)
+                shield.render(g);
         }
 
         public void renderExplosions(Graphics2D g) {

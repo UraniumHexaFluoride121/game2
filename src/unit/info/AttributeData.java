@@ -9,10 +9,14 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
 
     //Positive
     public static final AttributeData
+            HAS_SHIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
+            "Has a powerful shield for defence", orderCounter++),
             HIGH_MOVEMENT_SPEED = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
             "High movement speed", orderCounter++),
             QUICK_ASTEROID_FIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Can move through asteroid fields", orderCounter++),
+            HIGH_VIEW_RANGE = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
+                    "Extended view range", orderCounter++),
             ANTI_SHIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Effective against shields", orderCounter++),
             ANTI_CAPITAL_SHIP_MISSILES = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
@@ -37,6 +41,8 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
     public static final AttributeData
             NO_ASTEROID_FIELD = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
             "Cannot move through asteroid fields", orderCounter++),
+            LOW_VIEW_RANGE = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
+                    "Limited view range", orderCounter++),
             MAIN_GUN_LIMITED_AMMO = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Primary weapon has limited ammo", orderCounter++),
             INEFFECTIVE_AGAINST_SHIELDS = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,

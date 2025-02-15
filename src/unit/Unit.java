@@ -24,6 +24,7 @@ import render.texture.ImageSequenceGroup;
 import unit.action.Action;
 import unit.action.ActionSelector;
 import unit.action.UnitFiringExplosion;
+import unit.type.UnitType;
 import unit.weapon.WeaponInstance;
 import unit.weapon.WeaponTemplate;
 
@@ -35,7 +36,7 @@ import static level.tile.Tile.*;
 import static unit.action.Action.*;
 
 public class Unit implements Deletable, Tickable {
-    private static final Color HP_BACKGROUND_COLOUR = new Color(67, 67, 67);
+    private static final Color HP_BACKGROUND_COLOUR = new Color(67, 67, 67), SHIELD_HP_BACKGROUND_COLOUR = new Color(79, 115, 140);
     public final UnitType type;
     public final UnitTeam team;
     public Point pos;
@@ -58,10 +59,15 @@ public class Unit implements Deletable, Tickable {
     private final HashSet<Action> performedActions = new HashSet<>();
 
     public float hitPoints, firingTempHP;
+    public float shieldHP, shieldFiringTempHP;
     private final TextRenderer hitPointText = new TextRenderer(() -> MathUtil.floatToString((float) Math.ceil(hitPoints), 0), 0.7f, Color.WHITE)
             .setTextAlign(TextAlign.RIGHT)
             .setBold(true)
             .setRenderBorder(0.1f, 0.3f, HP_BACKGROUND_COLOUR);
+    private final TextRenderer shieldHitPointText = new TextRenderer(() -> MathUtil.floatToString((float) Math.ceil(shieldHP), 0), 0.7f, Color.WHITE)
+            .setTextAlign(TextAlign.LEFT)
+            .setBold(true)
+            .setRenderBorder(0.1f, 0.3f, SHIELD_HP_BACKGROUND_COLOUR);
 
     private Level level;
 
@@ -72,16 +78,18 @@ public class Unit implements Deletable, Tickable {
         this.level = level;
         hitPoints = type.hitPoints;
         firingTempHP = hitPoints;
+        shieldHP = type.shieldHP;
+        shieldFiringTempHP = shieldHP;
         level.buttonRegister.register(actionUI);
         renderPos = Tile.getRenderPos(pos);
         actionUI.setActions(type.actions, this);
         for (WeaponTemplate template : type.weapons) {
             weapons.add(new WeaponInstance(template));
         }
-        idleAnimX = new SineAnimation((5f + (float) Math.random()) * type.bobbingRate, (float) Math.random() * 360);
-        idleAnimY = new SineAnimation((7f + (float) Math.random()) * type.bobbingRate, (float) Math.random() * 360);
-        moveAnimX = new SineAnimation((1f + (float) Math.random() * .3f) * type.bobbingRate, (float) Math.random() * 360);
-        moveAnimY = new SineAnimation((1.5f + (float) Math.random() * .3f) * type.bobbingRate, (float) Math.random() * 360);
+        idleAnimX = new SineAnimation((5f + (float) Math.random()) * type.getBobbingRate(), (float) Math.random() * 360);
+        idleAnimY = new SineAnimation((7f + (float) Math.random()) * type.getBobbingRate(), (float) Math.random() * 360);
+        moveAnimX = new SineAnimation((1f + (float) Math.random() * .3f) * type.getBobbingRate(), (float) Math.random() * 360);
+        moveAnimY = new SineAnimation((1.5f + (float) Math.random() * .3f) * type.getBobbingRate(), (float) Math.random() * 360);
     }
 
     public void renderTile(Graphics2D g) {
@@ -92,11 +100,19 @@ public class Unit implements Deletable, Tickable {
         GameRenderer.renderOffset(getShipRenderPos(), g, () -> {
             g.translate(-TILE_SIZE / 2, 0);
             type.tileRenderer(team, getPose()).render(g);
+            if (shieldHP > 0)
+                type.shieldRenderer.render(g, TILE_SIZE);
         });
         if (path == null) {
             GameRenderer.renderOffset(getAndUpdateRenderPos(), g, () -> {
                 g.translate(TILE_SIZE / 4.5f, TILE_SIZE / 15);
-                hitPointText.render(g);
+                GameRenderer.renderTransformed(g, () -> {
+                    hitPointText.render(g);
+                });
+                if (type.shieldHP != 0) {
+                    g.translate(-TILE_SIZE * 0.45f, 0);
+                    shieldHitPointText.render(g);
+                }
             });
         }
     }
@@ -136,7 +152,7 @@ public class Unit implements Deletable, Tickable {
         if (level == null)
             return;
         if (level.selectedUnit == this) {
-            if (level.getActiveAction() == Action.FIRE) {
+            if (level.getActiveAction() == FIRE) {
                 Tile tile = selector().mouseOverTile;
                 if (tile != null && selectableTiles.contains(tile.pos)) {
                     GameRenderer.renderOffsetScaled(Tile.getCenteredRenderPos(tile.pos), Tile.TILE_SIZE / Renderable.SCALING, g, () -> {
@@ -181,20 +197,22 @@ public class Unit implements Deletable, Tickable {
             FIRE_TILE_BORDER_COLOUR = new Color(243, 103, 103, 118);
 
     public synchronized void onActionSelect(Action action) {
-        if (action == Action.MOVE) {
+        if (action == MOVE) {
             selectableTiles = selector().tilesInRange(pos, selector().tilesWithoutEnemies(selector().allTiles(), team), type.tileMovementCostFunction, type.maxMovement);
             movePath = new TilePath(type, selectableTiles, pos, selector());
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, MOVE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
-        } else if (action == Action.FIRE) {
+        } else if (action == FIRE) {
             selectableTiles = tilesInFiringRange();
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == CAPTURE) {
-            MainPanel.addTask(level::endAction);
-            level.tileSelector.deselect();
+            MainPanel.addTask(() -> {
+                level.endAction();
+                level.tileSelector.deselect();
+            });
             if (level.networkState == NetworkState.CLIENT) {
                 addPerformedAction(CAPTURE);
                 MainPanel.client.sendUnitCaptureRequest(this);
@@ -204,6 +222,19 @@ public class Unit implements Deletable, Tickable {
             if (level.networkState == NetworkState.SERVER)
                 level.server.sendUnitCapturePacket(this);
             return;
+        } else if (action == SHIELD_REGEN) {
+            MainPanel.addTask(() -> {
+                level.endAction();
+                level.tileSelector.deselect();
+            });
+            if (level.networkState == NetworkState.CLIENT) {
+                MainPanel.client.sendUnitShieldRegenRequest(this);
+                return;
+            }
+            addPerformedAction(SHIELD_REGEN);
+            setShieldHP(shieldHP + type.shieldRegen);
+            if (level.networkState == NetworkState.SERVER)
+                level.server.sendUnitShieldRegenPacket(this);
         } else {
             selectableTiles = new HashSet<>();
         }
@@ -219,7 +250,7 @@ public class Unit implements Deletable, Tickable {
             return;
         }
         if (selectableTiles.contains(tile.pos)) {
-            if (action == Action.MOVE) {
+            if (action == MOVE) {
                 if (tile.isFoW || level.canUnitBeMoved(tile.pos)) {
                     path = movePath.getAnimPath(t ->
                             level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this));
@@ -248,7 +279,7 @@ public class Unit implements Deletable, Tickable {
 
     public synchronized void onTileClickedAsClient(Tile tile, Action action) {
         if (selectableTiles.contains(tile.pos)) {
-            if (action == Action.MOVE) {
+            if (action == MOVE) {
                 if (tile.isFoW || level.canUnitBeMoved(tile.pos)) {
                     AnimTilePath path = movePath.getAnimPath(t ->
                             level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this));
@@ -266,6 +297,11 @@ public class Unit implements Deletable, Tickable {
                 selector().deselect();
             }
         }
+    }
+
+    public void setShieldHP(float newHP) {
+        shieldHP = Math.clamp(newHP, 0, type.shieldHP);
+        shieldFiringTempHP = shieldHP;
     }
 
     public void capture(int captureProgress, boolean action) {
@@ -387,6 +423,7 @@ public class Unit implements Deletable, Tickable {
 
     public void postFiring(Unit other, boolean isThisAttacking) {
         hitPoints = firingTempHP;
+        shieldHP = shieldFiringTempHP;
         if (hitPoints <= 0)
             onDestroyed(other);
         else if (!isThisAttacking) {
@@ -526,8 +563,8 @@ public class Unit implements Deletable, Tickable {
 
     private ObjPos getShipRenderPos() {
         if (path != null)
-            return getAndUpdateRenderPos().copy().add(moveAnimX.normalisedProgress() / 6 * type.bobbingAmount, moveAnimY.normalisedProgress() / 4 * type.bobbingAmount);
-        return getAndUpdateRenderPos().copy().add(idleAnimX.normalisedProgress() / 6 * type.bobbingAmount, idleAnimY.normalisedProgress() / 4 * type.bobbingAmount);
+            return getAndUpdateRenderPos().copy().add(moveAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), moveAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
+        return getAndUpdateRenderPos().copy().add(idleAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), idleAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
     }
 
     public float getTileDamageMultiplier() {
@@ -574,6 +611,8 @@ public class Unit implements Deletable, Tickable {
         d.performedActions.forEach(this::addPerformedAction);
         hitPoints = d.hitPoints;
         firingTempHP = d.hitPoints;
+        shieldHP = d.shieldHP;
+        shieldFiringTempHP = d.shieldHP;
         if (captureProgress != d.captureProgress) {
             setCaptureProgress(d.captureProgress);
         }

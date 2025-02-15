@@ -1,7 +1,7 @@
 package unit.weapon;
 
 import unit.Unit;
-import unit.UnitType;
+import unit.type.UnitType;
 
 import java.awt.*;
 import java.util.HashMap;

@@ -238,6 +238,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             for (int i = 0; i < colourSelectorButtons.length; i++) {
                 if (i < MainPanel.client.playerCount) {
                     UnitTeam team = UnitTeam.ORDERED_TEAMS[i];
+                    colourSelectorButtons[i].setEnabled(true);
                     if (MainPanel.client.teamClientIDs.containsKey(team))
                         colourSelectorButtons[i].setColourTheme(team.unavailableColour)
                                 .setText("Taken");
@@ -245,8 +246,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                         colourSelectorButtons[i].setColourTheme(team.uiColour)
                                 .setText(team == selectedTeam ? "Selected" : "Available");
                 } else {
-                    colourSelectorButtons[i].setColourTheme(UIColourTheme.GRAYED_OUT)
-                            .setText(null);
+                    colourSelectorButtons[i].setEnabled(false);
                 }
             }
             if (selectedTeam != null && !colourSelectorButtons[selectedTeam.order].getText().equals("Selected")) {

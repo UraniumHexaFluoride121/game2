@@ -9,6 +9,7 @@ import level.Level;
 import mainScreen.TitleScreen;
 import network.Client;
 import render.anim.LerpAnimation;
+import unit.type.UnitType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,6 +44,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public static boolean controlHeld = false, shiftHeld = false;
 
     public void init() {
+        UnitType.generateWeapons();
         fadeScreen.setReversed(true);
         fadeScreen.finish();
         titleScreen = new TitleScreen();
