@@ -49,6 +49,9 @@ public class FighterType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
+    }, map -> {
+        map.put(Action.CAPTURE, 4);
+        map.put(Action.FIRE, 7);
     }, new AttributeData[]{
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_FIGHTER, ANTI_SHIELD,
             CARRIER_LOADING,
@@ -89,19 +92,22 @@ public class FighterType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
+    }, map -> {
+        map.put(Action.CAPTURE, 4);
+        map.put(Action.FIRE, 8);
     }, new AttributeData[]{
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_CAPITAL_SHIP_MISSILES,
             CARRIER_LOADING,
             MAIN_GUN_LIMITED_AMMO
     }, FiringRenderer.THREE_UNITS);
 
-    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, infoAttributes, firingPositions);
+    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, Consumer<HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
     }
 
     @Override
-    protected Function<TileType, Float> getDamageReduction() {
-        return type -> switch (type) {
+    public float damageReduction(TileType type) {
+        return switch (type) {
             case EMPTY -> 1f;
             case NEBULA -> 0.88f;
             case DENSE_NEBULA -> 0.82f;
@@ -112,5 +118,15 @@ public class FighterType extends UnitType {
     @Override
     protected ShipClass getShipClass() {
         return ShipClass.FIGHTER;
+    }
+
+    @Override
+    public float movementCostMultiplier() {
+        return 1;
+    }
+
+    @Override
+    public float movementFixedCost() {
+        return 0;
     }
 }

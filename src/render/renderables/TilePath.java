@@ -4,11 +4,20 @@ import foundation.MainPanel;
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
 import level.Level;
+import level.energy.EnergyManager;
 import level.tile.Tile;
 import level.tile.TileSelector;
+import render.GameRenderer;
 import render.Renderable;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
+import render.renderables.text.FixedTextRenderer;
+import render.renderables.text.TextAlign;
+import render.ui.UIColourTheme;
+import render.ui.implementation.EnergyCostDisplay;
+import render.ui.types.UIBox;
+import render.ui.types.UITextLabel;
+import unit.Unit;
 import unit.type.UnitType;
 
 import java.awt.*;
@@ -23,6 +32,7 @@ public class TilePath implements Renderable {
     public static final Color MOVE_PATH_COLOUR_INNER = Tile.BLUE_HIGHLIGHT_COLOUR;
     public static final Color MOVE_PATH_COLOUR = new Color(61, 148, 193);
     public static final float END_DOT_RADIUS = 0.15f, END_DOT_RADIUS_INNER = 0.12f;
+    private static final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay();
     private final UnitType type;
     private final HashSet<Point> tiles;
     private final Point origin;
@@ -70,6 +80,18 @@ public class TilePath implements Renderable {
         path = level.tileSelector.shortestPathTo(origin, end, tiles, type.tileMovementCostFunction);
     }
 
+    public static int getEnergyCost(UnitType type, ArrayList<Point> path, Level level) {
+        float cost = 0;
+        for (Point t : path) {
+            cost += type.tileMovementCostFunction.apply(level.getTile(t).type);
+        }
+        return (int) Math.ceil(cost * type.movementCostMultiplier() + type.movementFixedCost());
+    }
+
+    public int getEnergyCost(Level level) {
+        return getEnergyCost(type, path, level);
+    }
+
     public Point getLastTile() {
         return path.getLast();
     }
@@ -92,6 +114,17 @@ public class TilePath implements Renderable {
         renderPath(LINE_STROKE_INNER, MOVE_PATH_COLOUR_INNER, END_DOT_RADIUS_INNER, g);
         g.scale(SCALING, SCALING);
         g.translate(0, -Tile.TILE_SIZE / 2 * Tile.SIN_60_DEG);
+    }
+
+    public void renderEnergyCost(Graphics2D g, Level level) {
+        if (end == null)
+            return;
+        energyCostDisplay.setCost(-getEnergyCost(level), level);
+        GameRenderer.renderOffset(level.getTile(end).renderPos, g, () -> {
+            g.translate(0, -1.5f);
+            energyCostDisplay.render(g);
+            energyCostDisplay.renderToEnergyManager(level);
+        });
     }
 
     private void renderPath(Stroke stroke, Color colour, float dotRadius, Graphics2D g) {

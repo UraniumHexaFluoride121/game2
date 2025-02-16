@@ -119,6 +119,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
                 break;
             tileSelector.tileSet.forEach(t -> t.setTileType(TileType.EMPTY, this));
         }
+        levelRenderer.energyManager.recalculateIncome();
+        levelRenderer.energyManager.incrementTurn(getThisTeam());
         return this;
     }
 
@@ -271,6 +273,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         updateFoW();
         levelRenderer.useLastCameraPos(team, activeTeam);
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
+        levelRenderer.energyManager.incrementTurn(activeTeam);
         if (networkState == NetworkState.SERVER)
             server.sendTurnUpdatePacket();
     }

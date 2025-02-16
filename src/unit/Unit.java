@@ -46,14 +46,14 @@ public class Unit implements Deletable, Tickable {
 
     private final SineAnimation idleAnimX, idleAnimY, moveAnimX, moveAnimY;
 
-    private ActionSelector actionUI = new ActionSelector(this::getAndUpdateRenderPos, () -> {
+    private ActionSelector actionUI = new ActionSelector(() -> {
         if (getLevel().getThisTeam() != getLevel().getActiveTeam() || getLevel().getThisTeam() != getTeam())
             return false;
         if (getLevel().getActiveAction() != null)
             return false;
         Tile selectedTile = getLevel().tileSelector.getSelectedTile();
         return selectedTile != null && selectedTile.pos.equals(getPos());
-    });
+    }, this);
 
     public final ArrayList<WeaponInstance> weapons = new ArrayList<>();
     private final HashSet<Action> performedActions = new HashSet<>();
@@ -149,8 +149,7 @@ public class Unit implements Deletable, Tickable {
     private UnitFiringExplosion firingExplosion = null;
 
     public synchronized void renderActionAboveUnits(Graphics2D g) {
-        if (level == null)
-            return;
+        if (level == null) return;
         if (level.selectedUnit == this) {
             if (level.getActiveAction() == FIRE) {
                 Tile tile = selector().mouseOverTile;
@@ -193,6 +192,12 @@ public class Unit implements Deletable, Tickable {
         }
     }
 
+    public synchronized void renderEnergyCostIndicator(Graphics2D g) {
+        if (level == null) return;
+        if (level.selectedUnit == this && movePath != null)
+            movePath.renderEnergyCost(g, level);
+    }
+
     private static final Color MOVE_TILE_BORDER_COLOUR = new Color(107, 184, 248, 192),
             FIRE_TILE_BORDER_COLOUR = new Color(243, 103, 103, 118);
 
@@ -209,6 +214,7 @@ public class Unit implements Deletable, Tickable {
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == CAPTURE) {
+            if (!level.levelRenderer.energyManager.canAfford(this, CAPTURE, true)) return;
             MainPanel.addTask(() -> {
                 level.endAction();
                 level.tileSelector.deselect();
@@ -223,6 +229,7 @@ public class Unit implements Deletable, Tickable {
                 level.server.sendUnitCapturePacket(this);
             return;
         } else if (action == SHIELD_REGEN) {
+            if (!level.levelRenderer.energyManager.canAfford(this, SHIELD_REGEN, true)) return;
             MainPanel.addTask(() -> {
                 level.endAction();
                 level.tileSelector.deselect();
@@ -243,15 +250,14 @@ public class Unit implements Deletable, Tickable {
 
     //Called when there is an active action and this unit is selected
     public synchronized void onTileClicked(Tile tile, Action action) {
-        if (tile == null || level == null)
-            return;
+        if (tile == null || level == null) return;
         if (level.networkState == NetworkState.CLIENT) {
             onTileClickedAsClient(tile, action);
             return;
         }
         if (selectableTiles.contains(tile.pos)) {
             if (action == MOVE) {
-                if (tile.isFoW || level.canUnitBeMoved(tile.pos)) {
+                if ((tile.isFoW || level.canUnitBeMoved(tile.pos)) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), true)) {
                     path = movePath.getAnimPath(t ->
                             level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this));
                     if (path.length() != movePath.length() + 1) {
@@ -265,6 +271,7 @@ public class Unit implements Deletable, Tickable {
                     }
                 }
             } else if (action == FIRE) {
+                if (!level.levelRenderer.energyManager.canAfford(this, FIRE, true)) return;
                 Unit other = level.getUnit(tile.pos);
                 if (level.networkState == NetworkState.SERVER) {
                     level.server.sendUnitShootPacket(this, other);
@@ -280,7 +287,7 @@ public class Unit implements Deletable, Tickable {
     public synchronized void onTileClickedAsClient(Tile tile, Action action) {
         if (selectableTiles.contains(tile.pos)) {
             if (action == MOVE) {
-                if (tile.isFoW || level.canUnitBeMoved(tile.pos)) {
+                if ((tile.isFoW || level.canUnitBeMoved(tile.pos)) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), true)) {
                     AnimTilePath path = movePath.getAnimPath(t ->
                             level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this));
                     Point illegalTile;
@@ -292,6 +299,7 @@ public class Unit implements Deletable, Tickable {
                     level.endAction();
                 }
             } else if (action == FIRE) {
+                if (!level.levelRenderer.energyManager.canAfford(this, FIRE, true)) return;
                 MainPanel.client.sendUnitShootRequest(this, level.getUnit(tile.pos));
                 level.endAction();
                 selector().deselect();
@@ -539,7 +547,7 @@ public class Unit implements Deletable, Tickable {
         return renderPos;
     }
 
-    private ObjPos getRenderPos() {
+    public ObjPos getRenderPos() {
         if (path != null) {
             if (path.finished())
                 renderPos = path.getEnd();
@@ -568,7 +576,7 @@ public class Unit implements Deletable, Tickable {
     }
 
     public float getTileDamageMultiplier() {
-        return type.damageReduction.apply(level.getTile(pos).type);
+        return type.damageReduction(level.getTile(pos).type);
     }
 
     public HashSet<Point> getVisibleTiles() {

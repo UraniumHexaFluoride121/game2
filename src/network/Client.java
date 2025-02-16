@@ -249,6 +249,14 @@ public class Client implements Deletable {
                     u.setShieldHP(shieldHP);
                 });
             }
+            case ENERGY_UPDATE -> {
+                HashMap<UnitTeam, Integer> availableMap = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
+                HashMap<UnitTeam, Integer> incomeMap = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
+                MainPanel.addTask(() -> {
+                    Level l = MainPanel.activeLevel;
+                    l.levelRenderer.energyManager.updateFromRead(availableMap, incomeMap);
+                });
+            }
         }
     }
 

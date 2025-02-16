@@ -8,6 +8,7 @@ import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import foundation.tick.Tickable;
+import level.energy.EnergyManager;
 import level.tile.Tile;
 import network.NetworkState;
 import render.GameRenderer;
@@ -38,6 +39,7 @@ import java.util.HashSet;
 import static level.tile.Tile.*;
 
 public class LevelRenderer implements Deletable, Renderable, Tickable, InputReceiver {
+    private static final float MOUSE_EDGE_CAMERA_MOVE_SPEED = 20;
     private Level level;
     private final GameRenderer mainRenderer, backgroundRenderer, levelUIRenderer, firingAnimRenderer, topUIRenderer;
     private BufferedImage borderImage;
@@ -67,6 +69,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     public UITileInfo tileInfo = null;
     public UIButton exitActionButton = null;
     public UnitInfoScreen unitInfoScreen = null;
+    public EnergyManager energyManager = null;
 
     private void createRenderers() {
         createTiles();
@@ -147,6 +150,10 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         //Damage UI
         damageUI = new UIDamage(mainRenderer, RenderOrder.DAMAGE_UI);
 
+        new RenderElement(mainRenderer, RenderOrder.ENERGY_COST_INDICATOR, g -> {
+            level.unitSet.forEach(u -> u.renderEnergyCostIndicator(g));
+        });
+
         new UIUnitInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, level);
 
         tileInfo = new UITileInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() - 15, .5f, level);
@@ -171,6 +178,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
         unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, level);
         unitInfoScreen.setEnabled(false);
+
+        energyManager = new EnergyManager(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2 - 5, Renderable.top() - 3.5f, level);
     }
 
     private void createTiles() {
@@ -367,19 +376,40 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         if (p != null && !runningAnim()) {
             ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
             ObjPos cameraTransformedPos = transformMousePosToCamera(p);
-            if (moveCameraEnabled && (interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4)) {
-                if (prevMousePos != null) {
-                    if (interpCameraTo != null) {
-                        interpCameraTo = null;
-                    }
-                    cameraPosition.add(mousePos.copy().subtract(prevMousePos).scaleToBlocks().flipY());
-                    cameraPosition.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
+            if (interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4) {
+                if (interpCameraTo != null && (moveCameraUp || moveCameraDown || moveCameraLeft || moveCameraRight))
+                    interpCameraTo = null;
+                if (moveCameraDown) {
+                    moveCameraDown = false;
+                    cameraPosition.addY(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
                 }
-                prevMousePos = mousePos;
+                if (moveCameraUp) {
+                    moveCameraUp = false;
+                    cameraPosition.addY(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
+                }
+                if (moveCameraLeft) {
+                    moveCameraLeft = false;
+                    cameraPosition.addX(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
+                }
+                if (moveCameraRight) {
+                    moveCameraRight = false;
+                    cameraPosition.addX(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
+                }
+                if (moveCameraEnabled) {
+                    if (prevMousePos != null) {
+                        if (interpCameraTo != null)
+                            interpCameraTo = null;
+                        cameraPosition.add(mousePos.copy().subtract(prevMousePos).scaleToBlocks().flipY());
+                    }
+                    prevMousePos = mousePos;
+                }
+                cameraPosition.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
             }
             level.buttonRegister.acceptInput(cameraTransformedPos, InputType.MOUSE_OVER, true, false);
         }
     }
+
+    public boolean moveCameraLeft = false, moveCameraRight = false, moveCameraUp = false, moveCameraDown = false;
 
     private boolean isFiring = false;
 

@@ -101,6 +101,10 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
         return state == ButtonState.SELECTED;
     }
 
+    public boolean isDefault() {
+        return state == ButtonState.DEFAULT;
+    }
+
     @Override
     public void delete() {
         onClick = null;

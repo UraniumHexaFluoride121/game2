@@ -216,7 +216,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                     }).setOnDeselect(() -> MainPanel.titleScreen.playerShipSettings.updateTeam());
             playerTeamLabel = new UITextLabel(5, 0.7f, false)
                     .updateTextCenter("Player Team").setTextCenterBold();
-            deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.5f, 2.25f, 1, 1, false, () -> {
+            deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.75f, 2.5f, 1, 1, false, () -> {
                 parentContainer.deletePlayer(getIndex());
             }).setShape(UIShapeButton::x).setBoxCorner(0.2f).setColourTheme(UIColourTheme.DEEP_RED);
             parent = buttonRegister;

@@ -82,6 +82,7 @@ public class Server implements Deletable {
 
     public void sendTurnUpdatePacket() {
         clients.forEach((id, c) -> c.queueTurnUpdatePacket());
+        sendEnergyUpdatePacket();
     }
 
     public void sendUnitMovePacket(AnimTilePath path, Point illegalTile, Unit unit) {
@@ -109,6 +110,10 @@ public class Server implements Deletable {
             PacketWriter.writePoint(unit.pos, w);
             w.writeInt(unit.getCaptureProgress());
         })));
+    }
+
+    public void sendEnergyUpdatePacket() {
+        clients.forEach((id, c) -> c.queueEnergyUpdatePacket());
     }
 
     public void sendUnitShieldRegenPacket(Unit unit) {
@@ -192,6 +197,13 @@ public class Server implements Deletable {
             queuePacket(new PacketWriter(PacketType.UNIT_UPDATE, w -> {
                 PacketWriter.writeCollection(server.level.unitSet, u -> new UnitData(u).write(w), w);
             }));
+            queueEnergyUpdatePacket();
+        }
+
+        public void queueEnergyUpdatePacket() {
+            queuePacket(new PacketWriter(PacketType.ENERGY_UPDATE, w -> {
+                server.level.levelRenderer.energyManager.write(w);
+            }));
         }
 
         public synchronized void queuePacket(PacketWriter packet) {
@@ -263,7 +275,7 @@ public class Server implements Deletable {
                     UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit unit = server.level.getUnit(unitPos);
-                        if (unit == null || unit.type != type || unit.team != team || unit.hasPerformedAction(Action.MOVE)) {
+                        if (unit == null || unit.type != type || unit.team != team || unit.hasPerformedAction(Action.MOVE) || !server.level.levelRenderer.energyManager.canAfford(unit.team, path.getEnergyCost(unit, server.level), true)) {
                             queueUnitUpdatePacket();
                             return;
                         }
@@ -275,7 +287,7 @@ public class Server implements Deletable {
                     Point from = PacketReceiver.readPoint(reader), to = PacketReceiver.readPoint(reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit fromUnit = server.level.getUnit(from), toUnit = server.level.getUnit(to);
-                        if (fromUnit == null || toUnit == null || server.teamClientIDs.get(fromUnit.team) != clientID || fromUnit.hasPerformedAction(Action.FIRE)) {
+                        if (fromUnit == null || toUnit == null || server.teamClientIDs.get(fromUnit.team) != clientID || fromUnit.hasPerformedAction(Action.FIRE) || !server.level.levelRenderer.energyManager.canAfford(fromUnit, Action.FIRE, true)) {
                             queueUnitUpdatePacket();
                             return;
                         }
@@ -286,7 +298,7 @@ public class Server implements Deletable {
                     Point pos = PacketReceiver.readPoint(reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit u = server.level.getUnit(pos);
-                        if (u == null || u.hasPerformedAction(Action.CAPTURE) || !u.canCapture()) {
+                        if (u == null || u.hasPerformedAction(Action.CAPTURE) || !u.canCapture() || !server.level.levelRenderer.energyManager.canAfford(u, Action.CAPTURE, true)) {
                             queueUnitUpdatePacket();
                             return;
                         }
@@ -298,7 +310,7 @@ public class Server implements Deletable {
                     Point pos = PacketReceiver.readPoint(reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit u = server.level.getUnit(pos);
-                        if (u == null || u.hasPerformedAction(Action.SHIELD_REGEN)) {
+                        if (u == null || u.hasPerformedAction(Action.SHIELD_REGEN) || !server.level.levelRenderer.energyManager.canAfford(u, Action.SHIELD_REGEN, true)) {
                             queueUnitUpdatePacket();
                             return;
                         }

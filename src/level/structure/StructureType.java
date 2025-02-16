@@ -10,18 +10,19 @@ import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
 public enum StructureType {
-    BASE("structures/base/base_", "Base", true, true, 3);
+    BASE("structures/base/base_", "Base", true, true, 3, 50);
 
     public final String displayName;
     private final HashMap<UnitTeam, ImageRenderer> renderers = new HashMap<>();
     public final boolean canBeCapturedByDefault, destroyedOnCapture;
-    public final int captureSteps;
+    public final int captureSteps, energyIncome;
 
-    StructureType(String path, String displayName, boolean canBeCapturedByDefault, boolean destroyedOnCapture, int captureSteps) {
+    StructureType(String path, String displayName, boolean canBeCapturedByDefault, boolean destroyedOnCapture, int captureSteps, int energyIncome) {
         this.displayName = displayName;
         this.canBeCapturedByDefault = canBeCapturedByDefault;
         this.destroyedOnCapture = destroyedOnCapture;
         this.captureSteps = captureSteps;
+        this.energyIncome = energyIncome;
         RescaleOp op = new RescaleOp(0.7f, 0, null);
         for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
             BufferedImage image = AssetManager.getImage(new ResourceLocation(path + team.s + ".png"), true);

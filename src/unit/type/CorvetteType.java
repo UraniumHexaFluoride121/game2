@@ -48,6 +48,9 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
+    }, map -> {
+        map.put(Action.CAPTURE, 6);
+        map.put(Action.FIRE, 10);
     }, new AttributeData[]{
         ANTI_CORVETTE, BALANCED,
                 SLOW_ASTEROID_FIELD, CARRIER_LOADING,
@@ -81,15 +84,20 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.MODERATE);
+    }, map -> {
+        map.put(Action.CAPTURE, 6);
+        map.put(Action.FIRE, 12);
+        map.put(Action.SHIELD_REGEN, 10);
     }, new AttributeData[]{
         ANTI_FIGHTER, ANTI_SHIELD, HAS_SHIELD,
                 SLOW_ASTEROID_FIELD, CARRIER_LOADING,
                 INEFFECTIVE_AGAINST_LARGE, LOW_VIEW_RANGE
     }, FiringRenderer.TWO_UNITS).addShield(4, 1.5f, 27);
 
-    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, infoAttributes, firingPositions);
+    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, Consumer<HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
     }
+
 
     @Override
     public CorvetteType addShield(float shieldHP, float shieldRegen, float firingAnimShieldWidth) {
@@ -108,8 +116,18 @@ public class CorvetteType extends UnitType {
     }
 
     @Override
-    protected Function<TileType, Float> getDamageReduction() {
-        return type -> switch (type) {
+    public float movementCostMultiplier() {
+        return 2;
+    }
+
+    @Override
+    public float movementFixedCost() {
+        return 2;
+    }
+
+    @Override
+    public float damageReduction(TileType type) {
+        return switch (type) {
             case EMPTY -> 1f;
             case NEBULA -> 0.88f;
             case DENSE_NEBULA -> 0.82f;

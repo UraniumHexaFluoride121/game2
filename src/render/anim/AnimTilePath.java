@@ -2,10 +2,13 @@ package render.anim;
 
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
+import level.Level;
 import level.tile.Tile;
 import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
+import render.renderables.TilePath;
+import unit.Unit;
 
 import java.awt.*;
 import java.io.DataInputStream;
@@ -85,6 +88,12 @@ public class AnimTilePath implements Writable {
             return directions.getFirst();
         int segment = (int) (t * segments);
         return directions.get(segment);
+    }
+
+    public int getEnergyCost(Unit unit, Level level) {
+        ArrayList<Point> path = new ArrayList<>(tiles);
+        path.removeFirst();
+        return TilePath.getEnergyCost(unit.type, path, level);
     }
 
     @Override

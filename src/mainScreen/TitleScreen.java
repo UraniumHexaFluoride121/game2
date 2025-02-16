@@ -112,7 +112,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             new OnButtonInput(b, ButtonOrder.MAIN_BUTTONS, t -> t == InputType.ENTER, () -> {
                 if (joinButton.isEnabled())
                     joinButton.select();
-                else if (enterIPLabel.isEnabled() && !connectButton.getText().equals("Connected!"))
+                else if (enterIPBox.isEnabled() && !connectButton.getText().equals("Connected!"))
                     connectButton.select();
             });
         }).setEnabled(false);

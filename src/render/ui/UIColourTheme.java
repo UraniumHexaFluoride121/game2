@@ -15,6 +15,12 @@ public enum UIColourTheme {
             new Color(161, 161, 161), new Color(131, 131, 131, 144),
             new Color(161, 161, 161), new Color(131, 131, 131, 144)
     ),
+    DARK_GRAY(
+            new Color(97, 97, 97), new Color(69, 69, 69, 221),
+            new Color(97, 97, 97), new Color(69, 69, 69, 221),
+            new Color(97, 97, 97), new Color(69, 69, 69, 221),
+            new Color(97, 97, 97), new Color(69, 69, 69, 221)
+    ),
     GREEN_SELECTED(
             new Color(105, 181, 228), new Color(87, 142, 189, 144),
             new Color(125, 195, 220), new Color(92, 140, 181, 133),

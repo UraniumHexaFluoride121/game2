@@ -9,6 +9,7 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
 import level.Level;
+import render.Renderable;
 import unit.Unit;
 import unit.UnitTeam;
 
@@ -317,9 +318,14 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
             }
             level.updateSelectedUnit();
         } else if (type == MOUSE_OVER) {
-            if (!blocked)
+            if (!blocked) {
+                ObjPos blockPos = level.levelRenderer.transformCameraPosToBlock(pos);
+                if (blockPos.y < 1) level.levelRenderer.moveCameraDown = true;
+                if (blockPos.y > Renderable.top() - 1) level.levelRenderer.moveCameraUp = true;
+                if (blockPos.x < 1) level.levelRenderer.moveCameraLeft = true;
+                if (blockPos.x > Renderable.right() - 1) level.levelRenderer.moveCameraRight = true;
                 mouseOverTile = tileAtSelectablePos(pos);
-            else
+            } else
                 mouseOverTile = null;
         } else if (type == ESCAPE) {
             if (!blocked) {

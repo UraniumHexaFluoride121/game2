@@ -10,6 +10,8 @@ import java.awt.*;
 
 public class UITextLabel implements Renderable {
     public static final Color TEXT_COLOUR = new Color(181, 204, 216);
+    public static final Color GREEN_TEXT_COLOUR = new Color(105, 214, 87);
+    public static final Color RED_TEXT_COLOUR = new Color(214, 83, 83);
     public static final Color TEXT_COLOUR_DARK = new Color(153, 188, 200);
     public static final float DEFAULT_LINE_WIDTH = 0.17f;
 

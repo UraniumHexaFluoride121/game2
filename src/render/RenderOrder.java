@@ -18,7 +18,7 @@ public enum RenderOrder {
     ACTION_ABOVE_UNITS,
     ACTION_SELECTOR,
     DAMAGE_UI,
-    UI,
+    ENERGY_COST_INDICATOR,
 
     //Level menus / UI
     LEVEL_UI,

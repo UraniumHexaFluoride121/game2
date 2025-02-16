@@ -5,7 +5,9 @@ import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
+import render.GameRenderer;
 import render.Renderable;
+import render.ui.implementation.EnergyCostDisplay;
 import unit.Unit;
 
 import java.awt.*;
@@ -22,11 +24,13 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     public static final Color BACKGROUND_COLOUR = new Color(0, 0, 0, 150), BORDER_COLOUR = new Color(90, 90, 90);
 
     public TreeMap<Action, ActionData> actionMap = new TreeMap<>(Comparator.comparingInt(Action::getOrder));
-    private final Supplier<ObjPos> renderPos;
+    private final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay();
     private Supplier<Boolean> isVisible;
 
-    public ActionSelector(Supplier<ObjPos> renderPos, Supplier<Boolean> isVisible) {
-        this.renderPos = renderPos;
+    private Unit unit;
+
+    public ActionSelector(Supplier<Boolean> isVisible, Unit unit) {
+        this.unit = unit;
         this.isVisible = isVisible;
     }
 
@@ -41,6 +45,17 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     public void render(Graphics2D g) {
         if (!isVisible.get())
             return;
+        actionMap.forEach((a, d) -> {
+            if (!d.clickHandler.isDefault()) {
+                unit.type.getActionCost(a).ifPresent(cost -> {
+                    energyCostDisplay.setCost(-cost, unit.getLevel());
+                    energyCostDisplay.renderToEnergyManager(unit.getLevel());
+                    GameRenderer.renderOffset(0, -4.5f, g, () -> {
+                        energyCostDisplay.render(g);
+                    });
+                });
+            }
+        });
         g.translate(0, -ACTION_BUTTON_SIZE / 2 - BORDER_OFFSET * 2);
         g.scale(1d / SCALING, 1d / SCALING);
         g.setStroke(BORDER_STROKE);
@@ -83,7 +98,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
             actionMap.get(MOVE).enabled = true;
         }
         if (actionMap.containsKey(SHIELD_REGEN)) {
-            actionMap.get(SHIELD_REGEN).enabled = true;
+            actionMap.get(SHIELD_REGEN).enabled = unit.shieldHP < unit.type.shieldHP;
         }
         if (unit.canCapture()) {
             addActionEnabled(CAPTURE, unit);
@@ -98,11 +113,17 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     }
 
     public void addAction(Action action, Unit unit) {
-        actionMap.putIfAbsent(action, new ActionData(() -> unit.onActionSelect(action), false));
+        actionMap.putIfAbsent(action, new ActionData(() -> {
+            if (unit.getLevel().levelRenderer.energyManager.canAfford(unit, action, false))
+                unit.onActionSelect(action);
+        }, false));
     }
 
     public void addActionEnabled(Action action, Unit unit) {
-        actionMap.putIfAbsent(action, new ActionData(() -> unit.onActionSelect(action), true));
+        actionMap.putIfAbsent(action, new ActionData(() -> {
+            if (unit.getLevel().levelRenderer.energyManager.canAfford(unit, action, false))
+                unit.onActionSelect(action);
+        }, true));
     }
 
     public void removeAction(Action action) {
@@ -122,7 +143,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     }
 
     private ObjPos actionOffset(int i) {
-        return new ObjPos().subtract(renderPos.get()).subtract((i - (actionMap.size() - 1) / 2f) * (ACTION_BUTTON_SIZE + ACTION_SPACING), -ACTION_BUTTON_SIZE / 2 - BORDER_OFFSET * 2);
+        return new ObjPos().subtract(unit.getRenderPos()).subtract((i - (actionMap.size() - 1) / 2f) * (ACTION_BUTTON_SIZE + ACTION_SPACING), -ACTION_BUTTON_SIZE / 2 - BORDER_OFFSET * 2);
     }
 
     private boolean isInsideAction(int i, ObjPos pos) {
@@ -165,6 +186,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     @Override
     public void delete() {
         isVisible = null;
+        unit = null;
         actionMap.forEach((a, d) -> d.clickHandler.delete());
         actionMap.clear();
     }
