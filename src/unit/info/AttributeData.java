@@ -17,6 +17,8 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
                     "Can move through asteroid fields", orderCounter++),
             HIGH_VIEW_RANGE = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Extended view range", orderCounter++),
+            RANGED_WEAPON = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
+                    "Has a ranged weapon", orderCounter++),
             ANTI_SHIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Effective against shields", orderCounter++),
             ANTI_CAPITAL_SHIP_MISSILES = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,

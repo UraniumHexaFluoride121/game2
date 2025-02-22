@@ -8,29 +8,43 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
     public boolean mouseHover = false, pressed = false;
     public final boolean staySelected;
     public boolean noDeselect = false;
+    public boolean toggle = false;
+    private boolean lastSelected = false;
 
     private final InputType clickInput;
 
-    private Runnable onClick, onDeselect;
+    private Runnable onClick = () -> lastSelected = true, onDeselect = () -> lastSelected = false;
 
     public ButtonClickHandler(InputType clickInput, boolean staySelected, Runnable onClick) {
-        this.staySelected = staySelected;
-        this.clickInput = clickInput;
-        this.onClick = onClick;
+        this(clickInput, staySelected);
+        setOnClick(onClick);
     }
 
     public ButtonClickHandler(InputType clickInput, boolean staySelected) {
         this.staySelected = staySelected;
         this.clickInput = clickInput;
-        onClick = null;
     }
 
     public void setOnClick(Runnable onClick) {
-        this.onClick = onClick;
+        if (onClick == null)
+            this.onClick = () -> lastSelected = true;
+        else {
+            this.onClick = () -> {
+                onClick.run();
+                lastSelected = true;
+            };
+        }
     }
 
     public ButtonClickHandler setOnDeselect(Runnable onDeselect) {
-        this.onDeselect = onDeselect;
+        if (onDeselect == null)
+            this.onDeselect = () -> lastSelected = false;
+        else {
+            this.onDeselect = () -> {
+                onDeselect.run();
+                lastSelected = false;
+            };
+        }
         return this;
     }
 
@@ -44,7 +58,10 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
                 state = pressed ? ButtonState.PRESSED : mouseHover ? ButtonState.HOVER : ButtonState.DEFAULT;
         } else if (type == clickInput) {
             pressed = inside && !blocked;
+            ButtonState prevState = state;
             state = pressed ? ButtonState.PRESSED : ButtonState.DEFAULT;
+            if (prevState == ButtonState.SELECTED && state == ButtonState.DEFAULT)
+                onDeselect.run();
         }
     }
 
@@ -55,19 +72,20 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
         if (type == clickInput) {
             if (staySelected && inside && !blocked && pressed) {
                 pressed = false;
-                state = ButtonState.SELECTED;
-                if (onClick != null)
+                if (toggle && lastSelected) {
+                    state = ButtonState.DEFAULT;
+                    onDeselect.run();
+                } else {
+                    state = ButtonState.SELECTED;
                     onClick.run();
+                }
             } else {
                 if (state == ButtonState.PRESSED && mouseHover) {
-                    if (onClick != null)
-                        onClick.run();
+                    onClick.run();
                 }
                 pressed = false;
                 state = mouseHover ? ButtonState.HOVER : ButtonState.DEFAULT;
-                if (onDeselect != null) {
-                    onDeselect.run();
-                }
+                onDeselect.run();
             }
         }
     }
@@ -76,15 +94,13 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
         if (staySelected)
             state = ButtonState.SELECTED;
         pressed = false;
-        if (onClick != null)
-            onClick.run();
+        onClick.run();
     }
 
     public void deselect() {
         state = ButtonState.DEFAULT;
         pressed = false;
-        if (onDeselect != null)
-            onDeselect.run();
+        onDeselect.run();
     }
 
     public ButtonClickHandler noDeselect() {
@@ -92,9 +108,13 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
         return this;
     }
 
+    public ButtonClickHandler toggleMode() {
+        toggle = true;
+        return this;
+    }
+
     public void runOnClick() {
-        if (onClick != null)
-            onClick.run();
+        onClick.run();
     }
 
     public boolean isSelected() {

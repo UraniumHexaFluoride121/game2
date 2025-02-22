@@ -46,7 +46,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         if (!isVisible.get())
             return;
         actionMap.forEach((a, d) -> {
-            if (!d.clickHandler.isDefault()) {
+            if (!d.clickHandler.isDefault() && d.enabled) {
                 unit.type.getActionCost(a).ifPresent(cost -> {
                     energyCostDisplay.setCost(-cost, unit.getLevel());
                     energyCostDisplay.renderToEnergyManager(unit.getLevel());
@@ -92,7 +92,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
 
     public void updateActions(Unit unit) {
         if (actionMap.containsKey(FIRE)) {
-            actionMap.get(FIRE).enabled = !unit.tilesInFiringRange().isEmpty();
+            actionMap.get(FIRE).enabled = !unit.tilesInFiringRange(true).isEmpty();
         }
         if (actionMap.containsKey(MOVE)) {
             actionMap.get(MOVE).enabled = true;

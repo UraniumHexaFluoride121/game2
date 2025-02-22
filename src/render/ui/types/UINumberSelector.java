@@ -1,9 +1,6 @@
 package render.ui.types;
 
-import foundation.input.ButtonOrder;
-import foundation.input.ButtonRegister;
-import foundation.input.InputType;
-import foundation.input.RegisteredButtonInputReceiver;
+import foundation.input.*;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import render.AbstractRenderElement;
@@ -119,13 +116,14 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (isEnabled()) {
-            if (!blocked && inside && type.isScrollInputOnce()) {
-                if (type == InputType.MOUSE_SCROLL_UP_ONCE) {
+            if (!blocked && inside && type instanceof ScrollInputType s) {
+                if (s.up) {
                     increment();
                 } else
                     decrement();
+                blocking = true;
             } else
-                blocking = internal.acceptInput(pos, type, true, blocked);
+                    blocking = internal.acceptInput(pos, type, true, blocked);
         }
     }
 

@@ -69,6 +69,10 @@ public class UITabSwitcher extends UIContainer {
         return this;
     }
 
+    public void addToTab(int index, BiConsumer<GameRenderer, ButtonRegister> elements) {
+        elements.accept(tabs.get(index).renderer, tabs.get(index).internal);
+    }
+
     public UITabSwitcher setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         return this;

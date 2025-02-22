@@ -9,7 +9,7 @@ import render.anim.LerpAnimation;
 import java.awt.*;
 
 public class Projectile implements Renderable {
-    private final ProjectileType type;
+    public final ProjectileType type;
     private float x, y;
     private LerpAnimation forwardAnim;
     private final LerpAnimation holdAnim = new LerpAnimation(1);
@@ -56,6 +56,10 @@ public class Projectile implements Renderable {
                 type.render(g);
             });
         }
+    }
+
+    public boolean pastHalfway() {
+        return holdAnim.finished();
     }
 
     public boolean exploding() {

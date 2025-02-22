@@ -9,12 +9,9 @@ public class InputType {
     public static final InputType
             NONE = new InputType(), TAB_ON_SWITCH_TO = new InputType(),
 
-            MOUSE_RIGHT = new InputType(), MOUSE_LEFT = new InputType(), MOUSE_OVER = new InputType(),
+    MOUSE_RIGHT = new InputType(), MOUSE_LEFT = new InputType(), MOUSE_OVER = new InputType(),
             ESCAPE = new InputType(), BACKSPACE = new InputType(), ENTER = new InputType(),
-            LEFT_ARROW = new InputType(), RIGHT_ARROW = new InputType(),
-
-    MOUSE_SCROLL_UP = new InputType(), MOUSE_SCROLL_DOWN = new InputType(),
-            MOUSE_SCROLL_UP_ONCE = new InputType(), MOUSE_SCROLL_DOWN_ONCE = new InputType();
+            LEFT_ARROW = new InputType(), RIGHT_ARROW = new InputType();
 
     public final boolean isCharInput;
     public final char c;
@@ -34,14 +31,6 @@ public class InputType {
 
     public boolean isMouseInput() {
         return this == MOUSE_OVER || this == MOUSE_RIGHT || this == MOUSE_LEFT;
-    }
-
-    public boolean isScrollInput() {
-        return this == MOUSE_SCROLL_DOWN || this == MOUSE_SCROLL_UP;
-    }
-
-    public boolean isScrollInputOnce() {
-        return this == MOUSE_SCROLL_DOWN_ONCE || this == MOUSE_SCROLL_UP_ONCE;
     }
 
     public boolean isArrowKey() {
@@ -88,16 +77,6 @@ public class InputType {
     }
 
     public static InputType getScrollInput(MouseWheelEvent e) {
-        if (e.getUnitsToScroll() < 0)
-            return MOUSE_SCROLL_UP;
-        else
-            return MOUSE_SCROLL_DOWN;
-    }
-
-    public static InputType getScrollInputOnce(MouseWheelEvent e) {
-        if (e.getUnitsToScroll() < 0)
-            return MOUSE_SCROLL_UP_ONCE;
-        else
-            return MOUSE_SCROLL_DOWN_ONCE;
+        return new ScrollInputType(e.getScrollAmount(), e.getUnitsToScroll() < 0);
     }
 }

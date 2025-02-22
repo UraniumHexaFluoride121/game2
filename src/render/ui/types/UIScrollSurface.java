@@ -63,6 +63,11 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
         elementsRenderer.accept(renderer, internal);
     }
 
+    public UIScrollSurface addRenderables(BiConsumer<GameRenderer, ButtonRegister> createRenderer) {
+        createRenderer.accept(renderer, internal);
+        return this;
+    }
+
     public UIScrollSurface setScrollMax(float scrollMax) {
         this.scrollMax = Math.max(0, scrollMax);
         scrollAmount = Math.clamp(scrollAmount, 0, this.scrollMax);
@@ -127,11 +132,11 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
             blocking = internal.acceptInput(getPos(pos), type, true, blocked);
         else
             blocking = internal.acceptInput(new ObjPos(-1000, -1000), type, true, blocked);
-        if (!blocking && inside && !blocked && type.isScrollInput()) {
-            if (type == InputType.MOUSE_SCROLL_UP)
-                scrollAmount = Math.clamp(scrollAmount - scrollSpeed, 0, scrollMax);
+        if (!blocking && inside && !blocked && type instanceof ScrollInputType s) {
+            if (s.up)
+                scrollAmount = Math.clamp(scrollAmount - scrollSpeed * s.scrollAmount, 0, scrollMax);
             else
-                scrollAmount = Math.clamp(scrollAmount + scrollSpeed, 0, scrollMax);
+                scrollAmount = Math.clamp(scrollAmount + scrollSpeed * s.scrollAmount, 0, scrollMax);
         }
         if (scrollBarBox != null && !blocked && !blocking && type == InputType.MOUSE_LEFT && scrollBarBox.isPositionInside(pos)) {
             prevPos = pos;

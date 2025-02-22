@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 public class MainPanel extends JFrame implements KeyListener, MouseListener, MouseWheelListener, RegisteredTickable {
     //TODO: Set to true when not testing
-    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = true;
+    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = false;
 
     public static AffineTransform windowTransform = new AffineTransform();
 
@@ -206,10 +206,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public void mouseWheelMoved(MouseWheelEvent e) {
         tasks.add(() -> {
             if (activeInputReceiver != null) {
-                activeInputReceiver.acceptPressed(InputType.getScrollInputOnce(e));
-                for (int i = 0; i < e.getScrollAmount(); i++) {
-                    activeInputReceiver.acceptPressed(InputType.getScrollInput(e));
-                }
+                activeInputReceiver.acceptPressed(InputType.getScrollInput(e));
             }
         });
     }

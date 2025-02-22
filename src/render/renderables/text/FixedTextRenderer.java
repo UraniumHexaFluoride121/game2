@@ -107,6 +107,10 @@ public class FixedTextRenderer implements Renderable {
         }
     }
 
+    public float getTextWidth() {
+        return (float) (textShape.getBounds2D().getWidth() + textShape.getBounds2D().getX()) * textSize;
+    }
+
     protected Font font;
 
     protected void updateText(Graphics2D g) {

@@ -8,14 +8,23 @@ import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.Level;
 import render.*;
+import render.renderables.HexagonBorder;
+import render.renderables.HighlightTileRenderer;
 import render.renderables.RenderElement;
+import render.ui.UIColourTheme;
 import render.ui.types.LevelUIContainer;
 import render.ui.types.UIBox;
 import render.ui.types.UIShapeButton;
 import render.ui.types.UITextLabel;
 import unit.Unit;
 import unit.UnitPose;
+import unit.action.Action;
 import unit.weapon.WeaponInstance;
+
+import java.awt.*;
+import java.util.HashSet;
+
+import static unit.Unit.*;
 
 public class UIUnitInfo extends LevelUIContainer {
     private final UITextLabel title = new UITextLabel(11f, 0.9f, true).setTextLeftBold();
@@ -25,6 +34,7 @@ public class UIUnitInfo extends LevelUIContainer {
     private final UIBox box = new UIBox(11, 14);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, 0.5f, 11, 14);
     private Level level;
+    public boolean showFiringRange = false;
 
     public UIUnitInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
         super(register, buttonRegister, order, buttonOrder, 0, 0, level);
@@ -58,6 +68,7 @@ public class UIUnitInfo extends LevelUIContainer {
                             WeaponInstance weapon = unit.getAmmoWeapon();
                             ammo.setRightOffset(weapon == null ? 0.4f : 0);
                             ammo.updateTextRight(weapon == null ? "--" : weapon.ammo + "/" + weapon.ammoCapacity);
+                            ammo.setLabelColour(weapon == null || weapon.ammo != 0 ? UIColourTheme.LIGHT_BLUE : UIColourTheme.RED);
                             ammo.render(g);
                         }
                     });
@@ -69,7 +80,22 @@ public class UIUnitInfo extends LevelUIContainer {
                         if (unit != null)
                             level.levelRenderer.unitInfoScreen.enable(unit);
                     });
+            new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 7.5f, 12.5f, 1.5f, 1.5f, true)
+                    .setShape(UIShapeButton::target).drawShape(0.12f).setColourTheme(UIColourTheme.RED).setBoxCorner(0.3f).setOnClick(() -> {
+                        Unit unit = level.selectedUnit;
+                        if (unit == null)
+                            return;
+                        HashSet<Point> tiles = unit.tilesInFiringRange(false);
+                        level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(Action.FIRE.tileColour, tiles, level);
+                        level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(tiles, FIRE_TILE_BORDER_COLOUR);
+                        showFiringRange = true;
+                    }).setOnDeselect(this::closeFiringRangeView).toggleMode();
         });
+    }
+
+    public void closeFiringRangeView() {
+        level.closeBorderRenderer();
+        showFiringRange = false;
     }
 
     @Override

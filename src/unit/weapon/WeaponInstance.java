@@ -15,8 +15,10 @@ public class WeaponInstance {
     public final HashMap<UnitType, AttackData> data;
     public final ProjectileType projectileType;
     public final Function<Unit, HashSet<Point>> tilesInFiringRange;
+    public final WeaponTemplate template;
 
     public WeaponInstance(WeaponTemplate template) {
+        this.template = template;
         requiresAmmo = template.requiresAmmo;
         ammoCapacity = template.ammoCapacity;
         projectileType = template.projectileType;

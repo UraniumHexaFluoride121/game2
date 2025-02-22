@@ -8,8 +8,8 @@ import render.anim.AnimTilePath;
 import unit.Unit;
 import unit.UnitData;
 import unit.UnitTeam;
-import unit.type.UnitType;
 import unit.action.Action;
+import unit.type.UnitType;
 
 import java.awt.*;
 import java.io.DataInputStream;
@@ -81,7 +81,7 @@ public class Server implements Deletable {
     }
 
     public void sendTurnUpdatePacket() {
-        clients.forEach((id, c) -> c.queueTurnUpdatePacket());
+        clients.forEach((id, c) -> c.queueTurnUpdatePacket(true));
         sendEnergyUpdatePacket();
     }
 
@@ -177,7 +177,7 @@ public class Server implements Deletable {
                 w.writeInt(server.level.playerCount());
             }));
             queueTeamsAvailablePacket();
-            queueTurnUpdatePacket();
+            queueTurnUpdatePacket(false);
         }
 
         public void queueTeamsAvailablePacket() {
@@ -186,11 +186,13 @@ public class Server implements Deletable {
             }));
         }
 
-        public void queueTurnUpdatePacket() {
+        public void queueTurnUpdatePacket(boolean updateUnits) {
             queuePacket(new PacketWriter(PacketType.LEVEL_TURN_UPDATE, w -> {
                 w.writeInt(server.level.getTurn());
                 PacketWriter.writeEnum(server.level.getActiveTeam(), w);
             }));
+            if (updateUnits)
+                queueUnitUpdatePacket();
         }
 
         public void queueUnitUpdatePacket() {
@@ -223,12 +225,8 @@ public class Server implements Deletable {
                     }));
                 }
                 case CLIENT_REQUEST_LEVEL_DATA -> {
-                    queueTurnUpdatePacket();
-                    queueUnitUpdatePacket();
-                    MainPanel.addTaskAfterAnimBlock(() -> {
-                        queueTurnUpdatePacket();
-                        queueUnitUpdatePacket();
-                    });
+                    queueTurnUpdatePacket(true);
+                    MainPanel.addTaskAfterAnimBlock(() -> queueTurnUpdatePacket(true));
                 }
                 case CLIENT_END_TURN -> {
                     UnitTeam endTeam = server.getClientTeam(clientID);

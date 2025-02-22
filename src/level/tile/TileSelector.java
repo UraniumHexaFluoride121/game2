@@ -283,6 +283,8 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         selectedTile = null;
         level.levelRenderer.tileInfo.setEnabled(false);
         level.updateSelectedUnit();
+        if (level.levelRenderer.uiUnitInfo.showFiringRange)
+            level.levelRenderer.uiUnitInfo.closeFiringRangeView();
     }
 
     public void select(Tile tile) {

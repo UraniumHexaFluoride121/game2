@@ -3,7 +3,6 @@ package level.energy;
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import level.Level;
-import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
 import render.*;
@@ -35,6 +34,7 @@ import static render.ui.types.UITextLabel.*;
 
 public class EnergyManager extends LevelUIContainer implements Writable {
     public static final ImageRenderer ENERGY_IMAGE = ImageRenderer.renderImageCentered(new ResourceLocation("icons/energy.png"), true, true);
+    public static final String displayName = "Antimatter";
 
     private final FixedTextRenderer availableText, incomeText, availableChangeText;
     public HashMap<UnitTeam, Integer> availableMap = new HashMap<>();
@@ -110,7 +110,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
     }
 
     private void addAvailable(UnitTeam team, int amount) {
-        availableMap.compute(team, (t, i) -> Math.clamp(i + amount, 0, Math.round(incomeMap.get(team) * 2.5f)));
+        availableMap.compute(team, (t, i) -> Math.clamp(i + amount, 0, Math.round(incomeMap.get(team) * 1.75f)));
         if (level.getThisTeam() == team) {
             updateDisplay(team);
             changeTexts.add(new NumberChangeText(amount));

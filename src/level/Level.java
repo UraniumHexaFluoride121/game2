@@ -7,6 +7,7 @@ import foundation.math.ObjPos;
 import foundation.math.RandomHandler;
 import foundation.tick.RegisteredTickable;
 import foundation.tick.TickOrder;
+import level.structure.Structure;
 import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileSelector;
@@ -144,7 +145,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     public void tick(float deltaTime) {
         levelRenderer.tick(deltaTime);
         unitSet.forEach(u -> u.tick(deltaTime));
-        removeUnits();
+        if (!qRemoveUnit.isEmpty())
+            removeUnits();
     }
 
     @Override
@@ -188,6 +190,21 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             unit.delete();
         });
         qRemoveUnit.clear();
+        HashSet<UnitTeam> removeTeams = new HashSet<>();
+        for (UnitTeam team : playerTeam.keySet()) {
+            boolean hasUnit = false;
+            for (Unit unit : unitSet) {
+                if (unit.team == team) {
+                    hasUnit = true;
+                    break;
+                }
+            }
+            if (!hasUnit)
+                removeTeams.add(team);
+        }
+        for (UnitTeam removeTeam : removeTeams) {
+            removePlayer(removeTeam);
+        }
         updateFoW();
     }
 
@@ -244,11 +261,15 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public void endAction() {
         setActiveAction(null);
+        closeBorderRenderer();
+        unitSet.forEach(Unit::updateActionUI);
+    }
+
+    public void closeBorderRenderer() {
         if (levelRenderer.highlightTileRenderer != null) {
             levelRenderer.highlightTileRenderer.close();
         }
         levelRenderer.unitTileBorderRenderer = null;
-        unitSet.forEach(Unit::updateActionUI);
     }
 
     public void endTurn() {
@@ -274,6 +295,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         levelRenderer.useLastCameraPos(team, activeTeam);
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
         levelRenderer.energyManager.incrementTurn(activeTeam);
+        structureEndTurnUpdate();
         if (networkState == NetworkState.SERVER)
             server.sendTurnUpdatePacket();
     }
@@ -290,6 +312,20 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         this.turn = turn;
         levelRenderer.turnBox.setNewTurn();
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
+    }
+
+    public void structureEndTurnUpdate() {
+        tileSelector.tileSet.forEach(t -> {
+            if (!t.hasStructure())
+                return;
+            Unit u = getUnit(t.pos);
+            Structure s = t.structure;
+            if (u == null || u.team != activeTeam)
+                return;
+            if (s.type.resupply)
+                u.resupply();
+            u.regenerateHP(s.type.unitRegen);
+        });
     }
 
     public Action getActiveAction() {
@@ -343,6 +379,10 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     }
 
     public void removePlayer(UnitTeam team) {
+        if (activeTeam == team && networkState != NetworkState.CLIENT)
+            endTurn();
+        if (!playerTeam.containsKey(team))
+            return;
         levelRenderer.onTeamEliminated.start(team.getName() + " Eliminated!", team);
         basePositions.remove(team);
         playerTeam.remove(team);

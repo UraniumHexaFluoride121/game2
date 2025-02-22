@@ -79,6 +79,11 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         return this;
     }
 
+    public UIShapeButton toggleMode() {
+        clickHandler.toggleMode();
+        return this;
+    }
+
     public UIShapeButton deselect() {
         clickHandler.deselect();
         return this;
@@ -284,5 +289,21 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
     public static Shape dot(UIBox b) {
         float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.4f;
         return new Ellipse2D.Float(cx - size, cy - size, size * 2, size * 2);
+    }
+
+    public static Shape target(UIBox b) {
+        float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.5f;
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(cx, cy - size * 1.2f);
+        path.lineTo(cx, cy - size * 0.65f);
+        path.moveTo(cx, cy + size * 1.2f);
+        path.lineTo(cx, cy + size * 0.65f);
+        path.moveTo(cx - size * 1.2f, cy);
+        path.lineTo(cx - size * 0.65f, cy);
+        path.moveTo(cx + size * 1.2f, cy);
+        path.lineTo(cx + size * 0.65f, cy);
+        Ellipse2D.Float circle = new Ellipse2D.Float(cx - size, cy - size, size * 2, size * 2);
+        path.append(circle.getPathIterator(null), false);
+        return path;
     }
 }

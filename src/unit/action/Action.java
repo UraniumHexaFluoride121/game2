@@ -1,7 +1,9 @@
 package unit.action;
 
+import foundation.NamedEnum;
 import foundation.input.ButtonState;
 import foundation.math.StaticHitBox;
+import level.energy.EnergyManager;
 import render.GameRenderer;
 import render.Renderable;
 
@@ -13,7 +15,7 @@ import java.util.Map;
 
 import static render.Renderable.*;
 
-public class Action {
+public class Action implements NamedEnum {
     private static final HashMap<String, Action> names = new HashMap<>();
 
     public static final float ACTION_BUTTON_SIZE = 2f;
@@ -30,7 +32,7 @@ public class Action {
             FIRE_ACTION_HIGHLIGHT = new Color(248, 122, 122, 26);
 
     public static final Action
-            MOVE = new Action("MOVE", ActionColour.BLUE, MOVE_ACTION_HIGHLIGHT, true, g -> {
+            MOVE = new Action("MOVE", "Move", ActionColour.BLUE, MOVE_ACTION_HIGHLIGHT, true, g -> {
         g.drawLine(
                 scale(0.37f), scale(0.37f),
                 scale(0.75f), scale(0.75f)
@@ -47,58 +49,75 @@ public class Action {
                 scale(0.75f), scale(0.45f),
                 scale(0.75f), scale(0.75f)
         );
-    }, 2), FIRE = new Action("FIRE", ActionColour.RED, FIRE_ACTION_HIGHLIGHT, true, g -> {
-        g.setStroke(ICON_STROKE_NARROW);
-        g.drawOval(
-                scale(0.25f), scale(0.25f),
-                scale(0.5f), scale(0.5f)
-        );
-        g.drawLine(
-                scale(0.2f), scale(0.5f),
-                scale(0.38f), scale(0.5f)
-        );
-        g.drawLine(
-                scale(0.8f), scale(0.5f),
-                scale(0.62f), scale(0.5f)
-        );
-        g.drawLine(
-                scale(0.5f), scale(0.2f),
-                scale(0.5f), scale(0.38f)
-        );
-        g.drawLine(
-                scale(0.5f), scale(0.8f),
-                scale(0.5f), scale(0.62f)
-        );
-    }, 1), CAPTURE = new Action("CAPTURE", ActionColour.DARK_GREEN, FIRE_ACTION_HIGHLIGHT, false, g -> {
-        g.setStroke(ICON_STROKE_NARROW_NON_SCALED);
-        GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
-            g.draw(ActionShapes.FLAG);
-            g.fill(ActionShapes.FLAG);
-        });
-    }, -1), SHIELD_REGEN = new Action("SHIELD_REGEN", ActionColour.LIGHT_BLUE, FIRE_ACTION_HIGHLIGHT, false, g -> {
-        g.setStroke(ICON_STROKE_EXTRA_NARROW_NON_SCALED);
-        GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
-            g.draw(ActionShapes.SHIELD);
-            g.fill(ActionShapes.SHIELD);
-            g.scale(.8, .8);
-            g.translate(.15, .12);
-            g.draw(ActionShapes.SHIP);
-            g.fill(ActionShapes.SHIP);
-        });
-    }, 0);
+    }, "Allows you to move this unit to nearby tiles. The distance a unit can move each turn " +
+            "depends primarily on the speed of the unit, but, hard to navigate terrain, such as nebulae or " +
+            "asteroid fields, can limit movement. The " + EnergyManager.displayName + " cost is per-tile, with " +
+            "larger ship classes generally costing more to move.", 2),
+            FIRE = new Action("FIRE", "Fire", ActionColour.RED, FIRE_ACTION_HIGHLIGHT, true, g -> {
+                g.setStroke(ICON_STROKE_NARROW);
+                g.drawOval(
+                        scale(0.25f), scale(0.25f),
+                        scale(0.5f), scale(0.5f)
+                );
+                g.drawLine(
+                        scale(0.2f), scale(0.5f),
+                        scale(0.38f), scale(0.5f)
+                );
+                g.drawLine(
+                        scale(0.8f), scale(0.5f),
+                        scale(0.62f), scale(0.5f)
+                );
+                g.drawLine(
+                        scale(0.5f), scale(0.2f),
+                        scale(0.5f), scale(0.38f)
+                );
+                g.drawLine(
+                        scale(0.5f), scale(0.8f),
+                        scale(0.5f), scale(0.62f)
+                );
+            }, "Fire at enemy units to deal damage. Damage dealt is proportional to the unit's remaining HP. " +
+                    "With the exception of ranged units, firing at an enemy will lead to being counterattacked, but, " +
+                    "attacking first gives you the upper hand as you'll weaken the enemy before the counterattack. " +
+                    "Being on terrain with high Defence reduces all incoming damage.", 1),
+            CAPTURE = new Action("CAPTURE", "Capture", ActionColour.DARK_GREEN, FIRE_ACTION_HIGHLIGHT, false, g -> {
+                g.setStroke(ICON_STROKE_NARROW_NON_SCALED);
+                GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
+                    g.draw(ActionShapes.FLAG);
+                    g.fill(ActionShapes.FLAG);
+                });
+            }, "This action only appears when over the top of an enemy structure that can be captured. Capturing " +
+                    "takes several turns, and each time you're attacked during a capture (not including counterattacks), " +
+                    "your capture progress gets reduced. Capturing an enemy base leads to that team being eliminated.", -1),
+            SHIELD_REGEN = new Action("SHIELD_REGEN", "Regenerate Shield", ActionColour.LIGHT_BLUE, FIRE_ACTION_HIGHLIGHT, false, g -> {
+                g.setStroke(ICON_STROKE_EXTRA_NARROW_NON_SCALED);
+                GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
+                    g.draw(ActionShapes.SHIELD);
+                    g.fill(ActionShapes.SHIELD);
+                    g.scale(.8, .8);
+                    g.translate(.15, .12);
+                    g.draw(ActionShapes.SHIP);
+                    g.fill(ActionShapes.SHIP);
+                });
+            }, "Regenerate a portion of this unit's shield. While expensive in terms of " + EnergyManager.displayName + ", " +
+                    "having shield HP provides several advantages over regular HP. Most notably, it allows the unit to " +
+                    "take damage without suffering a loss in firepower, as damage is based only on regular HP, and remains " +
+                    "unaffected when losing shield HP.", 0);
 
-    private final String name;
+    private final String name, displayName;
     private final ActionColour colour;
     public final Color tileColour;
     private final Renderable iconImageRenderer;
     private final boolean scaled;
+    public final String infoText;
     private final int order;
 
     private final HashMap<ButtonState, Renderable> defaultIcons = new HashMap<>(), disabledIcons = new HashMap<>();
 
     public static final StaticHitBox buttonBox = new StaticHitBox(ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, ACTION_BUTTON_SIZE / 2);
 
-    public Action(String name, ActionColour colour, Color tileColour, boolean scaled, Renderable iconImageRenderer, int order) {
+    public Action(String name, String displayName, ActionColour colour, Color tileColour, boolean scaled, Renderable iconImageRenderer, String infoText, int order) {
+        this.displayName = displayName;
+        this.infoText = infoText;
         this.order = order;
         names.put(name, this);
         this.name = name;
@@ -125,35 +144,39 @@ public class Action {
         g.translate(offset, offset);
     }
 
+    public void renderIcon(Graphics2D g, boolean enabled, ButtonState state) {
+        g.scale(1d / SCALING, 1d / SCALING);
+        g.setColor(enabled ? colour.border : ActionColour.DISABLED.border);
+        g.fillRoundRect(
+                0,
+                0,
+                (int) (ACTION_BUTTON_SIZE * SCALING),
+                (int) (ACTION_BUTTON_SIZE * SCALING),
+                (int) (SCALING * ROUNDING),
+                (int) (SCALING * ROUNDING)
+        );
+        g.setColor(enabled ? colour.background : ActionColour.DISABLED.background);
+        float border = BORDER * stateBorderScale(state);
+        g.fillRoundRect(
+                (int) (border * SCALING),
+                (int) (border * SCALING),
+                (int) ((ACTION_BUTTON_SIZE - border * 2) * SCALING),
+                (int) ((ACTION_BUTTON_SIZE - border * 2) * SCALING),
+                (int) (SCALING * (ROUNDING - border * 2)),
+                (int) (SCALING * (ROUNDING - border * 2))
+        );
+        g.setStroke(ICON_STROKE);
+        g.setColor(ICON_COLOUR);
+        if (scaled)
+            iconImageRenderer.render(g);
+        g.scale(SCALING, SCALING);
+        if (!scaled)
+            iconImageRenderer.render(g);
+    }
+
     private BufferedImage createImage(ButtonState state, boolean enabled) {
         BufferedImage image = Renderable.renderToImage(Renderable.createImage(ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE, BufferedImage.TYPE_INT_ARGB), g -> {
-            g.scale(1d / SCALING, 1d / SCALING);
-            g.setColor(enabled ? colour.border : ActionColour.DISABLED.border);
-            g.fillRoundRect(
-                    0,
-                    0,
-                    (int) (ACTION_BUTTON_SIZE * SCALING),
-                    (int) (ACTION_BUTTON_SIZE * SCALING),
-                    (int) (SCALING * ROUNDING),
-                    (int) (SCALING * ROUNDING)
-            );
-            g.setColor(enabled ? colour.background : ActionColour.DISABLED.background);
-            float border = BORDER * stateBorderScale(state);
-            g.fillRoundRect(
-                    (int) (border * SCALING),
-                    (int) (border * SCALING),
-                    (int) ((ACTION_BUTTON_SIZE - border * 2) * SCALING),
-                    (int) ((ACTION_BUTTON_SIZE - border * 2) * SCALING),
-                    (int) (SCALING * (ROUNDING - border * 2)),
-                    (int) (SCALING * (ROUNDING - border * 2))
-            );
-            g.setStroke(ICON_STROKE);
-            g.setColor(ICON_COLOUR);
-            if (scaled)
-                iconImageRenderer.render(g);
-            g.scale(SCALING, SCALING);
-            if (!scaled)
-                iconImageRenderer.render(g);
+            renderIcon(g, enabled, state);
         });
         Graphics2D g = image.createGraphics();
         new RescaleOp(stateBrightness(state), 0, g.getRenderingHints()).filter(image, image);
@@ -179,11 +202,6 @@ public class Action {
         };
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
-
     public static Action getByName(String name) {
         for (Map.Entry<String, Action> entry : names.entrySet()) {
             if (entry.getKey().equals(name))
@@ -198,5 +216,15 @@ public class Action {
 
     public int getOrder() {
         return order;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    @Override
+    public String getName() {
+        return displayName;
     }
 }

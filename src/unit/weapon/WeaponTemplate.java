@@ -1,6 +1,7 @@
 package unit.weapon;
 
 import unit.Unit;
+import unit.info.UnitCharacteristicValue;
 import unit.type.UnitType;
 
 import java.awt.*;
@@ -15,9 +16,14 @@ public class WeaponTemplate {
     public final HashMap<UnitType, AttackData> data = new HashMap<>();
     public final ProjectileType projectileType;
     public Function<Unit, HashSet<Point>> tilesInFiringRange = u -> range(u, 1);
+    public HashMap<DamageType, UnitCharacteristicValue> damageTypes = new HashMap<>();
+    public final WeaponType weaponType;
+    public String rangeText = "1 Tile";
+    public boolean counterattack = true;
 
-    public WeaponTemplate(ProjectileType projectileType) {
+    public WeaponTemplate(ProjectileType projectileType, WeaponType weaponType) {
         this.projectileType = projectileType;
+        this.weaponType = weaponType;
     }
 
     public WeaponTemplate consumeAmmo(int capacity) {
@@ -31,6 +37,11 @@ public class WeaponTemplate {
         return this;
     }
 
+    public WeaponTemplate addDamageType(DamageType type, UnitCharacteristicValue value) {
+        damageTypes.put(type, value);
+        return this;
+    }
+
     public WeaponTemplate setTilesInFiringRange(Function<Unit, HashSet<Point>> tilesInFiringRange) {
         this.tilesInFiringRange = tilesInFiringRange;
         return this;
@@ -41,12 +52,28 @@ public class WeaponTemplate {
         return this;
     }
 
+    public WeaponTemplate noCounterattack() {
+        counterattack = false;
+        return this;
+    }
+
     public WeaponTemplate firingRange(int range) {
         tilesInFiringRange = u -> range(u, range);
+        rangeText = "1 - " + range + " Tiles";
+        return this;
+    }
+
+    public WeaponTemplate firingRange(int minRange, int maxRange) {
+        tilesInFiringRange = u -> {
+            HashSet<Point> tiles = range(u, maxRange);
+            tiles.removeAll(range(u, minRange - 1));
+            return tiles;
+        };
+        rangeText = minRange + " - " + maxRange + " Tiles";
         return this;
     }
 
     public static HashSet<Point> range(Unit u, int range) {
-        return u.selector().withEnemyUnits(u.selector().tilesInRadius(u.pos, range), u);
+        return u.selector().tilesInRadius(u.pos, range);
     }
 }

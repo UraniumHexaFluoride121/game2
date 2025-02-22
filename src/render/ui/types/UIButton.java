@@ -70,6 +70,11 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
         return this;
     }
 
+    public UIButton toggleMode() {
+        clickHandler.toggleMode();
+        return this;
+    }
+
     public UIButton deselect() {
         clickHandler.deselect();
         return this;

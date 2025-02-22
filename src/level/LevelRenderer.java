@@ -50,6 +50,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     private final HashSet<Object> animationBlocks = new HashSet<>();
     private final HashMap<AnimationTimer, Runnable> animationTimerBlocks = new HashMap<>();
     public FiringRenderer firingRenderer;
+    public UIUnitInfo uiUnitInfo;
 
     public LevelRenderer(Level level) {
         this.level = level;
@@ -154,7 +155,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
             level.unitSet.forEach(u -> u.renderEnergyCostIndicator(g));
         });
 
-        new UIUnitInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, level);
+        uiUnitInfo = new UIUnitInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, level);
 
         tileInfo = new UITileInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() - 15, .5f, level);
         tileInfo.setEnabled(false);
@@ -167,6 +168,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
         onNextTurn = new UITextNotification(levelUIRenderer, RenderOrder.LEVEL_UI, level, 20, 3);
         onTeamEliminated = new UITextNotification(levelUIRenderer, RenderOrder.LEVEL_UI, level, 25, 2f);
+        onTeamEliminated.translate(0, -3);
         turnBox = new UITurnBox(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(turnBox);
 

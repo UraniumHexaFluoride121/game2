@@ -8,9 +8,7 @@ import unit.action.Action;
 import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
-import unit.weapon.AttackData;
-import unit.weapon.ProjectileType;
-import unit.weapon.WeaponTemplate;
+import unit.weapon.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,12 +33,18 @@ public class FighterType extends UnitType {
     }, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 15, list -> {
-        WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA);
+        WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA, WeaponType.PLASMA);
         float s = 5f;
+        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.HIGH);
+        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.LOW_MODERATE);
+        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
+        w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE_LOW);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH_MAX);
         w.addData("fighter", new AttackData(3.8f, s));
         w.addData("bomber", new AttackData(3.2f, s));
         w.addData("corvette", new AttackData(1.8f, s));
         w.addData("defender", new AttackData(1.6f, s));
+        w.addData("artillery", new AttackData(2.1f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.NONE_LOW);
@@ -71,19 +75,31 @@ public class FighterType extends UnitType {
     }, new Action[]{
             Action.FIRE, Action.MOVE
     }, 3, 15, list -> {
-        WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BOMBER_MISSILE).consumeAmmo(1).runAnim();
+        WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BOMBER_MISSILE, WeaponType.EXPLOSIVE).consumeAmmo(1).runAnim();
         float s1 = 0.4f;
+        w1.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW);
+        w1.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.MODERATE_GOOD);
+        w1.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.HIGH);
+        w1.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.MAX);
+        w1.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.NONE_LOW);
         w1.addData("fighter", new AttackData(0.8f, s1));
         w1.addData("bomber", new AttackData(0.7f, s1));
         w1.addData("corvette", new AttackData(2.4f, s1));
         w1.addData("defender", new AttackData(3.2f, s1));
+        w1.addData("artillery", new AttackData(3.3f, s1));
         list.add(w1);
-        WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BOMBER_PLASMA);
+        WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BOMBER_PLASMA, WeaponType.PLASMA);
         float s2 = 4.4f;
+        w2.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.GOOD_HIGH);
+        w2.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.LOW_MODERATE);
+        w2.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
+        w2.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE_LOW);
+        w2.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH);
         w2.addData("fighter", new AttackData(3.2f, s2));
         w2.addData("bomber", new AttackData(2.6f, s2));
         w2.addData("corvette", new AttackData(1.6f, s2));
         w2.addData("defender", new AttackData(1.5f, s2));
+        w2.addData("artillery", new AttackData(1.9f, s2));
         list.add(w2);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.LOW);

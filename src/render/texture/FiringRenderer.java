@@ -56,10 +56,12 @@ public class FiringRenderer extends AbstractRenderElement {
                 }
                 renderBackground(false, leftImage, g);
                 renderBackground(true, rightImage, g);
+                renderProjectilesBack(false, g);
+                renderProjectilesBack(true, g);
                 renderUnits(false, leftUnitRenderer, g);
                 renderUnits(true, rightUnitRenderer, g);
-                renderProjectiles(false, g);
-                renderProjectiles(true, g);
+                renderProjectilesFront(false, g);
+                renderProjectilesFront(true, g);
                 renderUnitExplosions(false, leftUnitRenderer, g);
                 renderUnitExplosions(true, rightUnitRenderer, g);
                 renderHPBar(false, g);
@@ -184,14 +186,28 @@ public class FiringRenderer extends AbstractRenderElement {
         });
     }
 
-    private void renderProjectiles(boolean right, Graphics2D g) {
+    private void renderProjectilesBack(boolean right, Graphics2D g) {
         GameRenderer.renderTransformed(g, () -> {
             if (right) {
                 g.translate(60, 0);
                 g.scale(-1, 1);
             }
             for (Projectile projectile : right ? rightProjectiles : leftProjectiles) {
-                projectile.render(g);
+                if (projectile.type.renderBehind && !projectile.pastHalfway())
+                    projectile.render(g);
+            }
+        });
+    }
+
+    private void renderProjectilesFront(boolean right, Graphics2D g) {
+        GameRenderer.renderTransformed(g, () -> {
+            if (right) {
+                g.translate(60, 0);
+                g.scale(-1, 1);
+            }
+            for (Projectile projectile : right ? rightProjectiles : leftProjectiles) {
+                if (!projectile.type.renderBehind || projectile.pastHalfway())
+                    projectile.render(g);
             }
         });
     }

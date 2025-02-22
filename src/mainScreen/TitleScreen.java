@@ -94,7 +94,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                     connectButton.setText("Connecting...");
                     MainPanel.removeClient();
                     updateColourSelectorVisibility();
-                    boolean success = MainPanel.startClient(enterIPBox.getText().toString());
+                    boolean success = MainPanel.startClient(enterIPBox.getText());
                     connectButton.setColourTheme(success ? UIColourTheme.GREEN : UIColourTheme.DEEP_RED);
                     connectButton.setText(success ? "Connected!" : "Connection Failed");
                     updateColourSelectorVisibility();
@@ -218,7 +218,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             int finalI = i;
             connectContainer.addRenderables((r, b) -> {
                 colourSelectorButtons[finalI] = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                        Renderable.right() - 35 + (width + spacing) * (finalI % 4), Renderable.top() / 2 - 8 - 1.7f * (finalI / 4), width, 1.3f, 0.6f, true, () -> {
+                        Renderable.right() - 35 + (width + spacing) * (finalI % 4), 8.875f - 1.7f * (finalI / 4), width, 1.3f, 0.6f, true, () -> {
                     deselectOtherColourSelectors(colourSelectorButtons[finalI]);
                     selectedTeam = UnitTeam.ORDERED_TEAMS[finalI];
                     updateColourSelectorVisibility();

@@ -49,7 +49,7 @@ public class Unit implements Deletable, Tickable {
     private ActionSelector actionUI = new ActionSelector(() -> {
         if (getLevel().getThisTeam() != getLevel().getActiveTeam() || getLevel().getThisTeam() != getTeam())
             return false;
-        if (getLevel().getActiveAction() != null)
+        if (getLevel().getActiveAction() != null || getLevel().levelRenderer.uiUnitInfo.showFiringRange)
             return false;
         Tile selectedTile = getLevel().tileSelector.getSelectedTile();
         return selectedTile != null && selectedTile.pos.equals(getPos());
@@ -198,7 +198,7 @@ public class Unit implements Deletable, Tickable {
             movePath.renderEnergyCost(g, level);
     }
 
-    private static final Color MOVE_TILE_BORDER_COLOUR = new Color(107, 184, 248, 192),
+    public static final Color MOVE_TILE_BORDER_COLOUR = new Color(107, 184, 248, 192),
             FIRE_TILE_BORDER_COLOUR = new Color(243, 103, 103, 118);
 
     public synchronized void onActionSelect(Action action) {
@@ -209,7 +209,7 @@ public class Unit implements Deletable, Tickable {
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, MOVE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == FIRE) {
-            selectableTiles = tilesInFiringRange();
+            selectableTiles = tilesInFiringRange(true);
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
@@ -257,9 +257,10 @@ public class Unit implements Deletable, Tickable {
         }
         if (selectableTiles.contains(tile.pos)) {
             if (action == MOVE) {
-                if ((tile.isFoW || level.canUnitBeMoved(tile.pos)) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), true)) {
+                if ((tile.isFoW || level.canUnitBeMoved(tile.pos)) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), false)) {
                     path = movePath.getAnimPath(t ->
                             level.getTile(t).isFoW && level.getUnit(t) != null && !level.samePlayerTeam(level.getUnit(t), this));
+                    level.levelRenderer.energyManager.canAfford(team, path.getEnergyCost(this, level), true);
                     if (path.length() != movePath.length() + 1) {
                         illegalTile = movePath.getTile(path.length() - 1);
                     } else
@@ -412,7 +413,7 @@ public class Unit implements Deletable, Tickable {
     public void attack(Unit other) {
         WeaponInstance thisWeapon = getBestWeaponAgainst(this, other, true);
         WeaponInstance otherWeapon = null;
-        if (other.firingTempHP > 0) {
+        if (other.firingTempHP > 0 && thisWeapon.template.counterattack) {
             otherWeapon = getBestWeaponAgainst(other, this, true);
         }
         boolean thisFoW = isRenderFoW(), otherFoW = other.isRenderFoW();
@@ -450,6 +451,8 @@ public class Unit implements Deletable, Tickable {
         float damage = 0;
         for (WeaponInstance weapon : thisUnit.weapons) {
             if (weapon.requiresAmmo && weapon.ammo == 0)
+                continue;
+            if (!weapon.tilesInFiringRange.apply(thisUnit).contains(other.pos))
                 continue;
             float newDamage = weapon.getDamageAgainst(thisUnit, other);
             if (newDamage > damage) {
@@ -496,12 +499,15 @@ public class Unit implements Deletable, Tickable {
         return WeaponInstance.FireAnimState.HOLD;
     }
 
-    public HashSet<Point> tilesInFiringRange() {
+    public HashSet<Point> tilesInFiringRange(boolean onlyWithEnemies) {
         HashSet<Point> tiles = new HashSet<>();
         for (WeaponInstance weapon : weapons) {
             if (weapon.requiresAmmo && weapon.ammo == 0)
                 continue;
-            tiles.addAll(weapon.tilesInFiringRange.apply(this));
+            if (onlyWithEnemies)
+                tiles.addAll(selector().withEnemyUnits(weapon.tilesInFiringRange.apply(this), this));
+            else
+                tiles.addAll(weapon.tilesInFiringRange.apply(this));
         }
         return tiles;
     }
@@ -612,6 +618,15 @@ public class Unit implements Deletable, Tickable {
 
     public TileSelector selector() {
         return level.tileSelector;
+    }
+
+    public void resupply() {
+        weapons.forEach(w -> w.ammo = w.ammoCapacity);
+    }
+
+    public void regenerateHP(float amount) {
+        hitPoints = Math.clamp(hitPoints + amount, 0, type.hitPoints);
+        firingTempHP = hitPoints;
     }
 
     public void updateFromData(UnitData d) {
