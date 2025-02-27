@@ -6,6 +6,7 @@ public enum ButtonOrder {
     //Level
     CONFIRM_UI,
 
+    PAUSE_MENU,
     UNIT_INFO_SCREEN,
 
     LEVEL_UI,

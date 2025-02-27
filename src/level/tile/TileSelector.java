@@ -9,6 +9,7 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
 import level.Level;
+import level.LevelRenderer;
 import render.Renderable;
 import unit.Unit;
 import unit.UnitTeam;
@@ -322,10 +323,10 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         } else if (type == MOUSE_OVER) {
             if (!blocked) {
                 ObjPos blockPos = level.levelRenderer.transformCameraPosToBlock(pos);
-                if (blockPos.y < 1) level.levelRenderer.moveCameraDown = true;
-                if (blockPos.y > Renderable.top() - 1) level.levelRenderer.moveCameraUp = true;
-                if (blockPos.x < 1) level.levelRenderer.moveCameraLeft = true;
-                if (blockPos.x > Renderable.right() - 1) level.levelRenderer.moveCameraRight = true;
+                if (blockPos.y < LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraDown = true;
+                if (blockPos.y > Renderable.top() - LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraUp = true;
+                if (blockPos.x < LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraLeft = true;
+                if (blockPos.x > Renderable.right() - LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraRight = true;
                 mouseOverTile = tileAtSelectablePos(pos);
             } else
                 mouseOverTile = null;

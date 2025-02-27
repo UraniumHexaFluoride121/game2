@@ -15,6 +15,7 @@ import render.ui.types.*;
 import unit.UnitTeam;
 
 import java.awt.*;
+import java.math.BigInteger;
 import java.util.Random;
 
 import static mainScreen.UIPlayerShipSettings.*;
@@ -209,6 +210,7 @@ public class TitleScreen implements Renderable, InputReceiver {
         connectButton.setText("Connect").setColourTheme(UIColourTheme.LIGHT_BLUE);
         enterSeedBox.deselect();
         newGameTabs.selectTab(0);
+        updateColourSelectorVisibility();
     }
 
     private void createColourSelectorButtons() {

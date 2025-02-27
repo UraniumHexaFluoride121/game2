@@ -456,6 +456,10 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         buttonRegister.delete();
         levelRenderer = null;
         buttonRegister = null;
+        if (server != null) {
+            server.delete();
+            server = null;
+        }
     }
 
     public int getTurn() {

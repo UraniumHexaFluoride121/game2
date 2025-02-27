@@ -34,7 +34,7 @@ public class UITextInputBox extends UIButton {
 
     @Override
     public boolean blocking(InputType type) {
-        return true;
+        return type.isMouseInput() || type.isCharInput;
     }
 
     @Override

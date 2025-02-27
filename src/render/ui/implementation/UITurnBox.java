@@ -15,7 +15,7 @@ import render.ui.types.UITextLabel;
 public class UITurnBox extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private final FixedTextRenderer text = new FixedTextRenderer(null, 1.5f, UITextLabel.TEXT_COLOUR)
             .setTextAlign(TextAlign.CENTER).setBold(true);
-    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(10.5f, Renderable.top() - 2.5f, 10, 2);
+    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(13.5f, Renderable.top() - 2.5f, 10, 2);
     private Level level;
     private final UIBox box = new UIBox(10, 2);
 
@@ -23,7 +23,7 @@ public class UITurnBox extends AbstractRenderElement implements RegisteredButton
         super(register, order);
         this.level = level;
         renderable = g -> {
-            GameRenderer.renderOffset(10.5f, Renderable.top() - 2.5f, g, () -> {
+            GameRenderer.renderOffset(13.5f, Renderable.top() - 2.5f, g, () -> {
                 box.render(g);
                 g.translate(10 / 2f, 0.5);
                 text.render(g);
@@ -60,5 +60,11 @@ public class UITurnBox extends AbstractRenderElement implements RegisteredButton
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
 
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        level = null;
     }
 }

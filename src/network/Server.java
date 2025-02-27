@@ -32,11 +32,11 @@ public class Server implements Deletable {
     public ConcurrentHashMap<UnitTeam, Integer> teamClientIDs = new ConcurrentHashMap<>();
     public ConcurrentHashMap<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
     public ConcurrentHashMap<InetAddress, ClientHandler> clientsByAddress = new ConcurrentHashMap<>();
+    private final ServerSocket serverSocket;
 
     public Server(Level level) {
         teamClientIDs.put(UnitTeam.ORDERED_TEAMS[0], 0);
         this.level = level;
-        ServerSocket serverSocket;
         try {
             serverSocket = new ServerSocket(TCP_PORT);
             if (MainPanel.CREATE_SERVER_AND_CLIENT_CONNECTIONS) {
@@ -150,6 +150,11 @@ public class Server implements Deletable {
         level = null;
         HashSet<ClientHandler> clientHandlers = new HashSet<>(clients.values());
         clientHandlers.forEach(ClientHandler::closeClient);
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static class ClientHandler implements Deletable {
@@ -343,7 +348,7 @@ public class Server implements Deletable {
                                 PacketWriter.writeEnum(p.type(), writer);
                                 p.writer().accept(writer);
                             } catch (SocketException e) {
-                                closed = true;
+                                closeClient();
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -360,6 +365,10 @@ public class Server implements Deletable {
 
         public void closeClient() {
             closed = true;
+            try {
+                socket.close();
+            } catch (IOException _) {
+            }
         }
 
         @Override

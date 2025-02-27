@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 public class MainPanel extends JFrame implements KeyListener, MouseListener, MouseWheelListener, RegisteredTickable {
     //TODO: Set to true when not testing
-    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = false;
+    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = true;
 
     public static AffineTransform windowTransform = new AffineTransform();
 
@@ -108,13 +108,11 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     }
 
     public static void clientDisconnect() {
-        addTask(() -> {
-            removeClient();
-            toTitleScreen();
-        });
+        addTask(MainPanel::toTitleScreen);
     }
 
     public static void toTitleScreen() {
+        removeClient();
         if (activeLevel != null) {
             activeLevel.delete();
             activeLevel = null;

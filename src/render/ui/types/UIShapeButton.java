@@ -306,4 +306,16 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         path.append(circle.getPathIterator(null), false);
         return path;
     }
+
+    public static Shape threeLines(UIBox b) {
+        float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.5f;
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(cx - size, cy - size * 0.7f);
+        path.lineTo(cx + size, cy - size * 0.7f);
+        path.moveTo(cx - size, cy);
+        path.lineTo(cx + size, cy);
+        path.moveTo(cx - size, cy + size * 0.7f);
+        path.lineTo(cx + size, cy + size * 0.7f);
+        return path;
+    }
 }

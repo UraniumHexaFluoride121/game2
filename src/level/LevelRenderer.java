@@ -24,7 +24,9 @@ import render.texture.FiringRenderer;
 import render.ui.UIColourTheme;
 import render.ui.implementation.*;
 import render.ui.types.LevelUIButton;
+import render.ui.types.LevelUIShapeButton;
 import render.ui.types.UIButton;
+import render.ui.types.UIShapeButton;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -40,6 +42,7 @@ import static level.tile.Tile.*;
 
 public class LevelRenderer implements Deletable, Renderable, Tickable, InputReceiver {
     private static final float MOUSE_EDGE_CAMERA_MOVE_SPEED = 20;
+    public static final float MOUSE_EDGE_CAMERA_BORDER = 0.5f;
     private Level level;
     private final GameRenderer mainRenderer, backgroundRenderer, levelUIRenderer, firingAnimRenderer, topUIRenderer;
     private BufferedImage borderImage;
@@ -71,6 +74,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     public UIButton exitActionButton = null;
     public UnitInfoScreen unitInfoScreen = null;
     public EnergyManager energyManager = null;
+    public UIShapeButton pauseMenuButton = null;
+    public PauseMenu pauseMenu = null;
 
     private void createRenderers() {
         createTiles();
@@ -182,6 +187,13 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         unitInfoScreen.setEnabled(false);
 
         energyManager = new EnergyManager(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2 - 5, Renderable.top() - 3.5f, level);
+
+        pauseMenuButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, Renderable.top() - 2.5f, 2, 2, false, level)
+                .setShape(UIShapeButton::threeLines).drawShape(0.15f).setOnClick(() -> {
+                    pauseMenu.setEnabled(true);
+                });
+        pauseMenu = new PauseMenu(levelUIRenderer, level.buttonRegister, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, level);
+        pauseMenu.setEnabled(false);
     }
 
     private void createTiles() {

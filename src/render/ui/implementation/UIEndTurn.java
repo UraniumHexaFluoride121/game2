@@ -19,7 +19,7 @@ import java.awt.*;
 public class UIEndTurn extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private final FixedTextRenderer text = new FixedTextRenderer("End Turn", 1.4f, UITextLabel.TEXT_COLOUR)
             .setTextAlign(TextAlign.CENTER).setBold(true);
-    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, Renderable.top() - 2.5f, 9, 2);
+    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(3.5f, Renderable.top() - 2.5f, 9, 2);
     private Level level;
     private final ButtonClickHandler clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, this::onClick);
     private final UIBox box = new UIBox(9, 2).setClickHandler(clickHandler);
@@ -29,7 +29,7 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
         super(register, order);
         this.level = level;
         renderable = g -> {
-            GameRenderer.renderOffset(0.5f, Renderable.top() - 2.5f, g, () -> {
+            GameRenderer.renderOffset(3.5f, Renderable.top() - 2.5f, g, () -> {
                 box.render(g);
                 g.translate(9 / 2f, textOffset);
                 text.render(g);

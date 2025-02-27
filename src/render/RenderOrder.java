@@ -24,6 +24,8 @@ public enum RenderOrder {
     LEVEL_UI,
     UNIT_INFO_SCREEN_BACKGROUND,
     UNIT_INFO_SCREEN,
+    PAUSE_MENU_BACKGROUND,
+    PAUSE_MENU,
 
     //Main menu screen
     TITLE_SCREEN_BACKGROUND,

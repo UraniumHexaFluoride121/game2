@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.function.Function;
 
 public class UnitInfoScreen extends LevelUIContainer {
-    private static final Color backgroundColour = new Color(0, 0, 0, 208);
+    public static final Color FULL_SCREEN_MENU_BACKGROUND_COLOUR = new Color(0, 0, 0, 208);
     private static final float sideMargin = 6;
     private final float width, height;
 
@@ -49,11 +49,11 @@ public class UnitInfoScreen extends LevelUIContainer {
                 .setLeftColour(UITextLabel.TEXT_COLOUR_DARK);
         addRenderables((r, b) -> {
             new UIButton(r, b, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN,
-                    0.5f, Renderable.top() - 2.5f, 9, 2, 1.4f, false, this::disable)
+                    3.5f, Renderable.top() - 2.5f, 9, 2, 1.4f, false, this::disable)
                     .setText("Exit").setBold().setColourTheme(UIColourTheme.DEEP_RED);
             new OnButtonInput(b, ButtonOrder.UNIT_INFO_SCREEN, t -> t == InputType.ESCAPE, this::disable);
             new RenderElement(r, RenderOrder.UNIT_INFO_SCREEN_BACKGROUND, g -> {
-                g.setColor(backgroundColour);
+                g.setColor(FULL_SCREEN_MENU_BACKGROUND_COLOUR);
                 g.fillRect(0, 0, (int) Math.ceil(Renderable.right()), (int) Math.ceil(Renderable.top()));
             });
             tabSwitcher = new UITabSwitcher(r, b, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN,
