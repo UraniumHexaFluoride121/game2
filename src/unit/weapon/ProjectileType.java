@@ -37,6 +37,14 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(681), y(278), 300));
         spawnPoints.add(new ProjectileSpawnPoint(x(720), y(459), 450));
         return spawnPoints;
+    }), SCOUT_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
+            INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
+        ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
+        spawnPoints.add(new ProjectileSpawnPoint(x(808), y(270), 0));
+        spawnPoints.add(new ProjectileSpawnPoint(x(858), y(420), 150));
+        spawnPoints.add(new ProjectileSpawnPoint(x(808), y(270), 300));
+        spawnPoints.add(new ProjectileSpawnPoint(x(808), y(420), 450));
+        return spawnPoints;
     }), CORVETTE_CANNON = new ProjectileType("projectile/bullet/bullet_1.png", 2,
             INFO_BULLET, 90, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, ImageSequenceGroup.EXPLOSION, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();

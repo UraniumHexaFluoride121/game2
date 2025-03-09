@@ -5,8 +5,12 @@ import render.GameRenderer;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
+import java.io.Serializable;
 
-public class ObjPos {
+public class ObjPos implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     public float x;
     public float y;
 

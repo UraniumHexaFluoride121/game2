@@ -9,6 +9,7 @@ import level.Level;
 import mainScreen.TitleScreen;
 import network.Client;
 import render.anim.LerpAnimation;
+import save.SaveManager;
 import unit.type.UnitType;
 
 import javax.swing.*;
@@ -51,6 +52,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         titleScreen.init();
         activeInputReceiver = titleScreen;
         registerTickable();
+        SaveManager.loadSaves();
     }
 
     public static void startNewLevel(Supplier<Level> levelCreator) {

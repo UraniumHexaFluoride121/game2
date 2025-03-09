@@ -9,7 +9,7 @@ public enum ActionColour {
     LIGHT_BLUE(new Color(33, 122, 179), new Color(94, 163, 184)),
     DARK_GREEN(new Color(7, 131, 38), new Color(108, 154, 107)),
     GREEN(new Color(30, 174, 63), new Color(122, 188, 119)),
-    YELLOW(new Color(213, 186, 49), new Color(177, 166, 120)),
+    YELLOW(new Color(211, 179, 37), new Color(165, 154, 113)),
     ORANGE(new Color(213, 131, 49), new Color(184, 147, 118)),
     RED(new Color(197, 62, 62), new Color(186, 110, 110));
 

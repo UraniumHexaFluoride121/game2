@@ -1,5 +1,9 @@
 package unit.action;
 
+import render.GameRenderer;
+import render.Renderable;
+
+import java.awt.*;
 import java.awt.geom.Path2D;
 
 public abstract class ActionShapes {
@@ -89,5 +93,23 @@ public abstract class ActionShapes {
         SHIP.lineTo(.6, .37);
         SHIP.lineTo(.38, .37);
         SHIP.closePath();
+    }
+
+    public static void stealthIcon(Graphics2D g) {
+        g.setStroke(Renderable.roundedStroke(.02f));
+        Shape clip = g.getClip();
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(.27f, .27f);
+        path.lineTo(.73f, .73f);
+        g.clip(Renderable.inverseShape(Renderable.outlineShape(path, 0.11f)));
+        GameRenderer.renderTransformed(g, () -> {
+            g.scale(1.2, 1.2);
+            g.translate(-.075, -.075);
+            g.draw(ActionShapes.SHIP);
+            g.fill(ActionShapes.SHIP);
+        });
+        g.setClip(clip);
+        g.setStroke(Renderable.roundedStroke(.06f));
+        g.draw(path);
     }
 }

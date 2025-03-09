@@ -12,19 +12,24 @@ import render.renderables.RenderElement;
 import render.texture.ResourceLocation;
 import render.ui.UIColourTheme;
 import render.ui.types.*;
+import save.GameSave;
+import save.SaveManager;
 import unit.UnitTeam;
 
 import java.awt.*;
-import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static mainScreen.UIPlayerShipSettings.*;
+import static render.ui.UIColourTheme.*;
 
 public class TitleScreen implements Renderable, InputReceiver {
     private static final Renderable TITLE_SCREEN_IMAGE = Renderable.renderImage(new ResourceLocation("title_screen.png"), false, true, 60, true);
     private final GameRenderer renderer = new GameRenderer(MainPanel.windowTransform, null);
     private final ButtonRegister buttonRegister = new ButtonRegister();
-    private UIButton newGame, multiplayer, connectToLan;
+    private UIButton newGame, multiplayer, connectToLan, loadGame;
 
     public UITabSwitcher newGameTabs;
     public UIScrollSurface playerBoxScrollWindow;
@@ -46,6 +51,13 @@ public class TitleScreen implements Renderable, InputReceiver {
     public UIPlayerShipSettings playerShipSettings;
     public UIButton pasteSettingsButton;
 
+    public UIContainer loadContainer;
+    public UIScrollSurface loadScrollSurface;
+    public ArrayList<UIContainer> loadSaveFiles = new ArrayList<>();
+    public UIButton loadGameLocally, loadGameToLan;
+    public GameSave selectedSave = null;
+    public UITextLabel loadLabel;
+
     public TitleScreen() {
     }
 
@@ -53,17 +65,19 @@ public class TitleScreen implements Renderable, InputReceiver {
         new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, () -> System.exit(0))
                 .setText("Quit Game").setColourTheme(UIColourTheme.DEEP_RED).setBold();
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BACKGROUND, TITLE_SCREEN_IMAGE);
-        new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(12, 18).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(Renderable.right() - 16, 2));
+        new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(12, 17).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(Renderable.right() - 16, 3));
         newGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, 16 - 4 * 0, 10, 3, 1.8f, true, () -> {
             multiplayer.deselect();
             connectToLan.deselect();
+            loadGame.deselect();
         }).setText("New Game").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
 
         multiplayer = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, 16 - 4 * 1, 10, 3, 1.6f, true, () -> {
             newGame.deselect();
             connectToLan.deselect();
+            loadGame.deselect();
             boolean verifyTeams = playerBoxes.getVerifyTeams();
             newGameTabs.setEnabled(true);
             startLocalGame.setEnabled(verifyTeams);
@@ -123,6 +137,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                 Renderable.right() - 15, 16 - 4 * 2, 10, 3, 1.2f, true, () -> {
             newGame.deselect();
             multiplayer.deselect();
+            loadGame.deselect();
             connectContainer.setEnabled(true);
             updateColourSelectorVisibility();
         }).setOnDeselect(() -> {
@@ -174,11 +189,11 @@ public class TitleScreen implements Renderable, InputReceiver {
                     });
                     playerShipSettingsContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, -20, 0, (r2, b2) -> {
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(18, Renderable.top() - TOP_MARGIN)
-                                .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)
+                                .setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
                                 .centerOnly())
                                 .translate(0, 4);
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS, new UIBox(18, Renderable.top() - TOP_MARGIN)
-                                .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)
+                                .setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
                                 .borderOnly())
                                 .translate(0, 4).setZOrder(1);
                         new UIScrollSurface(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 4, 17, Renderable.top() - TOP_MARGIN, (r3, b3) -> {
@@ -187,19 +202,56 @@ public class TitleScreen implements Renderable, InputReceiver {
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 2, 8.5f, 1.5f, 0.9f, false, () -> {
                             UIPlayerShipSettings.clipboardPreset = playerShipSettings.getCurrentPreset();
                             boolean canPaste = UIPlayerShipSettings.clipboardPreset != null;
-                            pasteSettingsButton.setClickEnabled(canPaste).setColourTheme(canPaste ? UIColourTheme.LIGHT_BLUE : UIColourTheme.GRAYED_OUT);
-                        }).setText("Copy Settings").setBold();
+                            pasteSettingsButton.setClickEnabled(canPaste).setColourTheme(canPaste ? LIGHT_BLUE_OPAQUE_CENTER_LIGHT : GRAYED_OUT_OPAQUE);
+                        }).setText("Copy Settings").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
                         pasteSettingsButton = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 9.5f, 2, 8.5f, 1.5f, 0.9f, false, () -> {
+                            if (clipboardPreset == null)
+                                return;
                             playerShipSettings.loadPresetForCurrentTeam(UIPlayerShipSettings.clipboardPreset);
-                        }).setText("Paste Settings").setBold().setColourTheme(UIColourTheme.GRAYED_OUT);
+                        }).setText("Paste Settings").setBold().setColourTheme(GRAYED_OUT_OPAQUE);
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0, 18, 1.5f, 0.9f, false, () -> {
                             playerShipSettings.loadPreset(playerShipSettings.getCurrentPreset());
-                        }).setText("Copy settings to all players").setBold();
+                        }).setText("Copy settings to all players").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, -2, 18, 1.5f, 0.9f, false, () -> {
                             playerShipSettings.loadPreset(UIPlayerShipSettings.DEFAULT_PRESET);
-                        }).setText("Reset all settings to default").setBold();
+                        }).setText("Reset all settings to default").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
                     }).setEnabled(false);
                 }).setEnabled(false);
+
+        loadGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                Renderable.right() - 15, 16 - 4 * 3, 10, 3, 1.55f, true, () -> {
+            multiplayer.deselect();
+            connectToLan.deselect();
+            newGame.deselect();
+            loadContainer.setEnabled(true);
+            updateSaveFiles();
+            updateLoadButtons();
+        }).setOnDeselect(() -> {
+            loadContainer.setEnabled(false);
+            updateLoadButtons();
+        }).setText("Load Game").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
+        loadContainer = new UIContainer(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                Renderable.right() - 30, 2).addRenderables((r, b) -> {
+            loadLabel = new UITextLabel(12.3f, 1, true)
+                    .setTextLeftBold();
+            new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND,
+                    new UIBox(12, 15).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(0, 2),
+                    loadLabel.translate(-.3f, 17.5f)
+            );
+            loadScrollSurface = new UIScrollSurface(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    0, 2, 12, 15, false, (r2, b2) -> {
+            });
+            loadGameLocally = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0.3f, 5.75f, 1.2f, .8f, false)
+                    .setText("Load locally").setBoxCorner(0.35f).setBold().setOnClick(() -> {
+                        MainPanel.startNewLevel(() -> loadLevel(selectedSave, false));
+                    });
+            loadGameToLan = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 6.25f, 0.3f, 5.75f, 1.2f, .8f, false)
+                    .setText("Load to LAN").setBoxCorner(0.35f).setBold().setOnClick(() -> {
+                        MainPanel.startNewLevel(() -> loadLevel(selectedSave, true));
+                    });
+            ;
+        });
+        loadContainer.setEnabled(false);
     }
 
     public void reset() {
@@ -211,6 +263,7 @@ public class TitleScreen implements Renderable, InputReceiver {
         enterSeedBox.deselect();
         newGameTabs.selectTab(0);
         updateColourSelectorVisibility();
+        updateSaveFiles();
     }
 
     private void createColourSelectorButtons() {
@@ -281,6 +334,61 @@ public class TitleScreen implements Renderable, InputReceiver {
     private Level getNewServerMultiplayerLevel() {
         long seed = enterSeedBox.getText().isEmpty() ? new Random().nextLong() : Long.parseLong(enterSeedBox.getText());
         return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), NetworkState.SERVER).generateDefaultTerrain(new TeamSpawner().setUnits(playerShipSettings.getUnits()));
+    }
+
+    private Level loadLevel(GameSave save, boolean server) {
+        Level level = new Level(new HashMap<>(save.teams), save.seed, save.levelWidth, save.levelHeight, server ? NetworkState.SERVER : NetworkState.LOCAL);
+        save.loadLevel(level);
+        return level;
+    }
+
+    private void updateSaveFiles() {
+        loadSaveFiles.forEach(UIContainer::delete);
+        loadSaveFiles.clear();
+        selectedSave = null;
+        ArrayList<UIButton> buttons = new ArrayList<>();
+        loadScrollSurface.addRenderables((r, b) -> {
+            AtomicInteger i = new AtomicInteger();
+            SaveManager.forEachSave((n, s) -> {
+                loadSaveFiles.add(new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 1, -2f * (i.get() + 1))
+                        .addRenderables((r2, b2) -> {
+                            UIButton button = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0, 8, 1.5f, 0.8f, true)
+                                    .setText(n).setBold().setBoxCorner(0.3f).setColourTheme(UIColourTheme.GREEN_SELECTED).noDeselect();
+                            button.setOnClick(() -> {
+                                selectSave(s, button, buttons);
+                            });
+                            buttons.add(button);
+                            new UIShapeButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 8.5f, 0, 1.5f, 1.5f, false)
+                                    .setColourTheme(DEEP_RED).setShape(UIShapeButton::smallX).setBoxCorner(0.3f).setOnClick(() -> {
+                                        SaveManager.removeSave(n);
+                                        MainPanel.addTask(this::updateSaveFiles);
+                                    });
+                        }));
+                i.getAndIncrement();
+            });
+        });
+        loadScrollSurface.setScrollMax(loadSaveFiles.size() * 2f - loadScrollSurface.height);
+        updateLoadButtons();
+    }
+
+    private void selectSave(GameSave save, UIButton button, ArrayList<UIButton> buttons) {
+        selectedSave = save;
+        buttons.forEach(b -> {
+            if (b != button)
+                b.deselect();
+        });
+        updateLoadButtons();
+    }
+
+    private void updateLoadButtons() {
+        if (selectedSave != null && loadContainer.isEnabled()) {
+            loadGameToLan.setEnabled(true);
+            loadGameLocally.setEnabled(true);
+        } else {
+            loadGameToLan.setEnabled(false);
+            loadGameLocally.setEnabled(false);
+        }
+        loadLabel.updateTextLeft(loadSaveFiles.isEmpty() ? "No save files detected" : "Saved games");
     }
 
     @Override

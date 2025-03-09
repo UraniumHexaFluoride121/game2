@@ -3,6 +3,7 @@ package render.ui.implementation;
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
+import foundation.input.OnButtonInput;
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
@@ -35,6 +36,7 @@ public class UIUnitInfo extends LevelUIContainer {
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, 0.5f, 11, 14);
     private Level level;
     public boolean showFiringRange = false;
+    private UIShapeButton viewFiringRange;
 
     public UIUnitInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
         super(register, buttonRegister, order, buttonOrder, 0, 0, level);
@@ -80,7 +82,7 @@ public class UIUnitInfo extends LevelUIContainer {
                         if (unit != null)
                             level.levelRenderer.unitInfoScreen.enable(unit);
                     });
-            new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 7.5f, 12.5f, 1.5f, 1.5f, true)
+            viewFiringRange = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 7.5f, 12.5f, 1.5f, 1.5f, true)
                     .setShape(UIShapeButton::target).drawShape(0.12f).setColourTheme(UIColourTheme.RED).setBoxCorner(0.3f).setOnClick(() -> {
                         Unit unit = level.selectedUnit;
                         if (unit == null)
@@ -90,6 +92,12 @@ public class UIUnitInfo extends LevelUIContainer {
                         level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(tiles, FIRE_TILE_BORDER_COLOUR);
                         showFiringRange = true;
                     }).setOnDeselect(this::closeFiringRangeView).toggleMode();
+            new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type.c == 'x', () -> {
+                if (viewFiringRange.isSelected())
+                    viewFiringRange.deselect();
+                else
+                    viewFiringRange.select();
+            });
         });
     }
 
@@ -100,7 +108,7 @@ public class UIUnitInfo extends LevelUIContainer {
 
     @Override
     public boolean isEnabled() {
-        return level.selectedUnit != null && super.isEnabled();
+        return level.selectedUnit != null && level.selectedUnit.visible() && super.isEnabled();
     }
 
     @Override
@@ -108,6 +116,7 @@ public class UIUnitInfo extends LevelUIContainer {
         super.delete();
         renderable = null;
         level = null;
+        viewFiringRange = null;
     }
 
     @Override

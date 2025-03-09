@@ -12,6 +12,7 @@ import unit.weapon.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -30,7 +31,7 @@ public class CorvetteType extends UnitType {
         case DENSE_NEBULA -> 100f;
         case ASTEROIDS -> 1.5f;
     }, new Action[]{
-        Action.FIRE, Action.MOVE
+            Action.FIRE, Action.MOVE
     }, 1, 17, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CORVETTE_CANNON, WeaponType.CANNON);
         float s = 3.4f;
@@ -41,6 +42,7 @@ public class CorvetteType extends UnitType {
         w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.MODERATE);
         w.addData("fighter", new AttackData(1.6f, s));
         w.addData("bomber", new AttackData(1.4f, s));
+        w.addData("scout", new AttackData(1.8f, s));
         w.addData("corvette", new AttackData(5.2f, s));
         w.addData("defender", new AttackData(4.8f, s));
         w.addData("artillery", new AttackData(5.2f, s));
@@ -52,13 +54,13 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
-    }, map -> {
+    }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 6);
         map.put(Action.FIRE, 10);
     }, new AttributeData[]{
-        ANTI_CORVETTE, BALANCED,
-                SLOW_ASTEROID_FIELD, CARRIER_LOADING,
-                INEFFECTIVE_AGAINST_FIGHTER, INEFFECTIVE_AGAINST_SHIELDS
+            ANTI_CORVETTE, BALANCED,
+            SLOW_ASTEROID_FIELD, CARRIER_LOADING,
+            INEFFECTIVE_AGAINST_FIGHTER, INEFFECTIVE_AGAINST_SHIELDS
     }, FiringRenderer.THREE_UNITS),
 
     DEFENDER = new CorvetteType("defender", "Defender", 10, 4f, 2.5f, type -> switch (type) {
@@ -72,7 +74,7 @@ public class CorvetteType extends UnitType {
         case DENSE_NEBULA -> 100f;
         case ASTEROIDS -> 1.2f;
     }, new Action[]{
-        Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
+            Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
     }, 1, 22, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.DEFENDER_PLASMA, WeaponType.PLASMA);
         float s = 5.5f;
@@ -83,6 +85,7 @@ public class CorvetteType extends UnitType {
         w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH_MAX);
         w.addData("fighter", new AttackData(6.2f, s));
         w.addData("bomber", new AttackData(5.8f, s));
+        w.addData("scout", new AttackData(6.0f, s));
         w.addData("corvette", new AttackData(2.7f, s));
         w.addData("defender", new AttackData(2.5f, s));
         w.addData("artillery", new AttackData(2.9f, s));
@@ -94,14 +97,14 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.MODERATE);
-    }, map -> {
+    }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 6);
         map.put(Action.FIRE, 12);
         map.put(Action.SHIELD_REGEN, 10);
     }, new AttributeData[]{
-        ANTI_FIGHTER, ANTI_SHIELD, HAS_SHIELD,
-                SLOW_ASTEROID_FIELD, CARRIER_LOADING,
-                INEFFECTIVE_AGAINST_LARGE, LOW_VIEW_RANGE
+            ANTI_FIGHTER, ANTI_SHIELD, HAS_SHIELD,
+            SLOW_ASTEROID_FIELD, CARRIER_LOADING,
+            INEFFECTIVE_AGAINST_LARGE, LOW_VIEW_RANGE
     }, FiringRenderer.TWO_UNITS).addShield(4, 1.5f, 27),
 
     ARTILLERY = new CorvetteType("artillery", "Artillery", 8, 4f, 3.5f, type -> switch (type) {
@@ -127,6 +130,7 @@ public class CorvetteType extends UnitType {
         w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.LOW);
         w.addData("fighter", new AttackData(1.2f, s));
         w.addData("bomber", new AttackData(1.1f, s));
+        w.addData("scout", new AttackData(1.2f, s));
         w.addData("corvette", new AttackData(3.5f, s));
         w.addData("defender", new AttackData(3.8f, s));
         w.addData("artillery", new AttackData(3.5f, s));
@@ -138,7 +142,7 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
-    }, map -> {
+    }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 8);
         map.put(Action.FIRE, 16);
     }, new AttributeData[]{
@@ -152,7 +156,7 @@ public class CorvetteType extends UnitType {
         }
     };
 
-    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, Consumer<HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
         super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
     }
 

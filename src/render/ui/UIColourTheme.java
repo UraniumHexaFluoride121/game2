@@ -15,6 +15,12 @@ public enum UIColourTheme {
             new Color(161, 161, 161), new Color(131, 131, 131, 144),
             new Color(161, 161, 161), new Color(131, 131, 131, 144)
     ),
+    GRAYED_OUT_OPAQUE(
+            new Color(161, 161, 161), new Color(76, 76, 76, 219),
+            new Color(161, 161, 161), new Color(76, 76, 76, 219),
+            new Color(161, 161, 161), new Color(76, 76, 76, 219),
+            new Color(161, 161, 161), new Color(76, 76, 76, 219)
+    ),
     DARK_GRAY(
             new Color(97, 97, 97), new Color(69, 69, 69, 221),
             new Color(97, 97, 97), new Color(69, 69, 69, 221),
@@ -56,6 +62,18 @@ public enum UIColourTheme {
             new Color(99, 156, 191), new Color(92, 140, 181, 65),
             new Color(75, 121, 147), new Color(74, 121, 159, 60),
             new Color(81, 135, 166), new Color(88, 137, 175, 61)
+    ),
+    LIGHT_BLUE_OPAQUE_CENTER(
+            new Color(105, 181, 228), new Color(27, 51, 66, 239),
+            new Color(99, 156, 191), new Color(25, 43, 55, 239),
+            new Color(75, 121, 147), new Color(20, 34, 44, 239),
+            new Color(81, 135, 166), new Color(19, 32, 43, 239)
+    ),
+    LIGHT_BLUE_OPAQUE_CENTER_LIGHT(
+            new Color(105, 181, 228), new Color(35, 66, 87, 239),
+            new Color(99, 156, 191), new Color(35, 59, 78, 239),
+            new Color(75, 121, 147), new Color(31, 52, 67, 239),
+            new Color(81, 135, 166), new Color(29, 48, 66, 239)
     ),
     RED(
             new Color(228, 105, 105), new Color(189, 87, 87, 144),

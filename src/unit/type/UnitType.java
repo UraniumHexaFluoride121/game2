@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,6 +34,7 @@ public abstract class UnitType implements NamedEnum {
     private final HashMap<UnitTeam, HashMap<UnitPose, Renderable>> tileRenderers = new HashMap<>();
     private final HashMap<UnitTeam, HashMap<UnitPose, BufferedImage>> images = new HashMap<>();
 
+    public boolean canCapture = true;
     private final String name, displayName;
     public final ShipClass shipClass;
     public final float hitPoints, maxMovement, maxViewRange;
@@ -54,15 +56,15 @@ public abstract class UnitType implements NamedEnum {
 
     public final HashMap<UnitTeam, ImageSequence> firingSequenceLeft = new HashMap<>();
     public final HashMap<UnitTeam, ImageSequence> firingSequenceRight = new HashMap<>();
-    private final HashMap<Action, Integer> actionCost = new HashMap<>();
+    private final HashMap<Action, Integer> actionCost = new HashMap<>(), perTurnActionCost = new HashMap<>();
 
     public ImageRenderer shieldRenderer = null;
 
     public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
-            FIGHTER, BOMBER, CORVETTE, DEFENDER, ARTILLERY
+            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY
     };
 
-    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, Consumer<HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
         this.name = name;
         this.displayName = displayName;
         this.hitPoints = hitPoints;
@@ -77,7 +79,7 @@ public abstract class UnitType implements NamedEnum {
         this.infoAttributes = infoAttributes;
         this.firingPositions = firingPositions;
         shipClass = getShipClass();
-        actionCostSetter.accept(actionCost);
+        actionCostSetter.accept(actionCost, perTurnActionCost);
         unitCharacteristicSetter.accept(unitCharacteristics);
         for (UnitTeam team : UnitTeam.values()) {
             tileRenderers.put(team, new HashMap<>());
@@ -139,6 +141,12 @@ public abstract class UnitType implements NamedEnum {
         return Optional.empty();
     }
 
+    public Optional<Integer> getPerTurnActionCost(Action action) {
+        if (perTurnActionCost.containsKey(action))
+            return Optional.of(perTurnActionCost.get(action));
+        return Optional.empty();
+    }
+
     public abstract float damageReduction(TileType type);
     protected abstract ShipClass getShipClass();
 
@@ -152,6 +160,15 @@ public abstract class UnitType implements NamedEnum {
 
     public abstract float movementCostMultiplier();
     public abstract float movementFixedCost();
+
+    public UnitType noCapture() {
+        canCapture = false;
+        return this;
+    }
+
+    public String getInternalName() {
+        return name;
+    }
 
     @Override
     public String getName() {

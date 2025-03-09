@@ -33,8 +33,8 @@ public class UIConfirm extends AbstractRenderElement implements RegisteredButton
             cancelButtonHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, null);
     private final UIBox
             box = new UIBox(width, height),
-            confirm = new UIBox(width / 3, 1.5f).setClickHandler(confirmButtonHandler).setColourTheme(UIColourTheme.GREEN),
-            cancel = new UIBox(width / 3, 1.5f).setClickHandler(cancelButtonHandler).setColourTheme(UIColourTheme.RED);
+            confirm = new UIBox(width / 3, 1.5f).setClickHandler(confirmButtonHandler).setColourTheme(UIColourTheme.DEEP_GREEN),
+            cancel = new UIBox(width / 3, 1.5f).setClickHandler(cancelButtonHandler).setColourTheme(UIColourTheme.DEEP_RED);
 
     private Level level;
     public boolean visible = false;

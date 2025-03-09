@@ -114,7 +114,8 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
     public HashSet<Point> tilesWithoutEnemies(HashSet<Point> tiles, UnitTeam team) {
         HashSet<Point> newTiles = new HashSet<>();
         for (Point tile : tiles) {
-            if (level.getUnit(tile) == null || level.samePlayerTeam(level.getUnit(tile).team, team) || getTile(tile).isFoW)
+            Unit u = level.getUnit(tile);
+            if (u == null || level.samePlayerTeam(u.team, team) || (u.stealthMode && !u.visibleInStealthMode) || getTile(tile).isFoW)
                 newTiles.add(tile);
         }
         return newTiles;

@@ -77,6 +77,8 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (grayedOut || level.levelRenderer.runningAnim())
             return;
+        if (!blocked && type.isCharInput && type.c == 'e')
+            onClick();
         clickHandler.buttonPressed(pos, inside, blocked, type);
     }
 

@@ -391,24 +391,6 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
             ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
             ObjPos cameraTransformedPos = transformMousePosToCamera(p);
             if (interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4) {
-                if (interpCameraTo != null && (moveCameraUp || moveCameraDown || moveCameraLeft || moveCameraRight))
-                    interpCameraTo = null;
-                if (moveCameraDown) {
-                    moveCameraDown = false;
-                    cameraPosition.addY(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                }
-                if (moveCameraUp) {
-                    moveCameraUp = false;
-                    cameraPosition.addY(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                }
-                if (moveCameraLeft) {
-                    moveCameraLeft = false;
-                    cameraPosition.addX(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                }
-                if (moveCameraRight) {
-                    moveCameraRight = false;
-                    cameraPosition.addX(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                }
                 if (moveCameraEnabled) {
                     if (prevMousePos != null) {
                         if (interpCameraTo != null)
@@ -416,6 +398,25 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
                         cameraPosition.add(mousePos.copy().subtract(prevMousePos).scaleToBlocks().flipY());
                     }
                     prevMousePos = mousePos;
+                } else {
+                    if (interpCameraTo != null && (moveCameraUp || moveCameraDown || moveCameraLeft || moveCameraRight))
+                        interpCameraTo = null;
+                    if (moveCameraDown) {
+                        moveCameraDown = false;
+                        cameraPosition.addY(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
+                    }
+                    if (moveCameraUp) {
+                        moveCameraUp = false;
+                        cameraPosition.addY(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
+                    }
+                    if (moveCameraLeft) {
+                        moveCameraLeft = false;
+                        cameraPosition.addX(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
+                    }
+                    if (moveCameraRight) {
+                        moveCameraRight = false;
+                        cameraPosition.addX(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
+                    }
                 }
                 cameraPosition.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
             }

@@ -213,7 +213,8 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                             if (b != this)
                                 b.editShips.deselect();
                         });
-                    }).setOnDeselect(() -> MainPanel.titleScreen.playerShipSettings.updateTeam());
+                    }).setOnDeselect(() -> MainPanel.titleScreen.playerShipSettings.updateTeam())
+                    .setColourTheme(UIColourTheme.GREEN_SELECTED).toggleMode();
             playerTeamLabel = new UITextLabel(5, 0.7f, false)
                     .updateTextCenter("Player Team").setTextCenterBold();
             deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.75f, 2.5f, 1, 1, false, () -> {

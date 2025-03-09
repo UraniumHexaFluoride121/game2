@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 public class UITextInputBox extends UIButton {
     private final Predicate<InputType> allowedChars;
     private final EditableTextRenderer editableText;
+    private Runnable onChanged = null;
 
     public UITextInputBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, int maxLength, Predicate<InputType> allowedChars) {
         super(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, null,
@@ -32,6 +33,19 @@ public class UITextInputBox extends UIButton {
         box.setShape(UIBox.BoxShape.RECTANGLE);
     }
 
+    public UITextInputBox setOnChanged(Runnable onChanged) {
+        this.onChanged = onChanged;
+        return this;
+    }
+
+    @Override
+    public UITextInputBox setText(String text) {
+        super.setText(text);
+        if (onChanged != null)
+            onChanged.run();
+        return this;
+    }
+
     @Override
     public boolean blocking(InputType type) {
         return type.isMouseInput() || type.isCharInput;
@@ -42,10 +56,14 @@ public class UITextInputBox extends UIButton {
         if (clickHandler.state == ButtonState.SELECTED) {
             if (type == InputType.BACKSPACE) {
                 editableText.removeChar();
+                if (onChanged != null)
+                    onChanged.run();
                 return;
             }
             if (allowedChars.test(type)) {
                 editableText.addChar(type.c);
+                if (onChanged != null)
+                    onChanged.run();
                 return;
             }
             editableText.buttonPressed(pos.copy().addX(-width / 2 - x), inside, blocked, type);
@@ -55,5 +73,11 @@ public class UITextInputBox extends UIButton {
 
     public String getText() {
         return editableText.getText();
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        onChanged = null;
     }
 }

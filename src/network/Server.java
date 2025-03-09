@@ -54,8 +54,7 @@ public class Server implements Deletable {
                     clients.put(id, client);
                     clientsByAddress.put(client.socket.getInetAddress(), client);
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (IOException _) {
             }
         }).start();
     }
@@ -85,14 +84,14 @@ public class Server implements Deletable {
         sendEnergyUpdatePacket();
     }
 
-    public void sendUnitMovePacket(AnimTilePath path, Point illegalTile, Unit unit) {
+    public void sendUnitMovePacket(AnimTilePath path, Point illegalTile, Point pos, Unit unit) {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_MOVE_UNIT, w -> {
             path.write(w);
             w.writeBoolean(illegalTile != null);
             if (illegalTile != null) {
                 PacketWriter.writePoint(illegalTile, w);
             }
-            PacketWriter.writePoint(unit.pos, w);
+            PacketWriter.writePoint(pos, w);
             unit.type.write(w);
             PacketWriter.writeEnum(unit.team, w);
         })));
@@ -120,6 +119,14 @@ public class Server implements Deletable {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHIELD_REGEN, w -> {
             PacketWriter.writePoint(unit.pos, w);
             w.writeFloat(unit.shieldHP);
+        })));
+    }
+
+    public void sendUnitStealthPacket(Unit unit, boolean cameraTo) {
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STEALTH_UNIT, w -> {
+            PacketWriter.writePoint(unit.pos, w);
+            w.writeBoolean(unit.stealthMode);
+            w.writeBoolean(cameraTo);
         })));
     }
 
@@ -282,7 +289,7 @@ public class Server implements Deletable {
                             queueUnitUpdatePacket();
                             return;
                         }
-                        server.sendUnitMovePacket(path, illegalTile, unit);
+                        server.sendUnitMovePacket(path, illegalTile, unit.pos, unit);
                         unit.startMove(path, illegalTile);
                     });
                 }
@@ -320,6 +327,19 @@ public class Server implements Deletable {
                         u.addPerformedAction(Action.SHIELD_REGEN);
                         u.setShieldHP(u.shieldHP + u.type.shieldRegen);
                         server.sendUnitShieldRegenPacket(u);
+                    });
+                }
+                case CLIENT_REQUEST_STEALTH -> {
+                    Point pos = PacketReceiver.readPoint(reader);
+                    MainPanel.addTaskAfterAnimBlock(() -> {
+                        Unit u = server.level.getUnit(pos);
+                        if (u == null || u.hasPerformedAction(Action.STEALTH) || !server.level.levelRenderer.energyManager.canAfford(u, Action.STEALTH, true)) {
+                            queueUnitUpdatePacket();
+                            return;
+                        }
+                        u.addPerformedAction(Action.STEALTH);
+                        u.setStealthMode(!u.stealthMode, true);
+                        server.sendUnitStealthPacket(u, true);
                     });
                 }
             }

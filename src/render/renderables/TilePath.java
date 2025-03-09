@@ -32,7 +32,7 @@ public class TilePath implements Renderable {
     public static final Color MOVE_PATH_COLOUR_INNER = Tile.BLUE_HIGHLIGHT_COLOUR;
     public static final Color MOVE_PATH_COLOUR = new Color(61, 148, 193);
     public static final float END_DOT_RADIUS = 0.15f, END_DOT_RADIUS_INNER = 0.12f;
-    private static final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay();
+    private static final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay(false);
     private final UnitType type;
     private final HashSet<Point> tiles;
     private final Point origin;

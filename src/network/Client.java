@@ -76,7 +76,7 @@ public class Client implements Deletable {
                 UnitTeam activeTeam = PacketReceiver.readEnum(UnitTeam.class, reader);
                 MainPanel.addTask(() -> {
                     if (MainPanel.activeLevel != null)
-                        MainPanel.activeLevel.setTurn(activeTeam, turn);
+                        MainPanel.activeLevel.setTurn(activeTeam, turn, true);
                 });
             }
             case UNIT_UPDATE -> {
@@ -185,7 +185,7 @@ public class Client implements Deletable {
                 UnitData from = new UnitData(reader), to = new UnitData(reader);
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.activeLevel;
-                    Unit fromUnit = from.getUnit(l), toUnit = to.getUnit(l);
+                    Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
                     fromUnit.attack(toUnit);
                     fromUnit.addPerformedAction(Action.FIRE);
                 });
@@ -247,6 +247,20 @@ public class Client implements Deletable {
                     }
                     u.addPerformedAction(Action.SHIELD_REGEN);
                     u.setShieldHP(shieldHP);
+                });
+            }
+            case SERVER_STEALTH_UNIT -> {
+                Point pos = PacketReceiver.readPoint(reader);
+                boolean stealth = reader.readBoolean(), cameraTo = reader.readBoolean();
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.activeLevel;
+                    Unit u = l.getUnit(pos);
+                    if (u == null) {
+                        requestLevelData();
+                        return;
+                    }
+                    u.addPerformedAction(Action.STEALTH);
+                    u.setStealthMode(stealth, false);
                 });
             }
             case ENERGY_UPDATE -> {
@@ -317,6 +331,12 @@ public class Client implements Deletable {
 
     public void sendUnitShieldRegenRequest(Unit unit) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_SHIELD_REGEN, w -> {
+            PacketWriter.writePoint(unit.pos, w);
+        }));
+    }
+
+    public void sendUnitStealthRequest(Unit unit) {
+        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_STEALTH, w -> {
             PacketWriter.writePoint(unit.pos, w);
         }));
     }

@@ -11,6 +11,7 @@ import render.ui.UIColourTheme;
 public class UIButton extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     protected final FixedTextRenderer text;
     public final float x, y, height, width;
+    public float textSize;
     protected final ButtonClickHandler clickHandler;
     protected final UIBox box;
     protected final StaticHitBox hitBox;
@@ -35,6 +36,7 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
         this.y = y;
         this.height = height;
         this.width = width;
+        this.textSize = textSize;
         this.buttonOrder = buttonOrder;
         this.buttonRegister = buttonRegister;
         this.text = text;
@@ -49,7 +51,7 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
                 return;
             GameRenderer.renderOffset(x, y, g, () -> {
                 box.render(g);
-                g.translate(width / 2f, height / 2 - textSize * 0.75 / 2);
+                g.translate(width / 2f, height / 2 - getTextSize() * 0.75 / 2);
                 text.render(g);
             });
         };
@@ -57,6 +59,12 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
 
     public UIButton setText(String text) {
         this.text.updateText(text);
+        return this;
+    }
+
+    public UIButton setTextSize(float size) {
+        textSize = size;
+        text.setTextSize(size);
         return this;
     }
 
@@ -153,6 +161,10 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (isEnabled() && clickEnabled)
             clickHandler.buttonReleased(pos, inside, blocked, type);
+    }
+
+    private float getTextSize() {
+        return textSize;
     }
 
     @Override

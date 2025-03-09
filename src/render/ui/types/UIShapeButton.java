@@ -274,6 +274,37 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         }, 12);
     }
 
+    public static Shape smallX(UIBox b) {
+        float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.6f, thickness = size * .3f;
+        return new Polygon(new int[]{
+                (int) ((cx - size) * SCALING),
+                (int) ((cx - thickness) * SCALING),
+                (int) ((cx - size) * SCALING),
+                (int) ((cx - size + thickness) * SCALING),
+                (int) ((cx) * SCALING),
+                (int) ((cx + size - thickness) * SCALING),
+                (int) ((cx + size) * SCALING),
+                (int) ((cx + thickness) * SCALING),
+                (int) ((cx + size) * SCALING),
+                (int) ((cx + size - thickness) * SCALING),
+                (int) ((cx) * SCALING),
+                (int) ((cx - size + thickness) * SCALING),
+        }, new int[]{
+                (int) ((cy - size + thickness) * SCALING),
+                (int) ((cy) * SCALING),
+                (int) ((cy + size - thickness) * SCALING),
+                (int) ((cy + size) * SCALING),
+                (int) ((cy + thickness) * SCALING),
+                (int) ((cy + size) * SCALING),
+                (int) ((cy + size - thickness) * SCALING),
+                (int) ((cy) * SCALING),
+                (int) ((cy - size + thickness) * SCALING),
+                (int) ((cy - size) * SCALING),
+                (int) ((cy - thickness) * SCALING),
+                (int) ((cy - size) * SCALING),
+        }, 12);
+    }
+
     public static Shape i(UIBox b) {
         float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.7f;
         Path2D.Float path = new Path2D.Float();

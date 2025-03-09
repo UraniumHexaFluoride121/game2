@@ -29,6 +29,7 @@ public class UIPlayerShipSettings extends UIContainer {
     static {
         DEFAULT_PRESET.put(FighterType.FIGHTER, 3);
         DEFAULT_PRESET.put(FighterType.BOMBER, 1);
+        DEFAULT_PRESET.put(FighterType.SCOUT, 1);
         DEFAULT_PRESET.put(CorvetteType.CORVETTE, 2);
         DEFAULT_PRESET.put(CorvetteType.DEFENDER, 1);
         DEFAULT_PRESET.put(CorvetteType.ARTILLERY, 1);

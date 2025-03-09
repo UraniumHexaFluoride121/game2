@@ -9,13 +9,23 @@ import level.Level;
 import render.*;
 import render.renderables.RenderElement;
 import render.ui.UIColourTheme;
-import render.ui.types.LevelUIContainer;
-import render.ui.types.UIButton;
+import render.ui.types.*;
+import save.GameSave;
+import save.SaveManager;
+
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static render.ui.implementation.UnitInfoScreen.*;
 
 public class PauseMenu extends LevelUIContainer {
-    private static final float WIDTH = 18, HEIGHT = 2, Y_OFFSET = -5;
+    private static final float WIDTH = 18, HEIGHT = 2.5f, Y_OFFSET = -5;
+    private UIContainer saveContainer;
+    public UITextInputBox saveFileNameBox;
+    private UIButton saveButton, saveGame;
+    private UIScrollSurface saveFileScrollSurface;
+    private ArrayList<UIContainer> saves = new ArrayList<>();
+
     public PauseMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
         super(register, buttonRegister, order, buttonOrder, 0, 0, level);
         addRenderables((r, b) -> {
@@ -24,28 +34,118 @@ public class PauseMenu extends LevelUIContainer {
                 g.setColor(FULL_SCREEN_MENU_BACKGROUND_COLOUR);
                 g.fillRect(0, 0, (int) Math.ceil(Renderable.right()), (int) Math.ceil(Renderable.top()));
             });
-            newButton(r, b, 0, WIDTH / 2 - 0.25f, 0)
-                    .setColourTheme(UIColourTheme.RED).setText("Exit game").setOnClick(() -> {
+            newButton(r, b, 0, WIDTH / 2 - 0.25f, 0, false)
+                    .setColourTheme(UIColourTheme.DEEP_RED).setText("Exit game").setOnClick(() -> {
                         MainPanel.addTask(MainPanel::toTitleScreen);
                     });
-            newButton(r, b, 0, WIDTH / 2 - 0.25f, WIDTH / 2 + 0.25f)
-                    .setColourTheme(UIColourTheme.GREEN).setText("Continue game").setOnClick(() -> {
+            newButton(r, b, 0, WIDTH / 2 - 0.25f, WIDTH / 2 + 0.25f, false)
+                    .setColourTheme(UIColourTheme.DEEP_GREEN).setText("Continue game").setOnClick(() -> {
                         setEnabled(false);
                     });
+            saveGame = newButton(r, b, 1, true)
+                    .setText("Save game").setOnClick(() -> {
+                        saveContainer.setEnabled(true);
+                    }).noDeselect().setOnDeselect(() -> {
+                        saveContainer.setEnabled(false);
+                    });
+            saveContainer = new UIContainer(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 + WIDTH / 2, Renderable.top() / 2 - 12);
+            saveContainer.addRenderables((r2, b2) -> {
+                new RenderElement(r2, RenderOrder.PAUSE_MENU_BACKGROUND,
+                        new UIBox(15, 14).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(2, 0),
+                        new UITextLabel(10.5f, 1.3f, false).setTextCenterBold().updateTextCenter("Save files").translate(4f, 14.6f),
+                        new UITextLabel(10.5f, 1f, false).setTextCenterBold().updateTextCenter("Enter save name:").translate(4f, 21.6f)
+                );
+                saveFileScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, 2, 0, 15, 14, false, (r3, b3) -> {
+                });
+                saveFileNameBox = new UITextInputBox(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
+                        1.5f, 19, 16, 2, 1, true, 15, InputType::isFileNameChar);
+                saveFileNameBox.setOnChanged(this::updateSaveButton).setBold().setColourTheme(UIColourTheme.GREEN_SELECTED);
+                saveButton = new UIButton(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, (15 - 8) / 2f + 2, 17.3f, 8, 1.2f, 1, false)
+                        .setText("Save").setBold().setColourTheme(UIColourTheme.GRAYED_OUT).setClickEnabled(false).setOnClick(() -> {
+                            String name = saveFileNameBox.getText();
+                            SaveManager.addSave(new GameSave(level, name), name);
+                            saveButton.setColourTheme(UIColourTheme.DEEP_GREEN).setText("Saved!").setClickEnabled(false);
+                            updateSaves();
+                        });
+            });
         });
     }
 
-    private UIButton newButton(GameRenderer r, ButtonRegister b, int i, float width, float xOffset) {
-        return new UIButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 - WIDTH / 2 + xOffset, Renderable.top() / 2 + i * HEIGHT + Y_OFFSET, width, HEIGHT - 0.25f, 1f, false)
-                .setBold();
+    private UIButton newButton(GameRenderer r, ButtonRegister b, int i, float width, float xOffset, boolean staySelected) {
+        return new UIButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 - WIDTH / 2 + xOffset, Renderable.top() / 2 + i * HEIGHT + Y_OFFSET, width, HEIGHT - 0.5f, 1f, staySelected)
+                .setBold().setBoxCorner(0.65f);
     }
 
-    private UIButton newButton(GameRenderer r, ButtonRegister b, int i) {
-        return newButton(r, b, i, WIDTH, 0);
+    private UIButton newButton(GameRenderer r, ButtonRegister b, int i, boolean staySelected) {
+        return newButton(r, b, i, WIDTH, 0, staySelected);
+    }
+
+    public void updateSaveButton() {
+        if (saveFileNameBox.getText().isEmpty()) {
+            saveButton.setColourTheme(UIColourTheme.GRAYED_OUT)
+                    .setText("Save").setClickEnabled(false);
+        } else if (SaveManager.containsSave(saveFileNameBox.getText())) {
+            saveButton.setColourTheme(UIColourTheme.DEEP_YELLOW)
+                    .setText("Overwrite Save").setClickEnabled(true);
+        } else {
+            saveButton.setColourTheme(UIColourTheme.LIGHT_BLUE)
+                    .setText("Save").setClickEnabled(true);
+        }
+    }
+
+    public void updateSaves() {
+        saves.forEach(UIContainer::delete);
+        saves.clear();
+        saveFileScrollSurface.addRenderables((r, b) -> {
+            AtomicInteger i = new AtomicInteger();
+            SaveManager.forEachSave((n, s) -> {
+                saves.add(new UIContainer(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, 1, -2f * (i.get() + 1))
+                        .addRenderables((r2, b2) -> {
+                            new UIButton(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, 0, 0, 11, 1.5f, 0.8f, true)
+                                    .setText(n).setBold().setBoxCorner(0.3f).setClickEnabled(false);
+                            new UIShapeButton(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, 11.5f, 0, 1.5f, 1.5f, false)
+                                    .setColourTheme(UIColourTheme.DEEP_RED).setShape(UIShapeButton::smallX).setBoxCorner(0.3f).setOnClick(() -> {
+                                        SaveManager.removeSave(n);
+                                        MainPanel.addTask(this::updateSaves);
+                                    });
+                        }));
+                i.getAndIncrement();
+            });
+        });
+        saveFileScrollSurface.setScrollMax(saves.size() * 2f - saveFileScrollSurface.height);
+    }
+
+    @Override
+    public UIContainer setEnabled(boolean enabled) {
+        updateSaves();
+
+        if (!enabled) {
+            saveContainer.setEnabled(false);
+            saveGame.deselect();
+            super.setEnabled(false);
+        } else {
+            MainPanel.addTaskAfterAnimBlock(this::enableAfterAnimBlock);
+        }
+        return this;
+    }
+
+    private void enableAfterAnimBlock() {
+        super.setEnabled(true);
     }
 
     @Override
     public boolean blocking(InputType type) {
         return true;
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        saveFileNameBox = null;
+        saveContainer = null;
+        saveButton = null;
+        saveGame = null;
+        saveFileScrollSurface = null;
+        saves.clear();
     }
 }

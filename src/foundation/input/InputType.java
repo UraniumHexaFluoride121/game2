@@ -41,6 +41,10 @@ public class InputType {
         return Character.isDigit(c);
     }
 
+    public boolean isFileNameChar() {
+        return isCharInput && (Character.isLetter(c) || Character.isDigit(c) || c == '_' || c == '-');
+    }
+
     public static InputType getInputType(InputEvent e) {
         if (e instanceof KeyEvent k) {
             switch (k.getKeyCode()) {

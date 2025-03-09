@@ -20,8 +20,8 @@ import unit.weapon.WeaponTemplate;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 
 public class UnitInfoScreen extends LevelUIContainer {
@@ -130,7 +130,8 @@ public class UnitInfoScreen extends LevelUIContainer {
         actionElements.clear();
         actionScrollSurface.addRenderables((r, b) -> {
             ArrayList<Action> actions = new ArrayList<>();
-            actions.add(Action.CAPTURE);
+            if (unit.type.canCapture)
+                actions.add(Action.CAPTURE);
             actions.addAll(Arrays.asList(unit.type.actions));
             actions.sort(Comparator.comparingInt(a -> -a.getOrder()));
             for (int i = 0; i < actions.size(); i++) {

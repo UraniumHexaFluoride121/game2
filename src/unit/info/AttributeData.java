@@ -12,10 +12,10 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
             HAS_SHIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
             "Has a powerful shield for defence", orderCounter++),
             HIGH_MOVEMENT_SPEED = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
-            "High movement speed", orderCounter++),
+                    "High movement speed", orderCounter++),
             QUICK_ASTEROID_FIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Can move through asteroid fields", orderCounter++),
-            HIGH_VIEW_RANGE = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
+            HIGH_VIEW_RANGE = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Extended view range", orderCounter++),
             RANGED_WEAPON = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Has a ranged weapon", orderCounter++),
@@ -35,6 +35,8 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
                     "Generally an all-round, balanced ship", orderCounter++);
     //Neutral
     public static final AttributeData
+            STEALTH_INSTEAD_OF_CAPTURE = new AttributeData(UnitInfoScreen.AttributeType.NEUTRAL,
+            "Has Stealth instead of Capture action", orderCounter++),
             SLOW_ASTEROID_FIELD = new AttributeData(UnitInfoScreen.AttributeType.NEUTRAL,
             "Can slowly move through asteroid fields", orderCounter++),
             CARRIER_LOADING = new AttributeData(UnitInfoScreen.AttributeType.NEUTRAL,
@@ -47,6 +49,8 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
                     "Limited view range", orderCounter++),
             MAIN_GUN_LIMITED_AMMO = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Primary weapon has limited ammo", orderCounter++),
+            INEFFECTIVE_AGAINST_ALL = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
+                    "Low firepower", orderCounter++),
             INEFFECTIVE_AGAINST_SHIELDS = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Ineffective against shields", orderCounter++),
             INEFFECTIVE_AGAINST_LARGE = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
@@ -60,5 +64,7 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
             INEFFECTIVE_AGAINST_CRUISER = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Ineffective against " + ShipClass.CRUISER.getName().toLowerCase() + " class", orderCounter++),
             INEFFECTIVE_AGAINST_CAPITAL_SHIP = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
-                    "Ineffective against " + ShipClass.CAPITAL_SHIP.getName().toLowerCase() + " class", orderCounter++);
+                    "Ineffective against " + ShipClass.CAPITAL_SHIP.getName().toLowerCase() + " class", orderCounter++),
+            LOW_HP = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
+                    "Small amount of HP", orderCounter++);
 }

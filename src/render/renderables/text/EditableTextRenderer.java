@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.font.TextLayout;
 
 public class EditableTextRenderer extends FixedTextRenderer implements ButtonInputReceiver {
-    public final StringBuilder s = new StringBuilder();
+    public StringBuilder s = new StringBuilder();
     private final int maxLength;
     private int caretPosition = 0;
     private float caretRenderPosition = 0;
@@ -56,6 +56,10 @@ public class EditableTextRenderer extends FixedTextRenderer implements ButtonInp
     @Override
     public void updateText(String text) {
         super.updateText(text);
+        if (text == null)
+            s = new StringBuilder();
+        else
+            s = new StringBuilder(text);
         caretUpdate = true;
     }
 

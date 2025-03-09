@@ -12,6 +12,7 @@ import unit.Unit;
 
 import java.awt.*;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -24,7 +25,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     public static final Color BACKGROUND_COLOUR = new Color(0, 0, 0, 150), BORDER_COLOUR = new Color(90, 90, 90);
 
     public TreeMap<Action, ActionData> actionMap = new TreeMap<>(Comparator.comparingInt(Action::getOrder));
-    private final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay();
+    private final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay(false), energyCostPerTurnDisplay = new EnergyCostDisplay(true);
     private Supplier<Boolean> isVisible;
 
     private Unit unit;
@@ -48,9 +49,19 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         actionMap.forEach((a, d) -> {
             if (!d.clickHandler.isDefault() && d.enabled) {
                 unit.type.getActionCost(a).ifPresent(cost -> {
+                    Optional<Integer> perTurnActionCost = unit.type.getPerTurnActionCost(a);
+                    perTurnActionCost.ifPresent(perTurnCost -> {
+                        energyCostPerTurnDisplay.setCost(unit.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
+                        energyCostPerTurnDisplay.renderToEnergyManager(unit.getLevel());
+                        GameRenderer.renderOffset(0, -4.5f, g, () -> {
+                            energyCostPerTurnDisplay.render(g);
+                        });
+                    });
+                    if (unit.removeActionEnergyCost(a))
+                        return;
                     energyCostDisplay.setCost(-cost, unit.getLevel());
                     energyCostDisplay.renderToEnergyManager(unit.getLevel());
-                    GameRenderer.renderOffset(0, -4.5f, g, () -> {
+                    GameRenderer.renderOffset(0, perTurnActionCost.isPresent() ? -5.8f : -4.5f, g, () -> {
                         energyCostDisplay.render(g);
                     });
                 });
@@ -92,10 +103,13 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
 
     public void updateActions(Unit unit) {
         if (actionMap.containsKey(FIRE)) {
-            actionMap.get(FIRE).enabled = !unit.tilesInFiringRange(true).isEmpty();
+            actionMap.get(FIRE).enabled = !unit.tilesInFiringRange(true).isEmpty() && !unit.stealthMode;
         }
         if (actionMap.containsKey(MOVE)) {
             actionMap.get(MOVE).enabled = true;
+        }
+        if (actionMap.containsKey(STEALTH)) {
+            actionMap.get(STEALTH).enabled = true;
         }
         if (actionMap.containsKey(SHIELD_REGEN)) {
             actionMap.get(SHIELD_REGEN).enabled = unit.shieldHP < unit.type.shieldHP;

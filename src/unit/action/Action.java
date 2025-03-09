@@ -8,14 +8,17 @@ import render.GameRenderer;
 import render.Renderable;
 
 import java.awt.*;
+import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import static render.Renderable.*;
 
-public class Action implements NamedEnum {
+public class Action implements NamedEnum, Serializable {
     private static final HashMap<String, Action> names = new HashMap<>();
 
     public static final float ACTION_BUTTON_SIZE = 2f;
@@ -101,7 +104,18 @@ public class Action implements NamedEnum {
             }, "Regenerate a portion of this unit's shield. While expensive in terms of " + EnergyManager.displayName + ", " +
                     "having shield HP provides several advantages over regular HP. Most notably, it allows the unit to " +
                     "take damage without suffering a loss in firepower, as damage is based only on regular HP, and remains " +
-                    "unaffected when losing shield HP.", 0);
+                    "unaffected when losing shield HP.", 0),
+            STEALTH = new Action("STEALTH", "Stealth", ActionColour.YELLOW, FIRE_ACTION_HIGHLIGHT, false, g -> {
+                GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
+                    ActionShapes.stealthIcon(g);
+                });
+            }, "Toggle stealth mode. While in stealth mode, the ship will be hidden from " +
+                    "enemies, unless directly adjacent to an enemy unit. The ship also loses the " +
+                    "ability to fire, and each ship kept in stealth mode costs a small amount of " +
+                    EnergyManager.displayName + " at the end of each turn, on top of the fixed cost " +
+                    "to enter stealth mode in the first place. This is visible in the form of a reduction in " +
+                    EnergyManager.displayName + " income. Not only that, ships that have this ability " +
+                    "are also unable to capture structures, regardless of whether or not they're in stealth mode.", -2);
 
     private final String name, displayName;
     private final ActionColour colour;
@@ -226,5 +240,9 @@ public class Action implements NamedEnum {
     @Override
     public String getName() {
         return displayName;
+    }
+
+    public String getInternalName() {
+        return name;
     }
 }

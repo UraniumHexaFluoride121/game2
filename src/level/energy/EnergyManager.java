@@ -3,6 +3,7 @@ package level.energy;
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import level.Level;
+import network.NetworkState;
 import network.PacketWriter;
 import network.Writable;
 import render.*;
@@ -22,7 +23,6 @@ import unit.UnitTeam;
 import unit.action.Action;
 
 import java.awt.*;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,9 +36,10 @@ public class EnergyManager extends LevelUIContainer implements Writable {
     public static final ImageRenderer ENERGY_IMAGE = ImageRenderer.renderImageCentered(new ResourceLocation("icons/energy.png"), true, true);
     public static final String displayName = "Antimatter";
 
-    private final FixedTextRenderer availableText, incomeText, availableChangeText;
+    private final FixedTextRenderer availableText, incomeText, availableChangeText, incomeChangeText;
     public HashMap<UnitTeam, Integer> availableMap = new HashMap<>();
     public HashMap<UnitTeam, Integer> incomeMap = new HashMap<>();
+    public HashMap<UnitTeam, Integer> costsMap = new HashMap<>();
     private final ArrayList<NumberChangeText> changeTexts = new ArrayList<>();
 
     public EnergyManager(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Level level) {
@@ -46,6 +47,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
         for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
             availableMap.putIfAbsent(team, 0);
             incomeMap.put(team, 0);
+            costsMap.put(team, 0);
         }
         availableText = new FixedTextRenderer(null, .7f, UITextLabel.TEXT_COLOUR)
                 .setBold(true).setTextAlign(TextAlign.LEFT);
@@ -53,7 +55,10 @@ public class EnergyManager extends LevelUIContainer implements Writable {
                 .setBold(true).setTextAlign(TextAlign.LEFT);
         availableChangeText = new FixedTextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
                 .setBold(true).setTextAlign(TextAlign.RIGHT);
+        incomeChangeText = new FixedTextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
+                .setBold(true).setTextAlign(TextAlign.RIGHT);
         Renderable availableChangeTranslated = availableChangeText.translate(8.4f, 1.75f);
+        Renderable incomeChangeTranslated = incomeChangeText.translate(8.4f, .15f);
         addRenderables((r, b) -> {
             new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, -.6f, 10, 3.6f, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)).setZOrder(-1);
             new RenderElement(r, RenderOrder.LEVEL_UI,
@@ -74,9 +79,15 @@ public class EnergyManager extends LevelUIContainer implements Writable {
                             renderAvailableChange = false;
                             availableChangeTranslated.render(g);
                         }
-                        GameRenderer.renderOffset(8.4f, 1.75f, g, () -> {
-                            changeTexts.removeIf(t -> t.anim.finished());
-                            changeTexts.forEach(t -> t.render(g));
+                        if (renderIncomeChange) {
+                            renderIncomeChange = false;
+                            incomeChangeTranslated.render(g);
+                        }
+                        changeTexts.removeIf(t -> t.anim.finished());
+                        changeTexts.forEach(t -> {
+                            GameRenderer.renderOffset(8.4f,  t.incomeChange ? .15f : 1.75f, g, () -> {
+                                t.render(g);
+                            });
                         });
                         g.translate(8.9f, 2f);
                         ENERGY_IMAGE.render(g, 1.3f);
@@ -92,40 +103,71 @@ public class EnergyManager extends LevelUIContainer implements Writable {
         return super.isEnabled() && level.isThisPlayerAlive();
     }
 
-    private boolean renderAvailableChange = false;
+    private boolean renderAvailableChange = false, renderIncomeChange;
 
     public void updateAvailableChange(int amount) {
         renderAvailableChange = true;
-        availableChangeText.setTextColour(amount < 0 ? RED_TEXT_COLOUR : GREEN_TEXT_COLOUR);
-        availableChangeText.updateText(String.valueOf(amount));
+        availableChangeText.setTextColour(numberColour(amount));
+        availableChangeText.updateText(numberText(amount));
+    }
+
+    public void updateIncomeChange(int amount) {
+        renderIncomeChange = true;
+        incomeChangeText.setTextColour(numberColour(amount));
+        incomeChangeText.updateText(numberText(amount));
     }
 
     public void updateDisplay(UnitTeam team) {
-        incomeText.updateText("+" + incomeMap.get(team));
+        incomeText.updateText(numberText(incomeMap.get(team) + costsMap.get(team)));
         availableText.updateText(String.valueOf(availableMap.get(team)));
+        incomeText.setTextColour(numberColour(incomeMap.get(team) + costsMap.get(team)));
     }
 
     public void incrementTurn(UnitTeam team) {
-        addAvailable(team, incomeMap.get(team));
+        int added = incomeMap.get(team) + costsMap.get(team);
+        if (availableMap.get(team) + added < 0) {
+            level.unitSet.forEach(u -> {
+                if (u.team == team && u.stealthMode) {
+                    u.setStealthMode(false, false);
+                    if (level.networkState == NetworkState.SERVER) {
+                        level.server.sendUnitStealthPacket(u, false);
+                    }
+                }
+            });
+        }
+        addAvailable(team, incomeMap.get(team) + costsMap.get(team));
     }
 
     private void addAvailable(UnitTeam team, int amount) {
         availableMap.compute(team, (t, i) -> Math.clamp(i + amount, 0, Math.round(incomeMap.get(team) * 1.75f)));
         if (level.getThisTeam() == team) {
             updateDisplay(team);
-            changeTexts.add(new NumberChangeText(amount));
+            changeTexts.add(new NumberChangeText(amount, false));
         }
     }
 
     public void recalculateIncome() {
+        int currentIncome = incomeMap.get(level.getThisTeam()) + costsMap.get(level.getThisTeam());
         for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
             incomeMap.put(team, 0);
+            costsMap.put(team, 0);
         }
         level.tileSelector.tileSet.forEach(t -> {
             if (t.hasStructure() && t.structure.team != null) {
                 incomeMap.compute(t.structure.team, (team, i) -> i + t.structure.type.energyIncome);
             }
         });
+        level.unitSet.forEach(u -> {
+            if (u.stealthMode)
+                u.type.getPerTurnActionCost(Action.STEALTH).ifPresent(cost -> {
+                    costsMap.compute(u.team, (team, i) -> i - cost);
+                });
+        });
+        int newIncome = incomeMap.get(level.getThisTeam()) + costsMap.get(level.getThisTeam());
+        if (newIncome != currentIncome) {
+            changeTexts.add(new NumberChangeText(newIncome - currentIncome, true));
+            updateDisplay(level.getThisTeam());
+        }
     }
 
     public boolean canAfford(UnitTeam team, int cost, boolean consume) {
@@ -139,6 +181,8 @@ public class EnergyManager extends LevelUIContainer implements Writable {
     }
 
     public boolean canAfford(Unit unit, Action action, boolean consume) {
+        if (unit.removeActionEnergyCost(action))
+            return true;
         Optional<Integer> actionCost = unit.type.getActionCost(action);
         return actionCost.map(cost -> canAfford(unit.team, cost, consume)).orElse(true);
     }
@@ -152,7 +196,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
     public void updateFromRead(HashMap<UnitTeam, Integer> availableMap, HashMap<UnitTeam, Integer> incomeMap) {
         UnitTeam team = level.getThisTeam();
         if (!Objects.equals(availableMap.get(team), this.availableMap.get(team))) {
-            changeTexts.add(new NumberChangeText(availableMap.get(team) - this.availableMap.get(team)));
+            changeTexts.add(new NumberChangeText(availableMap.get(team) - this.availableMap.get(team), false));
         }
         this.availableMap = availableMap;
         this.incomeMap = incomeMap;
@@ -160,14 +204,24 @@ public class EnergyManager extends LevelUIContainer implements Writable {
         updateDisplay(team);
     }
 
+    public static String numberText(int amount) {
+        return (amount <= 0 ? "" : "+") + amount;
+    }
+
+    public static Color numberColour(int amount) {
+        return amount == 0 ? TEXT_COLOUR : amount < 0 ? UITextLabel.RED_TEXT_COLOUR : UITextLabel.GREEN_TEXT_COLOUR;
+    }
+
     private static class NumberChangeText implements Renderable {
         public final FixedTextRenderer text;
         public final PowAnimation anim = new PowAnimation(1, .7f);
+        public final boolean incomeChange;
 
-        public NumberChangeText(int change) {
-            text = new FixedTextRenderer(null, .7f, change < 0 ? UITextLabel.RED_TEXT_COLOUR : UITextLabel.GREEN_TEXT_COLOUR)
+        public NumberChangeText(int change, boolean incomeChange) {
+            text = new FixedTextRenderer(null, .7f, numberColour(change))
                     .setBold(true).setTextAlign(TextAlign.RIGHT);
-            text.updateText((change < 0 ? "" : "+") + change);
+            this.incomeChange = incomeChange;
+            text.updateText(numberText(change));
         }
 
         @Override

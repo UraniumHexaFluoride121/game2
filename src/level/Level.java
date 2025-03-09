@@ -3,6 +3,7 @@ package level;
 import foundation.Deletable;
 import foundation.MainPanel;
 import foundation.input.ButtonRegister;
+import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
 import foundation.math.RandomHandler;
 import foundation.tick.RegisteredTickable;
@@ -300,13 +301,14 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             server.sendTurnUpdatePacket();
     }
 
-    public void setTurn(UnitTeam activeTeam, int turn) {
+    public void setTurn(UnitTeam activeTeam, int turn, boolean endIfDifferent) {
         if (this.activeTeam != activeTeam || this.turn != turn) {
             endAction();
             levelRenderer.onNextTurn.start("Turn " + turn, activeTeam);
-            for (Unit unit : unitSet) {
-                unit.turnEnded();
-            }
+            if (endIfDifferent)
+                for (Unit unit : unitSet) {
+                    unit.turnEnded();
+                }
         }
         this.activeTeam = activeTeam;
         this.turn = turn;
@@ -401,6 +403,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     public void updateFoW() {
         if (!isThisPlayerAlive()) {
             tileSelector.tileSet.forEach(t -> t.isFoW = false);
+            unitSet.forEach(u -> u.visibleInStealthMode = true);
             levelRenderer.fowTileBorder = null;
             return;
         }
@@ -408,8 +411,23 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         HashSet<Point> visible = new HashSet<>();
         UnitTeam team = getThisTeam();
         unitSet.forEach(u -> {
-            if (playerTeam.get(u.team) == playerTeam.get(team))
+            if (samePlayerTeam(u.team, team)) {
                 visible.addAll(u.getVisibleTiles());
+                u.visibleInStealthMode = true;
+            } else {
+                u.visibleInStealthMode = false;
+                Point pos = u.renderTile().pos;
+                for (HexagonalDirection d : HexagonalDirection.values()) {
+                    Point point = d.offset(pos);
+                    if (!tileSelector.validCoordinate(point))
+                        continue;
+                    Unit other = getUnit(point);
+                    if (other != null && samePlayerTeam(other.team, team)) {
+                        u.visibleInStealthMode = true;
+                        break;
+                    }
+                }
+            }
         });
         tileSelector.tileSet.forEach(t -> {
             if (t.hasStructure() && samePlayerTeam(t.structure.team, team))
