@@ -11,6 +11,11 @@ import render.RenderRegister;
 import render.renderables.text.EditableTextRenderer;
 import render.renderables.text.TextAlign;
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.util.function.Predicate;
 
 public class UITextInputBox extends UIButton {
@@ -54,13 +59,27 @@ public class UITextInputBox extends UIButton {
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (clickHandler.state == ButtonState.SELECTED) {
-            if (type == InputType.BACKSPACE) {
+            if (type == InputType.PASTE_TEXT) {
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                    try {
+                        String text = (String) clipboard.getData(DataFlavor.stringFlavor);
+                        for (char c : text.toCharArray()) {
+                            if (allowedChars.test(new InputType(true, c))) {
+                                editableText.addChar(c);
+                                if (onChanged != null)
+                                    onChanged.run();
+                            }
+                        }
+                    } catch (UnsupportedFlavorException | IOException _) {
+                    }
+                }
+            } else if (type == InputType.BACKSPACE) {
                 editableText.removeChar();
                 if (onChanged != null)
                     onChanged.run();
                 return;
-            }
-            if (allowedChars.test(type)) {
+            } else if (allowedChars.test(type)) {
                 editableText.addChar(type.c);
                 if (onChanged != null)
                     onChanged.run();

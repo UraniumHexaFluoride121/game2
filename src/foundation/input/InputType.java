@@ -1,5 +1,7 @@
 package foundation.input;
 
+import foundation.MainPanel;
+
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -7,7 +9,7 @@ import java.awt.event.MouseWheelEvent;
 
 public class InputType {
     public static final InputType
-            NONE = new InputType(), TAB_ON_SWITCH_TO = new InputType(),
+            NONE = new InputType(), TAB_ON_SWITCH_TO = new InputType(), PASTE_TEXT = new InputType(),
 
     MOUSE_RIGHT = new InputType(), MOUSE_LEFT = new InputType(), MOUSE_OVER = new InputType(),
             ESCAPE = new InputType(), BACKSPACE = new InputType(), ENTER = new InputType(),
@@ -16,12 +18,12 @@ public class InputType {
     public final boolean isCharInput;
     public final char c;
 
-    InputType(boolean isCharInput, char c) {
+    public InputType(boolean isCharInput, char c) {
         this.isCharInput = isCharInput;
         this.c = c;
     }
 
-    InputType() {
+    public InputType() {
         this(false, ' ');
     }
 
@@ -63,6 +65,10 @@ public class InputType {
                 case KeyEvent.VK_ENTER -> {
                     return ENTER;
                 }
+                case KeyEvent.VK_V -> {
+                    if (MainPanel.controlHeld)
+                        return PASTE_TEXT;
+                }
             }
             char c = k.getKeyChar();
             if (c == KeyEvent.CHAR_UNDEFINED)
@@ -82,5 +88,10 @@ public class InputType {
 
     public static InputType getScrollInput(MouseWheelEvent e) {
         return new ScrollInputType(e.getScrollAmount(), e.getUnitsToScroll() < 0);
+    }
+
+    @Override
+    public String toString() {
+        return "[Is char: " + isCharInput + ", char: " + c + "]";
     }
 }
