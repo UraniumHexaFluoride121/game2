@@ -198,7 +198,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                                 .translate(0, 4).setZOrder(1);
                         new UIScrollSurface(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 4, 17, Renderable.top() - TOP_MARGIN, (r3, b3) -> {
                             playerShipSettings = new UIPlayerShipSettings(r3, b3, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS);
-                        }).setScrollMax(playerShipSettings.scrollDistance() - (Renderable.top() - TOP_MARGIN));
+                        }).setScrollMax(playerShipSettings.scrollDistance() - (Renderable.top() - TOP_MARGIN)).addScrollBar(.6f, .4f, .5f);
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 2, 8.5f, 1.5f, 0.9f, false, () -> {
                             UIPlayerShipSettings.clipboardPreset = playerShipSettings.getCurrentPreset();
                             boolean canPaste = UIPlayerShipSettings.clipboardPreset != null;

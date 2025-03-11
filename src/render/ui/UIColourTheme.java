@@ -122,7 +122,13 @@ public enum UIColourTheme {
             new Color(87, 95, 135), new Color(92, 99, 145, 144),
             new Color(87, 95, 135), new Color(92, 99, 145, 144),
             new Color(87, 95, 135), new Color(92, 99, 145, 144)
-    ),;
+    ),
+    YELLOW_UNAVAILABLE(
+            new Color(161, 153, 98), new Color(163, 149, 100, 144),
+            new Color(161, 153, 98), new Color(163, 149, 100, 144),
+            new Color(161, 153, 98), new Color(163, 149, 100, 144),
+            new Color(161, 153, 98), new Color(163, 149, 100, 144)
+    );
 
     public final Color borderColour;
     public final Color backgroundColour;

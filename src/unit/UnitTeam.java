@@ -6,7 +6,8 @@ import render.ui.UIColourTheme;
 public enum UnitTeam implements NamedEnum {
     BLUE("blue", "Blue", 0, UIColourTheme.BLUE, UIColourTheme.BLUE_UNAVAILABLE),
     RED("red", "Red", 1, UIColourTheme.RED, UIColourTheme.RED_UNAVAILABLE),
-    GREEN("green", "Green", 2, UIColourTheme.GREEN, UIColourTheme.GREEN_UNAVAILABLE);
+    GREEN("green", "Green", 2, UIColourTheme.GREEN, UIColourTheme.GREEN_UNAVAILABLE),
+    YELLOW("yellow", "Yellow", 3, UIColourTheme.YELLOW, UIColourTheme.YELLOW_UNAVAILABLE);
 
     public static final UnitTeam[] ORDERED_TEAMS = new UnitTeam[values().length];
     public final String s;

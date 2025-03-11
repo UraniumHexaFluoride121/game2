@@ -32,7 +32,7 @@ public class CruiserType extends UnitType {
         case ASTEROIDS -> 1.5f;
     }, new Action[]{
             Action.FIRE, Action.MOVE
-    }, 1, 15, list -> {
+    }, 1, 25, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAIL_GUN, WeaponType.RAIL_GUN);
         float s = 2.2f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);

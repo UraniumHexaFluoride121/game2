@@ -17,7 +17,7 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
     public final float x, y, width, height;
     private final Rectangle2D clip;
     private ButtonOrder buttonOrder;
-    private float scrollAmount = 0, scrollMax = 0, scrollSpeed = 1;
+    private float scrollAmount = 0, scrollMax = 0, scrollSpeed = 0.75f;
     private ButtonRegister buttonRegister, internal = new ButtonRegister();
     private GameRenderer renderer = new GameRenderer(new AffineTransform(), null);
     private final boolean inverted;
@@ -76,6 +76,11 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
 
     public UIScrollSurface setScrollAmount(float amount) {
         scrollAmount = Math.clamp(amount, 0, scrollMax);
+        return this;
+    }
+
+    public UIScrollSurface setScrollSpeed(float scrollSpeed) {
+        this.scrollSpeed = scrollSpeed;
         return this;
     }
 

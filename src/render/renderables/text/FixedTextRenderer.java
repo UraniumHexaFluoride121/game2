@@ -12,7 +12,7 @@ public class FixedTextRenderer implements Renderable {
     private Shape textShape;
     protected String text;
     protected float textSize;
-    private boolean isBold = false;
+    private boolean isBold = false, isItalic = false;
     private boolean hasOutline = false;
     protected TextAlign textAlign = TextAlign.CENTER;
     private Color main, border, renderBoxColour;
@@ -33,6 +33,14 @@ public class FixedTextRenderer implements Renderable {
 
     public FixedTextRenderer setBold(boolean isBold) {
         this.isBold = isBold;
+        isItalic = false;
+        update();
+        return this;
+    }
+
+    public FixedTextRenderer setItalic(boolean isItalic) {
+        this.isItalic = isItalic;
+        isBold = false;
         update();
         return this;
     }
@@ -116,7 +124,7 @@ public class FixedTextRenderer implements Renderable {
     protected void updateText(Graphics2D g) {
         if (text == null)
             return;
-        font = new Font(null, isBold ? Font.BOLD : Font.PLAIN, 20);
+        font = new Font(null, isBold ? Font.BOLD : isItalic ? Font.ITALIC : Font.PLAIN, 20);
         textShape = new TextLayout(text, font, g.getFontRenderContext()).getOutline(null);
         Rectangle2D b = textShape.getBounds2D();
         bounds = StaticHitBox.createFromOriginAndSize((float) b.getX(), (float) b.getY(), (float) b.getWidth(), (float) b.getHeight());

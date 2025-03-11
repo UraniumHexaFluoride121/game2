@@ -50,6 +50,20 @@ public class TeamSpawner {
                     new ObjPos(0.78f, 0.85f)
             }
     };
+    private static final ObjPos[][] FOUR_TEAMS = new ObjPos[][]{
+            new ObjPos[]{
+                    new ObjPos(0.2f, 0.5f),
+                    new ObjPos(0.8f, 0.5f),
+                    new ObjPos(0.5f, 0.85f),
+                    new ObjPos(0.5f, 0.15f)
+            },
+            new ObjPos[]{
+                    new ObjPos(0.15f, 0.15f),
+                    new ObjPos(0.15f, 0.85f),
+                    new ObjPos(0.85f, 0.15f),
+                    new ObjPos(0.85f, 0.85f)
+            }
+    };
 
     private HashMap<UnitTeam, ArrayList<UnitType>> units;
 
@@ -64,6 +78,7 @@ public class TeamSpawner {
     public boolean generateTeams(Level level) {
         ObjPos[] teamPositions = level.random.randomFromArray(switch (level.playerCount()) {
             case 3 -> THREE_TEAMS;
+            case 4 -> FOUR_TEAMS;
             default -> TWO_TEAMS;
         }, RandomType.TEAM_SPAWNING);
 
