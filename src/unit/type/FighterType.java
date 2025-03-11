@@ -36,17 +36,18 @@ public class FighterType extends UnitType {
     }, 1, 15, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA, WeaponType.PLASMA);
         float s = 5f;
-        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.HIGH);
+        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.GOOD);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE_LOW);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH_MAX);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH);
         w.addData("fighter", new AttackData(3.8f, s));
         w.addData("bomber", new AttackData(3.2f, s));
         w.addData("scout", new AttackData(3.9f, s));
         w.addData("corvette", new AttackData(1.8f, s));
         w.addData("defender", new AttackData(1.6f, s));
         w.addData("artillery", new AttackData(2.1f, s));
+        w.addData("cruiser", new AttackData(1.0f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.NONE_LOW);
@@ -81,15 +82,16 @@ public class FighterType extends UnitType {
         float s1 = 0.4f;
         w1.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW);
         w1.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.MODERATE_GOOD);
-        w1.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.HIGH);
+        w1.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.GOOD_HIGH);
         w1.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.MAX);
         w1.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.NONE_LOW);
         w1.addData("fighter", new AttackData(0.8f, s1));
         w1.addData("bomber", new AttackData(0.7f, s1));
         w1.addData("scout", new AttackData(0.6f, s1));
-        w1.addData("corvette", new AttackData(2.4f, s1));
-        w1.addData("defender", new AttackData(3.2f, s1));
-        w1.addData("artillery", new AttackData(3.3f, s1));
+        w1.addData("corvette", new AttackData(2.7f, s1));
+        w1.addData("defender", new AttackData(2.6f, s1));
+        w1.addData("artillery", new AttackData(2.8f, s1));
+        w1.addData("cruiser", new AttackData(5.2f, s1));
         list.add(w1);
         WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BOMBER_PLASMA, WeaponType.PLASMA);
         float s2 = 4.4f;
@@ -104,12 +106,13 @@ public class FighterType extends UnitType {
         w2.addData("corvette", new AttackData(1.6f, s2));
         w2.addData("defender", new AttackData(1.5f, s2));
         w2.addData("artillery", new AttackData(1.9f, s2));
+        w2.addData("cruiser", new AttackData(1.0f, s2));
         list.add(w2);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.HIGH);
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.GOOD);
-        map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
+        map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
@@ -138,15 +141,16 @@ public class FighterType extends UnitType {
         float s = 2.5f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.NONE_LOW);
-        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.NONE);
+        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.NONE_LOW);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.MODERATE);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.MODERATE_GOOD);
         w.addData("fighter", new AttackData(1.8f, s));
         w.addData("bomber", new AttackData(1.6f, s));
         w.addData("scout", new AttackData(2.2f, s));
         w.addData("corvette", new AttackData(0.4f, s));
         w.addData("defender", new AttackData(0.4f, s));
         w.addData("artillery", new AttackData(0.5f, s));
+        w.addData("cruiser", new AttackData(0.3f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.NONE);

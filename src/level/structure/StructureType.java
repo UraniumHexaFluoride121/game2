@@ -10,7 +10,7 @@ import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
 public enum StructureType {
-    BASE("structures/base/base_", "Base", true, true, 3, 10, 1, true);
+    BASE("structures/base/base_", "Base", true, true, 3, 60, 1, true);
 
     public final String displayName;
     private final HashMap<UnitTeam, ImageRenderer> renderers = new HashMap<>();

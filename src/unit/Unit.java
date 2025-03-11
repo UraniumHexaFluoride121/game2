@@ -150,9 +150,10 @@ public class Unit implements Deletable, Tickable {
             if (movePath != null) {
                 if (selector().mouseOverTile != null)
                     movePath.setEnd(selector().mouseOverTile.pos, level);
-                movePath.render(g);
                 if (!level.hasActiveAction())
                     movePath = null;
+                else
+                    movePath.render(g);
             }
         }
     }
@@ -243,7 +244,7 @@ public class Unit implements Deletable, Tickable {
             return;
         } else if (action == SHIELD_REGEN) {
             if (!level.levelRenderer.energyManager.canAfford(this, SHIELD_REGEN, true)) return;
-            endAndDeselectAction();
+            endAction();
             if (level.networkState == NetworkState.CLIENT) {
                 MainPanel.client.sendUnitShieldRegenRequest(this);
                 return;
@@ -255,7 +256,7 @@ public class Unit implements Deletable, Tickable {
         } else if (action == STEALTH) {
             if (!level.levelRenderer.energyManager.canAfford(this, STEALTH, true)) return;
             setStealthMode(!stealthMode, true);
-            endAndDeselectAction();
+            endAction();
             if (level.networkState == NetworkState.CLIENT) {
                 MainPanel.client.sendUnitStealthRequest(this);
                 return;
@@ -566,6 +567,9 @@ public class Unit implements Deletable, Tickable {
                         tile.setIllegalTile();
                     }
                 }
+                if (level.getThisTeam() == team) {
+                    selector().select(level.getTile(pos));
+                }
             } else {
                 renderPos = path.getPos();
                 Tile renderTile = renderTile();
@@ -718,7 +722,7 @@ public class Unit implements Deletable, Tickable {
 
     public void setStealthMode(boolean stealth, boolean cameraTo) {
         if (stealthMode != stealth) {
-            if (!isRenderFoW() && cameraTo) {
+            if (!isRenderFoW() && cameraTo && level.getThisTeam() != team) {
                 level.levelRenderer.setCameraInterpBlockPos(level.getTile(pos).renderPosCentered);
             }
             if (!visibleInStealthMode) {
@@ -757,6 +761,12 @@ public class Unit implements Deletable, Tickable {
         });
     }
 
+    private void endAction() {
+        MainPanel.addTask(() -> {
+            level.endAction();
+        });
+    }
+
     public boolean removeActionEnergyCost(Action a) {
         return a == STEALTH && stealthMode;
     }
@@ -766,6 +776,6 @@ public class Unit implements Deletable, Tickable {
     }
 
     public boolean visible() {
-        return !isRenderFoW() && isRenderStealthVisible();
+        return !isRenderFoW() && (!stealthMode || isRenderStealthVisible());
     }
 }

@@ -15,6 +15,7 @@ import render.ui.types.*;
 import unit.UnitPose;
 import unit.UnitTeam;
 import unit.type.CorvetteType;
+import unit.type.CruiserType;
 import unit.type.FighterType;
 import unit.type.UnitType;
 
@@ -33,6 +34,7 @@ public class UIPlayerShipSettings extends UIContainer {
         DEFAULT_PRESET.put(CorvetteType.CORVETTE, 2);
         DEFAULT_PRESET.put(CorvetteType.DEFENDER, 1);
         DEFAULT_PRESET.put(CorvetteType.ARTILLERY, 1);
+        DEFAULT_PRESET.put(CruiserType.CRUISER, 1);
     }
 
     private final HashMap<UnitTeam, TeamSettings> teamSettingsMap = new HashMap<>();

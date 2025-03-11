@@ -37,21 +37,22 @@ public class CorvetteType extends UnitType {
         float s = 3.4f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.HIGH_MAX);
-        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.GOOD);
+        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.MODERATE_GOOD);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.LOW_MODERATE);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.MODERATE);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.GOOD);
         w.addData("fighter", new AttackData(1.6f, s));
         w.addData("bomber", new AttackData(1.4f, s));
         w.addData("scout", new AttackData(1.8f, s));
-        w.addData("corvette", new AttackData(5.2f, s));
-        w.addData("defender", new AttackData(4.8f, s));
-        w.addData("artillery", new AttackData(5.2f, s));
+        w.addData("corvette", new AttackData(6.3f, s));
+        w.addData("defender", new AttackData(6.0f, s));
+        w.addData("artillery", new AttackData(6.5f, s));
+        w.addData("cruiser", new AttackData(3.2f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.MODERATE);
-        map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
+        map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
@@ -78,8 +79,8 @@ public class CorvetteType extends UnitType {
     }, 1, 22, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.DEFENDER_PLASMA, WeaponType.PLASMA);
         float s = 5.5f;
-        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.HIGH);
-        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.MODERATE);
+        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.HIGH_MAX);
+        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.MODERATE_GOOD);
         w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE_LOW);
         w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH_MAX);
@@ -89,10 +90,11 @@ public class CorvetteType extends UnitType {
         w.addData("corvette", new AttackData(2.7f, s));
         w.addData("defender", new AttackData(2.5f, s));
         w.addData("artillery", new AttackData(2.9f, s));
+        w.addData("cruiser", new AttackData(1.1f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
-        map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.MODERATE);
+        map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.MODERATE_GOOD);
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
@@ -123,17 +125,18 @@ public class CorvetteType extends UnitType {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.ARTILLERY_MISSILE, WeaponType.EXPLOSIVE);
         w.consumeAmmo(3).firingRange(2, 4).noCounterattack();
         float s = 1.2f;
-        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW);
-        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.MODERATE_GOOD);
-        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.HIGH);
+        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
+        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.GOOD);
+        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.GOOD_HIGH);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.HIGH_MAX);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.LOW);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.LOW_MODERATE);
         w.addData("fighter", new AttackData(1.2f, s));
         w.addData("bomber", new AttackData(1.1f, s));
         w.addData("scout", new AttackData(1.2f, s));
         w.addData("corvette", new AttackData(3.5f, s));
         w.addData("defender", new AttackData(3.8f, s));
         w.addData("artillery", new AttackData(3.5f, s));
+        w.addData("cruiser", new AttackData(5.2f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.MODERATE);

@@ -78,6 +78,7 @@ public class TeamSpawner {
         HashSet<Point> connectedPoints = new HashSet<>();
         HashMap<UnitTeam, Point> basePositionsByTeam = new HashMap<>();
         HashMap<UnitTeam, ArrayList<Point>> unitPositions = new HashMap<>();
+        HashSet<Point> allSpawnPoints = new HashSet<>();
         for (int i = 0; i < basePositions.length; i++) {
             UnitTeam team = UnitTeam.ORDERED_TEAMS[i];
             basePositionsByTeam.put(team, basePositions[i]);
@@ -86,12 +87,13 @@ public class TeamSpawner {
             ArrayList<Point> tiles;
             do {
                 tiles = level.tileSelector.tilesInRadiusDeterministic(basePositions[i], radius);
-                tiles.removeIf(t -> level.getTile(t).type == TileType.ASTEROIDS);
+                tiles.removeIf(t -> level.getTile(t).type == TileType.ASTEROIDS || allSpawnPoints.contains(t));
                 radius++;
             } while (tiles.size() * 0.7f < units.get(team).size());
             ArrayList<Point> spawnPoints = level.random.randomSelection(tiles, units.get(team).size(), RandomType.TEAM_SPAWNING);
             connectedPoints.addAll(spawnPoints);
             unitPositions.put(team, spawnPoints);
+            allSpawnPoints.addAll(spawnPoints);
         }
         if (level.getTile(basePositions[0]).type == TileType.ASTEROIDS)
             return false;

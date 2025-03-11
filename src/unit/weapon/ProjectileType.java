@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class ProjectileType implements Renderable {
+    private static final ImageRenderer INFO_RAIL_GUN_BULLET = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/rail_gun_bullet/bullet_info.png"), true, true);
     private static final ImageRenderer INFO_BULLET = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/bullet/bullet_info.png"), true, true);
     private static final ImageRenderer INFO_MISSILE = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/missile/missile_info.png"), true, true);
     private static final ImageRenderer INFO_PLASMA = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/plasma/plasma_info.png"), true, true);
@@ -67,7 +68,15 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(936), y(401), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(940), y(287), 400));
         return spawnPoints;
-    }).renderBehind();
+    }).renderBehind(), CRUISER_RAIL_GUN = new ProjectileType("projectile/rail_gun_bullet/bullet_1.png", 2,
+            INFO_RAIL_GUN_BULLET, 120, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, null, () -> {
+        ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
+        spawnPoints.add(new ProjectileSpawnPoint(x(690), y(357), 0));
+        spawnPoints.add(new ProjectileSpawnPoint(x(900), y(470), 100));
+        spawnPoints.add(new ProjectileSpawnPoint(x(690), y(357), 350));
+        spawnPoints.add(new ProjectileSpawnPoint(x(900), y(470), 450));
+        return spawnPoints;
+    });
 
     private final Renderable image;
     public final ImageRenderer infoImage;

@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 
 import static level.tile.Tile.*;
 import static unit.type.CorvetteType.*;
+import static unit.type.CruiserType.*;
 import static unit.type.FighterType.*;
 
 public abstract class UnitType implements NamedEnum {
@@ -61,7 +62,7 @@ public abstract class UnitType implements NamedEnum {
     public ImageRenderer shieldRenderer = null;
 
     public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
-            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY
+            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY, CRUISER
     };
 
     UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {

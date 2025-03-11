@@ -297,6 +297,7 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         selectedTile = tile;
         level.levelRenderer.tileInfo.setTile(tile);
         level.levelRenderer.tileInfo.setEnabled(true);
+        level.updateSelectedUnit();
     }
 
     public Tile getSelectedTile() {
