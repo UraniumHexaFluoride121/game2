@@ -38,6 +38,8 @@ public class Projectile implements Renderable {
             forwardAnim = new LerpAnimation((endDistance - 31) / type.velocity);
         }
         if (end) {
+            Shape clip = g.getClip();
+            g.clipRect(30, 0, 30, (int) (Renderable.top() + 1));
             GameRenderer.renderOffset(MathUtil.lerp(31, endDistance, forwardAnim.normalisedProgress()), y, g, () -> {
                 if (forwardAnim.finished()) {
                     if (!exploding) {
@@ -49,12 +51,16 @@ public class Projectile implements Renderable {
                     type.render(g);
                 }
             });
+            g.setClip(clip);
         } else {
             if (forwardAnim.finished())
                 return;
+            Shape clip = g.getClip();
+            g.clipRect(0, 0, 30, (int) (Renderable.top() + 1));
             GameRenderer.renderOffset(x + forwardAnim.normalisedProgress() * (30 - x), y, g, () -> {
                 type.render(g);
             });
+            g.setClip(clip);
         }
     }
 

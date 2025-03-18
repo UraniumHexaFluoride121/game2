@@ -32,6 +32,7 @@ import static network.Server.*;
 
 public class Client implements Deletable {
     public ConcurrentHashMap<UnitTeam, Integer> teamClientIDs = new ConcurrentHashMap<>();
+    public HashMap<UnitTeam, Boolean> bots = new HashMap<>();
     public final String address;
     public Socket socket;
     private DataInputStream reader;
@@ -111,11 +112,13 @@ public class Client implements Deletable {
             }
             case TEAMS_AVAILABLE -> {
                 teamClientIDs = PacketReceiver.readMap(new ConcurrentHashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
+                bots = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readBoolean, reader);
                 MainPanel.titleScreen.updateColourSelectorVisibility();
             }
             case JOIN_REQUEST_ACCEPTED -> {
                 HashMap<UnitTeam, PlayerTeam> playerTeams = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> PacketReceiver.readEnum(PlayerTeam.class, reader), reader);
                 long seed = reader.readLong();
+                float botDifficulty = reader.readFloat();
                 int width = reader.readInt(), height = reader.readInt();
                 UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                 TileData[][] data = new TileData[width][];
@@ -135,7 +138,7 @@ public class Client implements Deletable {
                 }
                 MainPanel.addTask(() -> {
                     MainPanel.startNewLevel(() -> {
-                        Level l = new Level(playerTeams, seed, width, height, NetworkState.CLIENT);
+                        Level l = new Level(playerTeams, seed, width, height, bots, NetworkState.CLIENT, botDifficulty);
                         l.setThisTeam(team);
                         HashMap<UnitTeam, Point> basePositions = new HashMap<>();
                         for (int x = 0; x < width; x++) {
@@ -251,7 +254,7 @@ public class Client implements Deletable {
             }
             case SERVER_STEALTH_UNIT -> {
                 Point pos = PacketReceiver.readPoint(reader);
-                boolean stealth = reader.readBoolean(), cameraTo = reader.readBoolean();
+                boolean stealth = reader.readBoolean();
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.activeLevel;
                     Unit u = l.getUnit(pos);
@@ -269,6 +272,13 @@ public class Client implements Deletable {
                 MainPanel.addTask(() -> {
                     Level l = MainPanel.activeLevel;
                     l.levelRenderer.energyManager.updateFromRead(availableMap, incomeMap);
+                });
+            }
+            case BOT_SELECT_TILE -> {
+                Point pos = PacketReceiver.readPoint(reader);
+                MainPanel.addTask(() -> {
+                    Level l = MainPanel.activeLevel;
+                    l.botHandlerMap.get(l.getActiveTeam()).selectTileClient(pos);
                 });
             }
         }

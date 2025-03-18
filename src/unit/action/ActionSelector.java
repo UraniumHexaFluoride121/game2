@@ -9,6 +9,7 @@ import render.GameRenderer;
 import render.Renderable;
 import render.ui.implementation.EnergyCostDisplay;
 import unit.Unit;
+import unit.UnitData;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -103,7 +104,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
 
     public void updateActions(Unit unit) {
         if (actionMap.containsKey(FIRE)) {
-            actionMap.get(FIRE).enabled = !unit.tilesInFiringRange(true).isEmpty() && !unit.stealthMode;
+            actionMap.get(FIRE).enabled = !unit.tilesInFiringRange(unit.getLevel().currentVisibility, new UnitData(unit), true).isEmpty() && !unit.stealthMode;
         }
         if (actionMap.containsKey(MOVE)) {
             actionMap.get(MOVE).enabled = true;

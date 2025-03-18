@@ -1,12 +1,16 @@
 package unit.weapon;
 
+import level.Level;
+import level.tile.Tile;
 import unit.Unit;
+import unit.UnitData;
 import unit.info.UnitCharacteristicValue;
 import unit.type.UnitType;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class WeaponTemplate {
@@ -15,7 +19,7 @@ public class WeaponTemplate {
     public int ammoCapacity = 0;
     public final HashMap<UnitType, AttackData> data = new HashMap<>();
     public final ProjectileType projectileType;
-    public Function<Unit, HashSet<Point>> tilesInFiringRange = u -> range(u, 1);
+    public BiFunction<UnitData, Level, HashSet<Point>> tilesInFiringRange = (u, l) -> range(u, l, 1);
     public HashMap<DamageType, UnitCharacteristicValue> damageTypes = new HashMap<>();
     public final WeaponType weaponType;
     public String rangeText = "1 Tile";
@@ -42,7 +46,7 @@ public class WeaponTemplate {
         return this;
     }
 
-    public WeaponTemplate setTilesInFiringRange(Function<Unit, HashSet<Point>> tilesInFiringRange) {
+    public WeaponTemplate setTilesInFiringRange(BiFunction<UnitData, Level, HashSet<Point>> tilesInFiringRange) {
         this.tilesInFiringRange = tilesInFiringRange;
         return this;
     }
@@ -58,22 +62,22 @@ public class WeaponTemplate {
     }
 
     public WeaponTemplate firingRange(int range) {
-        tilesInFiringRange = u -> range(u, range);
+        tilesInFiringRange = (u, l) -> range(u, l, range);
         rangeText = "1 - " + range + " Tiles";
         return this;
     }
 
     public WeaponTemplate firingRange(int minRange, int maxRange) {
-        tilesInFiringRange = u -> {
-            HashSet<Point> tiles = range(u, maxRange);
-            tiles.removeAll(range(u, minRange - 1));
+        tilesInFiringRange = (u, l) -> {
+            HashSet<Point> tiles = range(u, l, maxRange);
+            tiles.removeAll(range(u, l, minRange - 1));
             return tiles;
         };
         rangeText = minRange + " - " + maxRange + " Tiles";
         return this;
     }
 
-    public static HashSet<Point> range(Unit u, int range) {
-        return u.selector().tilesInRadius(u.pos, range);
+    public static HashSet<Point> range(UnitData u, Level l, int range) {
+        return l.tileSelector.tilesInRadius(u.pos, range);
     }
 }

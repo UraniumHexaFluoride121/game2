@@ -18,6 +18,7 @@ import render.ui.types.UIBox;
 import render.ui.types.UIShapeButton;
 import render.ui.types.UITextLabel;
 import unit.Unit;
+import unit.UnitData;
 import unit.UnitPose;
 import unit.action.Action;
 import unit.weapon.WeaponInstance;
@@ -87,7 +88,8 @@ public class UIUnitInfo extends LevelUIContainer {
                         Unit unit = level.selectedUnit;
                         if (unit == null)
                             return;
-                        HashSet<Point> tiles = unit.tilesInFiringRange(false);
+                        level.endAction();
+                        HashSet<Point> tiles = unit.tilesInFiringRange(level.currentVisibility, new UnitData(unit), false);
                         level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(Action.FIRE.tileColour, tiles, level);
                         level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(tiles, FIRE_TILE_BORDER_COLOUR);
                         showFiringRange = true;
@@ -108,7 +110,7 @@ public class UIUnitInfo extends LevelUIContainer {
 
     @Override
     public boolean isEnabled() {
-        return level.selectedUnit != null && level.selectedUnit.visible() && super.isEnabled();
+        return level.selectedUnit != null && level.selectedUnit.renderVisible() && super.isEnabled();
     }
 
     @Override

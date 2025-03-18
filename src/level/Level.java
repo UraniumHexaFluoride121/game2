@@ -20,6 +20,8 @@ import render.renderables.HexagonBorder;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
+import unit.bot.BotHandler;
+import unit.bot.VisibilityData;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -41,8 +43,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public HashMap<UnitTeam, Point> basePositions = new HashMap<>();
 
-    private UnitTeam activeTeam = null;
-    public UnitTeam thisTeam = null;
+    private UnitTeam activeTeam = null, thisTeam = null, lastActiveNonBot = null;
 
     public ButtonRegister buttonRegister = new ButtonRegister();
 
@@ -54,12 +55,17 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     private Unit[][] unitGrid;
     public final HashSet<Unit> unitSet = new HashSet<>();
     public final HashMap<UnitTeam, PlayerTeam> playerTeam;
+    public final HashMap<UnitTeam, Boolean> bots;
+    public final HashMap<UnitTeam, BotHandler> botHandlerMap = new HashMap<>();
     public LevelRenderer levelRenderer;
 
     public final NetworkState networkState;
+    //Higher values are easier
+    public final float botDifficulty;
 
-    public Level(HashMap<UnitTeam, PlayerTeam> playerTeam, long seed, int width, int height, NetworkState networkState) {
+    public Level(HashMap<UnitTeam, PlayerTeam> playerTeam, long seed, int width, int height, HashMap<UnitTeam, Boolean> bots, NetworkState networkState, float botDifficulty) {
         this.networkState = networkState;
+        this.botDifficulty = botDifficulty;
         if (networkState == NetworkState.SERVER) {
             server = new Server(this);
             thisTeam = UnitTeam.ORDERED_TEAMS[0];
@@ -73,6 +79,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         this.seed = seed;
         random = new RandomHandler(seed);
         activeTeam = getFirstTeam();
+        lastActiveNonBot = activeTeam;
         for (int x = 0; x < tilesX; x++) {
             tiles[x] = new Tile[tilesY];
             for (int y = 0; y < tilesY; y++) {
@@ -88,6 +95,14 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             }
         }
         levelRenderer = new LevelRenderer(this);
+        this.bots = bots;
+        bots.forEach((team, isBot) -> {
+            if (isBot) {
+                botHandlerMap.put(team, new BotHandler(this, team));
+            }
+        });
+        if (networkState != NetworkState.CLIENT && bots.get(getActiveTeam()))
+            botHandlerMap.get(getActiveTeam()).startTurn();
     }
 
     public Level generateDefaultTerrain(TeamSpawner spawner) {
@@ -148,6 +163,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         unitSet.forEach(u -> u.tick(deltaTime));
         if (!qRemoveUnit.isEmpty())
             removeUnits();
+        if (networkState != NetworkState.CLIENT && bots.get(getActiveTeam()))
+            botHandlerMap.get(getActiveTeam()).tick(deltaTime);
     }
 
     @Override
@@ -284,6 +301,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         }
         UnitTeam team = activeTeam;
         activeTeam = getNextTeam(activeTeam);
+        if (!bots.get(activeTeam))
+            lastActiveNonBot = activeTeam;
         endAction();
         for (Unit unit : unitSet) {
             unit.turnEnded();
@@ -293,10 +312,15 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         levelRenderer.onNextTurn.start("Turn " + turn, activeTeam);
         levelRenderer.turnBox.setNewTurn();
         updateFoW();
-        levelRenderer.useLastCameraPos(team, activeTeam);
+        if (!bots.get(activeTeam))
+            levelRenderer.useLastCameraPos(team, activeTeam);
+        else
+            levelRenderer.setLastCameraPos(team);
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
         levelRenderer.energyManager.incrementTurn(activeTeam);
         structureEndTurnUpdate();
+        if (bots.get(getActiveTeam()))
+            botHandlerMap.get(getActiveTeam()).startTurn();
         if (networkState == NetworkState.SERVER)
             server.sendTurnUpdatePacket();
     }
@@ -311,6 +335,8 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
                 }
         }
         this.activeTeam = activeTeam;
+        if (!bots.get(activeTeam))
+            lastActiveNonBot = activeTeam;
         this.turn = turn;
         levelRenderer.turnBox.setNewTurn();
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
@@ -322,7 +348,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
                 return;
             Unit u = getUnit(t.pos);
             Structure s = t.structure;
-            if (u == null || u.team != activeTeam)
+            if (u == null || u.team != activeTeam || s.team != u.team)
                 return;
             if (s.type.resupply)
                 u.resupply();
@@ -338,14 +364,6 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         if (activeAction == null)
             levelRenderer.exitActionButton.setEnabled(false);
         this.activeAction = activeAction;
-    }
-
-    public static HashMap<UnitTeam, PlayerTeam> allSeparate() {
-        HashMap<UnitTeam, PlayerTeam> teamIndex = new HashMap<>();
-        for (int i = 0; i < UnitTeam.values().length; i++) {
-            teamIndex.put(UnitTeam.values()[i], PlayerTeam.values()[i]);
-        }
-        return teamIndex;
     }
 
     public boolean samePlayerTeam(Unit a, Unit b) {
@@ -367,7 +385,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
 
     public UnitTeam getThisTeam() {
         if (networkState == NetworkState.LOCAL) {
-            return activeTeam;
+            return lastActiveNonBot;
         }
         return thisTeam;
     }
@@ -386,6 +404,9 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
         if (!playerTeam.containsKey(team))
             return;
         levelRenderer.onTeamEliminated.start(team.getName() + " Eliminated!", team);
+        Tile baseTile = getTile(basePositions.get(team));
+        if (baseTile.hasStructure())
+            baseTile.explodeStructure();
         basePositions.remove(team);
         playerTeam.remove(team);
         unitSet.forEach(u -> {
@@ -399,23 +420,36 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     }
 
     private static final Color FOW_TILE_BORDER_COLOUR = new Color(67, 67, 67, 255);
+    public VisibilityData currentVisibility = null;
 
     public void updateFoW() {
         if (!isThisPlayerAlive()) {
             tileSelector.tileSet.forEach(t -> t.isFoW = false);
             unitSet.forEach(u -> u.visibleInStealthMode = true);
             levelRenderer.fowTileBorder = null;
+            HashSet<Point> points = new HashSet<>();
+            for (Tile t : tileSelector.tileSet) {
+                points.add(t.pos);
+            }
+            currentVisibility = new VisibilityData(points, new HashSet<>(unitSet));
             return;
         }
-        tileSelector.tileSet.forEach(t -> t.isFoW = true);
+        currentVisibility = getVisibilityData(getThisTeam());
+        tileSelector.tileSet.forEach(t -> {
+            t.isFoW = !currentVisibility.visibleTiles().contains(t.pos);
+        });
+        levelRenderer.fowTileBorder = new HexagonBorder(currentVisibility.visibleTiles(), FOW_TILE_BORDER_COLOUR);
+        unitSet.forEach(u -> u.visibleInStealthMode = currentVisibility.stealthVisibleUnit().contains(u));
+    }
+
+    public VisibilityData getVisibilityData(UnitTeam team) {
         HashSet<Point> visible = new HashSet<>();
-        UnitTeam team = getThisTeam();
+        HashSet<Unit> stealthVisible = new HashSet<>();
         unitSet.forEach(u -> {
             if (samePlayerTeam(u.team, team)) {
                 visible.addAll(u.getVisibleTiles());
-                u.visibleInStealthMode = true;
+                stealthVisible.add(u);
             } else {
-                u.visibleInStealthMode = false;
                 Point pos = u.renderTile().pos;
                 for (HexagonalDirection d : HexagonalDirection.values()) {
                     Point point = d.offset(pos);
@@ -423,7 +457,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
                         continue;
                     Unit other = getUnit(point);
                     if (other != null && samePlayerTeam(other.team, team)) {
-                        u.visibleInStealthMode = true;
+                        stealthVisible.add(u);
                         break;
                     }
                 }
@@ -433,10 +467,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             if (t.hasStructure() && samePlayerTeam(t.structure.team, team))
                 visible.add(t.pos);
         });
-        visible.forEach(p -> {
-            getTile(p).isFoW = false;
-        });
-        levelRenderer.fowTileBorder = new HexagonBorder(visible, FOW_TILE_BORDER_COLOUR);
+        return new VisibilityData(visible, stealthVisible);
     }
 
     public void setCaptureProgressBars() {
@@ -451,7 +482,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
     }
 
     public boolean isThisPlayerAlive() {
-        return playerTeam.containsKey(getThisTeam());
+        return true;
     }
 
     public boolean rendered = false;
@@ -478,6 +509,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             server.delete();
             server = null;
         }
+        currentVisibility = null;
     }
 
     public int getTurn() {

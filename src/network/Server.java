@@ -98,9 +98,11 @@ public class Server implements Deletable {
     }
 
     public void sendUnitShootPacket(Unit from, Unit to) {
+        UnitData fromData = new UnitData(from);
+        UnitData toData = new UnitData(to);
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHOOT_UNIT, w -> {
-            new UnitData(from).write(w);
-            new UnitData(to).write(w);
+            fromData.write(w);
+            toData.write(w);
         })));
     }
 
@@ -122,11 +124,10 @@ public class Server implements Deletable {
         })));
     }
 
-    public void sendUnitStealthPacket(Unit unit, boolean cameraTo) {
+    public void sendUnitStealthPacket(Unit unit) {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STEALTH_UNIT, w -> {
             PacketWriter.writePoint(unit.pos, w);
             w.writeBoolean(unit.stealthMode);
-            w.writeBoolean(cameraTo);
         })));
     }
 
@@ -138,6 +139,12 @@ public class Server implements Deletable {
             if (hasStructure) {
                 tile.structure.write(w);
             }
+        })));
+    }
+
+    public void sendBotSelectTile(Point pos) {
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.BOT_SELECT_TILE, w -> {
+            PacketWriter.writePoint(pos, w);
         })));
     }
 
@@ -195,6 +202,7 @@ public class Server implements Deletable {
         public void queueTeamsAvailablePacket() {
             queuePacket(new PacketWriter(PacketType.TEAMS_AVAILABLE, w -> {
                 PacketWriter.writeMap(server.teamClientIDs, k -> PacketWriter.writeEnum(k, w), w::writeInt, w);
+                PacketWriter.writeMap(server.level.bots, k -> PacketWriter.writeEnum(k, w), w::writeBoolean, w);
             }));
         }
 
@@ -251,7 +259,7 @@ public class Server implements Deletable {
                 case JOIN_REQUEST -> {
                     UnitTeam requestedTeam = PacketReceiver.readEnum(UnitTeam.class, reader);
                     MainPanel.addTask(() -> {
-                        if (server.teamClientIDs.containsKey(requestedTeam)) {
+                        if (server.teamClientIDs.containsKey(requestedTeam) || server.level.bots.get(requestedTeam)) {
                             queueTeamsAvailablePacket();
                         } else {
                             server.teamClientIDs.put(requestedTeam, clientID);
@@ -259,6 +267,7 @@ public class Server implements Deletable {
                             queuePacket(new PacketWriter(PacketType.JOIN_REQUEST_ACCEPTED, w -> {
                                 PacketWriter.writeMap(server.level.playerTeam, k -> PacketWriter.writeEnum(k, w), v -> PacketWriter.writeEnum(v, w), w);
                                 w.writeLong(server.level.seed);
+                                w.writeFloat(server.level.botDifficulty);
                                 w.writeInt(server.level.tilesX);
                                 w.writeInt(server.level.tilesY);
                                 PacketWriter.writeEnum(requestedTeam, w);
@@ -339,7 +348,7 @@ public class Server implements Deletable {
                         }
                         u.addPerformedAction(Action.STEALTH);
                         u.setStealthMode(!u.stealthMode, true);
-                        server.sendUnitStealthPacket(u, true);
+                        server.sendUnitStealthPacket(u);
                     });
                 }
             }

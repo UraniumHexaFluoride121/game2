@@ -19,6 +19,7 @@ import java.util.HashSet;
 
 public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private static final int MAX_PLAYERS = UnitTeam.ORDERED_TEAMS.length;
+    private static final float BOX_SIZE = 5.5f;
     private ButtonOrder buttonOrder;
     private ButtonRegister buttonRegister, internal = new ButtonRegister();
     private GameRenderer renderer = new GameRenderer(new AffineTransform(), null);
@@ -56,6 +57,14 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         return teamMap;
     }
 
+    public HashMap<UnitTeam, Boolean> getBots() {
+        HashMap<UnitTeam, Boolean> botMap = new HashMap<>();
+        boxes.forEach(b -> {
+            botMap.put(UnitTeam.ORDERED_TEAMS[b.index], b.isBot);
+        });
+        return botMap;
+    }
+
     public void verifyTeams() {
         PlayerTeam team = null;
         boolean verified = false;
@@ -74,7 +83,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         boolean unitsVerified = MainPanel.titleScreen.playerShipSettings == null || MainPanel.titleScreen.playerShipSettings.verifyTeams();
         if (!unitsVerified)
             verified = false;
-        if (MainPanel.titleScreen.newGameTabs != null && MainPanel.titleScreen.newGameTabs.isEnabled()) {
+        if (MainPanel.titleScreen.multiplayerTabs != null && MainPanel.titleScreen.multiplayerTabs.isEnabled()) {
             MainPanel.titleScreen.startLanGame.setEnabled(verified);
             MainPanel.titleScreen.startLocalGame.setEnabled(verified);
             UITextDisplayBox box = MainPanel.titleScreen.gameCannotBeStarted;
@@ -116,7 +125,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         if (plus != null)
             plus.delete();
         if (boxes.size() != MAX_PLAYERS)
-            plus = new UIShapeButton(register, internal, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 5, boxes.size() * 4 + 0.5f, 7, 3, false, this::addBox)
+            plus = new UIShapeButton(register, internal, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 5, boxes.size() * BOX_SIZE + (BOX_SIZE - 3) / 2f, 7, 3, false, this::addBox)
                     .setShape(UIShapeButton::plus);
     }
 
@@ -129,7 +138,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
     }
 
     public float getScrollDistance() {
-        return (boxes.size() == MAX_PLAYERS ? boxes.size() * 4 : (boxes.size() + 1) * 4) - 14;
+        return (boxes.size() == MAX_PLAYERS ? boxes.size() : (boxes.size() + 1)) * BOX_SIZE - 14;
     }
 
     public UnitTeam getEditShipsTeam() {
@@ -191,20 +200,22 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         private final UITextDisplayBox numberBox;
         private final UIBox mainBox;
         private final UIShapeButton deleteButton;
-        private final UIButton editShips;
+        private UIButton editShips, enableBot;
         public final UIEnumSelector<PlayerTeam> playerTeamSelector;
         private ButtonRegister parent, internal = new ButtonRegister();
         private int index;
         private final float x, y;
         private final UITextLabel playerTeamLabel;
+        public boolean isBot = false;
 
         public PlayerBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, int index, float x, float y, UIPlayerBoxes parentContainer) {
             super(register, order);
             this.x = x;
             this.y = y;
-            numberBox = new UITextDisplayBox(null, RenderOrder.NONE, 0.1f, 1, 2, 2, 1.7f)
+            numberBox = new UITextDisplayBox(null, RenderOrder.NONE, 0.1f, (BOX_SIZE - 2) / 2f, 2, 2, 1.7f)
                     .setBold();
-            mainBox = new UIBox(13, 3.5f, 0, UIBox.BoxShape.RECTANGLE);
+            mainBox = new UIBox(13, BOX_SIZE - .5f, 0, UIBox.BoxShape.RECTANGLE);
+            mainBox.translate(0, -2);
             playerTeamSelector = new UIEnumSelector<>(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 4, 0.7f, 1.3f, 2, PlayerTeam.class, PlayerTeam.values()[index])
                     .setOnChanged(parentContainer::verifyTeams);
             editShips = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 0.7f, 5, 1.3f, 0.7f, true)
@@ -213,19 +224,30 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                             if (b != this)
                                 b.editShips.deselect();
                         });
-                    }).setOnDeselect(() -> MainPanel.titleScreen.playerShipSettings.updateTeam())
+                        editShips.setColourTheme(UIColourTheme.ALWAYS_GREEN_SELECTED);
+                    }).setOnDeselect(() -> {
+                        MainPanel.titleScreen.playerShipSettings.updateTeam();
+                        editShips.setColourTheme(UIColourTheme.GREEN_SELECTED);
+                    })
                     .setColourTheme(UIColourTheme.GREEN_SELECTED).toggleMode();
+            enableBot = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 2.3f, 5, 1f, 0.7f, false);
+            enableBot.setBold().noDeselect().setBoxCorner(0.35f).setText("Bot (off)").setOnClick(() -> {
+                        isBot = !isBot;
+                        enableBot.setColourTheme(isBot ? UIColourTheme.GREEN : UIColourTheme.RED);
+                        enableBot.setText(isBot ? "Bot (on)" : "Bot (off)");
+                    })
+                    .setColourTheme(UIColourTheme.RED);
             playerTeamLabel = new UITextLabel(5, 0.7f, false)
                     .updateTextCenter("Player Team").setTextCenterBold();
-            deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.75f, 2.5f, 1, 1, false, () -> {
+            deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.75f, BOX_SIZE - 1.5f, 1, 1, false, () -> {
                 parentContainer.deletePlayer(getIndex());
             }).setShape(UIShapeButton::x).setBoxCorner(0.2f).setColourTheme(UIColourTheme.DEEP_RED);
             parent = buttonRegister;
             parent.register(this);
             update(index);
             renderable = g -> {
-                GameRenderer.renderOffset(0, getIndex() * 4, g, () -> {
-                    GameRenderer.renderOffsetScaled(0, 4, 1, -1, g, () -> {
+                GameRenderer.renderOffset(0, getIndex() * BOX_SIZE, g, () -> {
+                    GameRenderer.renderOffsetScaled(0, BOX_SIZE, 1, -1, g, () -> {
                         numberBox.render(g);
                         GameRenderer.renderOffset(3, 0.25f, g, () -> {
                             mainBox.render(g);
@@ -234,6 +256,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                             playerTeamLabel.render(g);
                         });
                         editShips.render(g);
+                        enableBot.render(g);
                         playerTeamSelector.render(g);
                         deleteButton.render(g);
                     });
@@ -247,6 +270,13 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
 
         public void update(int index) {
             this.index = index;
+            if (index == 0 && isBot)
+                enableBot.runOnCLick();
+            if (index == 0) {
+                enableBot.setText("Host");
+                enableBot.setColourTheme(UIColourTheme.GRAYED_OUT);
+            }
+            enableBot.setClickEnabled(index != 0);
             numberBox.setText(String.valueOf(index + 1))
                     .setColourTheme(UnitTeam.ORDERED_TEAMS[index].uiColour);
             mainBox.setColourTheme(UnitTeam.ORDERED_TEAMS[index].uiColour);
@@ -262,6 +292,9 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             parent = null;
             deleteButton.delete();
             editShips.delete();
+            editShips = null;
+            enableBot.delete();
+            enableBot = null;
         }
 
         @Override
@@ -285,14 +318,14 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
             if (!isEnabled())
                 return;
-            blocking = internal.acceptInput(pos.copy().subtract(0, 4).multiply(1, -1).subtract(x, -index * 4 + y), type, true, blocked);
+            blocking = internal.acceptInput(pos.copy().subtract(0, BOX_SIZE).multiply(1, -1).subtract(x, -index * BOX_SIZE + y), type, true, blocked);
         }
 
         @Override
         public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
             if (!isEnabled())
                 return;
-            blocking = internal.acceptInput(pos.copy().subtract(0, 4).multiply(1, -1).subtract(x, -index * 4 + y), type, false, blocked);
+            blocking = internal.acceptInput(pos.copy().subtract(0, BOX_SIZE).multiply(1, -1).subtract(x, -index * BOX_SIZE + y), type, false, blocked);
         }
     }
 }

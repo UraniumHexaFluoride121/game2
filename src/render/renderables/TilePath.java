@@ -22,6 +22,7 @@ import unit.type.UnitType;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -76,7 +77,7 @@ public class TilePath implements Renderable {
         this.end = end;
     }
 
-    private void setShortestPath(Point end, Level level) {
+    public void setShortestPath(Point end, Level level) {
         path = level.tileSelector.shortestPathTo(origin, end, tiles, type.tileMovementCostFunction);
     }
 
@@ -85,6 +86,11 @@ public class TilePath implements Renderable {
         for (Point t : path) {
             cost += type.tileMovementCostFunction.apply(level.getTile(t).type);
         }
+        return (int) Math.ceil(cost * type.movementCostMultiplier() + type.movementFixedCost());
+    }
+
+    public static int getEnergyCost(UnitType type, HashMap<Point, Float> costMap, Point to) {
+        float cost = costMap.get(to);
         return (int) Math.ceil(cost * type.movementCostMultiplier() + type.movementFixedCost());
     }
 

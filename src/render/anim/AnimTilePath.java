@@ -60,6 +60,14 @@ public class AnimTilePath implements Writable {
         points.add(Tile.getRenderPos(p));
     }
 
+    public void startTimer() {
+        timer.startTimer();
+    }
+
+    public AnimationTimer getTimer() {
+        return timer;
+    }
+
     public ObjPos getEnd() {
         return points.getLast();
     }
@@ -94,6 +102,15 @@ public class AnimTilePath implements Writable {
         ArrayList<Point> path = new ArrayList<>(tiles);
         path.removeFirst();
         return TilePath.getEnergyCost(unit.type, path, level);
+    }
+
+    public Point illegalTile(TilePath original) {
+        Point illegalTile;
+        if (length() != original.length() + 1) {
+            illegalTile = original.getTile(length() - 1);
+        } else
+            illegalTile = null;
+        return illegalTile;
     }
 
     @Override

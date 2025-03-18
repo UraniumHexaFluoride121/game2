@@ -147,7 +147,7 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 8);
-        map.put(Action.FIRE, 16);
+        map.put(Action.FIRE, 12);
     }, new AttributeData[]{
             ANTI_CAPITAL_SHIP, RANGED_WEAPON,
             SLOW_ASTEROID_FIELD, CARRIER_LOADING,
@@ -155,7 +155,12 @@ public class CorvetteType extends UnitType {
     }, FiringRenderer.THREE_UNITS) {
         @Override
         public float movementCostMultiplier() {
-            return 3;
+            return 1;
+        }
+
+        @Override
+        public float movementFixedCost() {
+            return 4;
         }
     };
 

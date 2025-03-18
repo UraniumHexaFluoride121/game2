@@ -100,6 +100,15 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
                 if (highlightTileRenderer.finished())
                     highlightTileRenderer = null;
             }
+            if (MainPanel.BOT_DEBUG_RENDER != null) {
+                if (level.bots.get(level.getActiveTeam())) {
+                    if (MainPanel.BOT_DEBUG_RENDER_UNIT) {
+                        if (level.botHandlerMap.get(level.getActiveTeam()).unitDebugData != null)
+                            level.botHandlerMap.get(level.getActiveTeam()).unitDebugData.render(g);
+                    } else
+                        level.botHandlerMap.get(level.getActiveTeam()).tileData.get(MainPanel.BOT_DEBUG_RENDER).render(g);
+                }
+            }
         });
 
         //Action render below units
@@ -218,18 +227,20 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
     @Override
     public void acceptPressed(InputType type) {
-        level.buttonRegister.input(true, type, this::transformMousePosToCamera);
+        if (!isFiring())
+            level.buttonRegister.input(true, type, this::transformMousePosToCamera);
     }
 
     @Override
     public void acceptReleased(InputType type) {
-        level.buttonRegister.input(false, type, this::transformMousePosToCamera);
+        if (!isFiring())
+            level.buttonRegister.input(false, type, this::transformMousePosToCamera);
     }
 
     private boolean moveCameraEnabled = false;
     private ObjPos prevMousePos = null;
     private float shakeTimer = 0;
-    private final ObjPos cameraPosition = new ObjPos();
+    private final ObjPos cameraPosition = new ObjPos(), cameraVelocityVector = new ObjPos();
 
     public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
 
@@ -242,10 +253,14 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
             if (prev == null) {
                 setCameraInterpBlockPos(lastCameraPos.get(current));
             } else {
-                lastCameraPos.put(prev, getCameraInterpBlockPos(cameraPosition.copy()));
+                setLastCameraPos(prev);
                 setCameraInterpBlockPos(lastCameraPos.get(current));
             }
         }
+    }
+
+    public void setLastCameraPos(UnitTeam team) {
+        lastCameraPos.put(team, getCameraInterpBlockPos(cameraPosition.copy()));
     }
 
     public void useLastCameraPos(UnitTeam team) {
@@ -305,7 +320,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     }
 
     public void setCameraInterpBlockPos(ObjPos pos) {
-        interpCameraTo = pos.copy().inverse().add(level.tileBound.copy().divide(2));
+        ObjPos newPos = pos.copy().inverse().add(level.tileBound.copy().divide(2));
+        interpCameraTo = newPos;
     }
 
     public ObjPos getCameraInterpBlockPos(ObjPos pos) {
@@ -382,10 +398,22 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         }
         Point p = Main.window.getMousePosition();
         if (interpCameraTo != null) {
-            cameraPosition.expTo(interpCameraTo, 4f, deltaTime);
-            cameraPosition.lerpTo(interpCameraTo, 2f, deltaTime);
-            if (interpCameraTo.equals(cameraPosition))
+            float distance = interpCameraTo.distance(cameraPosition);
+            ObjPos to = interpCameraTo.copy().subtract(cameraPosition);
+            ObjPos log = to.copy().addLength(4).log();
+            to.normalise();
+            ObjPos v = to.copy().setLength(to.dotProduct(log));
+            cameraVelocityVector.expTo(v, 5, deltaTime);
+            float l = to.dotProduct(cameraVelocityVector.copy().multiply(8 * deltaTime));
+            if (l > 0)
+                cameraPosition.add(to.copy().setLength(l));
+            else
+                cameraPosition.add(to.copy().setLength(l / 2));
+            if (distance < 0.1f)
                 interpCameraTo = null;
+        } else {
+            if (!runningAnim())
+                cameraVelocityVector.lerpTo(ObjPos.ORIGIN, 4, deltaTime);
         }
         if (p != null && !runningAnim()) {
             ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
@@ -440,8 +468,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
     public void endFiring(Unit attacking, Unit defending) {
         isFiring = false;
-        attacking.postFiring(defending, true);
-        defending.postFiring(attacking, false);
+        attacking.postFiring(defending, true, true);
+        defending.postFiring(attacking, false, true);
         removeAnimBlock(firingAnimRenderer);
     }
 }

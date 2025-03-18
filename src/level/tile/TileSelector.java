@@ -13,12 +13,14 @@ import level.LevelRenderer;
 import render.Renderable;
 import unit.Unit;
 import unit.UnitTeam;
+import unit.bot.VisibilityData;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static foundation.input.InputType.*;
@@ -39,10 +41,11 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         }
     }
 
-    public HashSet<Point> withEnemyUnits(HashSet<Point> tiles, Unit unit) {
+    public HashSet<Point> withEnemyUnits(HashSet<Point> tiles, Unit unit, VisibilityData visibility) {
         HashSet<Point> enemyTiles = new HashSet<>();
         tiles.forEach(t -> {
-            if (!getTile(t).isFoW && unit.canFireAt(level.getUnit(t)))
+            Unit u = level.getUnit(t);
+            if (u != null && u.visible(visibility) && unit.canFireAt(u))
                 enemyTiles.add(t);
         });
         return enemyTiles;
@@ -89,6 +92,25 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         return tileSet;
     }
 
+    public void forEachTilesInRadius(Point origin, int radius, BiConsumer<HashSet<Point>, Integer> action) {
+        HashSet<Point> tileSet = new HashSet<>();
+        tileSet.add(origin);
+        action.accept(tileSet, 0);
+        for (int i = 0; i < radius; i++) {
+            HashSet<Point> newTiles = new HashSet<>();
+            for (Point tile : tileSet) {
+                for (HexagonalDirection d : HexagonalDirection.values()) {
+                    Point p = d.offset(tile);
+                    if (validCoordinate(p))
+                        newTiles.add(p);
+                }
+            }
+            newTiles.removeAll(tileSet);
+            action.accept(newTiles, i + 1);
+            tileSet.addAll(newTiles);
+        }
+    }
+
     public ArrayList<Point> tilesInRadiusDeterministic(Point origin, int radius) {
         ArrayList<Point> tileSet = new ArrayList<>();
         tileSet.add(origin);
@@ -115,7 +137,17 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
         HashSet<Point> newTiles = new HashSet<>();
         for (Point tile : tiles) {
             Unit u = level.getUnit(tile);
-            if (u == null || level.samePlayerTeam(u.team, team) || (u.stealthMode && !u.visibleInStealthMode) || getTile(tile).isFoW)
+            if (u == null || level.samePlayerTeam(u.team, team) || !u.renderVisible())
+                newTiles.add(tile);
+        }
+        return newTiles;
+    }
+
+    public HashSet<Point> tilesWithoutEnemies(HashSet<Point> tiles, UnitTeam team, VisibilityData visibility) {
+        HashSet<Point> newTiles = new HashSet<>();
+        for (Point tile : tiles) {
+            Unit u = level.getUnit(tile);
+            if (u == null || level.samePlayerTeam(u.team, team) || !u.visible(visibility))
                 newTiles.add(tile);
         }
         return newTiles;
@@ -156,7 +188,11 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
     }
 
     public HashSet<Point> tilesInRange(Point origin, HashSet<Point> tiles, Function<TileType, Float> tileCostFunction, float maxCost) {
-        HashMap<Point, Float> costMap = new HashMap<>();
+        return new HashSet<>(tilesInRangeCostMap(origin, tiles, tileCostFunction, maxCost).keySet());
+    }
+
+    public HashMap<Point, Float> tilesInRangeCostMap(Point origin, HashSet<Point> tiles, Function<TileType, Float> tileCostFunction, float maxCost) {
+        HashMap<Point, Float> costMap = new HashMap<>(), finalMap = new HashMap<>();
         tiles.forEach(t -> costMap.put(t, -1f));
         costMap.put(origin, 0f);
         HashSet<Point> front = new HashSet<>();
@@ -182,12 +218,11 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
                 break;
             front = newFront;
         }
-        HashSet<Point> tilesInRange = new HashSet<>();
         costMap.forEach((t, cost) -> {
             if (cost != -1)
-                tilesInRange.add(t);
+                finalMap.put(t, cost);
         });
-        return tilesInRange;
+        return finalMap;
     }
 
     public HashSet<Point> pointTerrain(float tilesPerPoint, int radius, TileType generateOn, Function<Integer, Float> generationChance) {
@@ -326,9 +361,11 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
             if (!blocked) {
                 ObjPos blockPos = level.levelRenderer.transformCameraPosToBlock(pos);
                 if (blockPos.y < LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraDown = true;
-                if (blockPos.y > Renderable.top() - LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraUp = true;
+                if (blockPos.y > Renderable.top() - LevelRenderer.MOUSE_EDGE_CAMERA_BORDER)
+                    level.levelRenderer.moveCameraUp = true;
                 if (blockPos.x < LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraLeft = true;
-                if (blockPos.x > Renderable.right() - LevelRenderer.MOUSE_EDGE_CAMERA_BORDER) level.levelRenderer.moveCameraRight = true;
+                if (blockPos.x > Renderable.right() - LevelRenderer.MOUSE_EDGE_CAMERA_BORDER)
+                    level.levelRenderer.moveCameraRight = true;
                 mouseOverTile = tileAtSelectablePos(pos);
             } else
                 mouseOverTile = null;

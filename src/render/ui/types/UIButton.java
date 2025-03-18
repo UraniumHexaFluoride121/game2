@@ -118,6 +118,11 @@ public class UIButton extends AbstractRenderElement implements RegisteredButtonI
         return this;
     }
 
+    public UIButton runOnCLick() {
+        clickHandler.runOnClick();
+        return this;
+    }
+
     public UIButton setBoxShape(UIBox.BoxShape shape) {
         box.setShape(shape);
         return this;

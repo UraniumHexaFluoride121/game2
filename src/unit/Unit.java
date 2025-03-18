@@ -23,16 +23,21 @@ import render.renderables.TilePath;
 import render.renderables.text.TextAlign;
 import render.renderables.text.TextRenderer;
 import render.texture.ImageSequenceGroup;
+import render.ui.implementation.UnitDamageNumberUI;
 import unit.action.Action;
 import unit.action.ActionSelector;
 import unit.action.ActionShapes;
 import unit.action.UnitFiringExplosion;
+import unit.bot.VisibilityData;
 import unit.type.UnitType;
+import unit.weapon.DamageType;
+import unit.weapon.FiringData;
 import unit.weapon.WeaponInstance;
 import unit.weapon.WeaponTemplate;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import static level.tile.Tile.*;
@@ -65,6 +70,7 @@ public class Unit implements Deletable, Tickable {
 
     public float hitPoints, firingTempHP;
     public float shieldHP, shieldFiringTempHP;
+    private ArrayList<UnitDamageNumberUI> damageUIs = new ArrayList<>();
     private final TextRenderer hitPointText = new TextRenderer(() -> MathUtil.floatToString((float) Math.ceil(hitPoints), 0), 0.7f, Color.WHITE)
             .setTextAlign(TextAlign.RIGHT)
             .setBold(true)
@@ -167,6 +173,7 @@ public class Unit implements Deletable, Tickable {
 
     public synchronized void renderActionAboveUnits(Graphics2D g) {
         if (level == null || (stealthMode && !visibleInStealthMode)) return;
+        damageUIs.removeIf(e -> e.render(g));
         if (level.selectedUnit == this) {
             if (level.getActiveAction() == FIRE) {
                 Tile tile = selector().mouseOverTile;
@@ -220,13 +227,13 @@ public class Unit implements Deletable, Tickable {
 
     public synchronized void onActionSelect(Action action) {
         if (action == MOVE) {
-            selectableTiles = selector().tilesInRange(pos, selector().tilesWithoutEnemies(selector().allTiles(), team), type.tileMovementCostFunction, type.maxMovement);
+            selectableTiles = tilesInMoveRange(level.currentVisibility);
             movePath = new TilePath(type, selectableTiles, pos, selector());
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, MOVE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == FIRE) {
-            selectableTiles = tilesInFiringRange(true);
+            selectableTiles = tilesInFiringRange(level.currentVisibility, new UnitData(this), true);
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
@@ -263,7 +270,7 @@ public class Unit implements Deletable, Tickable {
             }
             addPerformedAction(STEALTH);
             if (level.networkState == NetworkState.SERVER)
-                level.server.sendUnitStealthPacket(this, true);
+                level.server.sendUnitStealthPacket(this);
         } else {
             selectableTiles = new HashSet<>();
         }
@@ -279,13 +286,10 @@ public class Unit implements Deletable, Tickable {
         }
         if (selectableTiles.contains(tile.pos)) {
             if (action == MOVE) {
-                if (canUnitAppearToBeMoved(tile) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), false)) {
-                    path = movePath.getAnimPath(this::isIllegalTile);
+                if (canUnitAppearToBeMoved(tile, level.currentVisibility) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), false)) {
+                    path = movePath.getAnimPath(p -> isIllegalTile(p, level.currentVisibility));
                     level.levelRenderer.energyManager.canAfford(team, path.getEnergyCost(this, level), true);
-                    if (path.length() != movePath.length() + 1) {
-                        illegalTile = movePath.getTile(path.length() - 1);
-                    } else
-                        illegalTile = null;
+                    illegalTile = path.illegalTile(movePath);
                     addPerformedAction(MOVE);
                     endAndDeselectAction();
                     if (level.networkState == NetworkState.SERVER) {
@@ -308,15 +312,10 @@ public class Unit implements Deletable, Tickable {
     public synchronized void onTileClickedAsClient(Tile tile, Action action) {
         if (selectableTiles.contains(tile.pos)) {
             if (action == MOVE) {
-                if (canUnitAppearToBeMoved(tile) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), false)) {
-                    AnimTilePath path = movePath.getAnimPath(this::isIllegalTile);
+                if (canUnitAppearToBeMoved(tile, level.currentVisibility) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), false)) {
+                    AnimTilePath path = movePath.getAnimPath(p -> isIllegalTile(p, level.currentVisibility));
                     level.levelRenderer.energyManager.canAfford(team, path.getEnergyCost(this, level), true);
-                    Point illegalTile;
-                    if (path.length() != movePath.length() + 1) {
-                        illegalTile = movePath.getTile(path.length() - 1);
-                    } else
-                        illegalTile = null;
-                    MainPanel.client.sendUnitMoveRequest(path, illegalTile, this);
+                    MainPanel.client.sendUnitMoveRequest(path, path.illegalTile(movePath), this);
                     endAndDeselectAction();
                 }
             } else if (action == FIRE) {
@@ -327,16 +326,30 @@ public class Unit implements Deletable, Tickable {
         }
     }
 
-    private boolean isIllegalTile(Point t) {
+    public boolean isIllegalTile(Point t, VisibilityData visibility) {
         Unit u = level.getUnit(t);
         if (u == null)
             return false;
-        return (level.getTile(t).isFoW || (u.stealthMode && !u.visibleInStealthMode)) && !level.samePlayerTeam(u, this);
+        return !u.visible(visibility) && !level.samePlayerTeam(u, this);
     }
 
     public void setShieldHP(float newHP) {
+        addDamageUI(newHP - shieldHP, true);
         shieldHP = Math.clamp(newHP, 0, type.shieldHP);
         shieldFiringTempHP = shieldHP;
+    }
+
+    public void setHP(float newHP) {
+        addDamageUI(newHP - hitPoints, false);
+        hitPoints = Math.clamp(newHP, 0, type.hitPoints);
+        firingTempHP = hitPoints;
+    }
+
+    public void addDamageUI(float value, boolean shield) {
+        if (value == 0)
+            return;
+        ObjPos pos = getRenderPos();
+        damageUIs.add(new UnitDamageNumberUI(value, pos.x + (shield ? -TILE_SIZE * 0.2f : TILE_SIZE * 0.2f), pos.y, value > 0 ? 1 : -0.7f));
     }
 
     public void capture(int captureProgress, boolean action) {
@@ -425,7 +438,7 @@ public class Unit implements Deletable, Tickable {
     public boolean canFireAt(Unit other) {
         if (other == null)
             return false;
-        return !level.samePlayerTeam(this, other) && !(other.stealthMode && !other.visibleInStealthMode);
+        return !level.samePlayerTeam(this, other);
     }
 
     public void clientAttack(Unit other) {
@@ -437,28 +450,34 @@ public class Unit implements Deletable, Tickable {
     }
 
     public void attack(Unit other) {
-        WeaponInstance thisWeapon = getBestWeaponAgainst(this, other, true);
+        FiringData firingData = getCurrentFiringData(other);
+        WeaponInstance thisWeapon = getBestWeaponAgainst(firingData, true);
         WeaponInstance otherWeapon = null;
-        if (other.firingTempHP > 0 && thisWeapon.template.counterattack) {
-            otherWeapon = getBestWeaponAgainst(other, this, true);
+        if (firingData.otherData().hitPoints > 0 && thisWeapon.template.counterattack) {
+            otherWeapon = getBestWeaponAgainst(FiringData.reverse(firingData, other.weapons), true);
         }
-        boolean thisFoW = isRenderFoW(), otherFoW = other.isRenderFoW();
-        if (!thisFoW && !otherFoW) {
+        firingData.updateTempHP(this, other);
+        if (renderVisible() && other.renderVisible()) {
             level.levelRenderer.beginFiring(this, other, thisWeapon, otherWeapon);
-        } else if (!otherFoW) {
+        } else if (other.renderVisible()) {
             firingExplosion = new UnitFiringExplosion(level.getTile(other.pos).renderPosCentered, this, other);
             level.levelRenderer.registerAnimBlock(firingExplosion);
         } else {
-            postFiring(other, true);
-            other.postFiring(this, false);
+            postFiring(other, true, false);
+            other.postFiring(this, false, false);
         }
-        if (!otherFoW && level.getThisTeam() != level.getActiveTeam())
+        if (other.renderVisible() && level.getThisTeam() != level.getActiveTeam())
             level.levelRenderer.setCameraInterpBlockPos(level.getTile(other.pos).renderPosCentered);
     }
 
-    public void postFiring(Unit other, boolean isThisAttacking) {
-        hitPoints = firingTempHP;
-        shieldHP = shieldFiringTempHP;
+    public void postFiring(Unit other, boolean isThisAttacking, boolean firingAnim) {
+        if (!firingAnim && renderVisible()) {
+            setShieldHP(shieldFiringTempHP);
+            setHP(firingTempHP);
+        } else {
+            hitPoints = firingTempHP;
+            shieldHP = shieldFiringTempHP;
+        }
         if (hitPoints <= 0)
             onDestroyed(other);
         else if (!isThisAttacking) {
@@ -467,36 +486,48 @@ public class Unit implements Deletable, Tickable {
     }
 
     public void onDestroyed(Unit destroyedBy) { //destroyedBy is null if not destroyed by a unit
-        explosion = new ImageSequenceAnim(ImageSequenceGroup.EXPLOSION.getRandomSequence(), TILE_SIZE * 2f, 0.5f);
-        level.levelRenderer.registerAnimBlock(explosion);
-        level.levelRenderer.enableCameraShake(new ObjPos(0.2f, 0.2f));
+        if (destroyedBy != null) {
+            if (level.networkState != NetworkState.CLIENT)
+                for (UnitTeam t : UnitTeam.ORDERED_TEAMS) {
+                    if (level.samePlayerTeam(destroyedBy.team, t) && level.bots.get(t))
+                        level.botHandlerMap.get(t).incrementDestroyedUnits();
+                }
+        }
+        if (renderVisible()) {
+            explosion = new ImageSequenceAnim(ImageSequenceGroup.EXPLOSION.getRandomSequence(), TILE_SIZE * 2f, 0.5f);
+            level.levelRenderer.registerAnimBlock(explosion);
+            level.levelRenderer.enableCameraShake(new ObjPos(0.2f, 0.2f));
+        } else {
+            level.qRemoveUnit(this);
+        }
     }
 
-    public static WeaponInstance getBestWeaponAgainst(Unit thisUnit, Unit other, boolean fireWeapon) {
+    public static WeaponInstance getBestWeaponAgainst(FiringData firingData, boolean fireWeapon) {
         WeaponInstance bestWeapon = null;
         float damage = 0;
-        for (WeaponInstance weapon : thisUnit.weapons) {
-            if (weapon.requiresAmmo && weapon.ammo == 0)
+        for (WeaponInstance weapon : firingData.weapons()) {
+            if (weapon.requiresAmmo && firingData.thisData().weaponAmmo == 0)
                 continue;
-            if (!weapon.tilesInFiringRange.apply(thisUnit).contains(other.pos))
+            if (!weapon.tilesInFiringRange.apply(firingData.thisData(), firingData.level()).contains(firingData.otherData().pos))
                 continue;
-            float newDamage = weapon.getDamageAgainst(thisUnit, other);
+            float newDamage = weapon.getDamageAgainst(firingData);
             if (newDamage > damage) {
                 damage = newDamage;
                 bestWeapon = weapon;
             }
         }
-        if (bestWeapon != null && fireWeapon)
-            bestWeapon.fire(thisUnit, other);
+        if (bestWeapon != null && fireWeapon) {
+            bestWeapon.fire(firingData);
+        }
         return bestWeapon;
     }
 
-    public static float getDamageAgainst(Unit thisUnit, Unit other) {
+    public static float getDamageAgainst(FiringData firingData) {
         float damage = 0;
-        for (WeaponInstance weapon : thisUnit.weapons) {
+        for (WeaponInstance weapon : firingData.weapons()) {
             if (weapon.requiresAmmo && weapon.ammo == 0)
                 continue;
-            float newDamage = weapon.getDamageAgainst(thisUnit, other);
+            float newDamage = weapon.getDamageAgainst(firingData);
             if (newDamage > damage) {
                 damage = newDamage;
             }
@@ -525,15 +556,15 @@ public class Unit implements Deletable, Tickable {
         return WeaponInstance.FireAnimState.HOLD;
     }
 
-    public HashSet<Point> tilesInFiringRange(boolean onlyWithEnemies) {
+    public HashSet<Point> tilesInFiringRange(VisibilityData visibility, UnitData data, boolean onlyWithEnemies) {
         HashSet<Point> tiles = new HashSet<>();
         for (WeaponInstance weapon : weapons) {
-            if (weapon.requiresAmmo && weapon.ammo == 0)
+            if (weapon.requiresAmmo && data.weaponAmmo == 0)
                 continue;
-            if (onlyWithEnemies)
-                tiles.addAll(selector().withEnemyUnits(weapon.tilesInFiringRange.apply(this), this));
-            else
-                tiles.addAll(weapon.tilesInFiringRange.apply(this));
+            if (onlyWithEnemies) {
+                tiles.addAll(selector().withEnemyUnits(weapon.tilesInFiringRange.apply(data, level), this, visibility));
+            } else
+                tiles.addAll(weapon.tilesInFiringRange.apply(data, level));
         }
         return tiles;
     }
@@ -563,7 +594,7 @@ public class Unit implements Deletable, Tickable {
                 path = null;
                 if (illegalTile != null) {
                     Tile tile = level.getTile(illegalTile);
-                    if ((!isRenderFoW() && !tile.isFoW) || level.samePlayerTeam(level.getThisTeam(), team)) {
+                    if (renderVisible()) {
                         tile.setIllegalTile();
                     }
                 }
@@ -617,7 +648,7 @@ public class Unit implements Deletable, Tickable {
         if (path == null) {
             return visibleInStealthMode;
         }
-        if (level.samePlayerTeam(team, level.getThisTeam()))
+        if (!level.isThisPlayerAlive() || level.samePlayerTeam(team, level.getThisTeam()))
             return true;
         Tile renderTile = renderTile();
         if (renderTile == null)
@@ -637,10 +668,6 @@ public class Unit implements Deletable, Tickable {
         if (path != null)
             return getAndUpdateRenderPos().copy().add(moveAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), moveAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
         return getAndUpdateRenderPos().copy().add(idleAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), idleAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
-    }
-
-    public float getTileDamageMultiplier() {
-        return type.damageReduction(level.getTile(pos).type);
     }
 
     public HashSet<Point> getVisibleTiles() {
@@ -698,9 +725,8 @@ public class Unit implements Deletable, Tickable {
         if (captureProgress != d.captureProgress) {
             setCaptureProgress(d.captureProgress);
         }
-        for (int i = 0; i < d.weaponAmmo.size(); i++) {
-            weapons.get(i).ammo = d.weaponAmmo.get(i);
-        }
+        if (d.weaponAmmo != -1)
+            getAmmoWeapon().ammo = d.weaponAmmo;
         stealthMode = d.stealthMode;
     }
 
@@ -734,13 +760,17 @@ public class Unit implements Deletable, Tickable {
         level.levelRenderer.energyManager.recalculateIncome();
     }
 
-    public boolean canUnitAppearToBeMoved(Tile tile) {
+    public boolean canUnitAppearToBeMoved(Tile tile, VisibilityData visibility) {
         Unit u = level.getUnit(tile.pos);
-        return tile.isFoW || level.canUnitBeMoved(tile.pos) || (u != null && u.stealthMode && !u.visibleInStealthMode);
+        return u == null || !u.visible(visibility);
     }
 
     @Override
     public void delete() {
+        if (explosion != null) {
+            level.levelRenderer.removeAnimBlock(explosion);
+            level.levelRenderer.disableCameraShake();
+        }
         level.buttonRegister.remove(actionUI);
         level = null;
         actionUI.delete();
@@ -775,7 +805,33 @@ public class Unit implements Deletable, Tickable {
         return selector().tileAtPos(getRenderPos().copy().addY(0.5f * SIN_60_DEG * TILE_SIZE));
     }
 
-    public boolean visible() {
+    public boolean renderVisible() {
         return !isRenderFoW() && (!stealthMode || isRenderStealthVisible());
+    }
+
+    public boolean visible(VisibilityData visibility) {
+        return visibility.visibleTiles().contains(pos) && (!stealthMode || visibility.stealthVisibleUnit().contains(this));
+    }
+
+    public HashSet<Point> tilesInMoveRange(VisibilityData visibility) {
+        return selector().tilesInRange(pos, selector().tilesWithoutEnemies(selector().allTiles(), team, visibility), type.tileMovementCostFunction, type.maxMovement);
+    }
+
+    public HashMap<Point, Float> tilesInMoveRangeCostMap(VisibilityData visibility) {
+        return selector().tilesInRangeCostMap(pos, selector().tilesWithoutEnemies(selector().allTiles(), team, visibility), type.tileMovementCostFunction, type.maxMovement);
+    }
+
+    public float getDamageAgainstType(DamageType damageType) {
+        final float[] v = {0};
+        weapons.forEach(w -> {
+            if (w.requiresAmmo && w.ammo == 0)
+                return;
+            v[0] = Math.max(v[0], w.template.damageTypes.get(damageType).fill);
+        });
+        return v[0];
+    }
+
+    public FiringData getCurrentFiringData(Unit otherUnit) {
+        return new FiringData(new UnitData(this), new UnitData(otherUnit), weapons, level);
     }
 }

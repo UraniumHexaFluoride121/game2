@@ -33,6 +33,12 @@ public enum UIColourTheme {
             new Color(113, 184, 148), new Color(74, 159, 108, 115),
             new Color(99, 193, 93), new Color(88, 175, 105, 128)
     ),
+    ALWAYS_GREEN_SELECTED(
+            new Color(99, 193, 93), new Color(88, 175, 105, 128),
+            new Color(90, 175, 84), new Color(71, 145, 86, 128),
+            new Color(82, 165, 78), new Color(75, 151, 90, 128),
+            new Color(99, 193, 93), new Color(88, 175, 105, 128)
+    ),
     GREEN_SELECTED_TAB(
             new Color(92, 166, 211), new Color(87, 142, 189, 144),
             new Color(99, 170, 191), new Color(92, 140, 181, 133),
@@ -74,6 +80,12 @@ public enum UIColourTheme {
             new Color(99, 156, 191), new Color(35, 59, 78, 239),
             new Color(75, 121, 147), new Color(31, 52, 67, 239),
             new Color(81, 135, 166), new Color(29, 48, 66, 239)
+    ),
+    LIGHT_BLUE_FULLY_OPAQUE_CENTER(
+            new Color(105, 181, 228), new Color(27, 51, 66),
+            new Color(99, 156, 191), new Color(25, 43, 55),
+            new Color(75, 121, 147), new Color(20, 34, 44),
+            new Color(81, 135, 166), new Color(19, 32, 43)
     ),
     RED(
             new Color(228, 105, 105), new Color(189, 87, 87, 144),

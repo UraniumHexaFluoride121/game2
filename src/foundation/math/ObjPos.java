@@ -11,6 +11,7 @@ import java.io.Serializable;
 public class ObjPos implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+    public static final ObjPos ORIGIN = new ObjPos();
     public float x;
     public float y;
 
@@ -411,6 +412,13 @@ public class ObjPos implements Serializable {
         return divide(length / newLength);
     }
 
+    public ObjPos addLength(float addLength) {
+        float length = length();
+        if (length == 0)
+            return set(addLength, 0);
+        return divide(length / (length + addLength));
+    }
+
     public static ObjPos getEdgeNormal(ObjPos a, ObjPos b) {
         ObjPos edgeVector = a.copy().subtract(b);
         return new ObjPos(-edgeVector.y, edgeVector.x);
@@ -453,6 +461,12 @@ public class ObjPos implements Serializable {
 
     public void affineScale(AffineTransform t) {
         t.scale(x, y);
+    }
+
+    public ObjPos log() {
+        x = x == 0 ? 0 : (float) Math.log(Math.abs(x)) * Math.signum(x);
+        y = y == 0 ? 0 : (float) Math.log(Math.abs(y)) * Math.signum(y);
+        return this;
     }
 
     @Override

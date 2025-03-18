@@ -24,6 +24,10 @@ public class LerpAnimation implements ReversableAnimationTimer {
         reversed = reader.readBoolean();
     }
 
+    public float getTime() {
+        return time / 1000f;
+    }
+
     @Override
     public void startTimer() {
         startTime = System.currentTimeMillis();

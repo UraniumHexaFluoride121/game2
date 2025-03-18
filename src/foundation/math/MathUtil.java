@@ -145,31 +145,6 @@ public abstract class MathUtil {
         return s.toString();
     }
 
-    public static String floatToTime(float seconds, int decimals) {
-        int minutes = (int) (seconds / 60);
-        seconds -= minutes * 60;
-        int hours = minutes / 60;
-        minutes -= hours * 60;
-        StringBuilder s = new StringBuilder();
-        if (hours != 0) {
-            s.append(hours).append(':');
-            if (minutes < 10)
-                s.append('0');
-            if (minutes == 0) {
-                s.append("0:");
-                if (seconds < 10)
-                    s.append('0');
-            }
-        }
-        if (minutes != 0) {
-            s.append(minutes).append(':');
-            if (seconds < 10)
-                s.append('0');
-        }
-        s.append(floatToString(seconds, decimals).replace('.', ':'));
-        return s.toString();
-    }
-
     public static int min(int... values) {
         int v = values[0];
         for (int i = 1; i < values.length; i++) {

@@ -1,5 +1,6 @@
 package foundation;
 
+import foundation.input.ButtonOrder;
 import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
@@ -8,8 +9,15 @@ import foundation.tick.TickOrder;
 import level.Level;
 import mainScreen.TitleScreen;
 import network.Client;
+import render.GameRenderer;
+import render.RenderOrder;
+import render.Renderable;
 import render.anim.LerpAnimation;
+import render.renderables.RenderElement;
+import render.texture.ResourceLocation;
+import render.ui.types.UIButton;
 import save.SaveManager;
+import unit.bot.BotTileDataType;
 import unit.type.UnitType;
 
 import javax.swing.*;
@@ -25,6 +33,9 @@ import java.util.function.Supplier;
 public class MainPanel extends JFrame implements KeyListener, MouseListener, MouseWheelListener, RegisteredTickable {
     //TODO: Set to true when not testing
     public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = true;
+
+    public static final BotTileDataType BOT_DEBUG_RENDER = null;
+    public static final boolean BOT_DEBUG_RENDER_UNIT = true;
 
     public static AffineTransform windowTransform = new AffineTransform();
 
@@ -42,21 +53,32 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     public static LerpAnimation fadeScreen = new LerpAnimation(0.5f);
 
+    private static final Renderable LOAD_SCREEN_IMAGE = Renderable.renderImage(new ResourceLocation("load_screen.png"), false, true, 60, true);
+    private static GameRenderer loadRenderer = new GameRenderer(MainPanel.windowTransform, null);
+
     public static boolean controlHeld = false, shiftHeld = false;
+    public static boolean loaded = false, loadFadeComplete = false;
 
     public void init() {
-        UnitType.generateWeapons();
+        new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BACKGROUND, LOAD_SCREEN_IMAGE);
+        new UIButton(loadRenderer, null, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                23, 4, 14, 3, 2, false).setBold().setText("Loading...");
         fadeScreen.setReversed(true);
         fadeScreen.finish();
-        titleScreen = new TitleScreen();
-        titleScreen.init();
-        activeInputReceiver = titleScreen;
-        registerTickable();
-        SaveManager.loadSaves();
+        Level.EXECUTOR.submit(() -> {
+            UnitType.initAll();
+            titleScreen = new TitleScreen();
+            titleScreen.init();
+            activeInputReceiver = titleScreen;
+            registerTickable();
+            SaveManager.loadSaves();
+            fadeScreen.setReversed(false);
+            loaded = true;
+        });
     }
 
     public static void startNewLevel(Supplier<Level> levelCreator) {
-        Level.EXECUTOR.submit(() -> {
+        new Thread(() -> {
             fadeScreen.setReversed(false);
             activeInputReceiver = null;
             Level level = levelCreator.get();
@@ -71,7 +93,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
                 }
             }
             fadeScreen.setReversed(true);
-        });
+        }).start();
     }
 
     public static void startNewLevel(Supplier<Level> levelCreator, Consumer<Level> onLevelCreated) {
@@ -131,10 +153,18 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
-        if (activeLevel != null) {
-            activeLevel.render(g2d);
+        if (loadFadeComplete) {
+            if (activeLevel != null) {
+                activeLevel.render(g2d);
+            } else {
+                titleScreen.render(g2d);
+            }
         } else {
-            titleScreen.render(g2d);
+            if (loaded && fadeScreen.finished()) {
+                fadeScreen.setReversed(true);
+                loadFadeComplete = true;
+            }
+            loadRenderer.render(g2d);
         }
         float a = fadeScreen.normalisedProgress();
         if (a != 0) {
@@ -226,13 +256,21 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     @Override
     public synchronized void tick(float deltaTime) {
-        tasks.addAll(tasksQ);
-        tasksQ.clear();
-        tasks.forEach(Runnable::run);
-        tasks.clear();
+        if (!loaded)
+            return;
+        tasksQ.removeIf(r -> {
+            tasks.add(r);
+            return true;
+        });
+        tasks.removeIf(r -> {
+            r.run();
+            return true;
+        });
 
-        noAnimBlockTasks.addAll(noAnimBlockTasksQ);
-        noAnimBlockTasksQ.clear();
+        noAnimBlockTasksQ.removeIf(r -> {
+            noAnimBlockTasks.add(r);
+            return true;
+        });
         if (activeLevel == null)
             noAnimBlockTasks.clear();
         else {

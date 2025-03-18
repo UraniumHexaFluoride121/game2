@@ -30,6 +30,6 @@ public class UIDamage extends AbstractRenderElement {
 
     public void show(Unit thisUnit, Unit targetUnit) {
         offset = Tile.getRenderPos(targetUnit.pos);
-        label.updateTextRight(MathUtil.floatToString(Unit.getDamageAgainst(thisUnit, targetUnit), 1));
+        label.updateTextRight(MathUtil.floatToString(Unit.getDamageAgainst(thisUnit.getCurrentFiringData(targetUnit)), 1));
     }
 }

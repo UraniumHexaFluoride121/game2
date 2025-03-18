@@ -44,7 +44,7 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_RIGHT_CORNERS_CUT)
                 .setOnClick(this::increment);
         displayBox = new UITextDisplayBox(null, RenderOrder.NONE, x + height + .5f, y, displayWidth, height, height * 0.8f)
-                .setBold().setBoxShape(UIBox.BoxShape.RECTANGLE).setText(String.valueOf(value));
+                .setBold().setBoxShape(UIBox.BoxShape.RECTANGLE).setText(value.getName());
         renderable = g -> {
             left.render(g);
             right.render(g);
@@ -84,6 +84,12 @@ public class UIEnumSelector<T extends Enum<T> & NamedEnum> extends AbstractRende
 
     public UIEnumSelector<T> setOnChanged(Runnable onChanged) {
         this.onChanged = onChanged;
+        return this;
+    }
+
+    public UIEnumSelector<T> setCorner(float corner) {
+        left.setBoxCorner(corner);
+        right.setBoxCorner(corner);
         return this;
     }
 

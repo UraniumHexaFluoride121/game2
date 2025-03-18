@@ -27,6 +27,10 @@ public class PowAnimation implements ReversableAnimationTimer {
         exponent = reader.readFloat();
     }
 
+    public float getTime() {
+        return time / 1000f;
+    }
+
     @Override
     public void startTimer() {
         startTime = System.currentTimeMillis();

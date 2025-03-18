@@ -16,8 +16,8 @@ public class UnitFiringExplosion extends ObjectExplosion implements Deletable {
 
     @Override
     public void delete() {
-        attacking.postFiring(defending, true);
-        defending.postFiring(attacking, false);
+        attacking.postFiring(defending, true, false);
+        defending.postFiring(attacking, false, false);
         attacking = null;
         defending = null;
     }

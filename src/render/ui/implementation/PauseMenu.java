@@ -25,6 +25,7 @@ public class PauseMenu extends LevelUIContainer {
     private UIButton saveButton, saveGame;
     private UIScrollSurface saveFileScrollSurface;
     private ArrayList<UIContainer> saves = new ArrayList<>();
+    private boolean botPLaying = false;
 
     public PauseMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
         super(register, buttonRegister, order, buttonOrder, 0, 0, level);
@@ -33,17 +34,25 @@ public class PauseMenu extends LevelUIContainer {
             new RenderElement(r, RenderOrder.PAUSE_MENU_BACKGROUND, g -> {
                 g.setColor(FULL_SCREEN_MENU_BACKGROUND_COLOUR);
                 g.fillRect(0, 0, (int) Math.ceil(Renderable.right()), (int) Math.ceil(Renderable.top()));
+                if (botPLaying != level.bots.get(level.getActiveTeam())) {
+                    botPLaying = !botPLaying;
+                    saveGame.setText(botPLaying ? "Cannot save while bot is playing" : "Save");
+                    saveGame.setClickEnabled(!botPLaying);
+                    saveGame.setColourTheme(botPLaying ? UIColourTheme.GRAYED_OUT : UIColourTheme.LIGHT_BLUE);
+                    if (botPLaying)
+                        saveContainer.setEnabled(false);
+                }
             });
             newButton(r, b, 0, WIDTH / 2 - 0.25f, 0, false)
-                    .setColourTheme(UIColourTheme.DEEP_RED).setText("Exit game").setOnClick(() -> {
+                    .setColourTheme(UIColourTheme.DEEP_RED).setText("Exit").setOnClick(() -> {
                         MainPanel.addTask(MainPanel::toTitleScreen);
                     });
             newButton(r, b, 0, WIDTH / 2 - 0.25f, WIDTH / 2 + 0.25f, false)
-                    .setColourTheme(UIColourTheme.DEEP_GREEN).setText("Continue game").setOnClick(() -> {
+                    .setColourTheme(UIColourTheme.DEEP_GREEN).setText("Continue").setOnClick(() -> {
                         setEnabled(false);
                     });
             saveGame = newButton(r, b, 1, true)
-                    .setText("Save game").setOnClick(() -> {
+                    .setText("Save").setOnClick(() -> {
                         saveContainer.setEnabled(true);
                     }).noDeselect().setOnDeselect(() -> {
                         saveContainer.setEnabled(false);
@@ -52,7 +61,7 @@ public class PauseMenu extends LevelUIContainer {
             saveContainer.addRenderables((r2, b2) -> {
                 new RenderElement(r2, RenderOrder.PAUSE_MENU_BACKGROUND,
                         new UIBox(15, 14).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(2, 0),
-                        new UITextLabel(10.5f, 1.3f, false).setTextCenterBold().updateTextCenter("Save files").translate(4f, 14.6f),
+                        new UITextLabel(10.5f, 1.3f, false).setTextCenterBold().updateTextCenter("Saved files").translate(4f, 14.6f),
                         new UITextLabel(10.5f, 1f, false).setTextCenterBold().updateTextCenter("Enter save name:").translate(4f, 21.6f)
                 );
                 saveFileScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, 2, 0, 15, 14, false, (r3, b3) -> {

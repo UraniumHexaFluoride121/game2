@@ -2,6 +2,7 @@ package level.energy;
 
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
+import foundation.math.MathUtil;
 import level.Level;
 import level.structure.Structure;
 import network.NetworkState;
@@ -104,7 +105,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
                     });
             incomeBox = new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, -14.5f, (r2, b2) -> {
                 new RenderElement(r2, RenderOrder.LEVEL_UI,
-                        new UIBox(10, 13).setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER),
+                        new UIBox(10, 13).setColourTheme(UIColourTheme.LIGHT_BLUE_FULLY_OPAQUE_CENTER),
                         new UITextLabel(8, 1, false).setTextCenterBold().updateTextCenter(displayName).translate(.7f, 11.5f),
                         new FixedTextRenderer("Income:", 0.7f, TEXT_COLOUR_DARK).setBold(true).setTextAlign(TextAlign.LEFT).translate(0.5f, 10.7f),
                         new FixedTextRenderer("Expenses:", 0.7f, TEXT_COLOUR_DARK).setBold(true).setTextAlign(TextAlign.LEFT).translate(0.5f, 5.7f),
@@ -127,7 +128,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
 
     @Override
     public boolean isEnabled() {
-        return super.isEnabled() && level.isThisPlayerAlive();
+        return super.isEnabled() && level.isThisPlayerAlive() && level.getThisTeam() == level.getActiveTeam();
     }
 
     private boolean renderAvailableChange = false, renderIncomeChange;
@@ -158,7 +159,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
                 if (u.team == team && u.stealthMode) {
                     u.setStealthMode(false, false);
                     if (level.networkState == NetworkState.SERVER) {
-                        level.server.sendUnitStealthPacket(u, false);
+                        level.server.sendUnitStealthPacket(u);
                     }
                 }
             });
@@ -189,13 +190,13 @@ public class EnergyManager extends LevelUIContainer implements Writable {
         incomeLineItems.clear();
         costLineItems.forEach(UIContainer::delete);
         costLineItems.clear();
-        ArrayList<LineItemData> lineItems = new ArrayList<>();
+        ArrayList<LineItemData> incomeList = new ArrayList<>(), expenseList = new ArrayList<>();
         level.tileSelector.tileSet.forEach(t -> {
             Structure s = t.structure;
             if (t.hasStructure() && s.team != null) {
                 incomeMap.compute(s.team, (team, i) -> {
                     if (team == thisTeam)
-                        lineItems.add(new LineItemData(s.type.displayName, s.type.energyIncome));
+                        LineItemData.addToList(s.type.displayName, s.type.energyIncome, incomeList);
                     return i + s.type.energyIncome;
                 });
             }
@@ -205,7 +206,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
                 u.type.getPerTurnActionCost(Action.STEALTH).ifPresent(cost -> {
                     costsMap.compute(u.team, (team, i) -> {
                         if (team == thisTeam)
-                            lineItems.add(new LineItemData(u.type.getName() + " (" + Action.STEALTH.getName() + ")", -cost));
+                            LineItemData.addToList(u.type.getName() + " (" + Action.STEALTH.getName() + ")", -cost, expenseList);
                         return i - cost;
                     });
                 });
@@ -216,18 +217,34 @@ public class EnergyManager extends LevelUIContainer implements Writable {
             updateDisplay(thisTeam);
         }
         AtomicInteger i = new AtomicInteger();
-        lineItems.sort(Comparator.naturalOrder());
-        lineItems.forEach(s -> {
+        incomeList.sort(Comparator.naturalOrder());
+        incomeList.forEach(s -> {
             i.getAndIncrement();
             if (s.income == 0)
                 return;
-            if (s.income < 0 && costLineItems.isEmpty())
-                i.set(1);
-            (s.income > 0 ? incomeLineItemsScroll : costLineItemsScroll).addRenderables((r, b) -> {
-                (s.income > 0 ? incomeLineItems : costLineItems).add(new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
+            incomeLineItemsScroll.addRenderables((r, b) -> {
+                incomeLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
                     new RenderElement(r2, RenderOrder.LEVEL_UI,
                             new UIBox(9, 1f).setColourTheme(UIColourTheme.DARK_GRAY).setCorner(0.25f),
-                            new FixedTextRenderer(s.name, 0.6f, TEXT_COLOUR)
+                            new FixedTextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
+                                    .setBold(true).setTextAlign(TextAlign.LEFT).translate(0.3f, 0.3f),
+                            new FixedTextRenderer(numberText(s.income), 0.7f, numberColour(s.income))
+                                    .setBold(true).setTextAlign(TextAlign.RIGHT).translate(9 - 0.3f, 0.25f)
+                    );
+                }));
+            });
+        });
+        i.set(0);
+        expenseList.sort(Comparator.<LineItemData>naturalOrder().reversed());
+        expenseList.forEach(s -> {
+            i.getAndIncrement();
+            if (s.income == 0)
+                return;
+            costLineItemsScroll.addRenderables((r, b) -> {
+                costLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
+                    new RenderElement(r2, RenderOrder.LEVEL_UI,
+                            new UIBox(9, 1f).setColourTheme(UIColourTheme.DARK_GRAY).setCorner(0.25f),
+                            new FixedTextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
                                     .setBold(true).setTextAlign(TextAlign.LEFT).translate(0.3f, 0.3f),
                             new FixedTextRenderer(numberText(s.income), 0.7f, numberColour(s.income))
                                     .setBold(true).setTextAlign(TextAlign.RIGHT).translate(9 - 0.3f, 0.25f)
@@ -279,7 +296,15 @@ public class EnergyManager extends LevelUIContainer implements Writable {
         return (amount <= 0 ? "" : "+") + amount;
     }
 
+    public static String numberText(float amount, int decimals) {
+        return (amount <= 0 ? "" : "+") + MathUtil.floatToString(amount, decimals);
+    }
+
     public static Color numberColour(int amount) {
+        return amount == 0 ? TEXT_COLOUR : amount < 0 ? UITextLabel.RED_TEXT_COLOUR : UITextLabel.GREEN_TEXT_COLOUR;
+    }
+
+    public static Color numberColour(float amount) {
         return amount == 0 ? TEXT_COLOUR : amount < 0 ? UITextLabel.RED_TEXT_COLOUR : UITextLabel.GREEN_TEXT_COLOUR;
     }
 
@@ -295,11 +320,24 @@ public class EnergyManager extends LevelUIContainer implements Writable {
 
     private static class LineItemData implements Comparable<LineItemData> {
         public final String name;
-        public final int income;
+        public int income;
+        public int count;
 
-        public LineItemData(String name, int income) {
+        public LineItemData(String name, int income, int count) {
             this.name = name;
             this.income = income;
+            this.count = count;
+        }
+
+        public static void addToList(String name, int income, ArrayList<LineItemData> list) {
+            for (LineItemData data : list) {
+                if (data.name.equals(name)) {
+                    data.income += income;
+                    data.count++;
+                    return;
+                }
+            }
+            list.add(new LineItemData(name, income, 1));
         }
 
         @Override

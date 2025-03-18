@@ -23,14 +23,18 @@ public class GameSave implements Serializable, LoadedFromSave {
     public final HashMap<UnitTeam, PlayerTeam> teams;
     public final UnitTeam activeTeam;
     public final HashMap<UnitTeam, Integer> availableMap;
+    public final HashMap<UnitTeam, Boolean> bots;
+    public final HashMap<UnitTeam, Integer> botDestroyedUnitCount = new HashMap<>();
     public final byte[] tiles;
     public final String name;
+    public final float botDifficulty;
 
     public GameSave(Level level, String name) {
         this.name = name;
         seed = level.seed;
         levelWidth = level.tilesX;
         levelHeight = level.tilesY;
+        botDifficulty = level.botDifficulty;
         try {
             ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
             DataOutputStream w = new DataOutputStream(byteOutput);
@@ -48,6 +52,11 @@ public class GameSave implements Serializable, LoadedFromSave {
         level.unitSet.forEach(u -> unitData.add(new UnitData(u)));
         activeTeam = level.getActiveTeam();
         availableMap = new HashMap<>(level.levelRenderer.energyManager.availableMap);
+        bots = level.bots;
+        for (UnitTeam team : bots.keySet()) {
+            if (bots.get(team))
+                botDestroyedUnitCount.put(team, level.botHandlerMap.get(team).getDestroyedUnits());
+        }
     }
 
     public void loadLevel(Level level) {
@@ -98,6 +107,10 @@ public class GameSave implements Serializable, LoadedFromSave {
         level.levelRenderer.energyManager.availableMap = new HashMap<>(availableMap);
         level.levelRenderer.energyManager.updateDisplay(level.getThisTeam());
         level.levelRenderer.pauseMenu.saveFileNameBox.setText(name);
+        for (UnitTeam team : bots.keySet()) {
+            if (bots.get(team))
+                level.botHandlerMap.get(team).loadDestroyedUnits(botDestroyedUnitCount.get(team));
+        }
     }
 
     @Override

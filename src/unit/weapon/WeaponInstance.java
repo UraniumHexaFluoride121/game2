@@ -1,12 +1,14 @@
 package unit.weapon;
 
+import level.Level;
 import unit.Unit;
+import unit.UnitData;
 import unit.type.UnitType;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public class WeaponInstance {
     public final boolean requiresAmmo, runsAnim;
@@ -14,7 +16,7 @@ public class WeaponInstance {
     public int ammo;
     public final HashMap<UnitType, AttackData> data;
     public final ProjectileType projectileType;
-    public final Function<Unit, HashSet<Point>> tilesInFiringRange;
+    public final BiFunction<UnitData, Level, HashSet<Point>> tilesInFiringRange;
     public final WeaponTemplate template;
 
     public WeaponInstance(WeaponTemplate template) {
@@ -28,20 +30,20 @@ public class WeaponInstance {
         tilesInFiringRange = template.tilesInFiringRange;
     }
 
-    public float getDamageAgainst(Unit thisUnit, Unit other) {
-        float damageLeft = Math.max(0.1f, thisUnit.firingTempHP / thisUnit.type.hitPoints);
-        float shieldDamage = getShieldDamage(thisUnit, other, damageLeft);
-        damageLeft = newDamageLeft(damageLeft, shieldDamage, other.shieldFiringTempHP);
-        float hullDamage = getHullDamage(thisUnit, other, damageLeft);
-        return hullDamage + Math.min(other.shieldFiringTempHP, shieldDamage);
+    public float getDamageAgainst(FiringData firingData) {
+        float damageLeft = 0.25f + 0.75f * (firingData.thisData().hitPoints / firingData.thisData().type.hitPoints);
+        float shieldDamage = getShieldDamage(firingData, damageLeft);
+        damageLeft = newDamageLeft(damageLeft, shieldDamage, firingData.otherData().shieldHP);
+        float hullDamage = getHullDamage(firingData, damageLeft);
+        return hullDamage + Math.min(firingData.otherData().shieldHP, shieldDamage);
     }
 
-    public float getHullDamage(Unit thisUnit, Unit other, float damageLeft) {
-        return data.get(other.type).damage * damageLeft * other.getTileDamageMultiplier();
+    public float getHullDamage(FiringData firingData, float damageLeft) {
+        return data.get(firingData.otherData().type).damage * damageLeft * firingData.getDamageMultiplier();
     }
 
-    public float getShieldDamage(Unit thisUnit, Unit other, float damageLeft) {
-        return data.get(other.type).shieldDamage * other.getTileDamageMultiplier() * damageLeft;
+    public float getShieldDamage(FiringData firingData, float damageLeft) {
+        return data.get(firingData.otherData().type).shieldDamage * firingData.getDamageMultiplier() * damageLeft;
     }
 
     private float newDamageLeft(float damageLeft, float damageDealt, float maxAvailable) {
@@ -50,20 +52,21 @@ public class WeaponInstance {
         return damageLeft * (1 - Math.min(damageDealt, maxAvailable) / damageDealt);
     }
 
-    public void fire(Unit thisUnit, Unit other) {
+    public void fire(FiringData firingData) {
         if (requiresAmmo)
-            ammo--;
-        float damageLeft = Math.max(0.1f, thisUnit.firingTempHP / thisUnit.type.hitPoints);
-        float shieldDamage = getShieldDamage(thisUnit, other, damageLeft);
-        damageLeft = newDamageLeft(damageLeft, shieldDamage, other.shieldFiringTempHP);
-        float hullDamage = getHullDamage(thisUnit, other, damageLeft);
-        other.firingTempHP -= Math.min(other.firingTempHP, hullDamage);
+            firingData.thisData().weaponAmmo--;
+        float damageLeft = Math.max(0.1f, firingData.thisData().hitPoints / firingData.thisData().type.hitPoints);
+        float shieldDamage = getShieldDamage(firingData, damageLeft);
+        damageLeft = newDamageLeft(damageLeft, shieldDamage, firingData.otherData().shieldHP);
+        float hullDamage = getHullDamage(firingData, damageLeft);
 
-        if (other.firingTempHP < 0.05f)
-            other.firingTempHP = 0;
-        other.shieldFiringTempHP -= Math.min(other.shieldFiringTempHP, shieldDamage);
-        if (other.shieldFiringTempHP < 0.05f)
-            other.shieldFiringTempHP = 0;
+        UnitData otherData = firingData.otherData();
+        otherData.hitPoints = Math.max(0, otherData.hitPoints - hullDamage);
+        if (otherData.hitPoints < 0.05f)
+            otherData.hitPoints = 0;
+        otherData.shieldHP = Math.max(0, otherData.shieldHP - shieldDamage);
+        if (otherData.shieldHP < 0.05f)
+            otherData.shieldHP = 0;
     }
 
     public enum FireAnimState {

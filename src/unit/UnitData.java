@@ -8,6 +8,8 @@ import network.Writable;
 import save.LoadedFromSave;
 import unit.action.Action;
 import unit.type.UnitType;
+import unit.weapon.FiringData;
+import unit.weapon.WeaponInstance;
 
 import java.awt.*;
 import java.io.*;
@@ -17,15 +19,15 @@ import java.util.HashSet;
 public class UnitData implements Writable, Serializable, LoadedFromSave {
     @Serial
     private static final long serialVersionUID = 1L;
-    public final Point pos;
+    public Point pos;
     public transient UnitType type;
     public final String typeName;
     public final UnitTeam team;
-    public final float hitPoints, shieldHP;
+    public float hitPoints, shieldHP;
     public final int captureProgress;
     public transient HashSet<Action> performedActions = new HashSet<>();
     public final HashSet<String> performedActionNames = new HashSet<>();
-    public final ArrayList<Integer> weaponAmmo = new ArrayList<>();
+    public int weaponAmmo = -1;
     public final boolean stealthMode;
 
     public UnitData(Unit unit) {
@@ -33,14 +35,14 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         type = unit.type;
         typeName = type.getInternalName();
         team = unit.team;
-        hitPoints = unit.hitPoints;
-        shieldHP = unit.shieldHP;
+        hitPoints = unit.firingTempHP;
+        shieldHP = unit.shieldFiringTempHP;
         captureProgress = unit.getCaptureProgress();
         performedActions.addAll(unit.getPerformedActions());
         performedActions.forEach(a -> performedActionNames.add(a.getInternalName()));
-        unit.weapons.forEach(w -> {
-            weaponAmmo.add(w.ammo);
-        });
+        WeaponInstance ammoWeapon = unit.getAmmoWeapon();
+        if (ammoWeapon != null)
+            weaponAmmo = ammoWeapon.ammo;
         stealthMode = unit.stealthMode;
     }
 
@@ -53,7 +55,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         shieldHP = reader.readFloat();
         captureProgress = reader.readInt();
         PacketReceiver.readCollection(performedActions, () -> Action.getByName(reader.readUTF()), reader);
-        PacketReceiver.readCollection(weaponAmmo, reader::readInt, reader);
+        weaponAmmo = reader.readInt();
         performedActions.forEach(a -> performedActionNames.add(a.getInternalName()));
         stealthMode = reader.readBoolean();
     }
@@ -67,7 +69,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         w.writeFloat(shieldHP);
         w.writeInt(captureProgress);
         PacketWriter.writeCollection(performedActions, v -> w.writeUTF(v.toString()), w);
-        PacketWriter.writeCollection(weaponAmmo, w::writeInt, w);
+        w.writeInt(weaponAmmo);
         w.writeBoolean(stealthMode);
     }
 

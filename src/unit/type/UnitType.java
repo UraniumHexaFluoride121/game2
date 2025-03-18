@@ -82,6 +82,9 @@ public abstract class UnitType implements NamedEnum {
         shipClass = getShipClass();
         actionCostSetter.accept(actionCost, perTurnActionCost);
         unitCharacteristicSetter.accept(unitCharacteristics);
+    }
+
+    private void init() {
         for (UnitTeam team : UnitTeam.values()) {
             tileRenderers.put(team, new HashMap<>());
             images.put(team, new HashMap<>());
@@ -130,8 +133,9 @@ public abstract class UnitType implements NamedEnum {
         writer.writeUTF(name);
     }
 
-    public static void generateWeapons() {
+    public static void initAll() {
         for (UnitType type : ORDERED_UNIT_TYPES) {
+            type.init();
             type.weaponGenerator.accept(type.weapons);
         }
     }
@@ -169,6 +173,16 @@ public abstract class UnitType implements NamedEnum {
 
     public String getInternalName() {
         return name;
+    }
+
+    public boolean canPerformAction(Action a) {
+        if (a == Action.CAPTURE && !canCapture)
+            return false;
+        for (Action action : actions) {
+            if (a == action)
+                return true;
+        }
+        return getActionCost(a).isPresent() || getPerTurnActionCost(a).isPresent();
     }
 
     @Override
