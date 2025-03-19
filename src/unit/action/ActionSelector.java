@@ -5,9 +5,13 @@ import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
+import level.energy.EnergyCostDisplay;
 import render.GameRenderer;
 import render.Renderable;
-import render.ui.implementation.EnergyCostDisplay;
+import render.renderables.text.FixedTextRenderer;
+import render.renderables.text.TextAlign;
+import render.ui.UIColourTheme;
+import render.ui.types.UIBox;
 import unit.Unit;
 import unit.UnitData;
 
@@ -18,6 +22,7 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static render.ui.types.UITextLabel.*;
 import static unit.action.Action.*;
 
 public class ActionSelector implements Renderable, Deletable, RegisteredButtonInputReceiver {
@@ -28,6 +33,10 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     public TreeMap<Action, ActionData> actionMap = new TreeMap<>(Comparator.comparingInt(Action::getOrder));
     private final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay(false), energyCostPerTurnDisplay = new EnergyCostDisplay(true);
     private Supplier<Boolean> isVisible;
+
+    private final UIBox actionUnusableBox = new UIBox(4f, 1).setCorner(.25f).setColourTheme(UIColourTheme.DARK_GRAY);
+    private final FixedTextRenderer actionUnusableText = new FixedTextRenderer("Unavailable", .6f, TEXT_COLOUR)
+            .setBold(true).setTextAlign(TextAlign.CENTER);
 
     private Unit unit;
 
@@ -48,24 +57,32 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         if (!isVisible.get())
             return;
         actionMap.forEach((a, d) -> {
-            if (!d.clickHandler.isDefault() && d.enabled) {
-                unit.type.getActionCost(a).ifPresent(cost -> {
-                    Optional<Integer> perTurnActionCost = unit.type.getPerTurnActionCost(a);
-                    perTurnActionCost.ifPresent(perTurnCost -> {
-                        energyCostPerTurnDisplay.setCost(unit.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
-                        energyCostPerTurnDisplay.renderToEnergyManager(unit.getLevel());
-                        GameRenderer.renderOffset(0, -4.5f, g, () -> {
-                            energyCostPerTurnDisplay.render(g);
+            if (!d.clickHandler.isDefault()) {
+                if (d.type == ActionIconType.ENABLED) {
+                    unit.getActionCost(a).ifPresent(cost -> {
+                        Optional<Integer> perTurnActionCost = unit.getPerTurnActionCost(a);
+                        perTurnActionCost.ifPresent(perTurnCost -> {
+                            energyCostPerTurnDisplay.setCost(unit.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
+                            energyCostPerTurnDisplay.renderToEnergyManager(unit.getLevel());
+                            GameRenderer.renderOffset(0, -4.5f, g, () -> {
+                                energyCostPerTurnDisplay.render(g);
+                            });
+                        });
+                        if (unit.removeActionEnergyCost(a))
+                            return;
+                        energyCostDisplay.setCost(-cost, unit.getLevel());
+                        energyCostDisplay.renderToEnergyManager(unit.getLevel());
+                        GameRenderer.renderOffset(0, perTurnActionCost.isPresent() ? -5.8f : -4.5f, g, () -> {
+                            energyCostDisplay.render(g);
                         });
                     });
-                    if (unit.removeActionEnergyCost(a))
-                        return;
-                    energyCostDisplay.setCost(-cost, unit.getLevel());
-                    energyCostDisplay.renderToEnergyManager(unit.getLevel());
-                    GameRenderer.renderOffset(0, perTurnActionCost.isPresent() ? -5.8f : -4.5f, g, () -> {
-                        energyCostDisplay.render(g);
+                } else if (d.type == ActionIconType.UNUSABLE) {
+                    GameRenderer.renderOffset(-2f, -4.5f, g, () -> {
+                        actionUnusableBox.render(g);
+                        g.translate(2f, 0.27f);
+                        actionUnusableText.render(g);
                     });
-                });
+                }
             }
         });
         g.translate(0, -ACTION_BUTTON_SIZE / 2 - BORDER_OFFSET * 2);
@@ -104,41 +121,46 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
 
     public void updateActions(Unit unit) {
         if (actionMap.containsKey(FIRE)) {
-            actionMap.get(FIRE).enabled = !unit.tilesInFiringRange(unit.getLevel().currentVisibility, new UnitData(unit), true).isEmpty() && !unit.stealthMode;
+            actionMap.get(FIRE).type = !unit.tilesInFiringRange(unit.getLevel().currentVisibility, new UnitData(unit), true).isEmpty() &&
+                    !unit.stealthMode ? ActionIconType.ENABLED : unit.hasPerformedAction(FIRE) ? ActionIconType.DISABLED : ActionIconType.UNUSABLE;
         }
         if (actionMap.containsKey(MOVE)) {
-            actionMap.get(MOVE).enabled = true;
+            actionMap.get(MOVE).type = ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(STEALTH)) {
-            actionMap.get(STEALTH).enabled = true;
+            actionMap.get(STEALTH).type = ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(SHIELD_REGEN)) {
-            actionMap.get(SHIELD_REGEN).enabled = unit.shieldHP < unit.type.shieldHP;
+            actionMap.get(SHIELD_REGEN).type = unit.shieldHP < unit.type.shieldHP ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
         }
         if (unit.canCapture()) {
             addActionEnabled(CAPTURE, unit);
-            actionMap.get(CAPTURE).enabled = !unit.hasPerformedAction(CAPTURE);
+            actionMap.get(CAPTURE).type = !unit.hasPerformedAction(CAPTURE) ? ActionIconType.ENABLED : ActionIconType.DISABLED;
         } else {
             removeAction(CAPTURE);
         }
         actionMap.forEach((a, d) -> {
             if (unit.hasPerformedAction(a))
-                d.enabled = false;
+                d.type = ActionIconType.DISABLED;
         });
     }
 
     public void addAction(Action action, Unit unit) {
-        actionMap.putIfAbsent(action, new ActionData(() -> {
-            if (unit.getLevel().levelRenderer.energyManager.canAfford(unit, action, false))
+        ActionData data = new ActionData(ActionIconType.DISABLED);
+        actionMap.putIfAbsent(action, data);
+        data.init(() -> {
+            if (data.type == ActionIconType.ENABLED && unit.getLevel().levelRenderer.energyManager.canAfford(unit, action, false))
                 unit.onActionSelect(action);
-        }, false));
+        });
     }
 
     public void addActionEnabled(Action action, Unit unit) {
-        actionMap.putIfAbsent(action, new ActionData(() -> {
-            if (unit.getLevel().levelRenderer.energyManager.canAfford(unit, action, false))
+        ActionData data = new ActionData(ActionIconType.ENABLED);
+        actionMap.putIfAbsent(action, data);
+        data.init(() -> {
+            if (data.type == ActionIconType.ENABLED && unit.getLevel().levelRenderer.energyManager.canAfford(unit, action, false))
                 unit.onActionSelect(action);
-        }, true));
+        });
     }
 
     public void removeAction(Action action) {
@@ -182,8 +204,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
             return;
         AtomicInteger i = new AtomicInteger();
         actionMap.forEach((a, d) -> {
-            if (d.enabled)
-                d.clickHandler.buttonPressed(pos, isInsideAction(i.get(), pos), blocked, type);
+            d.clickHandler.buttonPressed(pos, isInsideAction(i.get(), pos), blocked, type);
             i.getAndIncrement();
         });
     }
@@ -193,8 +214,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         if (!isVisible.get())
             return;
         actionMap.forEach((a, d) -> {
-            if (d.enabled)
-                d.clickHandler.buttonReleased(pos, inside, blocked, type);
+            d.clickHandler.buttonReleased(pos, inside, blocked, type);
         });
     }
 

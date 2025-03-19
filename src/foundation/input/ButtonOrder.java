@@ -9,6 +9,7 @@ public enum ButtonOrder {
     PAUSE_MENU,
     UNIT_INFO_SCREEN,
 
+    MAP,
     LEVEL_UI,
     ACTION_SELECTOR,
     HEXAGON,

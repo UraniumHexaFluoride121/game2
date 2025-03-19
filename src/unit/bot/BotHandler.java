@@ -82,7 +82,7 @@ public class BotHandler implements Deletable, Tickable {
                 }
                 if (u.hasPerformedAction(Action.FIRE) || !u.type.canPerformAction(Action.FIRE) || u.stealthMode)
                     return;
-                if (energyCost + u.type.getActionCost(Action.FIRE).get() > energyAvailable)
+                if (energyCost + u.getActionCost(Action.FIRE).get() > energyAvailable)
                     return;
                 UnitData data = new UnitData(u);
                 data.pos = p;
@@ -99,7 +99,7 @@ public class BotHandler implements Deletable, Tickable {
                         if (otherWeapon != null)
                             damageDealt -= otherWeapon.getDamageAgainst(reverse);
                     }
-                    v = noise() * (d.get(p) - current + damageDealt * 30) / (energyCost + 2 + u.type.getActionCost(Action.FIRE).orElse(0));
+                    v = noise() * (d.get(p) - current + damageDealt * 30) / (energyCost + 2 + u.getActionCost(Action.FIRE).orElse(0));
                     if (t.hasStructure() && level.samePlayerTeam(team, t.structure.team) && other.canCapture())
                         v += other.getCaptureProgress() > 0 ? 10 : 2;
                     if (v > value.get()) {
@@ -115,7 +115,7 @@ public class BotHandler implements Deletable, Tickable {
             });
         });
         thisTeamUnits.forEach(u -> {
-            if (u.hasPerformedAction(Action.FIRE) || !u.type.canPerformAction(Action.FIRE) || u.type.getActionCost(Action.FIRE).orElse(Integer.MAX_VALUE) > energyAvailable || u.stealthMode)
+            if (u.hasPerformedAction(Action.FIRE) || !u.type.canPerformAction(Action.FIRE) || u.getActionCost(Action.FIRE).orElse(Integer.MAX_VALUE) > energyAvailable || u.stealthMode)
                 return;
             HashSet<Point> firingTiles = u.tilesInFiringRange(visibility, new UnitData(u), true);
             for (Point firingTile : firingTiles) {
@@ -130,7 +130,7 @@ public class BotHandler implements Deletable, Tickable {
                         damageDealt -= otherWeapon.getDamageAgainst(reverse);
                 }
                 Tile t = level.getTile(firingTile);
-                float v = (damageDealt * 30) / (u.type.getActionCost(Action.FIRE).orElse(0));
+                float v = (damageDealt * 30) / (u.getActionCost(Action.FIRE).orElse(0));
                 if (t.hasStructure() && level.samePlayerTeam(team, t.structure.team) && other.canCapture())
                     v += other.getCaptureProgress() > 0 ? 10 : 2;
                 v *= noise();
@@ -146,7 +146,7 @@ public class BotHandler implements Deletable, Tickable {
         thisTeamUnits.forEach(u -> {
             if (u.hasPerformedAction(Action.SHIELD_REGEN) || !u.type.canPerformAction(Action.SHIELD_REGEN))
                 return;
-            int cost = u.type.getActionCost(Action.SHIELD_REGEN).get();
+            int cost = u.getActionCost(Action.SHIELD_REGEN).get();
             if (cost > energyAvailable)
                 return;
             float regen = Math.min(u.type.shieldRegen, u.type.shieldHP - u.shieldHP);
@@ -158,7 +158,7 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (u.hasPerformedAction(Action.CAPTURE) || !u.type.canPerformAction(Action.CAPTURE) || u.type.getActionCost(Action.CAPTURE).orElse(Integer.MAX_VALUE) > energyAvailable)
+            if (u.hasPerformedAction(Action.CAPTURE) || !u.type.canPerformAction(Action.CAPTURE) || u.getActionCost(Action.CAPTURE).orElse(Integer.MAX_VALUE) > energyAvailable)
                 return;
             Tile t = level.getTile(u.pos);
             if (t.hasStructure() && t.structure.canBeCaptured && !level.samePlayerTeam(team, t.structure.team)) {
@@ -181,7 +181,7 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (u.hasPerformedAction(Action.STEALTH) || !u.type.canPerformAction(Action.STEALTH) || u.type.getActionCost(Action.STEALTH).orElse(Integer.MAX_VALUE) > energyAvailable)
+            if (u.hasPerformedAction(Action.STEALTH) || !u.type.canPerformAction(Action.STEALTH) || u.getActionCost(Action.STEALTH).orElse(Integer.MAX_VALUE) > energyAvailable)
                 return;
             int enemyCount = 0;
             for (Point p : level.tileSelector.tilesInRadius(u.pos, 6)) {
@@ -191,9 +191,9 @@ public class BotHandler implements Deletable, Tickable {
             }
             float v;
             if (u.stealthMode) {
-                v = noise() * 0.3f * (3 * enemyCount + 10 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.type.getActionCost(Action.STEALTH).orElse(0) + 5) * (float) Math.log(u.type.getPerTurnActionCost(Action.STEALTH).orElse(1) + 1);
+                v = noise() * 0.3f * (3 * enemyCount + 10 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.getActionCost(Action.STEALTH).orElse(0) + 5) * (float) Math.log(u.getPerTurnActionCost(Action.STEALTH).orElse(1) + 1);
             } else
-                v = noise() * (28 - 4 * enemyCount - 5 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.type.getActionCost(Action.STEALTH).orElse(0) + 5 * u.type.getPerTurnActionCost(Action.STEALTH).orElse(0) + 1);
+                v = noise() * (28 - 4 * enemyCount - 5 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.getActionCost(Action.STEALTH).orElse(0) + 5 * u.getPerTurnActionCost(Action.STEALTH).orElse(0) + 1);
             if (v > value.get() && v > 0.4f) {
                 unit.set(u);
                 action.set(Action.STEALTH);
@@ -277,12 +277,15 @@ public class BotHandler implements Deletable, Tickable {
         if (action.get() == Action.STEALTH) {
             Unit u = unit.get();
             selectUnitTile(u);
-            anim.addTask(0.8f, () -> {
+            anim.addTask(1, () -> {
                 level.levelRenderer.energyManager.canAfford(u, Action.STEALTH, true);
                 u.addPerformedAction(Action.STEALTH);
                 u.setStealthMode(!u.stealthMode, false);
                 if (level.networkState == NetworkState.SERVER)
                     level.server.sendUnitStealthPacket(u);
+                selectUnitTile(u);
+                anim.addTask(1, () -> {
+                });
             });
             return true;
         }

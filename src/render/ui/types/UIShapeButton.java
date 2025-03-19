@@ -349,4 +349,25 @@ public class UIShapeButton extends AbstractRenderElement implements RegisteredBu
         path.lineTo(cx + size, cy + size * 0.7f);
         return path;
     }
+
+    public static Shape map(UIBox b) {
+        float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.7f;
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(cx - size * 0.8f, cy - size * 0.7f);
+        path.lineTo(cx - size * 0.8f, cy + size * 0.4f);
+        path.lineTo(cx - size * 0.2f, cy + size * 0.7f);
+        path.lineTo(cx - size * 0.2f, cy - size * 0.4f);
+        path.closePath();
+        path.moveTo(cx - size * 0.3f, cy + size * 0.7f);
+        path.lineTo(cx - size * 0.3f, cy - size * 0.4f);
+        path.lineTo(cx + size * 0.3f, cy - size * 0.7f);
+        path.lineTo(cx + size * 0.3f, cy + size * 0.4f);
+        path.closePath();
+        path.moveTo(cx + size * 0.4f, cy - size * 0.7f);
+        path.lineTo(cx + size * 0.4f, cy + size * 0.4f);
+        path.lineTo(cx + size * 0.8f, cy + size * 0.7f);
+        path.lineTo(cx + size * 0.8f, cy - size * 0.4f);
+        path.closePath();
+        return path;
+    }
 }

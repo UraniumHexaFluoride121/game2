@@ -105,6 +105,16 @@ public class GameRenderer implements RenderRegister<OrderedRenderable>, Deletabl
         g.setTransform(prev);
     }
 
+    public static void clipOffset(float x, float y, Shape clip, Graphics2D g, Runnable render) {
+        Shape prevClip = g.getClip();
+        AffineTransform prev = g.getTransform();
+        g.translate(x, y);
+        g.clip(clip);
+        g.setTransform(prev);
+        render.run();
+        g.setClip(prevClip);
+    }
+
     public static void renderOffsetScaled(ObjPos pos, float scale, Graphics2D g, Runnable render) {
         renderOffsetScaled(pos.x, pos.y, scale, g, render);
     }

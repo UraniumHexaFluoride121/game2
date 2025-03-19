@@ -74,7 +74,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             multiplayer.deselect();
             connectToLan.deselect();
             loadGame.deselect();
-        }).setText("New Game").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
+        }).setText("Singleplayer").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
 
         multiplayer = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, 16 - 4 * 1, 10, 3, 1.2f, true, () -> {
@@ -150,12 +150,24 @@ public class TitleScreen implements Renderable, InputReceiver {
 
         startLocalGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 37 + 1, 3.5f - 2, 7, 1.5f, 0.7f, false, () -> {
-            MainPanel.startNewLevel(this::getNewLocalMultiplayerLevel);
-        }).setText("Start game locally").setBold().setEnabled(false);
+            if (multiplayerTabs.lastTabSelected())
+                MainPanel.startNewLevel(this::getNewLocalMultiplayerLevel);
+            else {
+                if (!multiplayerTabs.firstTabSelected()) {
+                    multiplayerTabs.selectTab(multiplayerTabs.getSelectedTab() - 1);
+                    updateMultiplayerConnectButtons();
+                }
+            }
+        }).setBold().setEnabled(false);
         startLanGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 37 + 9, 3.5f - 2, 8, 1.5f, 0.7f, false, () -> {
-            MainPanel.startNewLevel(this::getNewServerMultiplayerLevel);
-        }).setText("Start game on LAN").setBold().setEnabled(false);
+            if (multiplayerTabs.lastTabSelected())
+                MainPanel.startNewLevel(this::getNewServerMultiplayerLevel);
+            else {
+                multiplayerTabs.selectTab(multiplayerTabs.getSelectedTab() + 1);
+                updateMultiplayerConnectButtons();
+            }
+        }).setBold().setEnabled(false);
         gameCannotBeStarted = new UITextDisplayBox(renderer, RenderOrder.TITLE_SCREEN_BUTTONS,
                 Renderable.right() - 37 + 1, 3.5f - 2, 16, 1.5f, 0.7f)
                 .setBold().setEnabled(false).setColourTheme(UIColourTheme.DEEP_RED);
@@ -164,7 +176,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                 .addTab(4.65f, "Map Layout", (r, b) -> {
                     UIButton seed = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                             1, 12, 7, 1.5f, 1f, true)
-                            .setColourTheme(GREEN_SELECTED).noDeselect().select().setText("From seed").setBold();
+                            .setColourTheme(GREEN_SELECTED).noDeselect().select().setText("Generated").setBold();
                     widthSelector = new UINumberSelector(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                             1, 7.5f, 1.5f, 2.5f, 10, 45, 20);
                     RenderElement widthLabel = new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
@@ -227,7 +239,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                                     .updateTextCenter("Bot Difficulty:")
                                     .translate(0.7f, 13.5f)
                     );
-                }).setEnabled(false);
+                }).setOnNewTabSelected(this::updateMultiplayerConnectButtons).setEnabled(false);
 
         loadGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, 16 - 4 * 3, 10, 3, 1.2f, true, () -> {
@@ -263,6 +275,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             ;
         });
         loadContainer.setEnabled(false);
+        reset();
     }
 
     public void reset() {
@@ -275,6 +288,19 @@ public class TitleScreen implements Renderable, InputReceiver {
         multiplayerTabs.selectTab(0);
         updateColourSelectorVisibility();
         updateSaveFiles();
+        updateMultiplayerConnectButtons();
+    }
+
+    public void updateMultiplayerConnectButtons() {
+        if (multiplayerTabs.lastTabSelected()) {
+            startLanGame.setText("Start game on LAN");
+            startLocalGame.setText("Start game locally");
+            startLocalGame.setColourTheme(LIGHT_BLUE);
+        } else {
+            startLanGame.setText("Next");
+            startLocalGame.setText("Back");
+            startLocalGame.setColourTheme(multiplayerTabs.getSelectedTab() == 0 ? GRAYED_OUT : LIGHT_BLUE);
+        }
     }
 
     private void createColourSelectorButtons() {

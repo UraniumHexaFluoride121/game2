@@ -22,6 +22,7 @@ public enum RenderOrder {
 
     //Level menus / UI
     LEVEL_UI,
+    MAP,
     UNIT_INFO_SCREEN_BACKGROUND,
     UNIT_INFO_SCREEN,
     PAUSE_MENU_BACKGROUND,

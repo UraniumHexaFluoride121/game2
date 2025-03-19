@@ -7,6 +7,8 @@ import foundation.math.ObjPos;
 import foundation.tick.RegisteredTickable;
 import foundation.tick.TickOrder;
 import level.Level;
+import level.structure.StructureType;
+import level.tile.TileType;
 import mainScreen.TitleScreen;
 import network.Client;
 import render.GameRenderer;
@@ -14,8 +16,15 @@ import render.RenderOrder;
 import render.Renderable;
 import render.anim.LerpAnimation;
 import render.renderables.RenderElement;
+import render.renderables.text.FixedTextRenderer;
+import render.renderables.text.TextAlign;
+import render.texture.BackgroundTexture;
+import render.texture.ImageSequenceGroup;
 import render.texture.ResourceLocation;
+import render.ui.UIColourTheme;
+import render.ui.implementation.UIHitPointBar;
 import render.ui.types.UIButton;
+import render.ui.types.UITextLabel;
 import save.SaveManager;
 import unit.bot.BotTileDataType;
 import unit.type.UnitType;
@@ -54,27 +63,56 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public static LerpAnimation fadeScreen = new LerpAnimation(0.5f);
 
     private static final Renderable LOAD_SCREEN_IMAGE = Renderable.renderImage(new ResourceLocation("load_screen.png"), false, true, 60, true);
-    private static GameRenderer loadRenderer = new GameRenderer(MainPanel.windowTransform, null);
+    private static final GameRenderer loadRenderer = new GameRenderer(MainPanel.windowTransform, null);
+    private static final FixedTextRenderer loadText = new FixedTextRenderer("Initializing...", 1f, UITextLabel.TEXT_COLOUR_DARK)
+            .setTextAlign(TextAlign.CENTER).setBold(true);
+    private static final UIHitPointBar loadBar = new UIHitPointBar(0.1f, 16, 1, 0.15f, 1, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
+    private static boolean loadBarEnabled = false;
 
     public static boolean controlHeld = false, shiftHeld = false;
     public static boolean loaded = false, loadFadeComplete = false;
 
     public void init() {
         new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BACKGROUND, LOAD_SCREEN_IMAGE);
-        new UIButton(loadRenderer, null, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                23, 4, 14, 3, 2, false).setBold().setText("Loading...");
+        Renderable loadBarTransformed = loadBar.translate(Renderable.right() /2 - 8, 0.5f);
+        new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BUTTONS, loadText.translate(Renderable.right() / 2, 2),
+                g -> {
+                    if (loadBarEnabled)
+                        loadBarTransformed.render(g);
+                });
         fadeScreen.setReversed(true);
         fadeScreen.finish();
         Level.EXECUTOR.submit(() -> {
+            loadText.updateText("Loading units...");
             UnitType.initAll();
+            loadText.updateText("Loading main menu...");
             titleScreen = new TitleScreen();
             titleScreen.init();
             activeInputReceiver = titleScreen;
             registerTickable();
+            loadText.updateText("Loading game saves...");
             SaveManager.loadSaves();
+            loadText.updateText("Loading background textures...");
+            BackgroundTexture.init();
+            loadText.updateText("Loading tiles...");
+            TileType.init();
+            loadText.updateText("Loading projectile effects...");
+            ImageSequenceGroup.init();
+            loadText.updateText("Loading structures...");
+            StructureType.init();
+            loadText.updateText("Loading complete!");
             fadeScreen.setReversed(false);
             loaded = true;
         });
+    }
+
+    public static void setLoadBarEnabled(boolean enabled) {
+        setLoadBarProgress(0);
+        loadBarEnabled = enabled;
+    }
+
+    public static void setLoadBarProgress(float progress) {
+        loadBar.setFill(progress);
     }
 
     public static void startNewLevel(Supplier<Level> levelCreator) {

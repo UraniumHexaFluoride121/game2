@@ -1,7 +1,6 @@
-package render.ui.implementation;
+package level.energy;
 
 import level.Level;
-import level.energy.EnergyManager;
 import render.GameRenderer;
 import render.Renderable;
 import render.renderables.text.FixedTextRenderer;

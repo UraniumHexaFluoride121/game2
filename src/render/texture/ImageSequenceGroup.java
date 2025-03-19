@@ -1,5 +1,9 @@
 package render.texture;
 
+import foundation.MainPanel;
+
+import java.util.function.Supplier;
+
 public enum ImageSequenceGroup {
     BULLET_HIT(
             CachedImageSequence.BULLET_HIT_SEED_0,
@@ -22,12 +26,27 @@ public enum ImageSequenceGroup {
     );
 
     public final CachedImageSequence[] sequences;
+    private final Supplier<CachedImageSequence>[] sequenceSuppliers;
 
-    ImageSequenceGroup(CachedImageSequence... sequences) {
-        this.sequences = sequences;
+    ImageSequenceGroup(Supplier<CachedImageSequence>... sequences) {
+        sequenceSuppliers = sequences;
+        this.sequences = new CachedImageSequence[sequences.length];
     }
 
     public CachedImageSequence getRandomSequence() {
-        return sequences[(int)(Math.random() * sequences.length)];
+        return sequences[(int) (Math.random() * sequences.length)];
+    }
+
+    public static void init() {
+        ImageSequenceGroup[] values = values();
+        MainPanel.setLoadBarEnabled(true);
+        for (int i = 0; i < values.length; i++) {
+            ImageSequenceGroup type = values[i];
+            for (int j = 0; j < type.sequences.length; j++) {
+                type.sequences[j] = type.sequenceSuppliers[j].get();
+                MainPanel.setLoadBarProgress((float) i / values.length + (j + 1f) / (type.sequences.length * values.length));
+            }
+        }
+        MainPanel.setLoadBarEnabled(false);
     }
 }

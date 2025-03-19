@@ -11,10 +11,10 @@ import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class ProjectileType implements Renderable {
-    private static final ImageRenderer INFO_RAIL_GUN_BULLET = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/rail_gun_bullet/bullet_info.png"), true, true);
-    private static final ImageRenderer INFO_BULLET = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/bullet/bullet_info.png"), true, true);
-    private static final ImageRenderer INFO_MISSILE = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/missile/missile_info.png"), true, true);
-    private static final ImageRenderer INFO_PLASMA = ImageRenderer.renderImageCentered(new ResourceLocation("projectile/plasma/plasma_info.png"), true, true);
+    private static final String INFO_RAIL_GUN_BULLET = "projectile/rail_gun_bullet/bullet_info.png";
+    private static final String INFO_BULLET = "projectile/bullet/bullet_info.png";
+    private static final String INFO_MISSILE = "projectile/missile/missile_info.png";
+    private static final String INFO_PLASMA = "projectile/plasma/plasma_info.png";
 
     public static final ProjectileType FIGHTER_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
             INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
@@ -86,8 +86,8 @@ public class ProjectileType implements Renderable {
     private final Supplier<ArrayList<ProjectileSpawnPoint>> getSpawnPoints;
     public boolean renderBehind = false;
 
-    public ProjectileType(String path, float projectileWidth, ImageRenderer infoImage, float velocity, float hitWidth, float spawnWidth, float hitTime, float spawnTime, ImageSequenceGroup hitSequence, ImageSequenceGroup spawnSequence, Supplier<ArrayList<ProjectileSpawnPoint>> getSpawnPoints) {
-        this.infoImage = infoImage;
+    public ProjectileType(String path, float projectileWidth, String infoImage, float velocity, float hitWidth, float spawnWidth, float hitTime, float spawnTime, ImageSequenceGroup hitSequence, ImageSequenceGroup spawnSequence, Supplier<ArrayList<ProjectileSpawnPoint>> getSpawnPoints) {
+        this.infoImage = ImageRenderer.renderImageCentered(new ResourceLocation(infoImage), true, true);
         this.velocity = velocity;
         this.hitWidth = hitWidth;
         this.spawnWidth = spawnWidth;

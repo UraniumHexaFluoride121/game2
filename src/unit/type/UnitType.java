@@ -1,5 +1,6 @@
 package unit.type;
 
+import foundation.MainPanel;
 import foundation.NamedEnum;
 import foundation.math.ObjPos;
 import level.tile.TileType;
@@ -134,10 +135,14 @@ public abstract class UnitType implements NamedEnum {
     }
 
     public static void initAll() {
-        for (UnitType type : ORDERED_UNIT_TYPES) {
+        MainPanel.setLoadBarEnabled(true);
+        for (int i = 0; i < ORDERED_UNIT_TYPES.length; i++) {
+            UnitType type = ORDERED_UNIT_TYPES[i];
             type.init();
             type.weaponGenerator.accept(type.weapons);
+            MainPanel.setLoadBarProgress((i + 1f) / ORDERED_UNIT_TYPES.length);
         }
+        MainPanel.setLoadBarEnabled(false);
     }
 
     public Optional<Integer> getActionCost(Action action) {

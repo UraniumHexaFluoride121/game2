@@ -13,6 +13,7 @@ import render.ui.types.*;
 import unit.Unit;
 import unit.UnitPose;
 import unit.action.Action;
+import unit.action.ActionIconType;
 import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.weapon.DamageType;
@@ -83,7 +84,7 @@ public class UnitInfoScreen extends LevelUIContainer {
                     }).addTab(4, "Weapons", (r2, b2) -> {
                         new RenderElement(r2, RenderOrder.UNIT_INFO_SCREEN, new UITextLabel(27, 2.5f, false).setTextLeftBold().updateTextLeft("Weapons")
                                 .translate(2, height - 3), weaponTypeText,
-                                new UITextLabel(26, 1, false).updateTextLeft("Select a weapon to see details").setTextLeftBold().translate(1, 17),
+                                new UITextLabel(26, 1, false).updateTextLeft("Select a weapon to see details").setTextLeftBold().translate(1, height - 11.5f),
                                 new UITextLabel(17, 1, true).updateTextLeft("About weapons:").setTextLeftBold().translate(29, 8),
                                 new UITextLabel(17, 1, true).updateTextLeft("Weapon effectiveness:").setTextLeftBold().translate(29, 18),
                                 weaponTypeLabel.translate(29, 25),
@@ -244,7 +245,7 @@ public class UnitInfoScreen extends LevelUIContainer {
                 new RenderElement(r, RenderOrder.UNIT_INFO_SCREEN, ((Renderable) g -> {
                     GameRenderer.renderOffset(1, 1, g, () -> {
                         GameRenderer.renderScaled(3 / Action.ACTION_BUTTON_SIZE, g, () -> {
-                            action.renderIcon(g, true, ButtonState.DEFAULT);
+                            action.renderIcon(g, ActionIconType.ENABLED, ButtonState.DEFAULT);
                         });
                     });
                     GameRenderer.renderOffset((44 - 12) / 2f, 3.8f, g, () -> {

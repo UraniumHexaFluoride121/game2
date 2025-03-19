@@ -377,7 +377,7 @@ public class FiringRenderer extends AbstractRenderElement {
             this.x = x;
             this.y = y;
             this.type = type;
-            shield = new ImageSequenceAnim(CachedImageSequence.SHIELD, type.firingAnimShieldWidth, (float) (0.1f + Math.random() * 0.07f)).renderLastWhenFinished();
+            shield = new ImageSequenceAnim(CachedImageSequence.SHIELD.get(), type.firingAnimShieldWidth, (float) (0.1f + Math.random() * 0.07f)).renderLastWhenFinished();
             shield.finish();
             if (fireAnimState == WeaponInstance.FireAnimState.EMPTY)
                 unit.end();

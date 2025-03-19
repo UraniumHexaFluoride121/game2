@@ -39,6 +39,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 
 import static level.tile.Tile.*;
 import static unit.action.Action.*;
@@ -833,5 +834,13 @@ public class Unit implements Deletable, Tickable {
 
     public FiringData getCurrentFiringData(Unit otherUnit) {
         return new FiringData(new UnitData(this), new UnitData(otherUnit), weapons, level);
+    }
+
+    public Optional<Integer> getActionCost(Action action) {
+        return type.getActionCost(action);
+    }
+
+    public Optional<Integer> getPerTurnActionCost(Action action) {
+        return type.getPerTurnActionCost(action);
     }
 }

@@ -104,6 +104,10 @@ public class UIBox implements Renderable {
         };
     }
 
+    public Shape getShape() {
+        return box;
+    }
+
     public enum BoxShape {
         RECTANGLE_ALL_CORNERS_CUT((width, height, corner) -> new Polygon(
                 new int[]{

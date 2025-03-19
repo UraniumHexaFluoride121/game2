@@ -95,6 +95,7 @@ public class Level implements Renderable, Deletable, RegisteredTickable {
             }
         }
         levelRenderer = new LevelRenderer(this);
+        levelRenderer.createRenderers();
         this.bots = bots;
         bots.forEach((team, isBot) -> {
             if (isBot) {

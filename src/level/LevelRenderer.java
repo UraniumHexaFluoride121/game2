@@ -37,6 +37,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.function.BiConsumer;
 
 import static level.tile.Tile.*;
 
@@ -62,7 +63,6 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         levelUIRenderer = new GameRenderer(MainPanel.windowTransform, null);
         firingAnimRenderer = new GameRenderer(MainPanel.windowTransform, null);
         topUIRenderer = new GameRenderer(MainPanel.windowTransform, null);
-        createRenderers();
     }
 
     public UIConfirm confirm = null;
@@ -74,11 +74,12 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
     public UIButton exitActionButton = null;
     public UnitInfoScreen unitInfoScreen = null;
     public EnergyManager energyManager = null;
-    public UIShapeButton pauseMenuButton = null;
+    public UIShapeButton pauseMenuButton = null, mapButton = null;
     public PauseMenu pauseMenu = null;
+    public MapUI mapUI = null;
 
-    private void createRenderers() {
-        createTiles();
+    public void createRenderers() {
+        borderImage = createTiles(Tile.TILE_SIZE, (g, t) -> t.renderTile(g, BORDER_RENDERER));
         new BackgroundRenderer(backgroundRenderer, RenderOrder.BACKGROUND, this::getCameraPosition).setTextures(BackgroundTexture.NORMAL_1);
 
         //Terrain
@@ -192,12 +193,21 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
         firingRenderer = new FiringRenderer(firingAnimRenderer, RenderOrder.BACKGROUND, level);
 
+        mapButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.MAP, ButtonOrder.MAP,
+                36.5f, Renderable.top() - 2.5f, 2, 2, false, level)
+                .setShape(UIShapeButton::map).setOnClick(() -> {
+                    mapUI.setEnabled(true);
+                });
+        mapUI = new MapUI(levelUIRenderer, level.buttonRegister, level);
+        mapUI.setEnabled(false);
+
         unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, level);
         unitInfoScreen.setEnabled(false);
 
         energyManager = new EnergyManager(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2 - 5, Renderable.top() - 3.5f, level);
 
-        pauseMenuButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, Renderable.top() - 2.5f, 2, 2, false, level)
+        pauseMenuButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                0.5f, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::threeLines).drawShape(0.15f).setOnClick(() -> {
                     pauseMenu.setEnabled(true);
                 });
@@ -205,10 +215,10 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         pauseMenu.setEnabled(false);
     }
 
-    private void createTiles() {
-        ObjPos tilesBound = MainPanel.RENDER_WINDOW_SIZE.copy().multiply(level.tileBound.copy().divide(MainPanel.BLOCK_DIMENSIONS));
+    public BufferedImage createTiles(float tileSize, BiConsumer<Graphics2D, Tile> tileRenderer) {
+        ObjPos tilesBound = MainPanel.RENDER_WINDOW_SIZE.copy().multiply(level.tileBound.copy().divide(MainPanel.BLOCK_DIMENSIONS).multiply(tileSize / TILE_SIZE));
 
-        borderImage = new BufferedImage(tilesBound.xInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, tilesBound.yInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage borderImage = new BufferedImage(tilesBound.xInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, tilesBound.yInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = borderImage.createGraphics();
         g.translate(Tile.SCREEN_STROKE_WIDTH_MARGIN / 2f, Tile.SCREEN_STROKE_WIDTH_MARGIN / 2f);
         g.scale(MainPanel.windowTransform.getScaleX(), MainPanel.windowTransform.getScaleX());
@@ -218,11 +228,11 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         for (int x = 0; x < level.tilesX; x++) {
             for (int y = 0; y < level.tilesY; y++) {
-                level.tiles[x][y].renderTile(g, BORDER_RENDERER);
+                tileRenderer.accept(g, level.tiles[x][y]);
             }
         }
         g.dispose();
-        Renderable.transparency(borderImage, 0.1f);
+        return Renderable.transparency(borderImage, 0.1f);
     }
 
     @Override
@@ -321,6 +331,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
 
     public void setCameraInterpBlockPos(ObjPos pos) {
         ObjPos newPos = pos.copy().inverse().add(level.tileBound.copy().divide(2));
+        newPos.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
         interpCameraTo = newPos;
     }
 

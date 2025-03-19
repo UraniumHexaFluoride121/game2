@@ -8,15 +8,14 @@ import render.GameRenderer;
 import render.Renderable;
 
 import java.awt.*;
-import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import static render.Renderable.*;
+import static unit.action.ActionColour.*;
 
 public class Action implements NamedEnum, Serializable {
     private static final HashMap<String, Action> names = new HashMap<>();
@@ -29,13 +28,14 @@ public class Action implements NamedEnum, Serializable {
     public static final BasicStroke ICON_STROKE_NARROW_NON_SCALED = new BasicStroke(0.15f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     public static final BasicStroke ICON_STROKE_EXTRA_NARROW_NON_SCALED = new BasicStroke(0.04f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     public static final Color ICON_COLOUR = new Color(214, 214, 214);
+    public static final Color ICON_COLOUR_UNUSABLE = new Color(195, 195, 195);
 
     public static final Color
             MOVE_ACTION_HIGHLIGHT = new Color(122, 210, 248, 26),
             FIRE_ACTION_HIGHLIGHT = new Color(248, 122, 122, 26);
 
     public static final Action
-            MOVE = new Action("MOVE", "Move", ActionColour.BLUE, MOVE_ACTION_HIGHLIGHT, true, g -> {
+            MOVE = new Action("MOVE", "Move", BLUE, BLUE, MOVE_ACTION_HIGHLIGHT, true, g -> {
         g.drawLine(
                 scale(0.37f), scale(0.37f),
                 scale(0.75f), scale(0.75f)
@@ -56,7 +56,7 @@ public class Action implements NamedEnum, Serializable {
             "depends primarily on the speed of the unit, but, hard to navigate terrain, such as nebulae or " +
             "asteroid fields, can limit movement. The " + EnergyManager.displayName + " cost is per-tile, with " +
             "larger ship classes generally costing more to move.", 2),
-            FIRE = new Action("FIRE", "Fire", ActionColour.RED, FIRE_ACTION_HIGHLIGHT, true, g -> {
+            FIRE = new Action("FIRE", "Fire", RED, RED_UNUSABLE, FIRE_ACTION_HIGHLIGHT, true, g -> {
                 g.setStroke(ICON_STROKE_NARROW);
                 g.drawOval(
                         scale(0.25f), scale(0.25f),
@@ -82,7 +82,7 @@ public class Action implements NamedEnum, Serializable {
                     "With the exception of ranged units, firing at an enemy will lead to being counterattacked, but, " +
                     "attacking first gives you the upper hand as you'll weaken the enemy before the counterattack. " +
                     "Being on terrain with high Defence reduces all incoming damage.", 1),
-            CAPTURE = new Action("CAPTURE", "Capture", ActionColour.DARK_GREEN, FIRE_ACTION_HIGHLIGHT, false, g -> {
+            CAPTURE = new Action("CAPTURE", "Capture", DARK_GREEN, DARK_GREEN, FIRE_ACTION_HIGHLIGHT, false, g -> {
                 g.setStroke(ICON_STROKE_NARROW_NON_SCALED);
                 GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
                     g.draw(ActionShapes.FLAG);
@@ -91,7 +91,7 @@ public class Action implements NamedEnum, Serializable {
             }, "This action only appears when over the top of an enemy structure that can be captured. Capturing " +
                     "takes several turns, and each time you're attacked during a capture (not including counterattacks), " +
                     "your capture progress gets reduced. Capturing an enemy base leads to that team being eliminated.", -1),
-            SHIELD_REGEN = new Action("SHIELD_REGEN", "Regenerate Shield", ActionColour.LIGHT_BLUE, FIRE_ACTION_HIGHLIGHT, false, g -> {
+            SHIELD_REGEN = new Action("SHIELD_REGEN", "Regenerate Shield", LIGHT_BLUE, LIGHT_BLUE_UNUSABLE, FIRE_ACTION_HIGHLIGHT, false, g -> {
                 g.setStroke(ICON_STROKE_EXTRA_NARROW_NON_SCALED);
                 GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
                     g.draw(ActionShapes.SHIELD);
@@ -105,7 +105,7 @@ public class Action implements NamedEnum, Serializable {
                     "having shield HP provides several advantages over regular HP. Most notably, it allows the unit to " +
                     "take damage without suffering a loss in firepower, as damage is based only on regular HP, and remains " +
                     "unaffected when losing shield HP.", 0),
-            STEALTH = new Action("STEALTH", "Stealth", ActionColour.YELLOW, FIRE_ACTION_HIGHLIGHT, false, g -> {
+            STEALTH = new Action("STEALTH", "Stealth", YELLOW, YELLOW_UNUSABLE, FIRE_ACTION_HIGHLIGHT, false, g -> {
                 GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
                     ActionShapes.stealthIcon(g);
                 });
@@ -118,19 +118,20 @@ public class Action implements NamedEnum, Serializable {
                     "are also unable to capture structures, regardless of whether or not they're in stealth mode.", -2);
 
     private final String name, displayName;
-    private final ActionColour colour;
+    private final ActionColour colour, unusableColour;
     public final Color tileColour;
     private final Renderable iconImageRenderer;
     private final boolean scaled;
     public final String infoText;
     private final int order;
 
-    private final HashMap<ButtonState, Renderable> defaultIcons = new HashMap<>(), disabledIcons = new HashMap<>();
+    private final HashMap<ButtonState, Renderable> defaultIcons = new HashMap<>(), unusableIcons = new HashMap<>(), disabledIcons = new HashMap<>();
 
     public static final StaticHitBox buttonBox = new StaticHitBox(ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, ACTION_BUTTON_SIZE / 2);
 
-    public Action(String name, String displayName, ActionColour colour, Color tileColour, boolean scaled, Renderable iconImageRenderer, String infoText, int order) {
+    public Action(String name, String displayName, ActionColour colour, ActionColour unusableColour, Color tileColour, boolean scaled, Renderable iconImageRenderer, String infoText, int order) {
         this.displayName = displayName;
+        this.unusableColour = unusableColour;
         this.infoText = infoText;
         this.order = order;
         names.put(name, this);
@@ -140,27 +141,30 @@ public class Action implements NamedEnum, Serializable {
         this.scaled = scaled;
         this.iconImageRenderer = iconImageRenderer;
         for (ButtonState state : ButtonState.values()) {
-            defaultIcons.put(state, Renderable.renderImage(createImage(state, true), false, false, -1));
-        }
-        for (ButtonState state : ButtonState.values()) {
-            disabledIcons.put(state, Renderable.renderImage(createImage(state, false), false, false, -1));
+            defaultIcons.put(state, Renderable.renderImage(createImage(state, ActionIconType.ENABLED), false, false, -1));
+            unusableIcons.put(state, Renderable.renderImage(createImage(state, ActionIconType.UNUSABLE), false, false, -1));
+            disabledIcons.put(state, Renderable.renderImage(createImage(state, ActionIconType.DISABLED), false, false, -1));
         }
     }
 
     public void render(Graphics2D g, ActionData data) {
         float offset = (ACTION_BUTTON_SIZE) / 2;
         g.translate(-offset, -offset);
-        if (data.enabled) {
-            defaultIcons.get(data.clickHandler.state).render(g);
-        } else {
-            disabledIcons.get(ButtonState.DEFAULT).render(g);
+        switch (data.type) {
+            case ENABLED -> defaultIcons.get(data.clickHandler.state).render(g);
+            case UNUSABLE -> unusableIcons.get(ButtonState.DEFAULT).render(g);
+            case DISABLED -> disabledIcons.get(ButtonState.DEFAULT).render(g);
         }
         g.translate(offset, offset);
     }
 
-    public void renderIcon(Graphics2D g, boolean enabled, ButtonState state) {
+    public void renderIcon(Graphics2D g, ActionIconType type, ButtonState state) {
         g.scale(1d / SCALING, 1d / SCALING);
-        g.setColor(enabled ? colour.border : ActionColour.DISABLED.border);
+        g.setColor(switch (type) {
+            case ENABLED -> colour.border;
+            case UNUSABLE -> unusableColour.border;
+            case DISABLED -> ActionColour.DISABLED.border;
+        });
         g.fillRoundRect(
                 0,
                 0,
@@ -168,8 +172,11 @@ public class Action implements NamedEnum, Serializable {
                 (int) (ACTION_BUTTON_SIZE * SCALING),
                 (int) (SCALING * ROUNDING),
                 (int) (SCALING * ROUNDING)
-        );
-        g.setColor(enabled ? colour.background : ActionColour.DISABLED.background);
+        );g.setColor(switch (type) {
+            case ENABLED -> colour.background;
+            case UNUSABLE -> unusableColour.background;
+            case DISABLED -> ActionColour.DISABLED.background;
+        });
         float border = BORDER * stateBorderScale(state);
         g.fillRoundRect(
                 (int) (border * SCALING),
@@ -180,7 +187,7 @@ public class Action implements NamedEnum, Serializable {
                 (int) (SCALING * (ROUNDING - border * 2))
         );
         g.setStroke(ICON_STROKE);
-        g.setColor(ICON_COLOUR);
+        g.setColor(type == ActionIconType.UNUSABLE ? ICON_COLOUR_UNUSABLE : ICON_COLOUR);
         if (scaled)
             iconImageRenderer.render(g);
         g.scale(SCALING, SCALING);
@@ -188,12 +195,12 @@ public class Action implements NamedEnum, Serializable {
             iconImageRenderer.render(g);
     }
 
-    private BufferedImage createImage(ButtonState state, boolean enabled) {
+    private BufferedImage createImage(ButtonState state, ActionIconType type) {
         BufferedImage image = Renderable.renderToImage(Renderable.createImage(ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE, BufferedImage.TYPE_INT_ARGB), g -> {
-            renderIcon(g, enabled, state);
+            renderIcon(g, type, state);
         });
         Graphics2D g = image.createGraphics();
-        new RescaleOp(stateBrightness(state), 0, g.getRenderingHints()).filter(image, image);
+        new RescaleOp(stateBrightness(type == ActionIconType.UNUSABLE ? ButtonState.DEFAULT : state), 0, g.getRenderingHints()).filter(image, image);
         g.dispose();
         return image;
     }

@@ -373,6 +373,8 @@ public class TileSelector implements RegisteredButtonInputReceiver, Deletable {
             if (!blocked) {
                 deselectAction();
             }
+        } else if (!blocked && type.isCharInput && type.c == 'm') {
+            level.levelRenderer.mapUI.setEnabled(true);
         }
     }
 

@@ -79,7 +79,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
                     g -> {
                         GameRenderer.renderTransformed(g, () -> {
                             if (level.hasActiveAction()) {
-                                level.selectedUnit.type.getActionCost(level.getActiveAction()).ifPresent(cost -> {
+                                level.selectedUnit.getActionCost(level.getActiveAction()).ifPresent(cost -> {
                                     updateAvailableChange(-cost);
                                 });
                             }
@@ -203,7 +203,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
         });
         level.unitSet.forEach(u -> {
             if (u.stealthMode)
-                u.type.getPerTurnActionCost(Action.STEALTH).ifPresent(cost -> {
+                u.getPerTurnActionCost(Action.STEALTH).ifPresent(cost -> {
                     costsMap.compute(u.team, (team, i) -> {
                         if (team == thisTeam)
                             LineItemData.addToList(u.type.getName() + " (" + Action.STEALTH.getName() + ")", -cost, expenseList);
@@ -271,7 +271,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
     public boolean canAfford(Unit unit, Action action, boolean consume) {
         if (unit.removeActionEnergyCost(action))
             return true;
-        Optional<Integer> actionCost = unit.type.getActionCost(action);
+        Optional<Integer> actionCost = unit.getActionCost(action);
         return actionCost.map(cost -> canAfford(unit.team, cost, consume)).orElse(true);
     }
 

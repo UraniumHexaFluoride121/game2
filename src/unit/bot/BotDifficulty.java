@@ -3,7 +3,7 @@ package unit.bot;
 import foundation.NamedEnum;
 
 public enum BotDifficulty implements NamedEnum {
-    EASY("Easy", 0.8f), MEDIUM("Medium", 0.4f), HARD("Hard", 0);
+    VERY_EASY("Cadet", 1.2f), EASY("Lieutenant", 0.85f), MEDIUM("Captain", 0.4f), HARD("Admiral", 0);
 
     public final String name;
     public final float difficulty;

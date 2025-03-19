@@ -24,6 +24,7 @@ public class UITabSwitcher extends UIContainer {
     public int selectedTab = 0;
 
     private final ArrayList<Tab> tabs = new ArrayList<>();
+    private Runnable onNewTabSelected = null;
 
     public UITabSwitcher(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height) {
         super(register, buttonRegister, order, buttonOrder, x, y);
@@ -57,6 +58,27 @@ public class UITabSwitcher extends UIContainer {
     public UITabSwitcher selectTab(int index) {
         tabs.get(index).select();
         return this;
+    }
+
+    public UITabSwitcher setOnNewTabSelected(Runnable onNewTabSelected) {
+        this.onNewTabSelected = onNewTabSelected;
+        return this;
+    }
+
+    public int getSelectedTab() {
+        return selectedTab;
+    }
+
+    public int getTabCount() {
+        return tabs.size();
+    }
+
+    public boolean firstTabSelected() {
+        return getSelectedTab() == 0;
+    }
+
+    public boolean lastTabSelected() {
+        return getSelectedTab() == getTabCount() - 1;
     }
 
     public UITabSwitcher addTab(float width, String text, BiConsumer<GameRenderer, ButtonRegister> tabElementsRenderer) {
@@ -144,12 +166,16 @@ public class UITabSwitcher extends UIContainer {
             if (parent.buttonRegister != null)
                 parent.buttonRegister.register(this);
             clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, true, () -> {
+                boolean runOnNewTabSelected = parent.selectedTab != index && parent.onNewTabSelected != null;
+
                 parent.selectedTab = index;
                 parent.tabs.forEach(t -> {
                     if (t.index != parent.selectedTab)
                         t.deselect();
                 });
                 internal.acceptInput(new ObjPos(), InputType.TAB_ON_SWITCH_TO, true, false);
+                if (runOnNewTabSelected)
+                    parent.onNewTabSelected.run();
             }).noDeselect();
             hitBox = StaticHitBox.createFromOriginAndSize(x + parent.x, y + parent.y, width, height);
             box = new UIBox(width, height, 0.4f, UIBox.BoxShape.RECTANGLE_TOP_CORNERS_CUT).setClickHandler(clickHandler).setColourTheme(UIColourTheme.GREEN_SELECTED_TAB);

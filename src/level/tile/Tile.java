@@ -59,7 +59,7 @@ public class Tile implements Writable {
         pos = new Point(x, y);
         renderPos = getRenderPos(x, y);
         renderPosCentered = getCenteredRenderPos(x, y);
-        if (type.tileTextures == null)
+        if (type.tileTexturesSupplier == null)
             imageRenderer = null;
         else {
             randomValue = level.random.getDoubleSupplier(RandomType.TILE_TEXTURE).get();
@@ -78,6 +78,10 @@ public class Tile implements Writable {
     public void renderTile(Graphics2D g, Color color, HexagonRenderer renderer) {
         renderer.setColor(color);
         GameRenderer.renderOffset(renderPos, g, () -> renderer.render(g));
+    }
+
+    public void renderTile(Graphics2D g, HexagonRenderer renderer, float tileSize) {
+        GameRenderer.renderOffset(renderPos.copy().multiply(tileSize / TILE_SIZE), g, () -> renderer.render(g));
     }
 
     public void renderTerrain(Graphics2D g) {
@@ -127,7 +131,7 @@ public class Tile implements Writable {
 
     public void setTileType(TileType type, Level level) {
         this.type = type;
-        if (type.tileTextures == null) {
+        if (type.tileTexturesSupplier == null) {
             imageRenderer = null;
         } else {
             randomValue = level.random.getDoubleSupplier(RandomType.TILE_TEXTURE).get();
@@ -138,7 +142,7 @@ public class Tile implements Writable {
     public void setTileType(TileType type, double randomValue) {
         this.randomValue = randomValue;
         this.type = type;
-        if (type.tileTextures == null) {
+        if (type.tileTexturesSupplier == null) {
             imageRenderer = null;
         } else {
             imageRenderer = type.tileTextures.getRandomImage(randomValue);

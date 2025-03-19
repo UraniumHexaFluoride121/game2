@@ -4,11 +4,14 @@ import foundation.input.ButtonClickHandler;
 import foundation.input.InputType;
 
 public class ActionData {
-    public final ButtonClickHandler clickHandler;
-    public boolean enabled;
+    public ButtonClickHandler clickHandler;
+    public ActionIconType type;
 
-    public ActionData(Runnable onClick, boolean enabled) {
+    public ActionData(ActionIconType type) {
+        this.type = type;
+    }
+
+    public void init(Runnable onClick) {
         clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, onClick);
-        this.enabled = enabled;
     }
 }
