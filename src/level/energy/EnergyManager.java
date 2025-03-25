@@ -10,13 +10,18 @@ import network.PacketWriter;
 import network.Writable;
 import render.*;
 import render.anim.PowAnimation;
-import render.renderables.RenderElement;
-import render.renderables.text.FixedTextRenderer;
-import render.renderables.text.TextAlign;
+import render.level.tile.RenderElement;
+import render.types.text.FixedTextRenderer;
+import render.types.text.TextAlign;
 import render.texture.ImageRenderer;
 import render.texture.ResourceLocation;
-import render.ui.UIColourTheme;
-import render.ui.types.*;
+import render.UIColourTheme;
+import render.types.box.UIBox;
+import render.types.text.UITextLabel;
+import render.types.input.button.UIButton;
+import render.types.container.LevelUIContainer;
+import render.types.container.UIContainer;
+import render.types.container.UIScrollSurface;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -27,9 +32,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static render.ui.types.UITextLabel.*;
+import static render.types.text.UITextLabel.*;
 
-public class EnergyManager extends LevelUIContainer implements Writable {
+public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     public static final ImageRenderer ENERGY_IMAGE = ImageRenderer.renderImageCentered(new ResourceLocation("icons/energy.png"), true, true);
     public static final String displayName = "Antimatter";
 
@@ -128,7 +133,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
 
     @Override
     public boolean isEnabled() {
-        return super.isEnabled() && level.isThisPlayerAlive() && level.getThisTeam() == level.getActiveTeam();
+        return super.isEnabled() && level.isThisPlayerAlive();
     }
 
     private boolean renderAvailableChange = false, renderIncomeChange;
@@ -196,7 +201,7 @@ public class EnergyManager extends LevelUIContainer implements Writable {
             if (t.hasStructure() && s.team != null) {
                 incomeMap.compute(s.team, (team, i) -> {
                     if (team == thisTeam)
-                        LineItemData.addToList(s.type.displayName, s.type.energyIncome, incomeList);
+                        LineItemData.addToList(s.type.getName(), s.type.energyIncome, incomeList);
                     return i + s.type.energyIncome;
                 });
             }

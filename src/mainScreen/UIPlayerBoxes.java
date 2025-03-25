@@ -8,14 +8,21 @@ import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
 import level.PlayerTeam;
 import render.*;
-import render.ui.UIColourTheme;
-import render.ui.types.*;
+import render.UIColourTheme;
+import render.types.box.UIBox;
+import render.types.text.UITextDisplayBox;
+import render.types.text.UITextLabel;
+import render.types.input.button.UIButton;
+import render.types.input.UIEnumSelector;
+import render.types.input.button.UIShapeButton;
 import unit.UnitTeam;
 
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+
+import static render.UIColourTheme.*;
 
 public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private static final int MAX_PLAYERS = UnitTeam.ORDERED_TEAMS.length;
@@ -28,6 +35,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
 
     private final ArrayList<PlayerBox> boxes = new ArrayList<>();
     private UIShapeButton plus;
+    private boolean locked = false;
 
     public UIPlayerBoxes(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y) {
         super(register, order);
@@ -41,8 +49,10 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         addBox();
         addBox();
         renderable = g -> {
-            removed.forEach(PlayerBox::delete);
-            removed.clear();
+            if (!removed.isEmpty()) {
+                removed.forEach(PlayerBox::delete);
+                removed.clear();
+            }
             renderer.render(g);
             if (MainPanel.titleScreen.playerBoxScrollWindow != null)
                 MainPanel.titleScreen.playerBoxScrollWindow.setScrollMax(getScrollDistance());
@@ -65,6 +75,16 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         return botMap;
     }
 
+    public void setPlayerCount(int count) {
+        if (count > getTeamCount()) {
+            addBox();
+            setPlayerCount(count);
+        } else if (count < getTeamCount()) {
+            deletePlayer(getTeamCount() - 1);
+            setPlayerCount(count);
+        }
+    }
+
     public void verifyTeams() {
         PlayerTeam team = null;
         boolean verified = false;
@@ -81,14 +101,20 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         if (boxes.size() <= 1)
             verified = false;
         boolean unitsVerified = MainPanel.titleScreen.playerShipSettings == null || MainPanel.titleScreen.playerShipSettings.verifyTeams();
-        if (!unitsVerified)
+        boolean noCustomMapSelected = MainPanel.titleScreen.customMap && !MainPanel.titleScreen.loadCustomBox.hasSelectedSave();
+        boolean invalidMap = MainPanel.titleScreen.customMap && MainPanel.titleScreen.loadCustomBox.hasSelectedSave() && !MainPanel.titleScreen.loadCustomBox.getSelected().valid;
+        if (!unitsVerified || noCustomMapSelected || invalidMap)
             verified = false;
         if (MainPanel.titleScreen.multiplayerTabs != null && MainPanel.titleScreen.multiplayerTabs.isEnabled()) {
             MainPanel.titleScreen.startLanGame.setEnabled(verified);
             MainPanel.titleScreen.startLocalGame.setEnabled(verified);
             UITextDisplayBox box = MainPanel.titleScreen.gameCannotBeStarted;
             box.setEnabled(!verified);
-            if (boxes.size() <= 1)
+            if (noCustomMapSelected)
+                box.setText("No custom map selected");
+            else if (invalidMap)
+                box.setText("The selected map has an invalid layout");
+            else if (boxes.size() <= 1)
                 box.setText("At least 2 players are needed to start game");
             else if (!playerTeamsVerified)
                 box.setText("At least 2 teams are needed to start game");
@@ -97,34 +123,34 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         }
     }
 
-    public boolean getVerifyTeams() {
-        PlayerTeam team = null;
-        boolean verified = false;
-        for (PlayerBox box : boxes) {
-            if (team == null)
-                team = box.playerTeamSelector.getValue();
-            else if (box.playerTeamSelector.getValue() != team) {
-                verified = true;
-                break;
-            }
-        }
-        return verified;
-    }
-
     public int getTeamCount() {
         return boxes.size();
     }
 
     private void addBox() {
         boxes.add(new PlayerBox(renderer, internal, RenderOrder.TITLE_SCREEN_BUTTONS, boxes.size(), x, y, this));
-        createPlus();
+        updatePlus();
     }
 
-    private void createPlus() {
+    public void lockPlayers() {
+        locked = true;
+        if (MainPanel.titleScreen.loadCustomBox.hasSelectedSave())
+            setPlayerCount(MainPanel.titleScreen.loadCustomBox.getSelected().playerCount);
+        updatePlus();
+        boxes.forEach(b -> b.updateLock(true));
+    }
+
+    public void unlockPlayers() {
+        locked = false;
+        updatePlus();
+        boxes.forEach(b -> b.updateLock(false));
+    }
+
+    private void updatePlus() {
         verifyTeams();
         if (plus != null)
             plus.delete();
-        if (boxes.size() != MAX_PLAYERS)
+        if (boxes.size() != MAX_PLAYERS && !MainPanel.titleScreen.customMap)
             plus = new UIShapeButton(register, internal, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 5, boxes.size() * BOX_SIZE + (BOX_SIZE - 3) / 2f, 7, 3, false, this::addBox)
                     .setShape(UIShapeButton::plus);
     }
@@ -134,11 +160,11 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         for (int i = 0; i < boxes.size(); i++) {
             boxes.get(i).update(i);
         }
-        createPlus();
+        updatePlus();
     }
 
     public float getScrollDistance() {
-        return (boxes.size() == MAX_PLAYERS ? boxes.size() : (boxes.size() + 1)) * BOX_SIZE - 14;
+        return ((boxes.size() == MAX_PLAYERS || MainPanel.titleScreen.customMap) ? boxes.size() : (boxes.size() + 1)) * BOX_SIZE - MainPanel.titleScreen.playerBoxScrollWindow.height;
     }
 
     public UnitTeam getEditShipsTeam() {
@@ -224,24 +250,24 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                             if (b != this)
                                 b.editShips.deselect();
                         });
-                        editShips.setColourTheme(UIColourTheme.ALWAYS_GREEN_SELECTED);
+                        editShips.setColourTheme(ALWAYS_GREEN_SELECTED);
                     }).setOnDeselect(() -> {
                         MainPanel.titleScreen.playerShipSettings.updateTeam();
-                        editShips.setColourTheme(UIColourTheme.GREEN_SELECTED);
+                        editShips.setColourTheme(parentContainer.locked ? GRAYED_OUT : GREEN_SELECTED);
                     })
-                    .setColourTheme(UIColourTheme.GREEN_SELECTED).toggleMode();
+                    .setColourTheme(GREEN_SELECTED).toggleMode();
             enableBot = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 2.3f, 5, 1f, 0.7f, false);
             enableBot.setBold().noDeselect().setBoxCorner(0.35f).setText("Bot (off)").setOnClick(() -> {
                         isBot = !isBot;
-                        enableBot.setColourTheme(isBot ? UIColourTheme.GREEN : UIColourTheme.RED);
+                        enableBot.setColourTheme(isBot ? GREEN : RED);
                         enableBot.setText(isBot ? "Bot (on)" : "Bot (off)");
                     })
-                    .setColourTheme(UIColourTheme.RED);
+                    .setColourTheme(RED);
             playerTeamLabel = new UITextLabel(5, 0.7f, false)
                     .updateTextCenter("Player Team").setTextCenterBold();
             deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.75f, BOX_SIZE - 1.5f, 1, 1, false, () -> {
                 parentContainer.deletePlayer(getIndex());
-            }).setShape(UIShapeButton::x).setBoxCorner(0.2f).setColourTheme(UIColourTheme.DEEP_RED);
+            }).setShape(UIShapeButton::x).setBoxCorner(0.2f).setColourTheme(DEEP_RED);
             parent = buttonRegister;
             parent.register(this);
             update(index);
@@ -280,6 +306,16 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             numberBox.setText(String.valueOf(index + 1))
                     .setColourTheme(UnitTeam.ORDERED_TEAMS[index].uiColour);
             mainBox.setColourTheme(UnitTeam.ORDERED_TEAMS[index].uiColour);
+        }
+
+        public void updateLock(boolean lock) {
+            deleteButton.setColourTheme(lock ? GRAYED_OUT : DEEP_RED)
+                    .setClickEnabled(!lock);
+            if (lock && editShips.isSelected()) {
+                editShips.deselect();
+            }
+            editShips.setColourTheme(lock ? GRAYED_OUT : editShips.isSelected() ? ALWAYS_GREEN_SELECTED : GREEN_SELECTED)
+                    .setClickEnabled(!lock);
         }
 
         @Override

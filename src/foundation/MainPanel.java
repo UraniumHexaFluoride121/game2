@@ -1,11 +1,11 @@
 package foundation;
 
-import foundation.input.ButtonOrder;
 import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import foundation.tick.RegisteredTickable;
 import foundation.tick.TickOrder;
+import level.AbstractLevel;
 import level.Level;
 import level.structure.StructureType;
 import level.tile.TileType;
@@ -15,16 +15,17 @@ import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
 import render.anim.LerpAnimation;
-import render.renderables.RenderElement;
-import render.renderables.text.FixedTextRenderer;
-import render.renderables.text.TextAlign;
+import render.level.tile.RenderElement;
+import render.types.text.FixedTextRenderer;
+import render.types.text.TextAlign;
 import render.texture.BackgroundTexture;
 import render.texture.ImageSequenceGroup;
 import render.texture.ResourceLocation;
-import render.ui.UIColourTheme;
-import render.ui.implementation.UIHitPointBar;
-import render.ui.types.UIButton;
-import render.ui.types.UITextLabel;
+import render.UIColourTheme;
+import render.types.UIHitPointBar;
+import render.types.text.UITextLabel;
+import save.GameSave;
+import save.MapSave;
 import save.SaveManager;
 import unit.bot.BotTileDataType;
 import unit.type.UnitType;
@@ -46,6 +47,9 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public static final BotTileDataType BOT_DEBUG_RENDER = null;
     public static final boolean BOT_DEBUG_RENDER_UNIT = true;
 
+    public static final SaveManager<GameSave> levelSaves = new SaveManager<>("saves.bin");
+    public static final SaveManager<MapSave> mapSaves = new SaveManager<>("custom-maps.bin");
+
     public static AffineTransform windowTransform = new AffineTransform();
 
     public static ObjPos DEVICE_WINDOW_SIZE; //the physical screen size, in pixels
@@ -55,7 +59,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     public static Client client = null;
 
-    public static Level activeLevel;
+    public static AbstractLevel<?, ?> activeLevel;
     public static TitleScreen titleScreen;
 
     public static InputReceiver activeInputReceiver = null;
@@ -74,7 +78,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     public void init() {
         new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BACKGROUND, LOAD_SCREEN_IMAGE);
-        Renderable loadBarTransformed = loadBar.translate(Renderable.right() /2 - 8, 0.5f);
+        Renderable loadBarTransformed = loadBar.translate(Renderable.right() / 2 - 8, 0.5f);
         new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BUTTONS, loadText.translate(Renderable.right() / 2, 2),
                 g -> {
                     if (loadBarEnabled)
@@ -83,6 +87,9 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         fadeScreen.setReversed(true);
         fadeScreen.finish();
         Level.EXECUTOR.submit(() -> {
+            loadText.updateText("Loading game saves...");
+            MainPanel.levelSaves.loadSaves();
+            MainPanel.mapSaves.loadSaves();
             loadText.updateText("Loading units...");
             UnitType.initAll();
             loadText.updateText("Loading main menu...");
@@ -90,13 +97,11 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
             titleScreen.init();
             activeInputReceiver = titleScreen;
             registerTickable();
-            loadText.updateText("Loading game saves...");
-            SaveManager.loadSaves();
             loadText.updateText("Loading background textures...");
             BackgroundTexture.init();
             loadText.updateText("Loading tiles...");
             TileType.init();
-            loadText.updateText("Loading projectile effects...");
+            loadText.updateText("Loading projectiles...");
             ImageSequenceGroup.init();
             loadText.updateText("Loading structures...");
             StructureType.init();
@@ -104,6 +109,10 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
             fadeScreen.setReversed(false);
             loaded = true;
         });
+    }
+
+    public static Level getActiveLevel() {
+        return (Level) activeLevel;
     }
 
     public static void setLoadBarEnabled(boolean enabled) {
@@ -115,11 +124,11 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         loadBar.setFill(progress);
     }
 
-    public static void startNewLevel(Supplier<Level> levelCreator) {
+    public static void startNewLevel(Supplier<AbstractLevel<?, ?>> levelCreator) {
         new Thread(() -> {
             fadeScreen.setReversed(false);
             activeInputReceiver = null;
-            Level level = levelCreator.get();
+            AbstractLevel<?, ?> level = levelCreator.get();
             level.init();
             activeLevel = level;
             activeInputReceiver = level.levelRenderer;
@@ -192,7 +201,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
         if (loadFadeComplete) {
-            if (activeLevel != null) {
+            if (activeLevel != null && (fadeScreen.reversed() || fadeScreen.finished())) {
                 activeLevel.render(g2d);
             } else {
                 titleScreen.render(g2d);

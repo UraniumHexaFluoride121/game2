@@ -8,10 +8,10 @@ import foundation.math.ObjPos;
 import level.energy.EnergyCostDisplay;
 import render.GameRenderer;
 import render.Renderable;
-import render.renderables.text.FixedTextRenderer;
-import render.renderables.text.TextAlign;
-import render.ui.UIColourTheme;
-import render.ui.types.UIBox;
+import render.types.text.FixedTextRenderer;
+import render.types.text.TextAlign;
+import render.UIColourTheme;
+import render.types.box.UIBox;
 import unit.Unit;
 import unit.UnitData;
 
@@ -22,7 +22,7 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static render.ui.types.UITextLabel.*;
+import static render.types.text.UITextLabel.*;
 import static unit.action.Action.*;
 
 public class ActionSelector implements Renderable, Deletable, RegisteredButtonInputReceiver {

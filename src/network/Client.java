@@ -2,6 +2,7 @@ package network;
 
 import foundation.Deletable;
 import foundation.MainPanel;
+import level.GameplaySettings;
 import level.Level;
 import level.PlayerTeam;
 import level.structure.Structure;
@@ -76,15 +77,15 @@ public class Client implements Deletable {
                 int turn = reader.readInt();
                 UnitTeam activeTeam = PacketReceiver.readEnum(UnitTeam.class, reader);
                 MainPanel.addTask(() -> {
-                    if (MainPanel.activeLevel != null)
-                        MainPanel.activeLevel.setTurn(activeTeam, turn, true);
+                    if (MainPanel.getActiveLevel() != null)
+                        MainPanel.getActiveLevel().setTurn(activeTeam, turn, true);
                 });
             }
             case UNIT_UPDATE -> {
                 HashSet<UnitData> data = new HashSet<>();
                 PacketReceiver.readCollection(data, () -> new UnitData(reader), reader);
                 MainPanel.addTaskAfterAnimBlock(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     HashSet<Unit> unitsUnaccountedFor = new HashSet<>(l.unitSet);
                     for (UnitData d : data) {
                         Unit u = null;
@@ -117,9 +118,11 @@ public class Client implements Deletable {
             }
             case JOIN_REQUEST_ACCEPTED -> {
                 HashMap<UnitTeam, PlayerTeam> playerTeams = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> PacketReceiver.readEnum(PlayerTeam.class, reader), reader);
+                HashMap<UnitTeam, PlayerTeam> initialPlayerTeams = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> PacketReceiver.readEnum(PlayerTeam.class, reader), reader);
                 long seed = reader.readLong();
                 float botDifficulty = reader.readFloat();
                 int width = reader.readInt(), height = reader.readInt();
+                GameplaySettings gameplaySettings = new GameplaySettings(reader);
                 UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                 TileData[][] data = new TileData[width][];
                 Structure[][] structures = new Structure[width][];
@@ -138,7 +141,8 @@ public class Client implements Deletable {
                 }
                 MainPanel.addTask(() -> {
                     MainPanel.startNewLevel(() -> {
-                        Level l = new Level(playerTeams, seed, width, height, bots, NetworkState.CLIENT, botDifficulty);
+                        Level l = new Level(playerTeams, seed, width, height, bots, gameplaySettings, NetworkState.CLIENT, botDifficulty);
+                        l.initialPlayerTeams = initialPlayerTeams;
                         l.setThisTeam(team);
                         HashMap<UnitTeam, Point> basePositions = new HashMap<>();
                         for (int x = 0; x < width; x++) {
@@ -176,7 +180,7 @@ public class Client implements Deletable {
                 UnitType type = UnitType.read(reader);
                 UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
                 MainPanel.addTaskAfterAnimBlock(() -> {
-                    Unit unit = MainPanel.activeLevel.getUnit(unitPos);
+                    Unit unit = MainPanel.getActiveLevel().getUnit(unitPos);
                     if (unit == null || unit.type != type || unit.team != team || unit.hasPerformedAction(Action.MOVE)) {
                         requestLevelData();
                         return;
@@ -187,7 +191,7 @@ public class Client implements Deletable {
             case SERVER_SHOOT_UNIT -> {
                 UnitData from = new UnitData(reader), to = new UnitData(reader);
                 MainPanel.addTaskAfterAnimBlock(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
                     fromUnit.attack(toUnit);
                     fromUnit.addPerformedAction(Action.FIRE);
@@ -197,7 +201,7 @@ public class Client implements Deletable {
                 Point pos = PacketReceiver.readPoint(reader);
                 int progress = reader.readInt();
                 MainPanel.addTaskAfterAnimBlock(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     Unit u = l.getUnit(pos);
                     if (u == null) {
                         requestLevelData();
@@ -215,7 +219,7 @@ public class Client implements Deletable {
                 else
                     structure = null;
                 MainPanel.addTaskAfterAnimBlock(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     Tile tile = l.getTile(pos);
                     if (tile.hasStructure()) {
                         if (hasStructure) {
@@ -242,7 +246,7 @@ public class Client implements Deletable {
                 Point pos = PacketReceiver.readPoint(reader);
                 float shieldHP = reader.readFloat();
                 MainPanel.addTaskAfterAnimBlock(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     Unit u = l.getUnit(pos);
                     if (u == null) {
                         requestLevelData();
@@ -256,7 +260,7 @@ public class Client implements Deletable {
                 Point pos = PacketReceiver.readPoint(reader);
                 boolean stealth = reader.readBoolean();
                 MainPanel.addTaskAfterAnimBlock(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     Unit u = l.getUnit(pos);
                     if (u == null) {
                         requestLevelData();
@@ -270,14 +274,14 @@ public class Client implements Deletable {
                 HashMap<UnitTeam, Integer> availableMap = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
                 HashMap<UnitTeam, Integer> incomeMap = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
                 MainPanel.addTask(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     l.levelRenderer.energyManager.updateFromRead(availableMap, incomeMap);
                 });
             }
             case BOT_SELECT_TILE -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 MainPanel.addTask(() -> {
-                    Level l = MainPanel.activeLevel;
+                    Level l = MainPanel.getActiveLevel();
                     l.botHandlerMap.get(l.getActiveTeam()).selectTileClient(pos);
                 });
             }

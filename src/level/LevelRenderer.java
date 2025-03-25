@@ -1,107 +1,71 @@
 package level;
 
-import foundation.Deletable;
-import foundation.Main;
 import foundation.MainPanel;
 import foundation.input.ButtonOrder;
-import foundation.input.InputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
-import foundation.tick.Tickable;
 import level.energy.EnergyManager;
 import level.tile.Tile;
 import network.NetworkState;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
-import render.anim.AnimationTimer;
-import render.renderables.HexagonBorder;
-import render.renderables.HighlightTileRenderer;
-import render.renderables.RenderElement;
-import render.texture.BackgroundRenderer;
-import render.texture.BackgroundTexture;
-import render.texture.FiringRenderer;
-import render.ui.UIColourTheme;
-import render.ui.implementation.*;
-import render.ui.types.LevelUIButton;
-import render.ui.types.LevelUIShapeButton;
-import render.ui.types.UIButton;
-import render.ui.types.UIShapeButton;
+import render.UIConfirm;
+import render.level.FiringRenderer;
+import render.level.GameEndScreen;
+import render.level.PauseMenu;
+import render.level.info.UITileInfo;
+import render.level.info.UIUnitInfo;
+import render.level.info.UnitInfoScreen;
+import render.level.map.LevelMapUI;
+import render.level.ui.UIDamage;
+import render.level.ui.UIEndTurn;
+import render.level.ui.UITurnBox;
+import render.level.tile.RenderElement;
+import render.types.text.UITextNotification;
+import render.UIColourTheme;
+import render.types.input.button.LevelUIButton;
+import render.types.input.button.LevelUIShapeButton;
+import render.types.input.button.UIButton;
+import render.types.input.button.UIShapeButton;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
 import unit.weapon.WeaponInstance;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.function.BiConsumer;
 
-import static level.tile.Tile.*;
+public class LevelRenderer extends AbstractLevelRenderer<Level> {
+    private final GameRenderer firingAnimRenderer;
 
-public class LevelRenderer implements Deletable, Renderable, Tickable, InputReceiver {
-    private static final float MOUSE_EDGE_CAMERA_MOVE_SPEED = 20;
-    public static final float MOUSE_EDGE_CAMERA_BORDER = 0.5f;
-    private Level level;
-    private final GameRenderer mainRenderer, backgroundRenderer, levelUIRenderer, firingAnimRenderer, topUIRenderer;
-    private BufferedImage borderImage;
-    public HighlightTileRenderer highlightTileRenderer = null;
-    public HexagonBorder unitTileBorderRenderer = null, fowTileBorder = null;
-
-    //Object in this set indicate that they are running an animation
-    private final HashSet<Object> animationBlocks = new HashSet<>();
-    private final HashMap<AnimationTimer, Runnable> animationTimerBlocks = new HashMap<>();
     public FiringRenderer firingRenderer;
     public UIUnitInfo uiUnitInfo;
 
     public LevelRenderer(Level level) {
-        this.level = level;
-        mainRenderer = new GameRenderer(MainPanel.windowTransform, this::getMainCameraTransform);
-        backgroundRenderer = new GameRenderer(MainPanel.windowTransform, null);
-        levelUIRenderer = new GameRenderer(MainPanel.windowTransform, null);
+        super(level);
         firingAnimRenderer = new GameRenderer(MainPanel.windowTransform, null);
-        topUIRenderer = new GameRenderer(MainPanel.windowTransform, null);
     }
 
-    public UIConfirm confirm = null;
-    public UITextNotification onNextTurn = null, onTeamEliminated = null;
-    public UITurnBox turnBox = null;
-    public UIDamage damageUI = null;
-    public UIEndTurn endTurn = null;
-    public UITileInfo tileInfo = null;
-    public UIButton exitActionButton = null;
-    public UnitInfoScreen unitInfoScreen = null;
-    public EnergyManager energyManager = null;
-    public UIShapeButton pauseMenuButton = null, mapButton = null;
-    public PauseMenu pauseMenu = null;
-    public MapUI mapUI = null;
+    public UIConfirm confirm;
+    public UITextNotification onNextTurn, onTeamEliminated;
+    public UITurnBox turnBox;
+    public UIDamage damageUI;
+    public UIEndTurn endTurn;
+    public UITileInfo tileInfo;
+    public UIButton exitActionButton;
+    public UnitInfoScreen unitInfoScreen;
+    public EnergyManager energyManager;
+    public UIShapeButton pauseMenuButton, mapButton;
+    public PauseMenu pauseMenu;
+    public LevelMapUI mapUI;
+    public GameEndScreen endScreen;
 
+    @Override
     public void createRenderers() {
-        borderImage = createTiles(Tile.TILE_SIZE, (g, t) -> t.renderTile(g, BORDER_RENDERER));
-        new BackgroundRenderer(backgroundRenderer, RenderOrder.BACKGROUND, this::getCameraPosition).setTextures(BackgroundTexture.NORMAL_1);
-
-        //Terrain
-        new RenderElement(mainRenderer, RenderOrder.TERRAIN, g -> {
-            for (Tile[] tileColumn : level.tiles) {
-                for (Tile tile : tileColumn) {
-                    tile.renderTerrain(g);
-                }
-            }
-        });
-
-        //Tile borders
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER, Renderable.renderImage(borderImage, false, false, -1).translate(-Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f, -Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f));
-
-        //Tile highlight
-        new RenderElement(mainRenderer, RenderOrder.TILE_HIGHLIGHT, g -> {
-            if (highlightTileRenderer != null) {
-                highlightTileRenderer.render(g);
-                if (highlightTileRenderer.finished())
-                    highlightTileRenderer = null;
-            }
-            if (MainPanel.BOT_DEBUG_RENDER != null) {
+        super.createRenderers();
+        if (MainPanel.BOT_DEBUG_RENDER != null) {
+            new RenderElement(mainRenderer, RenderOrder.TILE_HIGHLIGHT, g -> {
                 if (level.bots.get(level.getActiveTeam())) {
                     if (MainPanel.BOT_DEBUG_RENDER_UNIT) {
                         if (level.botHandlerMap.get(level.getActiveTeam()).unitDebugData != null)
@@ -109,8 +73,8 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
                     } else
                         level.botHandlerMap.get(level.getActiveTeam()).tileData.get(MainPanel.BOT_DEBUG_RENDER).render(g);
                 }
-            }
-        });
+            });
+        }
 
         //Action render below units
         new RenderElement(mainRenderer, RenderOrder.ACTION_BELOW_UNITS, g -> {
@@ -125,32 +89,12 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
             });
         });
 
-        new RenderElement(mainRenderer, RenderOrder.FOG_OF_WAR, g -> {
-            level.tileSelector.tileSet.forEach(t -> {
-                t.renderFogOfWar(g);
-            });
-            if (fowTileBorder != null)
-                fowTileBorder.render(g);
-        });
-
         //Capture bar
         new RenderElement(mainRenderer, RenderOrder.CAPTURE_BAR, g -> {
             for (Tile tile : level.tileSelector.tileSet) {
                 tile.renderCaptureBar(g, level);
             }
         });
-
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
-            if (unitTileBorderRenderer != null) {
-                unitTileBorderRenderer.render(g);
-            } else if (level.tileSelector.getSelectedTile() != null)
-                level.tileSelector.getSelectedTile().renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
-        });
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
-            if (level.tileSelector.mouseOverTile != null && level.getActiveAction() != Action.FIRE)
-                level.tileSelector.mouseOverTile.renderTile(g, Tile.BLUE_TRANSPARENT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
-        }).setZOrder(1);
-
 
         //Action render below units
         new RenderElement(mainRenderer, RenderOrder.ACTION_ABOVE_UNITS, g -> {
@@ -178,7 +122,7 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         endTurn = new UIEndTurn(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(endTurn);
 
-        confirm = new UIConfirm(topUIRenderer, RenderOrder.LEVEL_UI, level);
+        confirm = new UIConfirm(levelUIRenderer, RenderOrder.CONFIRM_UI, level);
         level.buttonRegister.register(confirm);
 
         onNextTurn = new UITextNotification(levelUIRenderer, RenderOrder.LEVEL_UI, level, 20, 3);
@@ -198,8 +142,11 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
                 });
-        mapUI = new MapUI(levelUIRenderer, level.buttonRegister, level);
+        mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
+
+        endScreen = new GameEndScreen(levelUIRenderer, level.buttonRegister, level);
+        endScreen.setEnabled(false);
 
         unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, level);
         unitInfoScreen.setEnabled(false);
@@ -215,48 +162,24 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         pauseMenu.setEnabled(false);
     }
 
-    public BufferedImage createTiles(float tileSize, BiConsumer<Graphics2D, Tile> tileRenderer) {
-        ObjPos tilesBound = MainPanel.RENDER_WINDOW_SIZE.copy().multiply(level.tileBound.copy().divide(MainPanel.BLOCK_DIMENSIONS).multiply(tileSize / TILE_SIZE));
-
-        BufferedImage borderImage = new BufferedImage(tilesBound.xInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, tilesBound.yInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = borderImage.createGraphics();
-        g.translate(Tile.SCREEN_STROKE_WIDTH_MARGIN / 2f, Tile.SCREEN_STROKE_WIDTH_MARGIN / 2f);
-        g.scale(MainPanel.windowTransform.getScaleX(), MainPanel.windowTransform.getScaleX());
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        for (int x = 0; x < level.tilesX; x++) {
-            for (int y = 0; y < level.tilesY; y++) {
-                tileRenderer.accept(g, level.tiles[x][y]);
-            }
-        }
-        g.dispose();
-        return Renderable.transparency(borderImage, 0.1f);
+    @Override
+    protected boolean renderMouseOverTile() {
+        return level.getActiveAction() != Action.FIRE;
     }
 
     @Override
     public void acceptPressed(InputType type) {
         if (!isFiring())
-            level.buttonRegister.input(true, type, this::transformMousePosToCamera);
+            super.acceptPressed(type);
     }
 
     @Override
     public void acceptReleased(InputType type) {
         if (!isFiring())
-            level.buttonRegister.input(false, type, this::transformMousePosToCamera);
+            super.acceptReleased(type);
     }
 
-    private boolean moveCameraEnabled = false;
-    private ObjPos prevMousePos = null;
-    private float shakeTimer = 0;
-    private final ObjPos cameraPosition = new ObjPos(), cameraVelocityVector = new ObjPos();
-
     public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
-
-    private ObjPos preShakePos = null;
-    private ObjPos shakeVector = null;
-    private boolean cameraShake = false;
 
     public void useLastCameraPos(UnitTeam prev, UnitTeam current) {
         if (level.networkState == NetworkState.LOCAL) {
@@ -280,190 +203,21 @@ public class LevelRenderer implements Deletable, Renderable, Tickable, InputRece
         setCameraInterpBlockPos(pos);
     }
 
-    public void moveCameraStart() {
-        prevMousePos = null;
-        moveCameraEnabled = true;
-    }
-
-    public void moveCameraEnd() {
-        prevMousePos = null;
-        moveCameraEnabled = false;
-    }
-
-    public void enableCameraShake(ObjPos shakeVector) {
-        if (preShakePos == null)
-            preShakePos = cameraPosition.copy();
-        this.shakeVector = shakeVector;
-        cameraShake = true;
-    }
-
-    public void disableCameraShake() {
-        if (preShakePos == null)
-            return;
-        cameraPosition.set(preShakePos);
-        preShakePos = null;
-        cameraShake = false;
-    }
-
-    public ObjPos getCameraPosition() {
-        return cameraPosition.copy();
-    }
-
-    public AffineTransform getMainCameraTransform() {
-        AffineTransform t = new AffineTransform();
-        level.tileBound.copy().divide(-2).affineTranslate(t);
-        MainPanel.BLOCK_DIMENSIONS.copy().divide(2).affineTranslate(t);
-        cameraPosition.affineTranslate(t);
-        return t;
-    }
-
-    private ObjPos transformMousePosToCamera(Point p) {
-        ObjPos pos = new ObjPos(p);
-        pos.subtract(MainPanel.INSETS_OFFSET);
-        pos.scaleToBlocks().flipY().addY(MainPanel.BLOCK_DIMENSIONS.y); //Scale to world block grid
-        pos.add(level.tileBound.copy().divide(2)).add(MainPanel.BLOCK_DIMENSIONS.copy().divide(-2)).subtract(cameraPosition); //camera transform
-        return pos;
-    }
-
-    public ObjPos transformCameraPosToBlock(ObjPos pos) {
-        return pos.copy().subtract(level.tileBound.copy().divide(2)).subtract(MainPanel.BLOCK_DIMENSIONS.copy().divide(-2)).add(cameraPosition);
-    }
-
-    public void setCameraInterpBlockPos(ObjPos pos) {
-        ObjPos newPos = pos.copy().inverse().add(level.tileBound.copy().divide(2));
-        newPos.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
-        interpCameraTo = newPos;
-    }
-
-    public ObjPos getCameraInterpBlockPos(ObjPos pos) {
-        return pos.copy().subtract(level.tileBound.copy().divide(2)).inverse();
-    }
-
     @Override
     public void delete() {
-        level = null;
-        backgroundRenderer.delete();
-        mainRenderer.delete();
-        levelUIRenderer.delete();
+        super.delete();
         firingAnimRenderer.delete();
-        topUIRenderer.delete();
-        animationBlocks.clear();
-        animationTimerBlocks.clear();
     }
 
     @Override
     public void render(Graphics2D g) {
         if (!isFiring() || firingRenderer.showLevel()) {
-            renderLevelElements(g);
-            if (confirm.visible) {
-                g.setColor(new Color(0, 0, 0, 66));
-                g.fillRect(0, 0, Main.window.getWidth(), Main.window.getHeight());
-            }
-            topUIRenderer.render(g);
+            super.render(g);
         }
         if (isFiring()) {
             firingAnimRenderer.render(g);
         }
     }
-
-    public void renderLevelElements(Graphics2D g) {
-        backgroundRenderer.render(g);
-        mainRenderer.render(g);
-        levelUIRenderer.render(g);
-    }
-
-    public boolean runningAnim() {
-        return !animationBlocks.isEmpty() || !animationTimerBlocks.isEmpty();
-    }
-
-    public void registerAnimBlock(Object o) {
-        animationBlocks.add(o);
-    }
-
-    public void removeAnimBlock(Object o) {
-        animationBlocks.remove(o);
-    }
-
-    public void registerTimerBlock(AnimationTimer t, Runnable r) {
-        animationTimerBlocks.putIfAbsent(t, r);
-    }
-
-    public ObjPos interpCameraTo = null;
-
-    @Override
-    public void tick(float deltaTime) {
-        animationTimerBlocks.entrySet().removeIf(entry -> {
-            if (entry.getKey().finished()) {
-                entry.getValue().run();
-                return true;
-            }
-            return false;
-        });
-        if (cameraShake) {
-            shakeTimer += deltaTime;
-            if (shakeTimer > 0.05f) {
-                shakeTimer = 0;
-                cameraPosition.add(shakeVector);
-                shakeVector.inverse();
-            }
-        }
-        Point p = Main.window.getMousePosition();
-        if (interpCameraTo != null) {
-            float distance = interpCameraTo.distance(cameraPosition);
-            ObjPos to = interpCameraTo.copy().subtract(cameraPosition);
-            ObjPos log = to.copy().addLength(4).log();
-            to.normalise();
-            ObjPos v = to.copy().setLength(to.dotProduct(log));
-            cameraVelocityVector.expTo(v, 5, deltaTime);
-            float l = to.dotProduct(cameraVelocityVector.copy().multiply(8 * deltaTime));
-            if (l > 0)
-                cameraPosition.add(to.copy().setLength(l));
-            else
-                cameraPosition.add(to.copy().setLength(l / 2));
-            if (distance < 0.1f)
-                interpCameraTo = null;
-        } else {
-            if (!runningAnim())
-                cameraVelocityVector.lerpTo(ObjPos.ORIGIN, 4, deltaTime);
-        }
-        if (p != null && !runningAnim()) {
-            ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
-            ObjPos cameraTransformedPos = transformMousePosToCamera(p);
-            if (interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4) {
-                if (moveCameraEnabled) {
-                    if (prevMousePos != null) {
-                        if (interpCameraTo != null)
-                            interpCameraTo = null;
-                        cameraPosition.add(mousePos.copy().subtract(prevMousePos).scaleToBlocks().flipY());
-                    }
-                    prevMousePos = mousePos;
-                } else {
-                    if (interpCameraTo != null && (moveCameraUp || moveCameraDown || moveCameraLeft || moveCameraRight))
-                        interpCameraTo = null;
-                    if (moveCameraDown) {
-                        moveCameraDown = false;
-                        cameraPosition.addY(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                    }
-                    if (moveCameraUp) {
-                        moveCameraUp = false;
-                        cameraPosition.addY(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                    }
-                    if (moveCameraLeft) {
-                        moveCameraLeft = false;
-                        cameraPosition.addX(deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                    }
-                    if (moveCameraRight) {
-                        moveCameraRight = false;
-                        cameraPosition.addX(-deltaTime * MOUSE_EDGE_CAMERA_MOVE_SPEED);
-                    }
-                }
-                cameraPosition.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
-            }
-            level.buttonRegister.acceptInput(cameraTransformedPos, InputType.MOUSE_OVER, true, false);
-        }
-    }
-
-    public boolean moveCameraLeft = false, moveCameraRight = false, moveCameraUp = false, moveCameraDown = false;
 
     private boolean isFiring = false;
 

@@ -2,7 +2,7 @@ package unit.type;
 
 import foundation.math.ObjPos;
 import level.tile.TileType;
-import render.texture.FiringRenderer;
+import render.level.FiringRenderer;
 import unit.ShipClass;
 import unit.action.Action;
 import unit.info.AttributeData;
@@ -123,7 +123,7 @@ public class CorvetteType extends UnitType {
             Action.FIRE, Action.MOVE
     }, 1, 16, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.ARTILLERY_MISSILE, WeaponType.EXPLOSIVE);
-        w.consumeAmmo(3).firingRange(2, 4).noCounterattack();
+        w.consumeAmmo(3).firingRange(2, 3).noCounterattack();
         float s = 1.2f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.GOOD);

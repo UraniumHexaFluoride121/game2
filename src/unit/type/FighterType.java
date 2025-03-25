@@ -2,7 +2,7 @@ package unit.type;
 
 import foundation.math.ObjPos;
 import level.tile.TileType;
-import render.texture.FiringRenderer;
+import render.level.FiringRenderer;
 import unit.ShipClass;
 import unit.action.Action;
 import unit.info.AttributeData;

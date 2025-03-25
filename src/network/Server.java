@@ -266,10 +266,12 @@ public class Server implements Deletable {
                             server.sendTeamsAvailablePacket();
                             queuePacket(new PacketWriter(PacketType.JOIN_REQUEST_ACCEPTED, w -> {
                                 PacketWriter.writeMap(server.level.playerTeam, k -> PacketWriter.writeEnum(k, w), v -> PacketWriter.writeEnum(v, w), w);
+                                PacketWriter.writeMap(server.level.initialPlayerTeams, k -> PacketWriter.writeEnum(k, w), v -> PacketWriter.writeEnum(v, w), w);
                                 w.writeLong(server.level.seed);
                                 w.writeFloat(server.level.botDifficulty);
                                 w.writeInt(server.level.tilesX);
                                 w.writeInt(server.level.tilesY);
+                                server.level.gameplaySettings.write(w);
                                 PacketWriter.writeEnum(requestedTeam, w);
                                 for (int x = 0; x < server.level.tilesX; x++) {
                                     for (int y = 0; y < server.level.tilesY; y++) {

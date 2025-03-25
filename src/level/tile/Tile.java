@@ -4,6 +4,7 @@ import foundation.math.HexagonCorner;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
 import level.Level;
+import level.AbstractLevel;
 import level.structure.Structure;
 import level.structure.StructureType;
 import network.PacketReceiver;
@@ -11,10 +12,10 @@ import network.PacketWriter;
 import network.Writable;
 import render.GameRenderer;
 import render.anim.LerpAnimation;
-import render.renderables.HexagonRenderer;
+import render.level.tile.HexagonRenderer;
 import render.texture.ImageRenderer;
-import render.ui.UIColourTheme;
-import render.ui.implementation.UIHitPointBar;
+import render.UIColourTheme;
+import render.types.UIHitPointBar;
 import unit.UnitTeam;
 import unit.action.ActionShapes;
 
@@ -27,7 +28,7 @@ import static unit.action.Action.*;
 
 public class Tile implements Writable {
     public static final float STROKE_WIDTH = 0.1f, HIGHLIGHT_STROKE_WIDTH = 0.2f;
-    public static final float SCREEN_STROKE_WIDTH_MARGIN = GameRenderer.scaleFloatToScreen(HIGHLIGHT_STROKE_WIDTH), BLOCK_STROKE_WIDTH_MARGIN = HIGHLIGHT_STROKE_WIDTH;
+    public static final float BLOCK_STROKE_WIDTH_MARGIN = 2f, SCREEN_STROKE_WIDTH_MARGIN = GameRenderer.scaleFloatToScreen(BLOCK_STROKE_WIDTH_MARGIN);
 
     public static final Color
             BORDER_COLOUR = new Color(175, 249, 255),
@@ -54,7 +55,7 @@ public class Tile implements Writable {
 
     public LerpAnimation illegalTileTimer = new LerpAnimation(0.8f).finish();
 
-    public Tile(int x, int y, TileType type, Level level) {
+    public Tile(int x, int y, TileType type, AbstractLevel<?, ?> level) {
         this.type = type;
         pos = new Point(x, y);
         renderPos = getRenderPos(x, y);
@@ -80,7 +81,7 @@ public class Tile implements Writable {
         GameRenderer.renderOffset(renderPos, g, () -> renderer.render(g));
     }
 
-    public void renderTile(Graphics2D g, HexagonRenderer renderer, float tileSize) {
+    public static void renderTile(Graphics2D g, HexagonRenderer renderer, float tileSize, ObjPos renderPos) {
         GameRenderer.renderOffset(renderPos.copy().multiply(tileSize / TILE_SIZE), g, () -> renderer.render(g));
     }
 
@@ -129,7 +130,7 @@ public class Tile implements Writable {
         illegalTileTimer.startTimer();
     }
 
-    public void setTileType(TileType type, Level level) {
+    public void setTileType(TileType type, AbstractLevel<?, ?> level) {
         this.type = type;
         if (type.tileTexturesSupplier == null) {
             imageRenderer = null;

@@ -3,14 +3,14 @@ package level.energy;
 import level.Level;
 import render.GameRenderer;
 import render.Renderable;
-import render.renderables.text.FixedTextRenderer;
-import render.renderables.text.TextAlign;
-import render.ui.UIColourTheme;
-import render.ui.types.UIBox;
+import render.types.text.FixedTextRenderer;
+import render.types.text.TextAlign;
+import render.UIColourTheme;
+import render.types.box.UIBox;
 
 import java.awt.*;
 
-import static render.ui.types.UITextLabel.*;
+import static render.types.text.UITextLabel.*;
 
 public class EnergyCostDisplay implements Renderable {
     private final UIBox energyBox;

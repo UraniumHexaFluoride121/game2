@@ -2,10 +2,13 @@ package render.anim;
 
 import foundation.math.MathUtil;
 import network.PacketWriter;
+import render.Renderable;
 
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.function.Function;
 
 public class LerpAnimation implements ReversableAnimationTimer {
     private long startTime, endTime;
@@ -26,6 +29,16 @@ public class LerpAnimation implements ReversableAnimationTimer {
 
     public float getTime() {
         return time / 1000f;
+    }
+
+    public void renderOverlay(Graphics2D g) {
+        g.setColor(new Color(0, 0, 0, normalisedProgress()));
+        g.fillRect(0, 0, 60, (int) Renderable.top() + 1);
+    }
+
+    public void renderOverlay(Graphics2D g, Function<LerpAnimation, Float> alpha) {
+        g.setColor(new Color(0, 0, 0, alpha.apply(this)));
+        g.fillRect(0, 0, 60, (int) Renderable.top() + 1);
     }
 
     @Override

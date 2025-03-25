@@ -7,7 +7,7 @@ import level.tile.Tile;
 import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
-import render.renderables.TilePath;
+import render.level.tile.TilePath;
 import unit.Unit;
 
 import java.awt.*;

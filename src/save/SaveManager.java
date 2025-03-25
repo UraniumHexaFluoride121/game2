@@ -4,18 +4,22 @@ import java.io.*;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
 
-public abstract class SaveManager {
-    private static final String SAVE_FILE_NAME = "saves.bin";
-    private static TreeMap<String, GameSave> gameSaves = new TreeMap<>();
+public class SaveManager<T extends LoadedFromSave> {
+    private final String saveFileName;
+    public TreeMap<String, T> gameSaves = new TreeMap<>();
 
-    public static void addSave(GameSave save, String name) {
+    public SaveManager(String saveFileName) {
+        this.saveFileName = saveFileName;
+    }
+
+    public void addSave(T save, String name) {
         gameSaves.put(name, save);
         save();
     }
 
-    public static void save() {
+    public void save() {
         try {
-            FileOutputStream file = new FileOutputStream(SAVE_FILE_NAME);
+            FileOutputStream file = new FileOutputStream(saveFileName);
             ObjectOutputStream w = new ObjectOutputStream(file);
             w.writeObject(gameSaves);
             file.close();
@@ -25,14 +29,14 @@ public abstract class SaveManager {
         }
     }
 
-    public static void loadSaves() {
+    public void loadSaves() {
         try {
-            FileInputStream file = new FileInputStream(SAVE_FILE_NAME);
+            FileInputStream file = new FileInputStream(saveFileName);
             ObjectInputStream reader = new ObjectInputStream(file);
             Object o = reader.readObject();
             if (!(o instanceof TreeMap))
                 throw new RuntimeException();
-            gameSaves = (TreeMap<String, GameSave>) o;
+            gameSaves = (TreeMap<String, T>) o;
             gameSaves.forEach((name, s) -> s.load());
             file.close();
             reader.close();
@@ -41,16 +45,16 @@ public abstract class SaveManager {
         }
     }
 
-    public static void removeSave(String name) {
+    public void removeSave(String name) {
         gameSaves.remove(name);
         save();
     }
 
-    public static boolean containsSave(String name) {
+    public boolean containsSave(String name) {
         return gameSaves.containsKey(name);
     }
 
-    public static void forEachSave(BiConsumer<String, GameSave> action) {
+    public void forEachSave(BiConsumer<String, T> action) {
         gameSaves.forEach(action);
     }
 }

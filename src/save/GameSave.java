@@ -1,5 +1,6 @@
 package save;
 
+import level.GameplaySettings;
 import level.Level;
 import level.PlayerTeam;
 import level.structure.Structure;
@@ -20,7 +21,7 @@ public class GameSave implements Serializable, LoadedFromSave {
     public final long seed;
     public final int levelWidth, levelHeight, turn;
     public final HashSet<UnitData> unitData = new HashSet<>();
-    public final HashMap<UnitTeam, PlayerTeam> teams;
+    public final HashMap<UnitTeam, PlayerTeam> teams, initialTeams;
     public final UnitTeam activeTeam;
     public final HashMap<UnitTeam, Integer> availableMap;
     public final HashMap<UnitTeam, Boolean> bots;
@@ -28,6 +29,7 @@ public class GameSave implements Serializable, LoadedFromSave {
     public final byte[] tiles;
     public final String name;
     public final float botDifficulty;
+    public final GameplaySettings gameplaySettings;
 
     public GameSave(Level level, String name) {
         this.name = name;
@@ -49,6 +51,7 @@ public class GameSave implements Serializable, LoadedFromSave {
         }
         turn = level.getTurn();
         teams = new HashMap<>(level.playerTeam);
+        initialTeams = new HashMap<>(level.initialPlayerTeams);
         level.unitSet.forEach(u -> unitData.add(new UnitData(u)));
         activeTeam = level.getActiveTeam();
         availableMap = new HashMap<>(level.levelRenderer.energyManager.availableMap);
@@ -57,6 +60,7 @@ public class GameSave implements Serializable, LoadedFromSave {
             if (bots.get(team))
                 botDestroyedUnitCount.put(team, level.botHandlerMap.get(team).getDestroyedUnits());
         }
+        gameplaySettings = level.gameplaySettings;
     }
 
     public void loadLevel(Level level) {
@@ -111,6 +115,7 @@ public class GameSave implements Serializable, LoadedFromSave {
             if (bots.get(team))
                 level.botHandlerMap.get(team).loadDestroyedUnits(botDestroyedUnitCount.get(team));
         }
+        level.initialPlayerTeams = new HashMap<>(initialTeams);
     }
 
     @Override

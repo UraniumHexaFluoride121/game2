@@ -2,18 +2,33 @@ package mainScreen;
 
 import foundation.MainPanel;
 import foundation.input.*;
+import level.GameplaySettings;
 import level.Level;
+import level.LevelEditor;
 import level.TeamSpawner;
 import network.NetworkState;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
-import render.renderables.RenderElement;
+import render.level.tile.RenderElement;
+import render.types.text.FixedTextRenderer;
+import render.types.text.TextAlign;
 import render.texture.ResourceLocation;
-import render.ui.UIColourTheme;
-import render.ui.types.*;
+import render.UIColourTheme;
+import render.level.map.MapUI;
+import render.save.UISaveBox;
+import render.types.box.UIBox;
+import render.types.text.UITextDisplayBox;
+import render.types.text.UITextLabel;
+import render.types.input.button.UIButton;
+import render.types.input.UIEnumSelector;
+import render.types.input.UINumberSelector;
+import render.types.input.UITextInputBox;
+import render.types.container.UIContainer;
+import render.types.container.UIScrollSurface;
+import render.types.container.UITabSwitcher;
 import save.GameSave;
-import save.SaveManager;
+import save.MapSave;
 import unit.UnitTeam;
 import unit.bot.BotDifficulty;
 
@@ -21,16 +36,17 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static mainScreen.UIPlayerShipSettings.*;
-import static render.ui.UIColourTheme.*;
+import static render.UIColourTheme.*;
 
 public class TitleScreen implements Renderable, InputReceiver {
+    public static final float MAIN_BUTTON_Y_OFFSET = 2, MAIN_BUTTON_HEIGHT = 2.4f, MAIN_BUTTON_SPACING = 0.7f, MAIN_BUTTON_COUNT = 6, MAIN_BUTTON_B0X_HEIGHT = MAIN_BUTTON_COUNT * MAIN_BUTTON_HEIGHT + (MAIN_BUTTON_COUNT + 1) * MAIN_BUTTON_SPACING;
     private static Renderable titleScreenImage;
     private final GameRenderer renderer = new GameRenderer(MainPanel.windowTransform, null);
     private final ButtonRegister buttonRegister = new ButtonRegister();
-    private UIButton newGame, multiplayer, connectToLan, loadGame;
+    private UIButton tutorialButton, newGame, multiplayer, connectToLan, loadGame, levelEditorButton;
+    private final ArrayList<UIButton> allMainButtons = new ArrayList<>();
 
     public UITabSwitcher multiplayerTabs;
     public UIScrollSurface playerBoxScrollWindow;
@@ -52,13 +68,20 @@ public class TitleScreen implements Renderable, InputReceiver {
     public UIButton pasteSettingsButton;
 
     public UIContainer loadContainer;
-    public UIScrollSurface loadScrollSurface;
-    public ArrayList<UIContainer> loadSaveFiles = new ArrayList<>();
     public UIButton loadGameLocally, loadGameToLan;
-    public GameSave selectedSave = null;
     public UITextLabel loadLabel;
+    public UISaveBox<GameSave> loadBox;
 
     public UIEnumSelector<BotDifficulty> botDifficultySelector;
+    public UIButton toggleFoW;
+
+    public UIContainer levelEditorContainer;
+    public UINumberSelector levelEditorWidthSelector, levelEditorHeightSelector, levelEditorPlayerSelector;
+    public UISaveBox<MapSave> mapSaveBox, loadCustomBox;
+    public UIButton mapLoadButton;
+    public MapUI customMapPreview = null;
+
+    public boolean customMap = false;
 
     public TitleScreen() {
     }
@@ -68,30 +91,82 @@ public class TitleScreen implements Renderable, InputReceiver {
         new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, () -> System.exit(0))
                 .setText("Quit").setColourTheme(UIColourTheme.DEEP_RED).setBold();
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BACKGROUND, titleScreenImage);
-        new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(12, 17).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(Renderable.right() - 16, 3));
+        new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(10 + MAIN_BUTTON_SPACING * 2, MAIN_BUTTON_B0X_HEIGHT).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(Renderable.right() - 15 - MAIN_BUTTON_SPACING, MAIN_BUTTON_Y_OFFSET));
+        tutorialButton = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                Renderable.right() - 15, mainButtonHeight(0), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
+            for (UIButton button : allMainButtons) {
+                if (button != tutorialButton)
+                    button.deselect();
+            }
+        }).setText("Tutorial").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
+
         newGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                Renderable.right() - 15, 16 - 4 * 0, 10, 3, 1.2f, true, () -> {
-            multiplayer.deselect();
-            connectToLan.deselect();
-            loadGame.deselect();
+                Renderable.right() - 15, mainButtonHeight(1), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
+            for (UIButton button : allMainButtons) {
+                if (button != newGame)
+                    button.deselect();
+            }
         }).setText("Singleplayer").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
 
         multiplayer = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                Renderable.right() - 15, 16 - 4 * 1, 10, 3, 1.2f, true, () -> {
-            newGame.deselect();
-            connectToLan.deselect();
-            loadGame.deselect();
-            boolean verifyTeams = playerBoxes.getVerifyTeams();
+                Renderable.right() - 15, mainButtonHeight(2), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
+            for (UIButton button : allMainButtons) {
+                if (button != multiplayer)
+                    button.deselect();
+            }
             multiplayerTabs.setEnabled(true);
-            startLocalGame.setEnabled(verifyTeams);
-            startLanGame.setEnabled(verifyTeams);
-            gameCannotBeStarted.setEnabled(!verifyTeams);
+            playerBoxes.verifyTeams();
         }).setOnDeselect(() -> {
             multiplayerTabs.setEnabled(false);
             startLocalGame.setEnabled(false);
             startLanGame.setEnabled(false);
             gameCannotBeStarted.setEnabled(false);
         }).setText("Multiplayer").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
+
+        connectToLan = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                Renderable.right() - 15, mainButtonHeight(3), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
+            for (UIButton button : allMainButtons) {
+                if (button != connectToLan)
+                    button.deselect();
+            }
+            connectContainer.setEnabled(true);
+            updateColourSelectorVisibility();
+        }).setOnDeselect(() -> {
+            connectContainer.setEnabled(false);
+            updateColourSelectorVisibility();
+        }).setText("Connect to LAN").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
+
+        loadGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                Renderable.right() - 15, mainButtonHeight(4), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
+            for (UIButton button : allMainButtons) {
+                if (button != loadGame)
+                    button.deselect();
+            }
+            loadContainer.setEnabled(true);
+            updateSaveFiles();
+            updateLoadButtons();
+        }).setOnDeselect(() -> {
+            loadContainer.setEnabled(false);
+            updateLoadButtons();
+        }).setText("Load Game").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
+
+        levelEditorButton = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                Renderable.right() - 15, mainButtonHeight(5), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
+            for (UIButton button : allMainButtons) {
+                if (button != levelEditorButton)
+                    button.deselect();
+            }
+            levelEditorContainer.setEnabled(true);
+        }).setOnDeselect(() -> {
+            levelEditorContainer.setEnabled(false);
+        }).setText("Map Editor").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
+
+        allMainButtons.add(tutorialButton);
+        allMainButtons.add(newGame);
+        allMainButtons.add(multiplayer);
+        allMainButtons.add(connectToLan);
+        allMainButtons.add(loadGame);
+        allMainButtons.add(levelEditorButton);
 
         connectContainer = new UIContainer(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0).addRenderables((r, b) -> {
             enterIPBox = new UITextInputBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
@@ -136,23 +211,14 @@ public class TitleScreen implements Renderable, InputReceiver {
         }).setEnabled(false);
         createColourSelectorButtons();
 
-        connectToLan = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                Renderable.right() - 15, 16 - 4 * 2, 10, 3, 1.2f, true, () -> {
-            newGame.deselect();
-            multiplayer.deselect();
-            loadGame.deselect();
-            connectContainer.setEnabled(true);
-            updateColourSelectorVisibility();
-        }).setOnDeselect(() -> {
-            connectContainer.setEnabled(false);
-            updateColourSelectorVisibility();
-        }).setText("Connect to LAN").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
-
         startLocalGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 37 + 1, 3.5f - 2, 7, 1.5f, 0.7f, false, () -> {
-            if (multiplayerTabs.lastTabSelected())
-                MainPanel.startNewLevel(this::getNewLocalMultiplayerLevel);
-            else {
+            if (multiplayerTabs.lastTabSelected()) {
+                if (customMap)
+                    MainPanel.startNewLevel(() -> loadCustomLevel(loadCustomBox.getSelected(), false));
+                else
+                    MainPanel.startNewLevel(this::getNewLocalMultiplayerLevel);
+            } else {
                 if (!multiplayerTabs.firstTabSelected()) {
                     multiplayerTabs.selectTab(multiplayerTabs.getSelectedTab() - 1);
                     updateMultiplayerConnectButtons();
@@ -161,9 +227,12 @@ public class TitleScreen implements Renderable, InputReceiver {
         }).setBold().setEnabled(false);
         startLanGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 37 + 9, 3.5f - 2, 8, 1.5f, 0.7f, false, () -> {
-            if (multiplayerTabs.lastTabSelected())
-                MainPanel.startNewLevel(this::getNewServerMultiplayerLevel);
-            else {
+            if (multiplayerTabs.lastTabSelected()) {
+                if (customMap)
+                    MainPanel.startNewLevel(() -> loadCustomLevel(loadCustomBox.getSelected(), true));
+                else
+                    MainPanel.startNewLevel(this::getNewServerMultiplayerLevel);
+            } else {
                 multiplayerTabs.selectTab(multiplayerTabs.getSelectedTab() + 1);
                 updateMultiplayerConnectButtons();
             }
@@ -174,30 +243,83 @@ public class TitleScreen implements Renderable, InputReceiver {
         multiplayerTabs = new UITabSwitcher(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 37, 3.5f, 18, 15)
                 .addTab(4.65f, "Map Layout", (r, b) -> {
+                    UIContainer seedContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0)
+                            .addRenderables((r2, b2) -> {
+                                widthSelector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                                        1.5f, 7.5f, 1.5f, 2.5f, Level.MIN_WIDTH, Level.MAX_WIDTH, 20);
+                                heightSelector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                                        10, 7.5f, 1.5f, 2.5f, Level.MIN_HEIGHT, Level.MAX_HEIGHT, 12);
+                                new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
+                                        new UITextLabel(6.5f, 1, false).setTextLeftBold()
+                                                .updateTextLeft("Level width").setLeftOffset(0.5f)
+                                                .translate(1.3f, 9.5f),
+                                        new UITextLabel(6.5f, 1, false).setTextLeftBold()
+                                                .updateTextLeft("Level height").setLeftOffset(0.35f)
+                                                .translate(9.7f, 9.5f),
+                                        new UITextLabel(15, 1, true, 0.2f).setTextLeftBold().setLeftOffset(0.1f).updateTextLeft("Enter seed:")
+                                                .translate(1, 5)
+                                );
+                                enterSeedBox = new UITextInputBox(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                                        2, 1, 13, 3, 1.5f, true, 15, InputType::isDigit);
+                                enterSeedBox.setColourTheme(GREEN_SELECTED).setBold();
+                            });
+                    UIContainer customContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0).setEnabled(false);
+                    customContainer.addRenderables((r2, b2) -> {
+                        RenderElement noMapsAvailableText = new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
+                                new FixedTextRenderer("No custom maps available", 0.7f, UITextLabel.TEXT_COLOUR)
+                                        .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 11),
+                                new FixedTextRenderer("Use the Map Editor to create", 0.7f, UITextLabel.TEXT_COLOUR)
+                                        .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 9),
+                                new FixedTextRenderer("custom maps", 0.7f, UITextLabel.TEXT_COLOUR)
+                                        .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 8)
+                        );
+                        new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
+                                new UITextLabel(12.3f, 1, true).setTextLeftBold()
+                                        .updateTextLeft("Select custom map:").setLeftOffset(0.1f)
+                                        .translate(-13.7f, 12.8f),
+                                new UIBox(16, 10).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER).translate(1, 1)
+                        );
+                        loadCustomBox = new UISaveBox<>(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                                -13.5f, 1.5f, 12, 11, 1.5f, MainPanel.mapSaves)
+                                .enableClick();
+                        loadCustomBox.setOnClickOrUpdate(() -> {
+                            noMapsAvailableText.setEnabled(loadCustomBox.getElements().isEmpty());
+                            if (customMapPreview != null)
+                                customMapPreview.delete();
+                            if (loadCustomBox.hasSelectedSave()) {
+                                customContainer.addRenderables((r3, b3) -> {
+                                    MapSave map = loadCustomBox.getSelected();
+                                    float tileSize = Math.min(16f / map.levelWidth, 10f / map.levelHeight);
+                                    customMapPreview = new MapUI(r3, RenderOrder.TITLE_SCREEN_BUTTONS, map, tileSize, tileSize / 8f, 0.15f);
+                                    customMapPreview.translate(9, 6f).setZOrder(1);
+                                    playerBoxes.setPlayerCount(map.playerCount);
+                                });
+                            }
+                            updateSaveFiles();
+                            playerBoxes.verifyTeams();
+                        });
+                    });
                     UIButton seed = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                            1, 12, 7, 1.5f, 1f, true)
+                            1, 12, 7.5f, 1.5f, 1f, true)
                             .setColourTheme(GREEN_SELECTED).noDeselect().select().setText("Generated").setBold();
-                    widthSelector = new UINumberSelector(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                            1, 7.5f, 1.5f, 2.5f, 10, 45, 20);
-                    RenderElement widthLabel = new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
-                            new UITextLabel(6.5f, 1, false).setTextLeftBold()
-                                    .updateTextLeft("Level width").setLeftOffset(0.5f)
-                                    .translate(1, 9.5f)
-                    );
-                    heightSelector = new UINumberSelector(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                            9, 7.5f, 1.5f, 2.5f, 7, 25, 12);
-                    RenderElement heightLabel = new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
-                            new UITextLabel(6.5f, 1, false).setTextLeftBold()
-                                    .updateTextLeft("Level height").setLeftOffset(0.35f)
-                                    .translate(9, 9.5f)
-                    );
-                    RenderElement enterSeedLabel = new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
-                            new UITextLabel(15, 1, true, 0.2f).setTextLeftBold().setLeftOffset(0.1f).updateTextLeft("Enter seed:")
-                                    .translate(1, 5)
-                    );
-                    enterSeedBox = new UITextInputBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                            2, 1, 13, 3, 1.5f, true, 15, InputType::isDigit);
-                    enterSeedBox.setColourTheme(GREEN_SELECTED).setBold();
+                    UIButton custom = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                            9.5f, 12, 7.5f, 1.5f, 1f, true)
+                            .setColourTheme(GREEN_SELECTED).noDeselect().setText("Custom").setBold();
+                    seed.setOnClick(() -> {
+                        custom.deselect();
+                        seedContainer.setEnabled(true);
+                        customContainer.setEnabled(false);
+                        customMap = false;
+                        playerBoxes.unlockPlayers();
+                    });
+                    custom.setOnClick(() -> {
+                        seed.deselect();
+                        seedContainer.setEnabled(false);
+                        customContainer.setEnabled(true);
+                        customMap = true;
+                        playerBoxes.lockPlayers();
+                        playerBoxes.verifyTeams();
+                    });
                 }).addTab(3.5f, "Players", (r, b) -> {
                     playerBoxScrollWindow = new UIScrollSurface(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, 0.5f, 17, 14, (r2, b2) -> {
                         playerBoxes = new UIPlayerBoxes(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0);
@@ -233,48 +355,97 @@ public class TitleScreen implements Renderable, InputReceiver {
                     }).setEnabled(false);
                 }).addTab(4, "Gameplay", (r, b) -> {
                     botDifficultySelector = new UIEnumSelector<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                            9, 13.5f, 1f, 4.5f, BotDifficulty.class, BotDifficulty.MEDIUM).setCorner(0.3f);
+                            9, 13.5f, 1f, 4.5f, BotDifficulty.class, BotDifficulty.VERY_EASY).setCorner(0.3f);
                     new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
                             new UITextLabel(7f, 1, false).setTextCenterBold()
                                     .updateTextCenter("Bot Difficulty:")
                                     .translate(0.7f, 13.5f)
                     );
+                    toggleFoW = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                            9, 12f, botDifficultySelector.totalWidth(), 1f, 0.8f, true)
+                            .setText("Enabled").setColourTheme(GREEN_SELECTED).noDeselect()
+                            .select().setBold().setBoxCorner(0.3f).setOnClick(() -> {
+                                toggleFoW.setColourTheme(GREEN_SELECTED);
+                                toggleFoW.setText("Enabled");
+                            }).setOnDeselect(() -> {
+                                toggleFoW.setColourTheme(DEEP_RED);
+                                toggleFoW.setText("Disabled");
+                            }).toggleMode();
+                    new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
+                            new UITextLabel(7f, 1, false).setTextCenterBold()
+                                    .updateTextCenter("Fog of War:")
+                                    .translate(0.7f, 12f)
+                    );
                 }).setOnNewTabSelected(this::updateMultiplayerConnectButtons).setEnabled(false);
 
-        loadGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                Renderable.right() - 15, 16 - 4 * 3, 10, 3, 1.2f, true, () -> {
-            multiplayer.deselect();
-            connectToLan.deselect();
-            newGame.deselect();
-            loadContainer.setEnabled(true);
-            updateSaveFiles();
-            updateLoadButtons();
-        }).setOnDeselect(() -> {
-            loadContainer.setEnabled(false);
-            updateLoadButtons();
-        }).setText("Load Game").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
         loadContainer = new UIContainer(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 30, 2).addRenderables((r, b) -> {
-            loadLabel = new UITextLabel(12.3f, 1, true)
+            loadLabel = new UITextLabel(14.3f, 1, true)
                     .setTextLeftBold();
             new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND,
-                    new UIBox(12, 15).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(0, 2),
-                    loadLabel.translate(-.3f, 17.5f)
+                    loadLabel.translate(-2.3f, 17.5f)
             );
-            loadScrollSurface = new UIScrollSurface(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                    0, 2, 12, 15, false, (r2, b2) -> {
-            });
-            loadGameLocally = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0.3f, 5.75f, 1.2f, .8f, false)
+            loadGameLocally = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, -1, 0.3f, 5.75f, 1.2f, .8f, false)
                     .setText("Load locally").setBoxCorner(0.35f).setBold().setOnClick(() -> {
-                        MainPanel.startNewLevel(() -> loadLevel(selectedSave, false));
+                        MainPanel.startNewLevel(() -> loadLevel(loadBox.getSelected(), false));
                     });
-            loadGameToLan = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 6.25f, 0.3f, 5.75f, 1.2f, .8f, false)
+            loadGameToLan = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 5.25f, 0.3f, 5.75f, 1.2f, .8f, false)
                     .setText("Load to LAN").setBoxCorner(0.35f).setBold().setOnClick(() -> {
-                        MainPanel.startNewLevel(() -> loadLevel(selectedSave, true));
+                        MainPanel.startNewLevel(() -> loadLevel(loadBox.getSelected(), true));
                     });
-            ;
+            loadBox = new UISaveBox<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    -2, 2, 14, 15, 1.5f, MainPanel.levelSaves).enableClick()
+                    .setOnClickOrUpdate(this::updateLoadButtons);
         });
         loadContainer.setEnabled(false);
+
+        levelEditorContainer = new UIContainer(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                Renderable.right() - 18, 4).addRenderables((r, b) -> {
+            new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND, new UIBox(12, 6f).setColourTheme(LIGHT_BLUE_TRANSPARENT_CENTER).translate(-12, -1.5f));
+            levelEditorWidthSelector = new UINumberSelector(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    -5, 2.5f, 1f, 1.5f, Level.MIN_WIDTH, Level.MAX_WIDTH, 20).setCorner(0.3f);
+            levelEditorHeightSelector = new UINumberSelector(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    -5, 1f, 1f, 1.5f, Level.MIN_HEIGHT, Level.MAX_HEIGHT, 12).setCorner(0.3f);
+            levelEditorPlayerSelector = new UINumberSelector(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    -5, -.5f, 1f, 1.5f, 2, UnitTeam.ORDERED_TEAMS.length, 2).setCorner(0.3f);
+            new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
+                    new UITextLabel(5.5f, 1, false).setTextCenterBold()
+                            .updateTextCenter("Width:")
+                            .translate(-11.5f, 2.5f),
+                    new UITextLabel(5.5f, 1, false).setTextCenterBold()
+                            .updateTextCenter("Height:")
+                            .translate(-11.5f, 1f),
+                    new UITextLabel(5.5f, 1, false).setTextCenterBold()
+                            .updateTextCenter("Players:")
+                            .translate(-11.5f, -.5f),
+                    new UITextLabel(10f, 1, false).setTextCenterBold()
+                            .updateTextCenter("Create new map")
+                            .translate(-11.25f, 5f),
+                    new UITextLabel(10f, 1, false).setTextCenterBold()
+                            .updateTextCenter("Select map to load")
+                            .translate(-11.25f, 19.5f)
+            );
+            new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    2 - 12, -3.5f, 8, 1.5f, 1.2f, false)
+                    .setText("Create Map").setBold().setOnClick(() -> {
+                        MainPanel.startNewLevel(this::getNewLevelEditor);
+                    });
+            mapLoadButton = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    2 - 12, 7f, 8, 1.5f, 1.2f, false)
+                    .setText("Load Map").setBold().setOnClick(() -> {
+                        MainPanel.startNewLevel(() -> mapSaveBox.getSelected().createLevelEditor());
+                    });
+            mapSaveBox = new UISaveBox<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    -12, 9, 12, 10, 1.5f, MainPanel.mapSaves)
+                    .enableClick().setOnClickOrUpdate(() -> {
+                        if (mapSaveBox.hasSelectedSave()) {
+                            mapLoadButton.setClickEnabled(true).setColourTheme(LIGHT_BLUE).setText("Load Map");
+                        } else {
+                            mapLoadButton.setClickEnabled(false).setColourTheme(GRAYED_OUT).setText("Load Map");
+                        }
+                    });
+            mapSaveBox.updateSaves();
+        }).setEnabled(false);
         reset();
     }
 
@@ -289,6 +460,12 @@ public class TitleScreen implements Renderable, InputReceiver {
         updateColourSelectorVisibility();
         updateSaveFiles();
         updateMultiplayerConnectButtons();
+        mapSaveBox.updateSaves();
+        loadCustomBox.updateSaves();
+    }
+
+    public float mainButtonHeight(int index) {
+        return MAIN_BUTTON_B0X_HEIGHT - (MAIN_BUTTON_SPACING + MAIN_BUTTON_HEIGHT) * (index + 1) + MAIN_BUTTON_Y_OFFSET;
     }
 
     public void updateMultiplayerConnectButtons() {
@@ -296,10 +473,14 @@ public class TitleScreen implements Renderable, InputReceiver {
             startLanGame.setText("Start game on LAN");
             startLocalGame.setText("Start game locally");
             startLocalGame.setColourTheme(LIGHT_BLUE);
+            startLanGame.setTextSize(0.7f);
+            startLocalGame.setTextSize(0.7f);
         } else {
             startLanGame.setText("Next");
             startLocalGame.setText("Back");
             startLocalGame.setColourTheme(multiplayerTabs.getSelectedTab() == 0 ? GRAYED_OUT : LIGHT_BLUE);
+            startLanGame.setTextSize(1.2f);
+            startLocalGame.setTextSize(1.2f);
         }
     }
 
@@ -363,69 +544,52 @@ public class TitleScreen implements Renderable, InputReceiver {
         }
     }
 
+    private LevelEditor getNewLevelEditor() {
+        return new LevelEditor(levelEditorWidthSelector.getValue(), levelEditorHeightSelector.getValue(), new Random().nextLong(), levelEditorPlayerSelector.getValue());
+    }
+
     private Level getNewLocalMultiplayerLevel() {
         long seed = enterSeedBox.getText().isEmpty() ? new Random().nextLong() : Long.parseLong(enterSeedBox.getText());
-        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), playerBoxes.getBots(), NetworkState.LOCAL, botDifficultySelector.getValue().difficulty).generateDefaultTerrain(new TeamSpawner().setUnits(playerShipSettings.getUnits()));
+        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), playerBoxes.getBots(), new GameplaySettings(this),
+                NetworkState.LOCAL, botDifficultySelector.getValue().difficulty)
+                .generateDefaultTerrain(new TeamSpawner().setUnits(playerShipSettings.getUnits()));
     }
 
     private Level getNewServerMultiplayerLevel() {
         long seed = enterSeedBox.getText().isEmpty() ? new Random().nextLong() : Long.parseLong(enterSeedBox.getText());
-        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), playerBoxes.getBots(), NetworkState.SERVER, botDifficultySelector.getValue().difficulty).generateDefaultTerrain(new TeamSpawner().setUnits(playerShipSettings.getUnits()));
+        return new Level(playerBoxes.getTeams(), seed, widthSelector.getValue(), heightSelector.getValue(), playerBoxes.getBots(), new GameplaySettings(this),
+                NetworkState.SERVER, botDifficultySelector.getValue().difficulty)
+                .generateDefaultTerrain(new TeamSpawner().setUnits(playerShipSettings.getUnits()));
     }
 
     private Level loadLevel(GameSave save, boolean server) {
-        Level level = new Level(new HashMap<>(save.teams), save.seed, save.levelWidth, save.levelHeight, save.bots, server ? NetworkState.SERVER : NetworkState.LOCAL, save.botDifficulty);
+        Level level = new Level(new HashMap<>(save.teams), save.seed, save.levelWidth, save.levelHeight, save.bots, save.gameplaySettings,
+                server ? NetworkState.SERVER : NetworkState.LOCAL, save.botDifficulty);
+        save.loadLevel(level);
+        return level;
+    }
+
+    private Level loadCustomLevel(MapSave save, boolean server) {
+        Level level = new Level(playerBoxes.getTeams(), save.seed, save.levelWidth, save.levelHeight, playerBoxes.getBots(), new GameplaySettings(this),
+                server ? NetworkState.SERVER : NetworkState.LOCAL, botDifficultySelector.getValue().difficulty);
         save.loadLevel(level);
         return level;
     }
 
     private void updateSaveFiles() {
-        loadSaveFiles.forEach(UIContainer::delete);
-        loadSaveFiles.clear();
-        selectedSave = null;
-        ArrayList<UIButton> buttons = new ArrayList<>();
-        loadScrollSurface.addRenderables((r, b) -> {
-            AtomicInteger i = new AtomicInteger();
-            SaveManager.forEachSave((n, s) -> {
-                loadSaveFiles.add(new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 1, -2f * (i.get() + 1))
-                        .addRenderables((r2, b2) -> {
-                            UIButton button = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0, 8, 1.5f, 0.8f, true)
-                                    .setText(n).setBold().setBoxCorner(0.3f).setColourTheme(UIColourTheme.GREEN_SELECTED).noDeselect();
-                            button.setOnClick(() -> {
-                                selectSave(s, button, buttons);
-                            });
-                            buttons.add(button);
-                            new UIShapeButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 8.5f, 0, 1.5f, 1.5f, false)
-                                    .setColourTheme(DEEP_RED).setShape(UIShapeButton::smallX).setBoxCorner(0.3f).setOnClick(() -> {
-                                        SaveManager.removeSave(n);
-                                        MainPanel.addTask(this::updateSaveFiles);
-                                    });
-                        }));
-                i.getAndIncrement();
-            });
-        });
-        loadScrollSurface.setScrollMax(loadSaveFiles.size() * 2f - loadScrollSurface.height);
-        updateLoadButtons();
-    }
-
-    private void selectSave(GameSave save, UIButton button, ArrayList<UIButton> buttons) {
-        selectedSave = save;
-        buttons.forEach(b -> {
-            if (b != button)
-                b.deselect();
-        });
+        loadBox.updateSaves();
         updateLoadButtons();
     }
 
     private void updateLoadButtons() {
-        if (selectedSave != null && loadContainer.isEnabled()) {
+        if (loadBox.hasSelectedSave() && loadContainer.isEnabled()) {
             loadGameToLan.setEnabled(true);
             loadGameLocally.setEnabled(true);
         } else {
             loadGameToLan.setEnabled(false);
             loadGameLocally.setEnabled(false);
         }
-        loadLabel.updateTextLeft(loadSaveFiles.isEmpty() ? "No save files detected" : "Saved games");
+        loadLabel.updateTextLeft(loadBox.getElements().isEmpty() ? "No save files detected" : "Saved games");
     }
 
     @Override

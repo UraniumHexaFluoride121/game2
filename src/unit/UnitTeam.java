@@ -1,7 +1,7 @@
 package unit;
 
 import foundation.NamedEnum;
-import render.ui.UIColourTheme;
+import render.UIColourTheme;
 
 public enum UnitTeam implements NamedEnum {
     BLUE("blue", "Blue", 0, UIColourTheme.BLUE, UIColourTheme.BLUE_UNAVAILABLE),

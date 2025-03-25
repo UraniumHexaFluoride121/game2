@@ -1,6 +1,6 @@
 package unit.info;
 
-import render.ui.implementation.UnitInfoScreen;
+import render.level.info.UnitInfoScreen;
 import unit.ShipClass;
 
 public record AttributeData(UnitInfoScreen.AttributeType type, String text, int order) {

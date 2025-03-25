@@ -9,7 +9,7 @@ import level.tile.Tile;
 import network.NetworkState;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
-import render.renderables.TilePath;
+import render.level.tile.TilePath;
 import unit.ShipClass;
 import unit.Unit;
 import unit.UnitData;
@@ -200,6 +200,8 @@ public class BotHandler implements Deletable, Tickable {
                 value.set(v);
             }
         });
+        if (value.get() < 0)
+            return false;
         if (action.get() == null)
             return false;
         if (action.get() == Action.MOVE) {

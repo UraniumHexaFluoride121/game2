@@ -37,7 +37,7 @@ public class Structure implements Writable {
 
     public Structure setTeam(UnitTeam team) {
         this.team = team;
-        renderer = type.getRenderer(team);
+        renderer = type.getImage(team);
         return this;
     }
 
