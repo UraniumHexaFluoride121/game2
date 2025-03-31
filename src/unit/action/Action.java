@@ -13,6 +13,7 @@ import java.awt.image.RescaleOp;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static render.Renderable.*;
 import static unit.action.ActionColour.*;
@@ -81,7 +82,7 @@ public class Action implements NamedEnum, Serializable {
             }, "Fire at enemy units to deal damage. Damage dealt is proportional to the unit's remaining HP. " +
                     "With the exception of ranged units, firing at an enemy will lead to being counterattacked, but, " +
                     "attacking first gives you the upper hand as you'll weaken the enemy before the counterattack. " +
-                    "Being on terrain with high Defence reduces all incoming damage.", 1),
+                    "Being on terrain with high defence reduces all incoming damage.", 1),
             CAPTURE = new Action("CAPTURE", "Capture", DARK_GREEN, DARK_GREEN, FIRE_ACTION_HIGHLIGHT, false, g -> {
                 g.setStroke(ICON_STROKE_NARROW_NON_SCALED);
                 GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
@@ -237,6 +238,12 @@ public class Action implements NamedEnum, Serializable {
 
     public int getOrder() {
         return order;
+    }
+
+    public static void forEach(Consumer<Action> action) {
+        for (Action a : names.values()) {
+            action.accept(a);
+        }
     }
 
     @Override

@@ -103,7 +103,7 @@ public class UITabSwitcher extends UIContainer {
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return isEnabled();
     }
 
@@ -202,7 +202,7 @@ public class UITabSwitcher extends UIContainer {
         }
 
         @Override
-        public boolean posInside(ObjPos pos) {
+        public boolean posInside(ObjPos pos, InputType type) {
             return hitBox.isPositionInside(pos);
         }
 

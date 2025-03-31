@@ -30,9 +30,9 @@ public class LevelUIContainer<T extends AbstractLevel<?, ?>> extends UIContainer
     }
 
     @Override
-    public final boolean posInside(ObjPos pos) {
+    public final boolean posInside(ObjPos pos, InputType type) {
         ObjPos offset = level.levelRenderer.transformCameraPosToBlock(pos);
-        return super.posInside(offset) && posInsideLevelOffset(offset);
+        return super.posInside(offset, type) && posInsideLevelOffset(offset);
     }
 
     @Override

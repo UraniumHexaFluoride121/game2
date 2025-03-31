@@ -6,9 +6,11 @@ import foundation.TimedTaskQueue;
 import foundation.tick.Tickable;
 import level.Level;
 import level.tile.Tile;
+import level.tutorial.TutorialManager;
 import network.NetworkState;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
+import render.level.FiringRenderer;
 import render.level.tile.TilePath;
 import unit.ShipClass;
 import unit.Unit;
@@ -30,7 +32,7 @@ public class BotHandler implements Deletable, Tickable {
     public Level level;
     public final UnitTeam team;
     private HashSet<Unit> thisTeamUnits;
-    private HashMap<Unit, BotTileData> unitMoveData = new HashMap<>();
+    private final HashMap<Unit, BotTileData> unitMoveData = new HashMap<>();
     public BotTileData unitDebugData = null;
     public HashMap<BotTileDataType, BotTileData> tileData = new HashMap<>();
     private final AtomicBoolean executingMove = new AtomicBoolean(false), runningTurn = new AtomicBoolean(false);
@@ -50,7 +52,14 @@ public class BotHandler implements Deletable, Tickable {
         updateData();
     }
 
-    public boolean executeBestMove() {
+    public boolean findBestMove() {
+        if (TutorialManager.isTutorial() && !TutorialManager.forcedBotActions.isEmpty()) {
+            BotActionData data = TutorialManager.forcedBotActions.pollFirst().get();
+            if (data == null)
+                return false;
+            else
+                return executeMove(data);
+        }
         VisibilityData visibility = level.getVisibilityData(team);
         int energyAvailable = level.levelRenderer.energyManager.availableMap.get(team);
         AtomicReference<Action> action = new AtomicReference<>(), secondaryAction = new AtomicReference<>();
@@ -200,59 +209,64 @@ public class BotHandler implements Deletable, Tickable {
                 value.set(v);
             }
         });
-        if (value.get() < 0)
+        return executeMove(new BotActionData(action.get(), secondaryAction.get(), target.get(), secondaryTarget.get(), unit.get(), value.get()));
+    }
+
+    public boolean executeMove(BotActionData d) {
+        if (d.value < 0)
             return false;
-        if (action.get() == null)
+        if (d.action == null)
             return false;
-        if (action.get() == Action.MOVE) {
-            TilePath path = new TilePath(unit.get().type, unit.get().tilesInMoveRange(visibility), unit.get().pos, level.tileSelector);
-            path.setShortestPath(target.get(), level);
-            AnimTilePath animPath = path.getAnimPath(p -> unit.get().isIllegalTile(p, visibility));
-            selectUnitTile(unit.get());
+        VisibilityData visibility = level.getVisibilityData(team);
+        if (d.action == Action.MOVE) {
+            TilePath path = new TilePath(d.unit.type, d.unit.tilesInMoveRange(visibility), d.unit.pos, level.tileSelector);
+            path.setShortestPath(d.target, level);
+            AnimTilePath animPath = path.getAnimPath(p -> d.unit.isIllegalTile(p, visibility));
+            selectUnitTile(d.unit);
             anim.addTask(0.8f, () -> {
                 animPath.startTimer();
                 anim.addTask(((PowAnimation) animPath.getTimer()).getTime() + 0.2f, () -> {
-                    if (secondaryAction.get() == Action.FIRE) {
-                        Unit other = level.getUnit(secondaryTarget.get());
+                    if (d.secondaryAction == Action.FIRE) {
+                        Unit other = level.getUnit(d.secondaryTarget);
                         selectUnitTile(other);
                         anim.addTask(0.6f, () -> {
-                            anim.addTask(7, () -> {
+                            anim.addTask(FiringRenderer.estimatedAnimationTime(), () -> {
                             });
-                            level.levelRenderer.energyManager.canAfford(unit.get(), Action.FIRE, true);
+                            level.levelRenderer.energyManager.canAfford(d.unit, Action.FIRE, true);
                             if (level.networkState == NetworkState.SERVER) {
-                                level.server.sendUnitShootPacket(unit.get(), other);
+                                level.server.sendUnitShootPacket(d.unit, other);
                             }
-                            unit.get().addPerformedAction(Action.FIRE);
-                            unit.get().attack(other);
+                            d.unit.addPerformedAction(Action.FIRE);
+                            d.unit.attack(other);
                         });
                     }
                 });
-                level.levelRenderer.energyManager.canAfford(unit.get().team, animPath.getEnergyCost(unit.get(), level), true);
+                level.levelRenderer.energyManager.canAfford(d.unit.team, animPath.getEnergyCost(d.unit, level), true);
                 Point illegalTile = animPath.illegalTile(path);
                 if (level.networkState == NetworkState.SERVER) {
-                    level.server.sendUnitMovePacket(animPath, illegalTile, unit.get().pos, unit.get());
+                    level.server.sendUnitMovePacket(animPath, illegalTile, d.unit.pos, d.unit);
                 }
-                unit.get().startMove(animPath, illegalTile);
+                d.unit.startMove(animPath, illegalTile);
             });
             return true;
         }
-        if (action.get() == Action.FIRE) {
-            Unit other = level.getUnit(target.get());
+        if (d.action == Action.FIRE) {
+            Unit other = level.getUnit(d.target);
             selectUnitTile(other);
             anim.addTask(0.8f, () -> {
-                anim.addTask(7, () -> {
+                anim.addTask(FiringRenderer.estimatedAnimationTime(), () -> {
                 });
-                level.levelRenderer.energyManager.canAfford(unit.get(), Action.FIRE, true);
+                level.levelRenderer.energyManager.canAfford(d.unit, Action.FIRE, true);
                 if (level.networkState == NetworkState.SERVER) {
-                    level.server.sendUnitShootPacket(unit.get(), other);
+                    level.server.sendUnitShootPacket(d.unit, other);
                 }
-                unit.get().attack(other);
-                unit.get().addPerformedAction(Action.FIRE);
+                d.unit.attack(other);
+                d.unit.addPerformedAction(Action.FIRE);
             });
             return true;
         }
-        if (action.get() == Action.SHIELD_REGEN) {
-            Unit u = unit.get();
+        if (d.action == Action.SHIELD_REGEN) {
+            Unit u = d.unit;
             selectUnitTile(u);
             anim.addTask(0.8f, () -> {
                 level.levelRenderer.energyManager.canAfford(u, Action.SHIELD_REGEN, true);
@@ -263,8 +277,8 @@ public class BotHandler implements Deletable, Tickable {
             });
             return true;
         }
-        if (action.get() == Action.CAPTURE) {
-            Unit u = unit.get();
+        if (d.action == Action.CAPTURE) {
+            Unit u = d.unit;
             selectUnitTile(u);
             anim.addTask(0.8f, () -> {
                 level.levelRenderer.energyManager.canAfford(u, Action.CAPTURE, true);
@@ -276,8 +290,8 @@ public class BotHandler implements Deletable, Tickable {
             });
             return true;
         }
-        if (action.get() == Action.STEALTH) {
-            Unit u = unit.get();
+        if (d.action == Action.STEALTH) {
+            Unit u = d.unit;
             selectUnitTile(u);
             anim.addTask(1, () -> {
                 level.levelRenderer.energyManager.canAfford(u, Action.STEALTH, true);
@@ -327,7 +341,7 @@ public class BotHandler implements Deletable, Tickable {
                 data(SCOUT_NEEDED).addValue(u.pos, 1, r -> -120f);
                 for (ShipClass shipClass : ShipClass.values()) {
                     data(BotTileDataType.enemyDamageTypeFromClass(shipClass))
-                            .addValue(u.pos, 4, r -> (10 - r * 2f) * u.getDamageAgainstType(shipClass.getDamageType()));
+                            .addValue(u.pos, 4, r -> (TutorialManager.isTutorial() ? 0f : 1) * (10 - r * 2f) * u.getDamageAgainstType(shipClass.getDamageType()));
                 }
             } else {
                 data(SCOUT_NEEDED).addValue(u.pos, 1, r -> -30f);
@@ -424,7 +438,7 @@ public class BotHandler implements Deletable, Tickable {
             executingMove.set(true);
             MainPanel.addTask(() -> {
                 updateData();
-                if (!executeBestMove()) {
+                if (!findBestMove()) {
                     runningTurn.set(false);
                     MainPanel.addTaskAfterAnimBlock(level::endTurn);
                 }

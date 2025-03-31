@@ -38,19 +38,33 @@ public class MultiLineTextBox implements Renderable {
         int prevSpace = 0;
         while (true) {
             int nextSpace = s.indexOf(' ', prevSpace + 1);
+            int nextBreak = s.indexOf('\n', prevSpace + 1);
+            boolean lineBreak;
+            if (nextBreak != -1 && (nextBreak < nextSpace || nextSpace == -1)) {
+                nextSpace = nextBreak;
+                lineBreak = true;
+            } else
+                lineBreak = false;
             if (nextSpace == -1) {
                 builder.append(s, prevSpace, s.length());
             } else {
                 builder.append(s, prevSpace, nextSpace);
             }
-            FixedTextRenderer text = new FixedTextRenderer(builder.toString(), textSize, textColour);
+            FixedTextRenderer text = new FixedTextRenderer(builder.toString(), textSize, textColour)
+                    .setBold(bold).setTextAlign(textAlign);
             text.updateText(g);
+
             if (text.getTextWidth() > width) {
                 if (prevText == null)
                     throw new RuntimeException("Multiline text box was not wide enough to fit the provided text: " + s);
                 textRenderers.add(prevText);
                 builder = new StringBuilder();
                 prevSpace++;
+                prevText = null;
+            } else if (lineBreak) {
+                textRenderers.add(text);
+                builder = new StringBuilder();
+                prevSpace = nextSpace;
                 prevText = null;
             } else {
                 prevText = text;
@@ -60,9 +74,6 @@ public class MultiLineTextBox implements Renderable {
                     break;
                 }
             }
-        }
-        for (FixedTextRenderer text : textRenderers) {
-            text.setBold(bold).setTextAlign(textAlign);
         }
     }
 

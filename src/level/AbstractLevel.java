@@ -40,6 +40,11 @@ public abstract class AbstractLevel<T extends AbstractLevelRenderer<?>, U extend
         tileBound = Tile.getTilesBound(tilesX, tilesY);
     }
 
+    @Override
+    public TileType getTileType(int x, int y) {
+        return tileSelector.getTile(x, y).type;
+    }
+
     public void createRandom(long seed) {
         this.seed = seed;
         random = new RandomHandler(seed);

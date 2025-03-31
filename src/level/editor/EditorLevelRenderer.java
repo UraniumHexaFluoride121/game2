@@ -18,6 +18,7 @@ import render.level.tile.RenderElement;
 import render.save.UISaveMenu;
 import render.texture.ImageRenderer;
 import render.types.box.UIBox;
+import render.types.box.UIShapeDisplayBox;
 import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
 import render.types.container.UIElementScrollSurface;
@@ -57,6 +58,8 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
     private TileType editingTileType = null;
     private UnitType editingUnitType = null;
     private StructureType editingStructureType = null;
+    private boolean removeUnit = false;
+    private boolean removeStructure = false;
     public NeutralUnitTeam editingTeam = NeutralUnitTeam.fromTeam(UnitTeam.ORDERED_TEAMS[0]);
     private UISaveMenu<MapSave> saveMenu;
     private UIEnumSelector<NeutralUnitTeam> teamSelector;
@@ -104,12 +107,12 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                         ImageRenderer image = type.tileTextures.getImage(0);
                                         new RenderElement(r4, RenderOrder.LEVEL_UI,
                                                 g -> {
-                                                    GameRenderer.renderOffset(9, 4.5f / 2, g, () -> {
+                                                    GameRenderer.renderOffset(9.5f, 4.5f / 2, g, () -> {
                                                         image.render(g, 4);
                                                     });
                                                 }).setZOrder(1);
                                     }
-                                    Renderable hexagonRenderer = new HexagonRenderer(4, false, 0.2f, new Color(117, 117, 117, 200)).translate(9, 4.5f / 2 - 4 / 2f * Tile.SIN_60_DEG);
+                                    Renderable hexagonRenderer = new HexagonRenderer(4, false, 0.2f, new Color(117, 117, 117, 200)).translate(9.5f, 4.5f / 2 - 4 / 2f * Tile.SIN_60_DEG);
                                     new RenderElement(r4, RenderOrder.LEVEL_UI, hexagonRenderer,
                                             new UITextLabel(6, 0.7f, false).setTextCenterBold()
                                                     .updateTextCenter(type.displayName + " tile").translate(0.5f, 3.3f)).setZOrder(2);
@@ -117,8 +120,8 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                     }).addTab(3, "Units", (r2, b2) -> {
                         new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                                 0, 0, 14, Renderable.top() - 8, false, size -> size * 5f + 0.5f)
-                                .addElements(UnitType.ORDERED_UNIT_TYPES.length, (r3, b3, i) -> {
-                                    UnitType type = UnitType.ORDERED_UNIT_TYPES[i];
+                                .addElements(UnitType.ORDERED_UNIT_TYPES.length + 1, (r3, b3, i) -> {
+                                    UnitType type = i == 0 ? null : UnitType.ORDERED_UNIT_TYPES[i - 1];
                                     UITeamDisplay display = new UITeamDisplay(r3, b3, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                                             1, -5 * (i + 1), () -> {
                                         unitButtons.get(i).setColourTheme(editingTeam == NeutralUnitTeam.NEUTRAL ? UIColourTheme.GRAYED_OUT_OPAQUE : UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER)
@@ -126,6 +129,8 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                         if (editingTeam == NeutralUnitTeam.NEUTRAL) {
                                             unitButtons.forEach(UIButton::deselect);
                                         }
+                                        if (type == null)
+                                            return null;
                                         return ImageRenderer.renderImageCentered(type.getImage(editingTeam == NeutralUnitTeam.NEUTRAL ? UnitTeam.ORDERED_TEAMS[0] : editingTeam.unitTeam, UnitPose.INFO), true);
                                     });
                                     unitDisplays.add(display);
@@ -138,26 +143,35 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                             }
                                             level.tileSelector.deselect();
                                             editingUnitType = type;
+                                            if (type == null)
+                                                removeUnit = true;
+                                        }).setOnDeselect(() -> {
+                                            if (type == null)
+                                                removeUnit = false;
                                         }));
                                         new RenderElement(r4, RenderOrder.LEVEL_UI,
                                                 g -> {
-                                                    GameRenderer.renderOffset(9, 4.5f / 2, g, () -> {
-                                                        display.image.render(g, 4);
+                                                    GameRenderer.renderOffset(9.5f, 4.5f / 2, g, () -> {
+                                                        if (display.image != null)
+                                                            display.image.render(g, 4);
                                                     });
                                                 }).setZOrder(1);
                                         new RenderElement(r4, RenderOrder.LEVEL_UI,
                                                 new UITextLabel(6, 0.7f, false).setTextCenterBold()
-                                                        .updateTextCenter(type.getName()).translate(0.5f, 3.3f)).setZOrder(2);
+                                                        .updateTextCenter(type == null ? "Remove unit" : type.getName()).translate(0.5f, 3.3f)).setZOrder(2);
+                                        if (type == null)
+                                            new UIShapeDisplayBox(r4, RenderOrder.LEVEL_UI, 12 - 3 - 1, 4.5f / 2 - 3 / 2f, 3, 3)
+                                                    .setColourTheme(UIColourTheme.DEEP_RED).setShape(UIShapeButton::smallX).setZOrder(3);
                                     });
                                 }).addScrollBar(0.7f, 0.3f, -0.4f);
                     }).addTab(4.5f, "Structures", (r2, b2) -> {
                         new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                                 0, 0, 14, Renderable.top() - 8, false, size -> size * 5f + 0.5f)
-                                .addElements(StructureType.values().length, (r3, b3, i) -> {
-                                    StructureType type = StructureType.values()[i];
+                                .addElements(StructureType.values().length + 1, (r3, b3, i) -> {
+                                    StructureType type = i == 0 ? null : StructureType.values()[i - 1];
                                     UITeamDisplay display = new UITeamDisplay(r3, b3, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                                             1, -5 * (i + 1), () -> {
-                                        if (!type.hasNeutral)
+                                        if (type != null && !type.hasNeutral)
                                             structureButtons.get(i).setColourTheme(editingTeam == NeutralUnitTeam.NEUTRAL ? UIColourTheme.GRAYED_OUT_OPAQUE : UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER)
                                                     .setClickEnabled(editingTeam != NeutralUnitTeam.NEUTRAL);
                                         if (editingTeam == NeutralUnitTeam.NEUTRAL) {
@@ -166,6 +180,8 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                                     structureButtons.get(j).deselect();
                                             }
                                         }
+                                        if (type == null)
+                                            return null;
                                         return type.getLightImage(editingTeam.unitTeam);
                                     });
                                     structureDisplays.add(display);
@@ -178,24 +194,33 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                             }
                                             level.tileSelector.deselect();
                                             editingStructureType = type;
+                                            if (type == null)
+                                                removeStructure = true;
+                                        }).setOnDeselect(() -> {
+                                            if (type == null)
+                                                removeStructure = false;
                                         }));
                                         new RenderElement(r4, RenderOrder.LEVEL_UI,
                                                 g -> {
-                                                    GameRenderer.renderOffset(9, 4.5f / 2, g, () -> {
-                                                        display.image.render(g, 4);
+                                                    GameRenderer.renderOffset(9.5f, 4.5f / 2, g, () -> {
+                                                        if (display.image != null)
+                                                            display.image.render(g, 4);
                                                     });
                                                 }).setZOrder(1);
                                         new RenderElement(r4, RenderOrder.LEVEL_UI,
                                                 new UITextLabel(6, 0.7f, false).setTextCenterBold()
-                                                        .updateTextCenter(type.getName()).translate(0.5f, 3.3f)).setZOrder(2);
+                                                        .updateTextCenter(type == null ? "Remove structure" : type.getName()).translate(0.5f, 3.3f)).setZOrder(2);
+                                        if (type == null)
+                                            new UIShapeDisplayBox(r4, RenderOrder.LEVEL_UI, 12 - 3 - 1, 4.5f / 2 - 3 / 2f, 3, 3)
+                                                    .setColourTheme(UIColourTheme.DEEP_RED).setShape(UIShapeButton::smallX).setZOrder(3);
                                     });
                                 }).addScrollBar(0.7f, 0.3f, -0.4f);
                     });
             NeutralUnitTeam[] allowedTeams = NeutralUnitTeam.toNeutralTeamArray(Arrays.copyOf(UnitTeam.ORDERED_TEAMS, level.playerCount));
-            teamSelector = new UIEnumSelector<>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+            teamSelector = new UIEnumSelector<>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK,
                     14 / 2f - UIEnumSelector.totalWidth(2f, 6.5f) / 2, -2.5f, 2f, 6.5f, allowedTeams, 1) {
                 @Override
-                public boolean posInside(ObjPos pos) {
+                public boolean posInside(ObjPos pos, InputType type) {
                     return true;
                 }
             }.setDisplayTheme(editingTeam.uiColour).setOnChanged(() -> {
@@ -226,7 +251,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                 .setText("Save").setBold();
         new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
                 0, 0, level).addRenderables((r, b) -> {
-            saveMenu = new UISaveMenu<>(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, MainPanel.mapSaves, () -> new MapSave(level))
+            saveMenu = new UISaveMenu<>(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, MainPanel.mapSaves, name -> new MapSave(level, name))
                     .setOnSave(() -> level.unsaved = false);
         });
         new OnButtonInput(level.buttonRegister, ButtonOrder.LEVEL_UI_BACK, t -> t.isCharInput && (t.c == 't' || t.c == '1'), () -> tabSwitcher.selectTab(0));
@@ -249,6 +274,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                 Renderable.right() / 2 + 5, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
+                    mapUI.update();
                 });
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
@@ -284,6 +310,10 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                 });
     }
 
+    public void setSaveName(String name) {
+        saveMenu.saveFileNameBox.setText(name);
+    }
+
     public void setInvalid(String message) {
         invalidText.updateText(message);
         invalidContainer.setEnabled(true);
@@ -303,6 +333,14 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
 
     public StructureType getEditingStructureType() {
         return (tabSwitcher.getSelectedTab() == 2 && editingStructureType != null && (editingStructureType.hasNeutral || editingTeam != NeutralUnitTeam.NEUTRAL)) ? editingStructureType : null;
+    }
+
+    public boolean removeUnit() {
+        return tabSwitcher.getSelectedTab() == 1 && removeUnit;
+    }
+
+    public boolean removeStructure() {
+        return tabSwitcher.getSelectedTab() == 2 && removeStructure;
     }
 
     @Override

@@ -10,6 +10,11 @@ import level.Level;
 import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileSelector;
+import level.tutorial.TutorialElement;
+import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EventActionComplete;
+import level.tutorial.sequence.event.EventActionPerform;
+import level.tutorial.sequence.event.EventActionSelect;
 import network.NetworkState;
 import render.GameRenderer;
 import render.Renderable;
@@ -227,6 +232,9 @@ public class Unit implements Deletable, Tickable {
             FIRE_TILE_BORDER_COLOUR = new Color(243, 103, 103, 118);
 
     public synchronized void onActionSelect(Action action) {
+        if (!TutorialManager.actionEnabled(action))
+            return;
+        TutorialManager.acceptEvent(new EventActionSelect(level, action));
         if (action == MOVE) {
             selectableTiles = tilesInMoveRange(level.currentVisibility);
             movePath = new TilePath(type, selectableTiles, pos, selector());
@@ -249,6 +257,7 @@ public class Unit implements Deletable, Tickable {
             incrementCapture();
             if (level.networkState == NetworkState.SERVER)
                 level.server.sendUnitCapturePacket(this);
+            TutorialManager.acceptEvent(new EventActionPerform(level, CAPTURE));
             return;
         } else if (action == SHIELD_REGEN) {
             if (!level.levelRenderer.energyManager.canAfford(this, SHIELD_REGEN, true)) return;
@@ -261,6 +270,7 @@ public class Unit implements Deletable, Tickable {
             setShieldHP(shieldHP + type.shieldRegen);
             if (level.networkState == NetworkState.SERVER)
                 level.server.sendUnitShieldRegenPacket(this);
+            TutorialManager.acceptEvent(new EventActionPerform(level, SHIELD_REGEN));
         } else if (action == STEALTH) {
             if (!level.levelRenderer.energyManager.canAfford(this, STEALTH, true)) return;
             setStealthMode(!stealthMode, true);
@@ -272,6 +282,7 @@ public class Unit implements Deletable, Tickable {
             addPerformedAction(STEALTH);
             if (level.networkState == NetworkState.SERVER)
                 level.server.sendUnitStealthPacket(this);
+            TutorialManager.acceptEvent(new EventActionPerform(level, STEALTH));
         } else {
             selectableTiles = new HashSet<>();
         }
@@ -280,7 +291,7 @@ public class Unit implements Deletable, Tickable {
 
     //Called when there is an active action and this unit is selected
     public synchronized void onTileClicked(Tile tile, Action action) {
-        if (tile == null || level == null) return;
+        if (tile == null || level == null || TutorialManager.actionTileNotSelectable(tile.pos, action)) return;
         if (level.networkState == NetworkState.CLIENT) {
             onTileClickedAsClient(tile, action);
             return;
@@ -296,6 +307,7 @@ public class Unit implements Deletable, Tickable {
                     if (level.networkState == NetworkState.SERVER) {
                         level.server.sendUnitMovePacket(path, illegalTile, pos, this);
                     }
+                    TutorialManager.acceptEvent(new EventActionPerform(level, MOVE));
                 }
             } else if (action == FIRE) {
                 if (!level.levelRenderer.energyManager.canAfford(this, FIRE, true)) return;
@@ -306,6 +318,7 @@ public class Unit implements Deletable, Tickable {
                 attack(other);
                 addPerformedAction(FIRE);
                 endAndDeselectAction();
+                TutorialManager.acceptEvent(new EventActionPerform(level, FIRE));
             }
         }
     }
@@ -481,9 +494,11 @@ public class Unit implements Deletable, Tickable {
         }
         if (hitPoints <= 0)
             onDestroyed(other);
-        else if (!isThisAttacking) {
+        else {
             decrementCapture();
         }
+        if (!isThisAttacking)
+            TutorialManager.acceptEvent(new EventActionComplete(level, FIRE));
     }
 
     public void onDestroyed(Unit destroyedBy) { //destroyedBy is null if not destroyed by a unit
@@ -602,6 +617,7 @@ public class Unit implements Deletable, Tickable {
                 if (level.getThisTeam() == team) {
                     selector().select(level.getTile(pos));
                 }
+                TutorialManager.acceptEvent(new EventActionComplete(level, MOVE));
             } else {
                 renderPos = path.getPos();
                 Tile renderTile = renderTile();
@@ -842,5 +858,13 @@ public class Unit implements Deletable, Tickable {
 
     public Optional<Integer> getPerTurnActionCost(Action action) {
         return type.getPerTurnActionCost(action);
+    }
+
+    public String getActionCostText(Action a) {
+        if (a == MOVE) {
+            int fixedCost = (int) (type.movementFixedCost()), maxCost = fixedCost + (int) Math.ceil(type.maxMovement * type.movementCostMultiplier());
+            return (fixedCost + 1) + " - " + maxCost;
+        }
+        return String.valueOf(getActionCost(a).orElse(null));
     }
 }

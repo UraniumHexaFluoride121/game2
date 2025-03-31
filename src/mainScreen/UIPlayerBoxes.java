@@ -100,20 +100,24 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         }
         if (boxes.size() <= 1)
             verified = false;
-        boolean unitsVerified = MainPanel.titleScreen.playerShipSettings == null || MainPanel.titleScreen.playerShipSettings.verifyTeams();
-        boolean noCustomMapSelected = MainPanel.titleScreen.customMap && !MainPanel.titleScreen.loadCustomBox.hasSelectedSave();
-        boolean invalidMap = MainPanel.titleScreen.customMap && MainPanel.titleScreen.loadCustomBox.hasSelectedSave() && !MainPanel.titleScreen.loadCustomBox.getSelected().valid;
-        if (!unitsVerified || noCustomMapSelected || invalidMap)
+        TitleScreen t = MainPanel.titleScreen;
+        boolean unitsVerified = t.playerShipSettings == null || t.playerShipSettings.verifyTeams();
+        boolean noCustomMapSelected = t.customMap && !t.loadCustomBox.hasSelectedSave();
+        boolean invalidMap = t.customMap && t.loadCustomBox.hasSelectedSave() && !t.loadCustomBox.getSelected().valid;
+        boolean tooManyUnits = !t.customMap && t.playerShipSettings != null && t.widthSelector.getValue() * t.heightSelector.getValue() * 0.4f < t.playerShipSettings.unitCount();
+        if (!unitsVerified || noCustomMapSelected || invalidMap || tooManyUnits)
             verified = false;
-        if (MainPanel.titleScreen.multiplayerTabs != null && MainPanel.titleScreen.multiplayerTabs.isEnabled()) {
-            MainPanel.titleScreen.startLanGame.setEnabled(verified);
-            MainPanel.titleScreen.startLocalGame.setEnabled(verified);
-            UITextDisplayBox box = MainPanel.titleScreen.gameCannotBeStarted;
+        if (t.multiplayerTabs != null && t.multiplayerTabs.isEnabled()) {
+            t.startLanGame.setEnabled(verified);
+            t.startLocalGame.setEnabled(verified);
+            UITextDisplayBox box = t.gameCannotBeStarted;
             box.setEnabled(!verified);
             if (noCustomMapSelected)
                 box.setText("No custom map selected");
             else if (invalidMap)
                 box.setText("The selected map has an invalid layout");
+            else if (tooManyUnits)
+                box.setText("Map is too small for this many units");
             else if (boxes.size() <= 1)
                 box.setText("At least 2 players are needed to start game");
             else if (!playerTeamsVerified)
@@ -176,7 +180,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return true;
     }
 
@@ -334,7 +338,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         }
 
         @Override
-        public boolean posInside(ObjPos pos) {
+        public boolean posInside(ObjPos pos, InputType type) {
             return true;
         }
 

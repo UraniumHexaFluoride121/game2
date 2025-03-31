@@ -153,4 +153,8 @@ public abstract class MathUtil {
         }
         return v;
     }
+
+    public static float fraction(float v) {
+        return v - ((int) v);
+    }
 }

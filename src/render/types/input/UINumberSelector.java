@@ -110,7 +110,7 @@ public class UINumberSelector extends AbstractRenderElement implements Registere
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return isEnabled() && hitBox.isPositionInside(pos);
     }
 

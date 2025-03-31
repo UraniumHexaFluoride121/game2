@@ -16,7 +16,7 @@ public class HexagonRenderer implements Renderable {
     public HexagonRenderer(float size, boolean fill, float strokeWidth, Color color) {
         this.color = color;
         this.fill = fill;
-        stroke = new BasicStroke(strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
+        stroke = Renderable.roundedStroke(strokeWidth);
         path.moveTo(-size / 4, 0);
         path.lineTo(-size / 2, size / 2 * Tile.SIN_60_DEG);
         path.lineTo(-size / 4, size * Tile.SIN_60_DEG);

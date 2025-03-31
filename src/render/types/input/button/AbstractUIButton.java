@@ -101,7 +101,7 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return isEnabled() && hitBox.isPositionInside(pos);
     }
 

@@ -20,8 +20,11 @@ public enum RenderOrder {
     DAMAGE_UI,
     ENERGY_COST_INDICATOR,
 
+    TUTORIAL_UI,
+
     //Level menus / UI
     LEVEL_UI,
+    TUTORIAL_LEVEL_UI,
     MAP,
     UNIT_INFO_SCREEN_BACKGROUND,
     UNIT_INFO_SCREEN,

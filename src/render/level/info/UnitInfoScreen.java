@@ -2,6 +2,7 @@ package render.level.info;
 
 import foundation.input.*;
 import level.Level;
+import level.energy.EnergyDisplay;
 import render.*;
 import render.types.UIHitPointBar;
 import render.types.text.*;
@@ -141,7 +142,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
             actions.addAll(Arrays.asList(unit.type.actions));
             actions.sort(Comparator.comparingInt(a -> -a.getOrder()));
             for (int i = 0; i < actions.size(); i++) {
-                actionElements.add(new ActionOverviewElement(r, b, i + 1, actions.get(i)));
+                actionElements.add(new ActionOverviewElement(r, b, i + 1, actions.get(i), unit));
             }
         });
         actionScrollSurface.setScrollMax((actionElements.size() - 1) * 6 - attributesScrollSurface.height);
@@ -239,7 +240,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                 .setTextColour(UITextLabel.TEXT_COLOUR_DARK);
         private final Action action;
 
-        private ActionOverviewElement(GameRenderer renderer, ButtonRegister buttonRegister, int index, Action action) {
+        private ActionOverviewElement(GameRenderer renderer, ButtonRegister buttonRegister, int index, Action action, Unit unit) {
             super(renderer, buttonRegister, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, 0, -index * 6 + .5f);
             this.action = action;
             name.updateTextCenter(action.getName());
@@ -247,8 +248,9 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
             addRenderables((r, b) -> {
                 new UIButton(r, b, RenderOrder.UNIT_INFO_SCREEN_BACKGROUND, ButtonOrder.UNIT_INFO_SCREEN, 1, 0, 44, 5, 0, true)
                         .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER);
+                String actionCostText = unit.getActionCostText(action);
                 new RenderElement(r, RenderOrder.UNIT_INFO_SCREEN, ((Renderable) g -> {
-                    GameRenderer.renderOffset(1, 1, g, () -> {
+                    GameRenderer.renderOffset(1, 1.7f, g, () -> {
                         GameRenderer.renderScaled(3 / Action.ACTION_BUTTON_SIZE, g, () -> {
                             action.renderIcon(g, ActionIconType.ENABLED, ButtonState.DEFAULT);
                         });
@@ -257,7 +259,8 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                         name.render(g);
                     });
                     infoText.render(g);
-                }).translate(1, 0));
+                }).translate(1, 0), new EnergyDisplay(actionCostText.length() > 4 ? 2.8f : 2f).setText(actionCostText)
+                        .translate(2 + 3 / 2f, 0.3f));
             });
         }
     }

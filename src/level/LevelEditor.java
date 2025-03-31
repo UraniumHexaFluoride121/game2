@@ -20,8 +20,8 @@ public class LevelEditor extends AbstractLevel<EditorLevelRenderer, EditorTileSe
         super(tilesX, tilesY, seed);
         this.playerCount = playerCount;
         levelRenderer = new EditorLevelRenderer(this);
-        levelRenderer.createRenderers();
         tileSelector = new EditorTileSelector(this);
+        levelRenderer.createRenderers();
         buttonRegister.register(tileSelector);
         tileSelector.tileSet.forEach(t -> t.isFoW = false);
 
@@ -97,10 +97,5 @@ public class LevelEditor extends AbstractLevel<EditorLevelRenderer, EditorTileSe
                 onMapChanged();
             }
         }
-    }
-
-    @Override
-    public void delete() {
-        super.delete();
     }
 }

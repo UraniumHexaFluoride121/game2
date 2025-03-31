@@ -50,7 +50,7 @@ public class UIContainer extends AbstractRenderElement implements RegisteredButt
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return isEnabled();
     }
 

@@ -4,7 +4,6 @@ import foundation.Deletable;
 import foundation.math.ObjPos;
 
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class OnButtonInput implements RegisteredButtonInputReceiver, Deletable {
     private ButtonRegister register;
@@ -22,7 +21,7 @@ public class OnButtonInput implements RegisteredButtonInputReceiver, Deletable {
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return true;
     }
 

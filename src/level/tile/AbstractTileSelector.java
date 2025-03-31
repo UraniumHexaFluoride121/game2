@@ -240,7 +240,7 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         for (Tile[] tileRow : tiles) {
             for (Tile tile : tileRow) {
                 if (tile.posInside(pos))
@@ -308,14 +308,10 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
         } else if (type == MOUSE_OVER) {
             if (!blocked) {
                 ObjPos blockPos = level.levelRenderer.transformCameraPosToBlock(pos);
-                if (blockPos.y < AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER)
-                    level.levelRenderer.moveCameraDown = true;
-                if (blockPos.y > Renderable.top() - AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER)
-                    level.levelRenderer.moveCameraUp = true;
-                if (blockPos.x < AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER)
-                    level.levelRenderer.moveCameraLeft = true;
-                if (blockPos.x > Renderable.right() - AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER)
-                    level.levelRenderer.moveCameraRight = true;
+                level.levelRenderer.moveCameraDown = blockPos.y < AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER;
+                level.levelRenderer.moveCameraUp = blockPos.y > Renderable.top() - AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER;
+                level.levelRenderer.moveCameraLeft = blockPos.x < AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER;
+                level.levelRenderer.moveCameraRight = blockPos.x > Renderable.right() - AbstractLevelRenderer.MOUSE_EDGE_CAMERA_BORDER;
                 mouseOverTile = tileAtSelectablePos(pos);
             } else
                 mouseOverTile = null;
@@ -330,10 +326,14 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
 
     protected void mouseLeft(ObjPos pos, boolean inside, InputType type) {
         Tile newTile = tileAtSelectablePos(pos);
-        if (newTile == getSelectedTile() && newTile != null) {
+        if (newTile == getSelectedTile() && newTile != null && allowDoubleClickToMoveCamera()) {
             level.levelRenderer.setCameraInterpBlockPos(newTile.renderPosCentered);
         } else
             select(newTile);
+    }
+
+    protected boolean allowDoubleClickToMoveCamera() {
+        return true;
     }
 
     protected void escapePressed() {

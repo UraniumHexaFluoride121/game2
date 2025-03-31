@@ -3,8 +3,13 @@ package level.tile;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import level.Level;
+import level.tutorial.TutorialElement;
+import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EventActionDeselect;
+import level.tutorial.sequence.event.EventTileSelect;
 import unit.Unit;
 import unit.UnitTeam;
+import unit.action.Action;
 import unit.bot.VisibilityData;
 
 import java.awt.*;
@@ -60,7 +65,10 @@ public class TileSelector extends AbstractTileSelector<Level> {
         }
     }
 
+    @Override
     public void deselect() {
+        if (TutorialManager.isDisabled(TutorialElement.TILE_DESELECTION))
+            return;
         super.deselect();
         level.levelRenderer.tileInfo.setEnabled(false);
         level.updateSelectedUnit();
@@ -68,13 +76,19 @@ public class TileSelector extends AbstractTileSelector<Level> {
             level.levelRenderer.uiUnitInfo.closeFiringRangeView();
     }
 
+    @Override
     public void select(Tile tile) {
-        super.select(tile);
-        if (tile == null)
+        if (tile == null) {
+            deselect();
             return;
+        }
+        if (TutorialManager.tileNotSelectable(tile.pos))
+            return;
+        super.select(tile);
         level.levelRenderer.tileInfo.setTile(tile);
         level.levelRenderer.tileInfo.setEnabled(true);
         level.updateSelectedUnit();
+        TutorialManager.acceptEvent(new EventTileSelect(level, tile.pos));
     }
 
     @Override
@@ -88,6 +102,11 @@ public class TileSelector extends AbstractTileSelector<Level> {
     }
 
     @Override
+    protected boolean allowDoubleClickToMoveCamera() {
+        return super.allowDoubleClickToMoveCamera() && TutorialManager.isEnabled(TutorialElement.TILE_SELECTION) && TutorialManager.isEnabled(TutorialElement.CAMERA_MOVEMENT);
+    }
+
+    @Override
     protected void escapePressed() {
         deselectAction();
     }
@@ -98,11 +117,18 @@ public class TileSelector extends AbstractTileSelector<Level> {
     }
 
     public void deselectAction() {
+        if (TutorialManager.isDisabled(TutorialElement.ACTION_DESELECT)) {
+            if (!level.hasActiveAction())
+                deselect();
+            return;
+        }
         if (level.hasActiveAction()) {
+            Action action = level.getActiveAction();
             if (level.levelRenderer.highlightTileRenderer != null)
                 level.levelRenderer.highlightTileRenderer.close();
             level.levelRenderer.unitTileBorderRenderer = null;
             level.setActiveAction(null);
+            TutorialManager.acceptEvent(new EventActionDeselect(level, action));
         } else
             deselect();
     }

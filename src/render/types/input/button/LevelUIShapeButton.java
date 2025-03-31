@@ -24,8 +24,8 @@ public class LevelUIShapeButton extends UIShapeButton {
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
-        return super.posInside(level.levelRenderer.transformCameraPosToBlock(pos));
+    public boolean posInside(ObjPos pos, InputType type) {
+        return super.posInside(level.levelRenderer.transformCameraPosToBlock(pos), type);
     }
 
     @Override

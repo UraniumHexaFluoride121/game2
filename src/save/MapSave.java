@@ -7,6 +7,8 @@ import level.editor.EditorTileData;
 import level.editor.EditorUnitData;
 import level.structure.StructureType;
 import level.tile.Tile;
+import level.tile.TileType;
+import level.tutorial.TutorialManager;
 import unit.TileMapDisplayable;
 import unit.Unit;
 import unit.UnitMapDataConsumer;
@@ -27,8 +29,10 @@ public class MapSave implements Serializable, LoadedFromSave, TileMapDisplayable
     public final EditorUnitData[][] unitData;
     public final boolean valid;
     private final ObjPos tileBound;
+    private final String name;
 
-    public MapSave(LevelEditor level) {
+    public MapSave(LevelEditor level, String name) {
+        this.name = name;
         seed = level.seed;
         levelWidth = level.tilesX;
         levelHeight = level.tilesY;
@@ -64,6 +68,7 @@ public class MapSave implements Serializable, LoadedFromSave, TileMapDisplayable
         }
         level.onMapChanged();
         level.unsaved = false;
+        level.levelRenderer.setSaveName(name);
         return level;
     }
 
@@ -86,6 +91,10 @@ public class MapSave implements Serializable, LoadedFromSave, TileMapDisplayable
             }
         }
         level.setBasePositions(basePositions);
+        level.levelRenderer.energyManager.recalculateIncome();
+        level.levelRenderer.energyManager.incrementTurn(level.getThisTeam());
+        if (TutorialManager.isTutorial())
+            TutorialManager.createSequence(level);
     }
 
     @Override
@@ -133,5 +142,10 @@ public class MapSave implements Serializable, LoadedFromSave, TileMapDisplayable
     @Override
     public int tilesY() {
         return levelHeight;
+    }
+
+    @Override
+    public TileType getTileType(int x, int y) {
+        return tileData[x][y].type();
     }
 }

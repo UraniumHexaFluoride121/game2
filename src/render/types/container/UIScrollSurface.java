@@ -111,7 +111,7 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return clip.contains(pos.x - x, pos.y - y);
     }
 
@@ -140,6 +140,7 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
                 scrollAmount = Math.clamp(scrollAmount - scrollSpeed * s.scrollAmount, 0, scrollMax);
             else
                 scrollAmount = Math.clamp(scrollAmount + scrollSpeed * s.scrollAmount, 0, scrollMax);
+            blocking = true;
         }
         if (scrollBarBox != null && !blocked && !blocking && type == InputType.MOUSE_LEFT && scrollBarBox.isPositionInside(pos)) {
             prevPos = pos;

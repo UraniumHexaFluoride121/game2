@@ -8,6 +8,9 @@ import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileSelector;
 import level.tile.TileType;
+import level.tutorial.TutorialLevel;
+import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EventTurnStart;
 import network.NetworkState;
 import network.Server;
 import render.level.tile.HexagonBorder;
@@ -276,6 +279,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             botHandlerMap.get(getActiveTeam()).startTurn();
         if (networkState == NetworkState.SERVER)
             server.sendTurnUpdatePacket();
+        TutorialManager.acceptEvent(new EventTurnStart(this, getActiveTeam()));
     }
 
     public void setTurn(UnitTeam activeTeam, int turn, boolean endIfDifferent) {
@@ -390,7 +394,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         return null;
     }
 
-    private static final Color FOW_TILE_BORDER_COLOUR = new Color(67, 67, 67, 255);
+    public static final Color FOW_TILE_BORDER_COLOUR = new Color(67, 67, 67, 255);
     public VisibilityData currentVisibility = null;
 
     public void updateFoW() {
@@ -470,6 +474,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             server = null;
         }
         currentVisibility = null;
+        TutorialManager.deleteSequence();
     }
 
     public int getTurn() {

@@ -6,11 +6,10 @@ import foundation.input.InputType;
 import foundation.math.ObjPos;
 import level.energy.EnergyManager;
 import level.tile.Tile;
+import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EventAnim;
 import network.NetworkState;
-import render.GameRenderer;
-import render.RenderOrder;
-import render.Renderable;
-import render.UIConfirm;
+import render.*;
 import render.level.FiringRenderer;
 import render.level.GameEndScreen;
 import render.level.PauseMenu;
@@ -18,16 +17,15 @@ import render.level.info.UITileInfo;
 import render.level.info.UIUnitInfo;
 import render.level.info.UnitInfoScreen;
 import render.level.map.LevelMapUI;
+import render.level.tile.RenderElement;
 import render.level.ui.UIDamage;
 import render.level.ui.UIEndTurn;
 import render.level.ui.UITurnBox;
-import render.level.tile.RenderElement;
-import render.types.text.UITextNotification;
-import render.UIColourTheme;
 import render.types.input.button.LevelUIButton;
 import render.types.input.button.LevelUIShapeButton;
 import render.types.input.button.UIButton;
 import render.types.input.button.UIShapeButton;
+import render.types.text.UITextNotification;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -133,7 +131,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
         exitActionButton = new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                 0.5f, Renderable.top() - 4.5f, 7, 1.5f, 0.9f, false, level, () -> level.tileSelector.deselectAction())
-                .setText("Exit Action").setBold().setColourTheme(UIColourTheme.RED).setEnabled(false);
+                .setText("Exit Action").setBold().setColourTheme(UIColourTheme.DEEP_RED).setEnabled(false);
 
         firingRenderer = new FiringRenderer(firingAnimRenderer, RenderOrder.BACKGROUND, level);
 
@@ -141,6 +139,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
                 36.5f, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
+                    mapUI.update();
                 });
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
@@ -236,5 +235,10 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         attacking.postFiring(defending, true, true);
         defending.postFiring(attacking, false, true);
         removeAnimBlock(firingAnimRenderer);
+    }
+
+    @Override
+    public void animStateUpdate(boolean running) {
+        TutorialManager.acceptEvent(new EventAnim(level, running));
     }
 }

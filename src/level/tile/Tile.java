@@ -1,6 +1,7 @@
 package level.tile;
 
 import foundation.math.HexagonCorner;
+import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
 import level.Level;
@@ -34,7 +35,9 @@ public class Tile implements Writable {
             BORDER_COLOUR = new Color(175, 249, 255),
             BLUE_HIGHLIGHT_COLOUR = new Color(87, 177, 225),
             BLUE_TRANSPARENT_COLOUR = new Color(122, 151, 248, 142),
-            FOW_COLOUR = new Color(0, 0, 0, 128), ILLEGAL_TILE_COLOUR = new Color(227, 90, 90);
+            FOW_COLOUR_BACKGROUND = new Color(0, 0, 0, 153),
+            FOW_COLOUR = new Color(0, 0, 0, 64),
+            ILLEGAL_TILE_COLOUR = new Color(227, 90, 90);
     public static final float TILE_SIZE = 4.5f;
     public static final float SIN_60_DEG = ((float) Math.sin(Math.toRadians(60)));
 
@@ -95,6 +98,13 @@ public class Tile implements Writable {
                     structure.renderExplosion(g, this);
             }
         });
+    }
+
+    public void renderFogOfWarBackground(Graphics2D g) {
+        if (isFoW) {
+            HIGHLIGHT_RENDERER.setColor(FOW_COLOUR_BACKGROUND);
+            GameRenderer.renderOffset(renderPos, g, () -> HIGHLIGHT_RENDERER.render(g));
+        }
     }
 
     public void renderFogOfWar(Graphics2D g) {
@@ -224,6 +234,10 @@ public class Tile implements Writable {
 
     public static ObjPos getRenderPos(int x, int y) {
         return new ObjPos(x * TILE_SIZE * 1.5f / 2 + TILE_SIZE / 2, y * SIN_60_DEG * TILE_SIZE + ((x % 2) == 0 ? SIN_60_DEG * TILE_SIZE / 2 : 0));
+    }
+
+    public static ObjPos getFractionalRenderPos(float x, float y) {
+        return getRenderPos((int) x, (int) y).add(MathUtil.fraction(x) * Tile.TILE_SIZE, MathUtil.fraction(y) * Tile.TILE_SIZE * Tile.SIN_60_DEG);
     }
 
     public static ObjPos getCenteredRenderPos(Point pos) {
