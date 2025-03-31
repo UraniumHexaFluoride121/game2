@@ -15,6 +15,10 @@ public class GameplaySettings implements Serializable, Writable {
         isFoWEnabled = titleScreen.toggleFoW.isSelected();
     }
 
+    public GameplaySettings(boolean isFoWEnabled) {
+        this.isFoWEnabled = isFoWEnabled;
+    }
+
     public GameplaySettings(DataInputStream reader) throws IOException {
         isFoWEnabled = reader.readBoolean();
     }

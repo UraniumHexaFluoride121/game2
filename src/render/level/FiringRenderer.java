@@ -33,7 +33,7 @@ public class FiringRenderer extends AbstractRenderElement {
     private UIHitPointBar hitPointBarBorderLeft, hitPointBarBorderRight;
     private UIHitPointBar shieldHitPointBarLeft, shieldHitPointBarRight;
     private final ArrayList<Projectile> leftProjectiles = new ArrayList<>(), rightProjectiles = new ArrayList<>();
-    private final LerpAnimation shootTimerAttacking = new LerpAnimation(1.7f), shootTimerAttacked = new LerpAnimation(2.2f), endTimer = new LerpAnimation(1);
+    private final LerpAnimation shootTimerAttacking = new LerpAnimation(1.7f), shootTimerAttacked = new LerpAnimation(2.2f), endTimer = new LerpAnimation(0.5f);
     private boolean firingLeft = false, firingRight = false, finished = false, leftHit = false, rightHit = false, rightShieldStarted = false, leftShieldStarted = false;
     private Level level;
     private LerpAnimation overlayTimer = new LerpAnimation(1);
@@ -348,6 +348,10 @@ public class FiringRenderer extends AbstractRenderElement {
             new ObjPos(14, Renderable.top() * 0.7f),
             new ObjPos(17, Renderable.top() * 0.3f)
     };
+
+    public static float estimatedAnimationTime() {
+        return 6.5f;
+    }
 
     private static class UnitRenderer implements Renderable {
         private final ImageSequenceAnim shield;

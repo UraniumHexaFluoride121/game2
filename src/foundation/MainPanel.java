@@ -9,20 +9,22 @@ import level.AbstractLevel;
 import level.Level;
 import level.structure.StructureType;
 import level.tile.TileType;
+import level.tutorial.TutorialLevel;
+import level.tutorial.TutorialManager;
 import mainScreen.TitleScreen;
 import network.Client;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
+import render.UIColourTheme;
 import render.anim.LerpAnimation;
 import render.level.tile.RenderElement;
-import render.types.text.FixedTextRenderer;
-import render.types.text.TextAlign;
 import render.texture.BackgroundTexture;
 import render.texture.ImageSequenceGroup;
 import render.texture.ResourceLocation;
-import render.UIColourTheme;
 import render.types.UIHitPointBar;
+import render.types.text.FixedTextRenderer;
+import render.types.text.TextAlign;
 import render.types.text.UITextLabel;
 import save.GameSave;
 import save.MapSave;
@@ -49,6 +51,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     public static final SaveManager<GameSave> levelSaves = new SaveManager<>("saves.bin");
     public static final SaveManager<MapSave> mapSaves = new SaveManager<>("custom-maps.bin");
+    public static final SaveManager<MapSave> tutorialMaps = new SaveManager<>("tutorial/tutorial-maps.bin");
 
     public static AffineTransform windowTransform = new AffineTransform();
 
@@ -88,8 +91,9 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         fadeScreen.finish();
         Level.EXECUTOR.submit(() -> {
             loadText.updateText("Loading game saves...");
-            MainPanel.levelSaves.loadSaves();
-            MainPanel.mapSaves.loadSaves();
+            levelSaves.loadSavesExternal();
+            mapSaves.loadSavesExternal();
+            tutorialMaps.loadSavesInternal();
             loadText.updateText("Loading units...");
             UnitType.initAll();
             loadText.updateText("Loading main menu...");
@@ -124,7 +128,17 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         loadBar.setFill(progress);
     }
 
+    public static void startNewLevel(TutorialLevel tutorialLevel, Supplier<AbstractLevel<?, ?>> levelCreator) {
+        TutorialManager.startTutorial(tutorialLevel);
+        createLevel(levelCreator);
+    }
+
     public static void startNewLevel(Supplier<AbstractLevel<?, ?>> levelCreator) {
+        TutorialManager.endTutorial();
+        createLevel(levelCreator);
+    }
+
+    private static void createLevel(Supplier<AbstractLevel<?, ?>> levelCreator) {
         new Thread(() -> {
             fadeScreen.setReversed(false);
             activeInputReceiver = null;
@@ -144,6 +158,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     }
 
     public static void startNewLevel(Supplier<Level> levelCreator, Consumer<Level> onLevelCreated) {
+        TutorialManager.endTutorial();
         Level.EXECUTOR.submit(() -> {
             fadeScreen.setReversed(false);
             activeInputReceiver = null;

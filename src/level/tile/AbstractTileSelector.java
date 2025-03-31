@@ -240,7 +240,7 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         for (Tile[] tileRow : tiles) {
             for (Tile tile : tileRow) {
                 if (tile.posInside(pos))
@@ -330,10 +330,14 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
 
     protected void mouseLeft(ObjPos pos, boolean inside, InputType type) {
         Tile newTile = tileAtSelectablePos(pos);
-        if (newTile == getSelectedTile() && newTile != null) {
+        if (newTile == getSelectedTile() && newTile != null && allowDoubleClickToMoveCamera()) {
             level.levelRenderer.setCameraInterpBlockPos(newTile.renderPosCentered);
         } else
             select(newTile);
+    }
+
+    protected boolean allowDoubleClickToMoveCamera() {
+        return true;
     }
 
     protected void escapePressed() {

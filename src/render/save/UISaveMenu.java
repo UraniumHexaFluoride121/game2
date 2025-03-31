@@ -19,6 +19,7 @@ import save.LoadedFromSave;
 import save.SaveManager;
 
 import java.awt.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class UISaveMenu<T extends LoadedFromSave> extends UIContainer {
@@ -28,7 +29,7 @@ public class UISaveMenu<T extends LoadedFromSave> extends UIContainer {
     private final SaveManager<T> saveManager;
     private Runnable onSave = null;
 
-    public UISaveMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, SaveManager<T> saveManager, Supplier<T> saveSupplier) {
+    public UISaveMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, SaveManager<T> saveManager, Function<String, T> saveSupplier) {
         super(register, buttonRegister, order, buttonOrder, 0, 0);
         this.saveManager = saveManager;
         addRenderables((r, b) -> {
@@ -46,7 +47,7 @@ public class UISaveMenu<T extends LoadedFromSave> extends UIContainer {
             saveButton = new UIButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 - 4, Renderable.top() / 2 + 5.5f, 8, 1.2f, 1, false)
                     .setText("Save").setBold().setColourTheme(UIColourTheme.GRAYED_OUT).setClickEnabled(false).setOnClick(() -> {
                         String name = saveFileNameBox.getText();
-                        saveBox.addSave(saveSupplier.get(), name);
+                        saveBox.addSave(saveSupplier.apply(name), name);
                         saveButton.setColourTheme(UIColourTheme.DEEP_GREEN).setText("Saved!").setClickEnabled(false);
                         if (onSave != null)
                             onSave.run();

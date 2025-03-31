@@ -38,7 +38,7 @@ public class UITurnBox extends AbstractRenderElement implements RegisteredButton
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return hitBox.isPositionInside(level.levelRenderer.transformCameraPosToBlock(pos));
     }
 

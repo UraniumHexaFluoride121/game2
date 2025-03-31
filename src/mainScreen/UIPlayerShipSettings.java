@@ -84,6 +84,14 @@ public class UIPlayerShipSettings extends UIContainer {
         return units;
     }
 
+    public int unitCount() {
+        int count = 0;
+        for (int i = 0; i < MainPanel.titleScreen.playerBoxes.getTeamCount(); i++) {
+            count += teamSettingsMap.get(UnitTeam.ORDERED_TEAMS[i]).getTypes().size();
+        }
+        return count;
+    }
+
     public void loadPreset(HashMap<UnitType, Integer> preset) {
         teamSettingsMap.forEach((team, teamSettings) -> {
             teamSettings.selectors.forEach((type, selector) -> {

@@ -1,6 +1,7 @@
 package level.tile;
 
 import foundation.math.HexagonCorner;
+import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
 import level.Level;
@@ -224,6 +225,10 @@ public class Tile implements Writable {
 
     public static ObjPos getRenderPos(int x, int y) {
         return new ObjPos(x * TILE_SIZE * 1.5f / 2 + TILE_SIZE / 2, y * SIN_60_DEG * TILE_SIZE + ((x % 2) == 0 ? SIN_60_DEG * TILE_SIZE / 2 : 0));
+    }
+
+    public static ObjPos getFractionalRenderPos(float x, float y) {
+        return getRenderPos((int) x, (int) y).add(MathUtil.fraction(x) * Tile.TILE_SIZE, MathUtil.fraction(y) * Tile.TILE_SIZE * Tile.SIN_60_DEG);
     }
 
     public static ObjPos getCenteredRenderPos(Point pos) {

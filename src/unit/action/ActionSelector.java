@@ -188,7 +188,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         if (!isVisible.get())
             return false;
         for (int i = 0; i < actionMap.size(); i++) {

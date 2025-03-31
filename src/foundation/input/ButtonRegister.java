@@ -90,7 +90,7 @@ public class ButtonRegister implements IButtonRegister, Deletable {
         processQueued();
         AtomicBoolean blocked = new AtomicBoolean(alreadyBlocked);
         buttons.forEach((_, zSet) -> zSet.forEach((_, set) -> set.forEach(b -> {
-            boolean inside = b.posInside(pos);
+            boolean inside = b.posInside(pos, type);
             if (pressed)
                 b.buttonPressed(pos, inside, blocked.get(), type);
             else

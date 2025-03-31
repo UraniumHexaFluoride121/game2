@@ -126,7 +126,7 @@ public class UIEnumSelector<T extends NamedEnum> extends AbstractRenderElement i
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return isEnabled() && hitBox.isPositionInside(pos);
     }
 

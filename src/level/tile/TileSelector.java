@@ -3,6 +3,9 @@ package level.tile;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import level.Level;
+import level.tutorial.TutorialElement;
+import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EventTileSelect;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.bot.VisibilityData;
@@ -69,12 +72,13 @@ public class TileSelector extends AbstractTileSelector<Level> {
     }
 
     public void select(Tile tile) {
-        super.select(tile);
-        if (tile == null)
+        if (tile == null || TutorialManager.tileNotSelectable(tile.pos))
             return;
+        super.select(tile);
         level.levelRenderer.tileInfo.setTile(tile);
         level.levelRenderer.tileInfo.setEnabled(true);
         level.updateSelectedUnit();
+        TutorialManager.acceptEvent(new EventTileSelect(level, tile.pos));
     }
 
     @Override
@@ -88,8 +92,14 @@ public class TileSelector extends AbstractTileSelector<Level> {
     }
 
     @Override
+    protected boolean allowDoubleClickToMoveCamera() {
+        return super.allowDoubleClickToMoveCamera() && TutorialManager.isEnabled(TutorialElement.TILE_SELECTION);
+    }
+
+    @Override
     protected void escapePressed() {
-        deselectAction();
+        if (TutorialManager.isEnabled(TutorialElement.ACTION_DESELECT))
+            deselectAction();
     }
 
     @Override

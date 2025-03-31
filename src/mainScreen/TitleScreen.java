@@ -6,27 +6,27 @@ import level.GameplaySettings;
 import level.Level;
 import level.LevelEditor;
 import level.TeamSpawner;
+import level.tutorial.TutorialLevel;
+import level.tutorial.TutorialLevelData;
 import network.NetworkState;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
-import render.level.tile.RenderElement;
-import render.types.text.FixedTextRenderer;
-import render.types.text.TextAlign;
-import render.texture.ResourceLocation;
 import render.UIColourTheme;
 import render.level.map.MapUI;
+import render.level.tile.RenderElement;
 import render.save.UISaveBox;
+import render.texture.ResourceLocation;
 import render.types.box.UIBox;
-import render.types.text.UITextDisplayBox;
-import render.types.text.UITextLabel;
-import render.types.input.button.UIButton;
+import render.types.container.UIContainer;
+import render.types.container.UIElementScrollSurface;
+import render.types.container.UIScrollSurface;
+import render.types.container.UITabSwitcher;
 import render.types.input.UIEnumSelector;
 import render.types.input.UINumberSelector;
 import render.types.input.UITextInputBox;
-import render.types.container.UIContainer;
-import render.types.container.UIScrollSurface;
-import render.types.container.UITabSwitcher;
+import render.types.input.button.UIButton;
+import render.types.text.*;
 import save.GameSave;
 import save.MapSave;
 import unit.UnitTeam;
@@ -79,9 +79,11 @@ public class TitleScreen implements Renderable, InputReceiver {
     public UINumberSelector levelEditorWidthSelector, levelEditorHeightSelector, levelEditorPlayerSelector;
     public UISaveBox<MapSave> mapSaveBox, loadCustomBox;
     public UIButton mapLoadButton;
-    public MapUI customMapPreview = null;
-
+    public MapUI customMapPreview = null, loadMapPreview = null, loadGamePreview = null;
     public boolean customMap = false;
+
+    public UIContainer tutorialContainer;
+    public TutorialLevel selectedTutorialLevel = null;
 
     public TitleScreen() {
     }
@@ -98,6 +100,9 @@ public class TitleScreen implements Renderable, InputReceiver {
                 if (button != tutorialButton)
                     button.deselect();
             }
+            tutorialContainer.setEnabled(true);
+        }).setOnDeselect(() -> {
+            tutorialContainer.setEnabled(false);
         }).setText("Tutorial").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED);
 
         newGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
@@ -167,6 +172,35 @@ public class TitleScreen implements Renderable, InputReceiver {
         allMainButtons.add(connectToLan);
         allMainButtons.add(loadGame);
         allMainButtons.add(levelEditorButton);
+
+        tutorialContainer = new UIContainer(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, Renderable.right() - 28, 4).addRenderables((r, b) -> {
+            new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
+                    new UIBox(10, 14).setColourTheme(LIGHT_BLUE_TRANSPARENT_CENTER),
+                    new UITextLabel(10.3f, 1, true).setTextLeftBold().updateTextLeft("Select tutorial:").translate(-0.3f, 14.5f));
+            UIMultiLineDisplayBox textBox = new UIMultiLineDisplayBox(r, RenderOrder.TITLE_SCREEN_BUTTONS, -10, 2, 8, 10, 0.7f, TextAlign.LEFT, box -> box.setColourTheme(LIGHT_BLUE_OPAQUE_CENTER));
+            textBox.setEnabled(false);
+            UIButton startButton = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 1.5f, -2.5f, 7, 1.5f, 1.2f, false)
+                    .setBold().setText("Start").setClickEnabled(false).setColourTheme(GRAYED_OUT).setOnClick(() -> {
+                        MainPanel.startNewLevel(selectedTutorialLevel, () -> loadTutorialLevel(MainPanel.tutorialMaps.gameSaves.get(selectedTutorialLevel.saveFileName), selectedTutorialLevel.levelData));
+                    });
+            UIElementScrollSurface<UIButton> tutorialButtons = new UIElementScrollSurface<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    0, 0, 10, 14, false, count -> count * 2f + 1f);
+            tutorialButtons.addElements(TutorialLevel.values().length, (r2, b2, i) -> {
+                TutorialLevel level = TutorialLevel.values()[i];
+                UIButton button = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 1, -2 * (i + 1) - 0.5f, 8, 1.5f, 0.8f, true)
+                        .setText(level.getName()).setColourTheme(GREEN_SELECTED).setBold().noDeselect();
+                return button.setOnClick(() -> {
+                    tutorialButtons.forEach(other -> {
+                        if (button != other)
+                            other.deselect();
+                    });
+                    textBox.setEnabled(true);
+                    textBox.setText(level.description);
+                    startButton.setClickEnabled(true).setColourTheme(LIGHT_BLUE);
+                    selectedTutorialLevel = level;
+                });
+            });
+        }).setEnabled(false);
 
         connectContainer = new UIContainer(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0).addRenderables((r, b) -> {
             enterIPBox = new UITextInputBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
@@ -246,9 +280,11 @@ public class TitleScreen implements Renderable, InputReceiver {
                     UIContainer seedContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0)
                             .addRenderables((r2, b2) -> {
                                 widthSelector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                                        1.5f, 7.5f, 1.5f, 2.5f, Level.MIN_WIDTH, Level.MAX_WIDTH, 20);
+                                        1.5f, 7.5f, 1.5f, 2.5f, Level.MIN_WIDTH, Level.MAX_WIDTH, 20)
+                                        .setOnChanged(() -> playerBoxes.verifyTeams());
                                 heightSelector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                                        10, 7.5f, 1.5f, 2.5f, Level.MIN_HEIGHT, Level.MAX_HEIGHT, 12);
+                                        10, 7.5f, 1.5f, 2.5f, Level.MIN_HEIGHT, Level.MAX_HEIGHT, 12)
+                                        .setOnChanged(() -> playerBoxes.verifyTeams());
                                 new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
                                         new UITextLabel(6.5f, 1, false).setTextLeftBold()
                                                 .updateTextLeft("Level width").setLeftOffset(0.5f)
@@ -289,9 +325,8 @@ public class TitleScreen implements Renderable, InputReceiver {
                             if (loadCustomBox.hasSelectedSave()) {
                                 customContainer.addRenderables((r3, b3) -> {
                                     MapSave map = loadCustomBox.getSelected();
-                                    float tileSize = Math.min(16f / map.levelWidth, 10f / map.levelHeight);
-                                    customMapPreview = new MapUI(r3, RenderOrder.TITLE_SCREEN_BUTTONS, map, tileSize, tileSize / 8f, 0.15f);
-                                    customMapPreview.translate(9, 6f).setZOrder(1);
+                                    customMapPreview = MapUI.box(r3, RenderOrder.TITLE_SCREEN_BUTTONS, map, 16, 10, 0.15f);
+                                    customMapPreview.translate(1, 1f).setZOrder(1);
                                     playerBoxes.setPlayerCount(map.playerCount);
                                 });
                             }
@@ -345,12 +380,15 @@ public class TitleScreen implements Renderable, InputReceiver {
                             if (clipboardPreset == null)
                                 return;
                             playerShipSettings.loadPresetForCurrentTeam(clipboardPreset);
+                            playerBoxes.verifyTeams();
                         }).setText("Paste Settings").setBold().setColourTheme(GRAYED_OUT_OPAQUE);
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0, 18, 1.5f, 0.9f, false, () -> {
                             playerShipSettings.loadPreset(playerShipSettings.getCurrentPreset());
+                            playerBoxes.verifyTeams();
                         }).setText("Copy settings to all players").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, -2, 18, 1.5f, 0.9f, false, () -> {
                             playerShipSettings.loadPreset(DEFAULT_PRESET);
+                            playerBoxes.verifyTeams();
                         }).setText("Reset all settings to default").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
                     }).setEnabled(false);
                 }).addTab(4, "Gameplay", (r, b) -> {
@@ -393,9 +431,26 @@ public class TitleScreen implements Renderable, InputReceiver {
                     .setText("Load to LAN").setBoxCorner(0.35f).setBold().setOnClick(() -> {
                         MainPanel.startNewLevel(() -> loadLevel(loadBox.getSelected(), true));
                     });
+            UIContainer mapViewContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    -28.5f, 1.5f).addRenderables((r2, b2) -> {
+                new RenderElement(r2, RenderOrder.TITLE_SCREEN_BACKGROUND,
+                        new UIBox(25, 16).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
+                );
+            });
             loadBox = new UISaveBox<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                     -2, 2, 14, 15, 1.5f, MainPanel.levelSaves).enableClick()
-                    .setOnClickOrUpdate(this::updateLoadButtons);
+                    .setOnClickOrUpdate(() -> {
+                        updateLoadButtons();
+                        if (loadBox.hasSelectedSave()) {
+                            if (loadGamePreview != null)
+                                loadGamePreview.delete();
+                            mapViewContainer.addRenderables((r2, b2) -> {
+                                loadGamePreview = MapUI.box(r2, RenderOrder.TITLE_SCREEN_BUTTONS, loadBox.getSelected(), 25, 16, 0.15f);
+                            }).setEnabled(true);
+                        } else {
+                            mapViewContainer.setEnabled(false);
+                        }
+                    });
         });
         loadContainer.setEnabled(false);
 
@@ -435,13 +490,25 @@ public class TitleScreen implements Renderable, InputReceiver {
                     .setText("Load Map").setBold().setOnClick(() -> {
                         MainPanel.startNewLevel(() -> mapSaveBox.getSelected().createLevelEditor());
                     });
+            UIContainer mapViewContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                    -40, 1).addRenderables((r2, b2) -> {
+                new RenderElement(r2, RenderOrder.TITLE_SCREEN_BACKGROUND,
+                        new UIBox(25, 16).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
+                );
+            });
             mapSaveBox = new UISaveBox<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                     -12, 9, 12, 10, 1.5f, MainPanel.mapSaves)
                     .enableClick().setOnClickOrUpdate(() -> {
                         if (mapSaveBox.hasSelectedSave()) {
                             mapLoadButton.setClickEnabled(true).setColourTheme(LIGHT_BLUE).setText("Load Map");
+                            if (loadMapPreview != null)
+                                loadMapPreview.delete();
+                            mapViewContainer.addRenderables((r2, b2) -> {
+                                loadMapPreview = MapUI.box(r2, RenderOrder.TITLE_SCREEN_BUTTONS, mapSaveBox.getSelected(), 25, 16, 0.15f);
+                            }).setEnabled(true);
                         } else {
                             mapLoadButton.setClickEnabled(false).setColourTheme(GRAYED_OUT).setText("Load Map");
+                            mapViewContainer.setEnabled(false);
                         }
                     });
             mapSaveBox.updateSaves();
@@ -572,6 +639,13 @@ public class TitleScreen implements Renderable, InputReceiver {
     private Level loadCustomLevel(MapSave save, boolean server) {
         Level level = new Level(playerBoxes.getTeams(), save.seed, save.levelWidth, save.levelHeight, playerBoxes.getBots(), new GameplaySettings(this),
                 server ? NetworkState.SERVER : NetworkState.LOCAL, botDifficultySelector.getValue().difficulty);
+        save.loadLevel(level);
+        return level;
+    }
+
+    private Level loadTutorialLevel(MapSave save, TutorialLevelData tutorialData) {
+        Level level = new Level(tutorialData.teams, save.seed, save.levelWidth, save.levelHeight, tutorialData.bots, tutorialData.settings,
+                NetworkState.LOCAL, tutorialData.botDifficulty);
         save.loadLevel(level);
         return level;
     }

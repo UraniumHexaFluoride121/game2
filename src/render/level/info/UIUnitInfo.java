@@ -8,6 +8,8 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.Level;
+import level.tutorial.TutorialElement;
+import level.tutorial.TutorialManager;
 import render.*;
 import render.level.tile.HexagonBorder;
 import render.level.tile.HighlightTileRenderer;
@@ -37,7 +39,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, 0.5f, 11, 14);
     private Level level;
     public boolean showFiringRange = false;
-    private UIShapeButton viewFiringRange;
+    public UIShapeButton viewFiringRange;
 
     public UIUnitInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
         super(register, buttonRegister, order, buttonOrder, 0, 0, level);
@@ -59,7 +61,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         title.render(g);
                     });
                     GameRenderer.renderOffset(0.5f, 4.5f, g, () -> {
-                        hp.updateTextRight(MathUtil.floatToString(unit.hitPoints, 1));
+                        hp.updateTextRight(MathUtil.floatToString(unit.hitPoints, 1) + " / " + MathUtil.floatToString(unit.type.hitPoints, 1));
                         hp.render(g);
                         if (unit.type.shieldHP != 0) {
                             g.translate(0, -1);
@@ -88,6 +90,10 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         Unit unit = level.selectedUnit;
                         if (unit == null)
                             return;
+                        if (TutorialManager.isDisabled(TutorialElement.ACTION_DESELECT) || TutorialManager.isDisabled(TutorialElement.VIEW_FIRING_RANGE)) {
+                            viewFiringRange.deselect();
+                            return;
+                        }
                         level.endAction();
                         HashSet<Point> tiles = unit.tilesInFiringRange(level.currentVisibility, new UnitData(unit), false);
                         level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(Action.FIRE.tileColour, tiles, level);

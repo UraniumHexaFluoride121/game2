@@ -1,5 +1,10 @@
 package save;
 
+import render.texture.AssetManager;
+import render.texture.ResourceLocation;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
@@ -29,7 +34,8 @@ public class SaveManager<T extends LoadedFromSave> {
         }
     }
 
-    public void loadSaves() {
+    public void loadSavesExternal() {
+        ResourceLocation resource = new ResourceLocation(saveFileName);
         try {
             FileInputStream file = new FileInputStream(saveFileName);
             ObjectInputStream reader = new ObjectInputStream(file);
@@ -38,7 +44,28 @@ public class SaveManager<T extends LoadedFromSave> {
                 throw new RuntimeException();
             gameSaves = (TreeMap<String, T>) o;
             gameSaves.forEach((name, s) -> s.load());
-            file.close();
+            reader.close();
+        } catch (IOException | ClassNotFoundException | RuntimeException e) {
+            gameSaves = new TreeMap<>();
+        }
+    }
+
+    public void loadSavesInternal() {
+        ResourceLocation resource = new ResourceLocation(saveFileName);
+        try {
+            InputStream inputStream = AssetManager.class.getResourceAsStream(resource.getPath("../assets/"));
+            if (inputStream == null) {
+                //When packaged as a jar file, the assets path cannot be accessed the same way
+                inputStream = AssetManager.class.getResourceAsStream(resource.getPath("/"));
+            }
+            if (inputStream == null)
+                throw new RuntimeException("Unable to load image with path " + resource.relativePath);
+            ObjectInputStream reader = new ObjectInputStream(inputStream);
+            Object o = reader.readObject();
+            if (!(o instanceof TreeMap))
+                throw new RuntimeException();
+            gameSaves = (TreeMap<String, T>) o;
+            gameSaves.forEach((name, s) -> s.load());
             reader.close();
         } catch (IOException | ClassNotFoundException | RuntimeException e) {
             gameSaves = new TreeMap<>();

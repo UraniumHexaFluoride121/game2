@@ -95,7 +95,7 @@ public class UIConfirm extends AbstractRenderElement implements RegisteredButton
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return visible;
     }
 

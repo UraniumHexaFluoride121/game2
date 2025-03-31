@@ -6,9 +6,11 @@ import foundation.TimedTaskQueue;
 import foundation.tick.Tickable;
 import level.Level;
 import level.tile.Tile;
+import level.tutorial.TutorialManager;
 import network.NetworkState;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
+import render.level.FiringRenderer;
 import render.level.tile.TilePath;
 import unit.ShipClass;
 import unit.Unit;
@@ -216,7 +218,7 @@ public class BotHandler implements Deletable, Tickable {
                         Unit other = level.getUnit(secondaryTarget.get());
                         selectUnitTile(other);
                         anim.addTask(0.6f, () -> {
-                            anim.addTask(7, () -> {
+                            anim.addTask(FiringRenderer.estimatedAnimationTime(), () -> {
                             });
                             level.levelRenderer.energyManager.canAfford(unit.get(), Action.FIRE, true);
                             if (level.networkState == NetworkState.SERVER) {
@@ -240,7 +242,7 @@ public class BotHandler implements Deletable, Tickable {
             Unit other = level.getUnit(target.get());
             selectUnitTile(other);
             anim.addTask(0.8f, () -> {
-                anim.addTask(7, () -> {
+                anim.addTask(FiringRenderer.estimatedAnimationTime(), () -> {
                 });
                 level.levelRenderer.energyManager.canAfford(unit.get(), Action.FIRE, true);
                 if (level.networkState == NetworkState.SERVER) {
@@ -327,7 +329,7 @@ public class BotHandler implements Deletable, Tickable {
                 data(SCOUT_NEEDED).addValue(u.pos, 1, r -> -120f);
                 for (ShipClass shipClass : ShipClass.values()) {
                     data(BotTileDataType.enemyDamageTypeFromClass(shipClass))
-                            .addValue(u.pos, 4, r -> (10 - r * 2f) * u.getDamageAgainstType(shipClass.getDamageType()));
+                            .addValue(u.pos, 4, r -> (TutorialManager.isTutorial() ? 0f : 1) * (10 - r * 2f) * u.getDamageAgainstType(shipClass.getDamageType()));
                 }
             } else {
                 data(SCOUT_NEEDED).addValue(u.pos, 1, r -> -30f);

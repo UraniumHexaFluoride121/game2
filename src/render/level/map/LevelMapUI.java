@@ -22,6 +22,7 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
     private final float height, width, boxHeight, boxWidth;
     private static final Color BACKGROUND_FILL = new Color(0, 0, 0, 100), CAMERA_BOX = new Color(184, 196, 214);
     private final StaticHitBox clickBox;
+    public MapUI mapUI;
     private boolean mouseDown = false;
 
     public LevelMapUI(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, AbstractLevel<?, ?> level) {
@@ -40,7 +41,8 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
             }, box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER)
                     .translate(-boxWidth / 2, -boxHeight / 2)
             ).setZOrder(-3);
-            new MapUI(r, RenderOrder.MAP, level, 1, 0.1f, 0.1f).setZOrder(-2);
+            mapUI = new MapUI(r, RenderOrder.MAP, level, 1, 0.1f, 0.1f);
+            mapUI.setZOrder(-2);
             new RenderElement(r, RenderOrder.MAP, g -> {
                 Shape clip = g.getClip();
                 GameRenderer.renderOffsetScaled(-boxWidth / 2, -boxHeight / 2, 1f / Renderable.SCALING, g, () -> {
@@ -65,7 +67,7 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
             }).setBold().setText("Close").setColourTheme(UIColourTheme.DEEP_RED);
             b.register(new RegisteredButtonInputReceiver() {
                 @Override
-                public boolean posInside(ObjPos pos) {
+                public boolean posInside(ObjPos pos, InputType type) {
                     return true;
                 }
 
@@ -106,5 +108,15 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
                 }
             });
         });
+    }
+
+    public void update() {
+        mapUI.update();
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        mapUI = null;
     }
 }

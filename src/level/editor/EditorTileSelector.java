@@ -27,6 +27,9 @@ public class EditorTileSelector extends AbstractTileSelector<LevelEditor> {
                 if (u.tileMovementCostFunction.apply(TileType.ASTEROIDS) < 50)
                     level.unitData[t.pos.x][t.pos.y] = new EditorUnitData(u.getInternalName(), level.levelRenderer.editingTeam.unitTeam, getTile(t.pos).renderPos);
                 level.onMapChanged();
+            } else if (level.levelRenderer.removeUnit()) {
+                level.unitData[t.pos.x][t.pos.y] = new EditorUnitData(null, null, null);
+                level.onMapChanged();
             }
             StructureType s = level.levelRenderer.getEditingStructureType();
             if (s != null) {
@@ -37,6 +40,9 @@ public class EditorTileSelector extends AbstractTileSelector<LevelEditor> {
                     });
                 }
                 t.setStructure(s, level.levelRenderer.editingTeam.unitTeam);
+                level.onMapChanged();
+            } else if (level.levelRenderer.removeStructure()) {
+                t.removeStructure();
                 level.onMapChanged();
             }
         }

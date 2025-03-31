@@ -8,6 +8,9 @@ import foundation.input.InputType;
 import foundation.math.ObjPos;
 import foundation.tick.Tickable;
 import level.tile.Tile;
+import level.tile.TileImageRenderer;
+import level.tutorial.TutorialElement;
+import level.tutorial.TutorialManager;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
@@ -24,7 +27,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.function.BiConsumer;
 
 import static level.tile.Tile.*;
 
@@ -32,10 +34,10 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
     public static final float MOUSE_EDGE_CAMERA_BORDER = 0.5f;
     private static final float MOUSE_EDGE_CAMERA_MOVE_SPEED = 20;
 
-    public HighlightTileRenderer highlightTileRenderer = null;
-    public HexagonBorder unitTileBorderRenderer = null, fowTileBorder = null;
+    public HighlightTileRenderer highlightTileRenderer = null, tutorialHighlightRenderer = null;
+    public HexagonBorder unitTileBorderRenderer = null, fowTileBorder = null, tutorialBorderRenderer = null;
     private BufferedImage borderImage;
-    protected final GameRenderer mainRenderer, backgroundRenderer, levelUIRenderer;
+    public final GameRenderer mainRenderer, backgroundRenderer, levelUIRenderer;
     public T level;
     protected boolean moveCameraEnabled = false;
     protected ObjPos prevMousePos = null;
@@ -58,7 +60,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
     }
 
     public void createRenderers() {
-        borderImage = createTiles(Tile.TILE_SIZE, 0.1f, level, (g, pos) -> Tile.renderTile(g, BORDER_RENDERER, TILE_SIZE, pos));
+        borderImage = createTiles(Tile.TILE_SIZE, 0.1f, level, (g, pos, type) -> Tile.renderTile(g, BORDER_RENDERER, TILE_SIZE, pos));
         new BackgroundRenderer(backgroundRenderer, RenderOrder.BACKGROUND, this::getCameraPosition).setTextures(BackgroundTexture.NORMAL_1);
 
         //Terrain
@@ -80,6 +82,11 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
                 if (highlightTileRenderer.finished())
                     highlightTileRenderer = null;
             }
+            if (tutorialHighlightRenderer != null) {
+                tutorialHighlightRenderer.render(g);
+                if (tutorialHighlightRenderer.finished())
+                    tutorialHighlightRenderer = null;
+            }
         });
 
         new RenderElement(mainRenderer, RenderOrder.FOG_OF_WAR, g -> {
@@ -91,9 +98,11 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
         });
 
         new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
-            if (unitTileBorderRenderer != null) {
+            if (unitTileBorderRenderer != null)
                 unitTileBorderRenderer.render(g);
-            } else if (level.tileSelector.getSelectedTile() != null && renderSelectedTile())
+            if (tutorialBorderRenderer != null)
+                tutorialBorderRenderer.render(g);
+            if (level.tileSelector.getSelectedTile() != null && renderSelectedTile())
                 level.tileSelector.getSelectedTile().renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
         });
         new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
@@ -187,8 +196,8 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
 
     public ObjPos interpCameraTo = null;
 
-    public static BufferedImage createTiles(float tileSize, float transparency, TileMapDisplayable level, BiConsumer<Graphics2D, ObjPos> tileRenderer) {
-        ObjPos tilesBound = MainPanel.RENDER_WINDOW_SIZE.copy().multiply(level.getTileBound().copy().divide(MainPanel.BLOCK_DIMENSIONS).multiply(tileSize / TILE_SIZE));
+    public static BufferedImage createTiles(float tileSize, float transparency, TileMapDisplayable tileDisplayable, TileImageRenderer tileRenderer) {
+        ObjPos tilesBound = MainPanel.RENDER_WINDOW_SIZE.copy().multiply(tileDisplayable.getTileBound().copy().divide(MainPanel.BLOCK_DIMENSIONS).multiply(tileSize / TILE_SIZE));
 
         BufferedImage borderImage = new BufferedImage(tilesBound.xInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, tilesBound.yInt() + (int) (Tile.SCREEN_STROKE_WIDTH_MARGIN) + 2, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = borderImage.createGraphics();
@@ -198,9 +207,9 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.scale(MainPanel.windowTransform.getScaleX(), MainPanel.windowTransform.getScaleX());
         g.translate(BLOCK_STROKE_WIDTH_MARGIN / 2f, Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f);
-        for (int x = 0; x < level.tilesX(); x++) {
-            for (int y = 0; y < level.tilesY(); y++) {
-                tileRenderer.accept(g, Tile.getRenderPos(x, y));
+        for (int x = 0; x < tileDisplayable.tilesX(); x++) {
+            for (int y = 0; y < tileDisplayable.tilesY(); y++) {
+                tileRenderer.render(g, Tile.getRenderPos(x, y), tileDisplayable.getTileType(x, y));
             }
         }
         g.dispose();
@@ -265,7 +274,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
         if (p != null) {
             ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
             ObjPos cameraTransformedPos = transformMousePosToCamera(p);
-            if ((interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4) && !runningAnim()) {
+            if ((interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4) && !runningAnim() && !TutorialManager.isDisabled(TutorialElement.CAMERA_MOVEMENT)) {
                 if (moveCameraEnabled) {
                     if (prevMousePos != null) {
                         if (interpCameraTo != null)

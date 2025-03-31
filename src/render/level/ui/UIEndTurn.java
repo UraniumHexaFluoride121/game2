@@ -7,6 +7,8 @@ import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.Level;
+import level.tutorial.TutorialElement;
+import level.tutorial.TutorialManager;
 import render.*;
 import render.types.text.FixedTextRenderer;
 import render.types.text.TextAlign;
@@ -59,7 +61,7 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
     }
 
     @Override
-    public boolean posInside(ObjPos pos) {
+    public boolean posInside(ObjPos pos, InputType type) {
         return hitBox.isPositionInside(level.levelRenderer.transformCameraPosToBlock(pos));
     }
 
@@ -75,6 +77,8 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
+        if (TutorialManager.isDisabled(TutorialElement.END_TURN))
+            return;
         if (grayedOut || level.levelRenderer.runningAnim())
             return;
         if (!blocked && type.isCharInput && type.c == 'e')

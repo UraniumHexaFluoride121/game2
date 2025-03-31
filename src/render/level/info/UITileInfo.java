@@ -4,15 +4,16 @@ import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import level.Level;
 import level.tile.Tile;
-import render.OrderedRenderable;
-import render.RenderOrder;
-import render.RenderRegister;
+import render.*;
+import render.level.tile.HexagonRenderer;
 import render.level.tile.RenderElement;
-import render.UIColourTheme;
-import render.types.input.UIClickBlockingBox;
-import render.types.container.UIContainer;
+import render.texture.ImageRenderer;
 import render.types.UIHitPointBar;
+import render.types.container.UIContainer;
+import render.types.input.UIClickBlockingBox;
 import render.types.text.UITextLabel;
+
+import java.awt.*;
 
 public class UITileInfo extends UIContainer {
     private final UITextLabel title = new UITextLabel(14f, 0.9f, true).setTextLeftBold();
@@ -23,17 +24,31 @@ public class UITileInfo extends UIContainer {
     private final UIHitPointBar visibilityBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     private final UIHitPointBar defenceBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     private final UIHitPointBar movementBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
+    private final HexagonRenderer border = new HexagonRenderer(8, false, 0.3f, Level.FOW_TILE_BORDER_COLOUR);
+    private final HexagonRenderer fill = new HexagonRenderer(8, true, 0.2f, new Color(51, 65, 81, 204));
+    private ImageRenderer tileImage, structureImage;
+
     public UITileInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Level level) {
         super(register, buttonRegister, order, buttonOrder, x, y);
         addRenderables((r, b) -> {
-            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, 0, 14, 8)
+            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, 0, 14, 17)
                     .setPosTransformer(p -> level.levelRenderer.transformCameraPosToBlock(p));
             new RenderElement(r, RenderOrder.LEVEL_UI,
-                    title.translate(-0.2f, 8.5f),
+                    title.translate(-0.2f, 17.5f),
                     structure.translate(0.5f, 6.5f),
                     visibility.translate(0.5f, 4.8f),
                     defence.translate(0.5f, 2.8f),
-                    movement.translate(0.5f, 0.8f)
+                    movement.translate(0.5f, 0.8f),
+                    fill.translate(7, 8.5f),
+                    g -> {
+                        GameRenderer.renderOffset(7, 8.5f + 8 * Tile.SIN_60_DEG / 2, g, () -> {
+                            if (tileImage != null)
+                                tileImage.render(g, 8);
+                            if (structureImage != null)
+                                structureImage.render(g, 8);
+                        });
+                    },
+                    border.translate(7, 8.5f)
             ).setZOrder(1);
             new RenderElement(r, RenderOrder.LEVEL_UI, visibilityBar.translate(7, 4.8f)).setZOrder(2);
             new RenderElement(r, RenderOrder.LEVEL_UI, defenceBar.translate(7, 2.8f)).setZOrder(2);
@@ -51,6 +66,11 @@ public class UITileInfo extends UIContainer {
     }
 
     public void setTile(Tile tile) {
+        tileImage = tile.imageRenderer;
+        if (tile.hasStructure())
+            structureImage = tile.structure.renderer;
+        else
+            structureImage = null;
         title.updateTextLeft(tile.type.displayName + " tile");
         structure.updateTextRight(tile.structure == null ? "None" : tile.structure.type.getName());
         if (previouslyDisabled) {

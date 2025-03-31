@@ -11,8 +11,13 @@ public enum ButtonOrder {
     UNIT_INFO_SCREEN,
 
     MAP,
+    TUTORIAL_LEVEL_UI,
+
     LEVEL_UI,
     LEVEL_UI_BACK,
+
+    TUTORIAL_UI,
+
     ACTION_SELECTOR,
     HEXAGON,
 

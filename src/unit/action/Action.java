@@ -13,6 +13,7 @@ import java.awt.image.RescaleOp;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static render.Renderable.*;
 import static unit.action.ActionColour.*;
@@ -237,6 +238,12 @@ public class Action implements NamedEnum, Serializable {
 
     public int getOrder() {
         return order;
+    }
+
+    public static void forEach(Consumer<Action> action) {
+        for (Action a : names.values()) {
+            action.accept(a);
+        }
     }
 
     @Override

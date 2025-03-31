@@ -54,8 +54,13 @@ public class UITextInputBox extends UIButton {
     }
 
     @Override
+    public boolean posInside(ObjPos pos, InputType type) {
+        return super.posInside(pos, type) || (isSelected() && isEnabled() && type.isCharInput);
+    }
+
+    @Override
     public boolean blocking(InputType type) {
-        return type.isMouseInput() || type.isCharInput;
+        return type.isMouseInput() || (type.isCharInput && isEnabled());
     }
 
     @Override
