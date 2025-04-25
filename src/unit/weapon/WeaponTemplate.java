@@ -2,6 +2,7 @@ package unit.weapon;
 
 import level.Level;
 import level.tile.Tile;
+import level.tile.TileSet;
 import unit.Unit;
 import unit.UnitData;
 import unit.info.UnitCharacteristicValue;
@@ -19,7 +20,7 @@ public class WeaponTemplate {
     public int ammoCapacity = 0;
     public final HashMap<UnitType, AttackData> data = new HashMap<>();
     public final ProjectileType projectileType;
-    public BiFunction<UnitData, Level, HashSet<Point>> tilesInFiringRange = (u, l) -> range(u, l, 1);
+    public BiFunction<UnitData, Level, TileSet> tilesInFiringRange = (u, l) -> range(u, l, 1);
     public HashMap<DamageType, UnitCharacteristicValue> damageTypes = new HashMap<>();
     public final WeaponType weaponType;
     public String rangeText = "1 Tile";
@@ -46,7 +47,7 @@ public class WeaponTemplate {
         return this;
     }
 
-    public WeaponTemplate setTilesInFiringRange(BiFunction<UnitData, Level, HashSet<Point>> tilesInFiringRange) {
+    public WeaponTemplate setTilesInFiringRange(BiFunction<UnitData, Level, TileSet> tilesInFiringRange) {
         this.tilesInFiringRange = tilesInFiringRange;
         return this;
     }
@@ -69,7 +70,7 @@ public class WeaponTemplate {
 
     public WeaponTemplate firingRange(int minRange, int maxRange) {
         tilesInFiringRange = (u, l) -> {
-            HashSet<Point> tiles = range(u, l, maxRange);
+            TileSet tiles = range(u, l, maxRange);
             tiles.removeAll(range(u, l, minRange - 1));
             return tiles;
         };
@@ -77,7 +78,7 @@ public class WeaponTemplate {
         return this;
     }
 
-    public static HashSet<Point> range(UnitData u, Level l, int range) {
-        return l.tileSelector.tilesInRadius(u.pos, range);
+    public static TileSet range(UnitData u, Level l, int range) {
+        return TileSet.tilesInRadius(u.pos, range, l);
     }
 }

@@ -50,14 +50,12 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (noDeselect && !toggle && state == ButtonState.SELECTED)
-            return;
         if (type == InputType.MOUSE_OVER) {
             mouseHover = inside && !blocked;
             if (state != ButtonState.SELECTED)
                 state = pressed ? ButtonState.PRESSED : mouseHover ? ButtonState.HOVER : ButtonState.DEFAULT;
         } else if (type == clickInput) {
-            if (noDeselect && (blocked || !inside))
+            if (noDeselect && (blocked || !inside || (!toggle && state == ButtonState.SELECTED)))
                 return;
             pressed = inside && !blocked;
             ButtonState prevState = state;

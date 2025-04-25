@@ -30,10 +30,7 @@ import render.types.input.button.LevelUIButton;
 import render.types.input.button.LevelUIShapeButton;
 import render.types.input.button.UIButton;
 import render.types.input.button.UIShapeButton;
-import render.types.text.FixedTextRenderer;
-import render.types.text.MultiLineTextBox;
-import render.types.text.TextAlign;
-import render.types.text.UITextLabel;
+import render.types.text.*;
 import save.MapSave;
 import unit.NeutralUnitTeam;
 import unit.UnitPose;
@@ -175,8 +172,8 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                             structureButtons.get(i).setColourTheme(editingTeam == NeutralUnitTeam.NEUTRAL ? UIColourTheme.GRAYED_OUT_OPAQUE : UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER)
                                                     .setClickEnabled(editingTeam != NeutralUnitTeam.NEUTRAL);
                                         if (editingTeam == NeutralUnitTeam.NEUTRAL) {
-                                            for (int j = 0; j < structureButtons.size(); j++) {
-                                                if (!StructureType.values()[j].hasNeutral)
+                                            for (int j = 1; j < structureButtons.size(); j++) {
+                                                if (!StructureType.values()[j - 1].hasNeutral)
                                                     structureButtons.get(j).deselect();
                                             }
                                         }
@@ -275,7 +272,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
                     mapUI.update();
-                });
+                }).tooltip(t -> t.add(-1, UITooltip.dark(), "Open map"));
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
 
@@ -292,14 +289,15 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
             ).setZOrder(-1);
             UITextInputBox seedBox = new UITextInputBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                     0.5f, 4, 7, 1.5f, 0.8f, true, 15, InputType::isDigit);
-            seedBox.setBold().setColourTheme(UIColourTheme.GREEN_SELECTED);
+            seedBox.setBold().setColourTheme(UIColourTheme.GREEN_SELECTED).tooltip(t -> t.add(12, UITooltip.dark(),
+                    "Enter number as seed to generate map from, or leave blank for random seed. Seeds are not guaranteed to generate the same maps as other seed entry boxes."));
             new UIButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 1.5f, 2.2f, 5, 1.2f, 1f, false)
                     .setText("Generate").setBold().setOnClick(() -> {
                         long seed = seedBox.getText().isEmpty() ? new Random().nextLong() : Long.parseLong(seedBox.getText());
                         level.createRandom(seed);
                         level.clearUnits();
                         level.generateTiles();
-                    });
+                    }).setBoxCorner(0.35f);
         }).setEnabled(false);
         new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK,
                 Renderable.right() / 2 - 4, Renderable.top() - 2.5f, 8, 2, 1.2f, true, level)
@@ -307,7 +305,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                     generateContainer.setEnabled(true);
                 }).setOnDeselect(() -> {
                     generateContainer.setEnabled(false);
-                });
+                }).tooltip(t -> t.add(-1, UITooltip.dark(), "Generate map from seed"));
     }
 
     public void setSaveName(String name) {

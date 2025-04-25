@@ -9,8 +9,9 @@ import foundation.tick.Tickable;
 import level.Level;
 import level.structure.StructureType;
 import level.tile.Tile;
+import level.tile.TileModifier;
 import level.tile.TileSelector;
-import level.tutorial.TutorialElement;
+import level.tile.TileSet;
 import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventActionComplete;
 import level.tutorial.sequence.event.EventActionPerform;
@@ -24,11 +25,13 @@ import render.anim.LerpAnimation;
 import render.anim.SineAnimation;
 import render.level.tile.HexagonBorder;
 import render.level.tile.HighlightTileRenderer;
+import render.level.tile.TileFlash;
 import render.level.tile.TilePath;
+import render.level.ui.UnitDamageNumberUI;
+import render.level.ui.UnitTextUI;
+import render.texture.ImageSequenceGroup;
 import render.types.text.TextAlign;
 import render.types.text.TextRenderer;
-import render.texture.ImageSequenceGroup;
-import render.level.ui.UnitDamageNumberUI;
 import unit.action.Action;
 import unit.action.ActionSelector;
 import unit.action.ActionShapes;
@@ -50,7 +53,8 @@ import static level.tile.Tile.*;
 import static unit.action.Action.*;
 
 public class Unit implements Deletable, Tickable {
-    private static final Color HP_BACKGROUND_COLOUR = new Color(67, 67, 67), SHIELD_HP_BACKGROUND_COLOUR = new Color(79, 115, 140);
+    public static final Color HP_BACKGROUND_COLOUR = new Color(67, 67, 67);
+    public static final Color SHIELD_HP_BACKGROUND_COLOUR = new Color(79, 115, 140);
     public final UnitType type;
     public final UnitTeam team;
     public Point pos;
@@ -76,7 +80,7 @@ public class Unit implements Deletable, Tickable {
 
     public float hitPoints, firingTempHP;
     public float shieldHP, shieldFiringTempHP;
-    private ArrayList<UnitDamageNumberUI> damageUIs = new ArrayList<>();
+    private final ArrayList<UnitTextUI> damageUIs = new ArrayList<>();
     private final TextRenderer hitPointText = new TextRenderer(() -> MathUtil.floatToString((float) Math.ceil(hitPoints), 0), 0.7f, Color.WHITE)
             .setTextAlign(TextAlign.RIGHT)
             .setBold(true)
@@ -93,6 +97,7 @@ public class Unit implements Deletable, Tickable {
         this.team = team;
         this.pos = pos;
         this.level = level;
+        selectableTiles = new TileSet(level.tilesX, level.tilesY);
         hitPoints = type.hitPoints;
         firingTempHP = hitPoints;
         shieldHP = type.shieldHP;
@@ -123,7 +128,7 @@ public class Unit implements Deletable, Tickable {
                 type.shieldRenderer.render(g, TILE_SIZE);
         });
         if (path == null) {
-            GameRenderer.renderOffset(getAndUpdateRenderPos(), g, () -> {
+            GameRenderer.renderOffset(getRenderPos(), g, () -> {
                 g.translate(TILE_SIZE / 4.5f, TILE_SIZE / 15);
                 GameRenderer.renderTransformed(g, () -> {
                     hitPointText.render(g);
@@ -150,7 +155,7 @@ public class Unit implements Deletable, Tickable {
             return;
         if (level.levelRenderer.runningAnim())
             return;
-        GameRenderer.renderOffset(getAndUpdateRenderPos(), g, () -> {
+        GameRenderer.renderOffset(getRenderPos(), g, () -> {
             actionUI.render(g);
         });
     }
@@ -196,7 +201,8 @@ public class Unit implements Deletable, Tickable {
                         g.drawLine(0, (int) (-0.53f * Renderable.SCALING * anim), 0, (int) (-0.27f * Renderable.SCALING * anim));
                         g.drawLine(0, (int) (0.53f * Renderable.SCALING * anim), 0, (int) (0.27f * Renderable.SCALING * anim));
                     });
-                    level.levelRenderer.damageUI.show(this, level.getUnit(tile.pos));
+                    if (!level.levelRenderer.isFiring())
+                        level.levelRenderer.damageUI.show(this, level.getUnit(tile.pos));
                 } else
                     targetAnim.startTimer();
             }
@@ -210,7 +216,7 @@ public class Unit implements Deletable, Tickable {
             }
         }
         if (explosion != null) {
-            GameRenderer.renderOffset(getAndUpdateRenderPos().copy().add(0, TILE_SIZE * SIN_60_DEG / 2), g, () -> {
+            GameRenderer.renderOffset(getRenderPos().copy().add(0, TILE_SIZE * SIN_60_DEG / 2), g, () -> {
                 explosion.render(g);
             });
             if (explosion.timer.normalisedProgress() > 0.5f)
@@ -229,22 +235,28 @@ public class Unit implements Deletable, Tickable {
     }
 
     public static final Color MOVE_TILE_BORDER_COLOUR = new Color(107, 184, 248, 192),
-            FIRE_TILE_BORDER_COLOUR = new Color(243, 103, 103, 118);
+            FIRE_TILE_BORDER_COLOUR = new Color(243, 103, 103, 118),
+            REPAIR_TILE_BORDER_COLOUR = new Color(116, 250, 69, 205),
+            RESUPPLY_TILE_BORDER_COLOUR = new Color(124, 86, 45, 205);
+
+    public static final Color
+            ATTACK_TILE_FLASH = new Color(250, 69, 69, 205),
+            SHIELD_REGEN_TILE_FLASH = new Color(69, 235, 250, 205),
+            REPAIR_TILE_FLASH = new Color(116, 250, 69, 205),
+            RESUPPLY_TILE_FLASH = new Color(124, 86, 45, 205);
 
     public synchronized void onActionSelect(Action action) {
         if (!TutorialManager.actionEnabled(action))
             return;
         TutorialManager.acceptEvent(new EventActionSelect(level, action));
         if (action == MOVE) {
-            selectableTiles = tilesInMoveRange(level.currentVisibility);
+            setSelectableTiles(action, FIRE_TILE_BORDER_COLOUR, tilesInMoveRange(level.currentVisibility));
             movePath = new TilePath(type, selectableTiles, pos, selector());
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, MOVE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == FIRE) {
-            selectableTiles = tilesInFiringRange(level.currentVisibility, new UnitData(this), true);
-            level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
-            level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, FIRE_TILE_BORDER_COLOUR);
+            setSelectableTiles(action, FIRE_TILE_BORDER_COLOUR, tilesInFiringRange(level.currentVisibility, new UnitData(this), true));
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == CAPTURE) {
             if (!level.levelRenderer.energyManager.canAfford(this, CAPTURE, true)) return;
@@ -262,29 +274,21 @@ public class Unit implements Deletable, Tickable {
         } else if (action == SHIELD_REGEN) {
             if (!level.levelRenderer.energyManager.canAfford(this, SHIELD_REGEN, true)) return;
             endAction();
-            if (level.networkState == NetworkState.CLIENT) {
-                MainPanel.client.sendUnitShieldRegenRequest(this);
-                return;
-            }
-            addPerformedAction(SHIELD_REGEN);
-            setShieldHP(shieldHP + type.shieldRegen);
-            if (level.networkState == NetworkState.SERVER)
-                level.server.sendUnitShieldRegenPacket(this);
+            regenShield();
             TutorialManager.acceptEvent(new EventActionPerform(level, SHIELD_REGEN));
         } else if (action == STEALTH) {
             if (!level.levelRenderer.energyManager.canAfford(this, STEALTH, true)) return;
-            setStealthMode(!stealthMode, true);
             endAction();
-            if (level.networkState == NetworkState.CLIENT) {
-                MainPanel.client.sendUnitStealthRequest(this);
-                return;
-            }
-            addPerformedAction(STEALTH);
-            if (level.networkState == NetworkState.SERVER)
-                level.server.sendUnitStealthPacket(this);
+            stealth();
             TutorialManager.acceptEvent(new EventActionPerform(level, STEALTH));
+        } else if (action == REPAIR) {
+            setSelectableTiles(action, REPAIR_TILE_BORDER_COLOUR, getRepairTiles(pos));
+            level.levelRenderer.exitActionButton.setEnabled(true);
+        } else if (action == RESUPPLY) {
+            setSelectableTiles(action, RESUPPLY_TILE_BORDER_COLOUR, getResupplyTiles(pos));
+            level.levelRenderer.exitActionButton.setEnabled(true);
         } else {
-            selectableTiles = new HashSet<>();
+            selectableTiles.clear();
         }
         level.setActiveAction(action);
     }
@@ -319,6 +323,14 @@ public class Unit implements Deletable, Tickable {
                 addPerformedAction(FIRE);
                 endAndDeselectAction();
                 TutorialManager.acceptEvent(new EventActionPerform(level, FIRE));
+            } else if (action == REPAIR) {
+                if (!level.levelRenderer.energyManager.canAfford(this, REPAIR, true)) return;
+                repair(level.getUnit(tile.pos));
+                endAndDeselectAction();
+            } else if (action == RESUPPLY) {
+                if (!level.levelRenderer.energyManager.canAfford(this, RESUPPLY, true)) return;
+                resupply(level.getUnit(tile.pos));
+                endAndDeselectAction();
             }
         }
     }
@@ -336,6 +348,14 @@ public class Unit implements Deletable, Tickable {
                 if (!level.levelRenderer.energyManager.canAfford(this, FIRE, true)) return;
                 MainPanel.client.sendUnitShootRequest(this, level.getUnit(tile.pos));
                 endAndDeselectAction();
+            } else if (action == REPAIR) {
+                if (!level.levelRenderer.energyManager.canAfford(this, REPAIR, true)) return;
+                MainPanel.client.sendUnitRepairRequest(this, level.getUnit(tile.pos));
+                endAndDeselectAction();
+            } else if (action == RESUPPLY) {
+                if (!level.levelRenderer.energyManager.canAfford(this, RESUPPLY, true)) return;
+                MainPanel.client.sendUnitResupplyRequest(this, level.getUnit(tile.pos));
+                endAndDeselectAction();
             }
         }
     }
@@ -347,23 +367,89 @@ public class Unit implements Deletable, Tickable {
         return !u.visible(visibility) && !level.samePlayerTeam(u, this);
     }
 
+    private void stealth() {
+        if (level.networkState == NetworkState.CLIENT) {
+            MainPanel.client.sendUnitStealthRequest(this);
+            return;
+        }
+        setStealthMode(!stealthMode);
+        addPerformedAction(STEALTH);
+        level.updateSelectedUnit();
+        if (level.networkState == NetworkState.SERVER)
+            level.server.sendUnitStealthPacket(this);
+    }
+
+    public void regenShield() {
+        if (level.networkState == NetworkState.CLIENT) {
+            MainPanel.client.sendUnitShieldRegenRequest(this);
+            return;
+        }
+        regenShield(shieldHP + type.shieldRegen);
+        if (level.networkState == NetworkState.SERVER)
+            level.server.sendUnitShieldRegenPacket(this);
+    }
+
+    public void regenShield(float newHP) {
+        addPerformedAction(Action.SHIELD_REGEN);
+        setShieldHP(newHP);
+        cameraTo();
+        level.updateSelectedUnit();
+        if (renderVisible())
+            tileFlash(pos, SHIELD_REGEN_TILE_FLASH);
+    }
+
+    public void repair(Unit other) {
+        other.cameraTo(team);
+        if (level.networkState == NetworkState.SERVER) {
+            level.server.sendUnitRepairPacket(this, other);
+        }
+        other.setHP(other.hitPoints + getRepair());
+        addPerformedAction(REPAIR);
+        if (other.renderVisible())
+            tileFlash(other.pos, REPAIR_TILE_FLASH);
+    }
+
+    public void resupply(Unit other) {
+        other.cameraTo(team);
+        if (level.networkState == NetworkState.SERVER) {
+            level.server.sendUnitResupplyPacket(this, other);
+        }
+        other.resupply();
+        other.showResupply();
+        addPerformedAction(RESUPPLY);
+    }
+
+    public void resupply() {
+        weapons.forEach(w -> w.ammo = w.ammoCapacity);
+    }
+
+    public void showResupply() {
+        if (renderVisible()) {
+            tileFlash(pos, RESUPPLY_TILE_FLASH);
+            ObjPos pos = getRenderPos();
+            damageUIs.add(new UnitTextUI("RESUPPLY", pos.x, pos.y, 0.5f, 1, UnitTextUI.RESUPPLY_COLOR));
+        }
+    }
+
     public void setShieldHP(float newHP) {
+        newHP = Math.clamp(newHP, 0, type.shieldHP);
         addDamageUI(newHP - shieldHP, true);
-        shieldHP = Math.clamp(newHP, 0, type.shieldHP);
+        shieldHP = newHP;
         shieldFiringTempHP = shieldHP;
     }
 
     public void setHP(float newHP) {
+        newHP = Math.clamp(newHP, 0, type.hitPoints);
         addDamageUI(newHP - hitPoints, false);
-        hitPoints = Math.clamp(newHP, 0, type.hitPoints);
+        hitPoints = newHP;
         firingTempHP = hitPoints;
     }
 
     public void addDamageUI(float value, boolean shield) {
-        if (value == 0)
+        if (value == 0 || !visible(level.currentVisibility))
             return;
         ObjPos pos = getRenderPos();
-        damageUIs.add(new UnitDamageNumberUI(value, pos.x + (shield ? -TILE_SIZE * 0.2f : TILE_SIZE * 0.2f), pos.y, value > 0 ? 1 : -0.7f));
+        damageUIs.add(new UnitDamageNumberUI(value, pos.x + (shield ? -TILE_SIZE * 0.2f : TILE_SIZE * 0.2f), pos.y, value > 0 ? 1 : -0.7f, shield));
     }
 
     public void capture(int captureProgress, boolean action) {
@@ -476,16 +562,17 @@ public class Unit implements Deletable, Tickable {
         } else if (other.renderVisible()) {
             firingExplosion = new UnitFiringExplosion(level.getTile(other.pos).renderPosCentered, this, other);
             level.levelRenderer.registerAnimBlock(firingExplosion);
+            tileFlash(other.pos, ATTACK_TILE_FLASH);
         } else {
             postFiring(other, true, false);
             other.postFiring(this, false, false);
         }
-        if (other.renderVisible() && level.getThisTeam() != level.getActiveTeam())
-            level.levelRenderer.setCameraInterpBlockPos(level.getTile(other.pos).renderPosCentered);
+        if (other.renderVisible())
+            other.cameraTo(team);
     }
 
     public void postFiring(Unit other, boolean isThisAttacking, boolean firingAnim) {
-        if (!firingAnim && renderVisible()) {
+        if (renderVisible()) {
             setShieldHP(shieldFiringTempHP);
             setHP(firingTempHP);
         } else {
@@ -572,25 +659,25 @@ public class Unit implements Deletable, Tickable {
         return WeaponInstance.FireAnimState.HOLD;
     }
 
-    public HashSet<Point> tilesInFiringRange(VisibilityData visibility, UnitData data, boolean onlyWithEnemies) {
-        HashSet<Point> tiles = new HashSet<>();
+    public TileSet tilesInFiringRange(VisibilityData visibility, UnitData data, boolean onlyWithEnemies) {
+        TileSet tiles = new TileSet(level.tilesX, level.tilesY);
         for (WeaponInstance weapon : weapons) {
             if (weapon.requiresAmmo && data.weaponAmmo == 0)
                 continue;
             if (onlyWithEnemies) {
-                tiles.addAll(selector().withEnemyUnits(weapon.tilesInFiringRange.apply(data, level), this, visibility));
+                tiles.addAll(weapon.tilesInFiringRange.apply(data, level).m(level, t -> t.unitFilter(TileModifier.withEnemiesThatCanBeFiredAt(this, visibility))));
             } else
                 tiles.addAll(weapon.tilesInFiringRange.apply(data, level));
         }
         return tiles;
     }
 
-    private HashSet<Point> selectableTiles = new HashSet<>();
+    private TileSet selectableTiles;
     private TilePath movePath = null;
     private AnimTilePath path = null;
     public Point illegalTile = null;
 
-    public HashSet<Point> selectableTiles() {
+    public TileSet selectableTiles() {
         return selectableTiles;
     }
 
@@ -600,17 +687,17 @@ public class Unit implements Deletable, Tickable {
         return UnitPose.FORWARD;
     }
 
-    private ObjPos getAndUpdateRenderPos() {
+    private void updateRenderPos() {
         if (path != null) {
             if (path.finished()) {
                 renderPos = path.getEnd();
-                if (level.getUnit(pos) != this)
+                if (!renderTile().pos.equals(pos))
                     level.moveUnit(this, path.getLastTile(), level.getThisTeam() == level.getActiveTeam());
                 level.levelRenderer.removeAnimBlock(path);
                 path = null;
                 if (illegalTile != null) {
                     Tile tile = level.getTile(illegalTile);
-                    if (renderVisible()) {
+                    if (renderVisible() && level.getUnit(illegalTile).visible(level.currentVisibility)) {
                         tile.setIllegalTile();
                     }
                 }
@@ -636,7 +723,6 @@ public class Unit implements Deletable, Tickable {
                 }
             }
         }
-        return renderPos;
     }
 
     public ObjPos getRenderPos() {
@@ -683,15 +769,15 @@ public class Unit implements Deletable, Tickable {
 
     private ObjPos getShipRenderPos() {
         if (path != null)
-            return getAndUpdateRenderPos().copy().add(moveAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), moveAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
-        return getAndUpdateRenderPos().copy().add(idleAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), idleAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
+            return getRenderPos().copy().add(moveAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), moveAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
+        return getRenderPos().copy().add(idleAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), idleAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
     }
 
-    public HashSet<Point> getVisibleTiles() {
+    public TileSet getVisibleTiles() {
         Point renderTilePos = renderTile().pos;
-        HashSet<Point> points = selector().tilesInRange(renderTilePos, selector().allTiles(), type.tileViewRangeCostFunction, type.maxViewRange);
-        points.addAll(selector().tilesInRadius(renderTilePos, 1));
-        return points;
+        return TileSet.all(level).m(level, t -> t
+                .tilesInRange(renderTilePos, type.tileViewRangeCostFunction, type.maxViewRange)
+                .add(TileSet.tilesInRadius(renderTilePos, 1, level)));
     }
 
     public Point getPos() {
@@ -721,10 +807,6 @@ public class Unit implements Deletable, Tickable {
 
     public TileSelector selector() {
         return level.tileSelector;
-    }
-
-    public void resupply() {
-        weapons.forEach(w -> w.ammo = w.ammoCapacity);
     }
 
     public void regenerateHP(float amount) {
@@ -763,11 +845,9 @@ public class Unit implements Deletable, Tickable {
         performedActions.clear();
     }
 
-    public void setStealthMode(boolean stealth, boolean cameraTo) {
+    public void setStealthMode(boolean stealth) {
         if (stealthMode != stealth) {
-            if (!isRenderFoW() && cameraTo && level.getThisTeam() != team) {
-                level.levelRenderer.setCameraInterpBlockPos(level.getTile(pos).renderPosCentered);
-            }
+            cameraToIgnoreStealth();
             if (!visibleInStealthMode) {
                 stealthTransparencyAnim.setReversed(stealth);
                 stealthTransparencyAnim.startTimer();
@@ -775,6 +855,29 @@ public class Unit implements Deletable, Tickable {
         }
         stealthMode = stealth;
         level.levelRenderer.energyManager.recalculateIncome();
+        level.updateSelectedUnit();
+    }
+
+    public void tileFlash(Point pos, Color color) {
+        new TileFlash(color, 1, TileSet.of(level, pos), level);
+    }
+
+    public void cameraTo() {
+        if (visible(level.currentVisibility) && level.getThisTeam() != team) {
+            level.levelRenderer.setCameraInterpBlockPos(level.getTile(pos).renderPosCentered);
+        }
+    }
+
+    public void cameraTo(UnitTeam actionPerformingTeam) {
+        if (visible(level.currentVisibility) && level.getThisTeam() != actionPerformingTeam) {
+            level.levelRenderer.setCameraInterpBlockPos(level.getTile(pos).renderPosCentered);
+        }
+    }
+
+    private void cameraToIgnoreStealth() {
+        if (!isRenderFoW() && level.getThisTeam() != team) {
+            level.levelRenderer.setCameraInterpBlockPos(level.getTile(pos).renderPosCentered);
+        }
     }
 
     public boolean canUnitAppearToBeMoved(Tile tile, VisibilityData visibility) {
@@ -798,7 +901,7 @@ public class Unit implements Deletable, Tickable {
 
     @Override
     public void tick(float deltaTime) {
-        getAndUpdateRenderPos();
+        updateRenderPos();
     }
 
     private void endAndDeselectAction() {
@@ -812,6 +915,12 @@ public class Unit implements Deletable, Tickable {
         MainPanel.addTask(() -> {
             level.endAction();
         });
+    }
+
+    private void setSelectableTiles(Action action, Color border, TileSet tiles) {
+        selectableTiles = tiles;
+        level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
+        level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, border);
     }
 
     public boolean removeActionEnergyCost(Action a) {
@@ -830,12 +939,17 @@ public class Unit implements Deletable, Tickable {
         return visibility.visibleTiles().contains(pos) && (!stealthMode || visibility.stealthVisibleUnit().contains(this));
     }
 
-    public HashSet<Point> tilesInMoveRange(VisibilityData visibility) {
-        return selector().tilesInRange(pos, selector().tilesWithoutEnemies(selector().allTiles(), team, visibility), type.tileMovementCostFunction, type.maxMovement);
+    public TileSet tilesInMoveRange(VisibilityData visibility) {
+        return TileSet.all(level).m(level, t -> t
+                .unitFilter(TileModifier.withoutVisibleEnemies(team, level, visibility))
+                .tilesInRange(pos, type.tileMovementCostFunction, type.maxMovement)
+        );
     }
 
     public HashMap<Point, Float> tilesInMoveRangeCostMap(VisibilityData visibility) {
-        return selector().tilesInRangeCostMap(pos, selector().tilesWithoutEnemies(selector().allTiles(), team, visibility), type.tileMovementCostFunction, type.maxMovement);
+        return selector().tilesInRangeCostMap(pos, TileSet.all(level).m(level, t -> t
+                .unitFilter(TileModifier.withoutVisibleEnemies(team, level, visibility))
+        ), type.tileMovementCostFunction, type.maxMovement);
     }
 
     public float getDamageAgainstType(DamageType damageType) {
@@ -866,5 +980,19 @@ public class Unit implements Deletable, Tickable {
             return (fixedCost + 1) + " - " + maxCost;
         }
         return String.valueOf(getActionCost(a).orElse(null));
+    }
+
+    public TileSet getRepairTiles(Point pos) {
+        return TileSet.tilesInRadius(pos, 1, 1, level)
+                .m(level, t -> t.unitFilter(TileModifier.hasAlliedUnit(team, level).and(u -> u.hitPoints < u.type.hitPoints)));
+    }
+
+    public TileSet getResupplyTiles(Point pos) {
+        return TileSet.tilesInRadius(pos, 1, 1, level)
+                .m(level, t -> t.unitFilter(TileModifier.hasAlliedUnit(team, level).and(u -> u.getAmmoWeapon() != null && u.getAmmoWeapon().ammo < u.getAmmoWeapon().ammoCapacity)));
+    }
+
+    public float getRepair() {
+        return type.repair;
     }
 }

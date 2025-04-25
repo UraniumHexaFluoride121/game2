@@ -130,6 +130,12 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         if (actionMap.containsKey(STEALTH)) {
             actionMap.get(STEALTH).type = ActionIconType.ENABLED;
         }
+        if (actionMap.containsKey(REPAIR)) {
+            actionMap.get(REPAIR).type = unit.getRepairTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
+        }
+        if (actionMap.containsKey(RESUPPLY)) {
+            actionMap.get(RESUPPLY).type = unit.getResupplyTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
+        }
         if (actionMap.containsKey(SHIELD_REGEN)) {
             actionMap.get(SHIELD_REGEN).type = unit.shieldHP < unit.type.shieldHP ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
         }

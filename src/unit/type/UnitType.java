@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -46,12 +47,13 @@ public abstract class UnitType implements NamedEnum {
     public final Action[] actions;
     public final int firingAnimFrames;
     public float shieldHP = 0, shieldRegen = 0, firingAnimShieldWidth = 0;
+    public float repair = 0;
     public final float firingAnimUnitWidth;
 
     public final ArrayList<WeaponTemplate> weapons = new ArrayList<>();
     private final Consumer<ArrayList<WeaponTemplate>> weaponGenerator;
 
-    public final HashMap<UnitCharacteristic, UnitCharacteristicValue> unitCharacteristics = new HashMap<>();
+    public final TreeMap<UnitCharacteristic, UnitCharacteristicValue> unitCharacteristics = new TreeMap<>();
     public final AttributeData[] infoAttributes;
 
     public final Supplier<ObjPos[]> firingPositions;
@@ -63,10 +65,10 @@ public abstract class UnitType implements NamedEnum {
     public ImageRenderer shieldRenderer = null;
 
     public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
-            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY, CRUISER
+            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY, SUPPLY, CRUISER
     };
 
-    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
         this.name = name;
         this.displayName = displayName;
         this.hitPoints = hitPoints;
@@ -173,6 +175,16 @@ public abstract class UnitType implements NamedEnum {
 
     public UnitType noCapture() {
         canCapture = false;
+        return this;
+    }
+
+    public UnitType setRepair(float repair) {
+        this.repair = repair;
+        return this;
+    }
+
+    public UnitType modify(Consumer<UnitType> action) {
+        action.accept(this);
         return this;
     }
 

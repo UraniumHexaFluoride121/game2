@@ -43,14 +43,24 @@ public class Client implements Deletable {
 
     public boolean failed = false, connected = false;
 
-    public Client(String address) {
-        this.address = address;
+    public Client(String s) {
+        int port;
+        if (s.indexOf(':') != -1 && s.indexOf(':') == s.lastIndexOf(':')) {
+            address = s.substring(0, s.indexOf(':'));
+            port = Integer.parseInt(s.substring(s.indexOf(':') + 1));
+        } else if (s.indexOf('/') != -1 && s.indexOf('/') == s.lastIndexOf('/')) {
+            address = s.substring(0, s.indexOf('/'));
+            port = Integer.parseInt(s.substring(s.indexOf('/') + 1));
+        } else {
+            address = s;
+            port = TCP_PORT;
+        }
         try {
             if (MainPanel.CREATE_SERVER_AND_CLIENT_CONNECTIONS) {
-                ServerSocket serverSocket = new ServerSocket(TCP_PORT);
+                ServerSocket serverSocket = new ServerSocket(port);
                 serverSocket.close();
             }
-            socket = new Socket(address, TCP_PORT);
+            socket = new Socket(address, port);
             socket.setSoTimeout(10000);
             reader = new DataInputStream(socket.getInputStream());
             writer = new DataOutputStream(socket.getOutputStream());
@@ -197,6 +207,22 @@ public class Client implements Deletable {
                     fromUnit.addPerformedAction(Action.FIRE);
                 });
             }
+            case SERVER_REPAIR -> {
+                UnitData from = new UnitData(reader), to = new UnitData(reader);
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.getActiveLevel();
+                    Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
+                    fromUnit.repair(toUnit);
+                });
+            }
+            case SERVER_RESUPPLY -> {
+                UnitData from = new UnitData(reader), to = new UnitData(reader);
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.getActiveLevel();
+                    Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
+                    fromUnit.resupply(toUnit);
+                });
+            }
             case SERVER_CAPTURE_UNIT -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 int progress = reader.readInt();
@@ -252,8 +278,7 @@ public class Client implements Deletable {
                         requestLevelData();
                         return;
                     }
-                    u.addPerformedAction(Action.SHIELD_REGEN);
-                    u.setShieldHP(shieldHP);
+                    u.regenShield(shieldHP);
                 });
             }
             case SERVER_STEALTH_UNIT -> {
@@ -267,7 +292,7 @@ public class Client implements Deletable {
                         return;
                     }
                     u.addPerformedAction(Action.STEALTH);
-                    u.setStealthMode(stealth, false);
+                    u.setStealthMode(stealth);
                 });
             }
             case ENERGY_UPDATE -> {
@@ -332,6 +357,20 @@ public class Client implements Deletable {
 
     public void sendUnitShootRequest(Unit from, Unit to) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_SHOOT_UNIT, w -> {
+            PacketWriter.writePoint(from.pos, w);
+            PacketWriter.writePoint(to.pos, w);
+        }));
+    }
+
+    public void sendUnitRepairRequest(Unit from, Unit to) {
+        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_REPAIR, w -> {
+            PacketWriter.writePoint(from.pos, w);
+            PacketWriter.writePoint(to.pos, w);
+        }));
+    }
+
+    public void sendUnitResupplyRequest(Unit from, Unit to) {
+        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_RESUPPLY, w -> {
             PacketWriter.writePoint(from.pos, w);
             PacketWriter.writePoint(to.pos, w);
         }));

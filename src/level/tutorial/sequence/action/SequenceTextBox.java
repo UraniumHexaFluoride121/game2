@@ -4,23 +4,21 @@ import foundation.MainPanel;
 import foundation.math.ObjPos;
 import level.Level;
 import level.tile.Tile;
-import level.tutorial.TutorialManager;
 import level.tutorial.sequence.BoxSize;
 import level.tutorial.sequence.SequenceHolder;
 import level.tutorial.sequence.TutorialSequence;
 import level.tutorial.sequence.event.EventConsumer;
 import level.tutorial.sequence.event.TutorialEvent;
-import level.tutorial.sequence.event.TutorialEventListener;
 import render.RenderOrder;
 import render.UIColourTheme;
 import render.types.text.TextAlign;
-import render.types.text.UIMultiLineDisplayBox;
+import render.types.text.UIMLTextBoxRenderElement;
 
 import java.util.function.Supplier;
 
 public class SequenceTextBox implements TutorialSequenceElement, EventConsumer, SequenceHolder {
-    private UIMultiLineDisplayBox textBox;
-    private Supplier<UIMultiLineDisplayBox> textBoxSupplier;
+    private UIMLTextBoxRenderElement textBox;
+    private Supplier<UIMLTextBoxRenderElement> textBoxSupplier;
     private final TutorialSequence tutorialSequence = new TutorialSequence();
 
     public static SequenceTextBox onMap(Level l, BoxSize size, float x, float y, TextAlign textAlign, String text, TutorialSequenceElement... sequence) {
@@ -34,9 +32,9 @@ public class SequenceTextBox implements TutorialSequenceElement, EventConsumer, 
     private SequenceTextBox(Level l, float x, float y, BoxSize boxSize, TextAlign textAlign, String text, boolean map, TutorialSequenceElement... sequence) {
         tutorialSequence.setSequence(sequence);
         ObjPos pos = map ? Tile.getFractionalRenderPos(x, y) : new ObjPos(x, y);
-        textBoxSupplier = () -> new UIMultiLineDisplayBox(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
+        textBoxSupplier = () -> new UIMLTextBoxRenderElement(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
                 pos.x - boxSize.size.x / 2, pos.y, boxSize.size.x, boxSize.size.y, 0.7f, textAlign, box ->
-                box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER))
+                box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER), false)
                 .setText(text);
     }
 

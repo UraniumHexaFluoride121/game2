@@ -8,6 +8,7 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.Level;
+import level.tile.TileSet;
 import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
 import render.*;
@@ -19,6 +20,7 @@ import render.types.container.LevelUIContainer;
 import render.types.box.UIBox;
 import render.types.input.button.UIShapeButton;
 import render.types.text.UITextLabel;
+import render.types.text.UITooltip;
 import unit.Unit;
 import unit.UnitData;
 import unit.UnitPose;
@@ -35,6 +37,8 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
     private final UITextLabel hp = new UITextLabel(9.4f, 1, false);
     private final UITextLabel ammo = new UITextLabel(9.4f, 1, false);
     private final UITextLabel shield = new UITextLabel(9.4f, 1, false);
+    private final UITextLabel shieldRegen = new UITextLabel(9.4f, 1, false);
+    private final UITextLabel repair = new UITextLabel(9.4f, 1, false);
     private final UIBox box = new UIBox(11, 14).setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, 0.5f, 11, 14);
     private Level level;
@@ -47,6 +51,8 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
         hp.updateTextLeft("HP:").setTextLeftBold().setTextRightBold();
         ammo.updateTextLeft("Ammo:").setTextLeftBold().setTextRightBold();
         shield.updateTextLeft("Shield HP:").setTextLeftBold().setTextRightBold();
+        shieldRegen.updateTextLeft("Sh. Regen:").setTextLeftBold().setTextRightBold();
+        repair.updateTextLeft("Repair:").setTextLeftBold().setTextRightBold();
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.LEVEL_UI, g -> {
                 GameRenderer.renderTransformed(g, () -> {
@@ -65,8 +71,13 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         hp.render(g);
                         if (unit.type.shieldHP != 0) {
                             g.translate(0, -1);
-                            shield.updateTextRight(MathUtil.floatToString(unit.shieldHP, 1));
+                            shield.updateTextRight(MathUtil.floatToString(unit.shieldHP, 1) + " / " + MathUtil.floatToString(unit.type.shieldHP, 1));
                             shield.render(g);
+                        }
+                        if (unit.type.canPerformAction(Action.SHIELD_REGEN)) {
+                            g.translate(0, -1);
+                            shieldRegen.updateTextRight("+" + MathUtil.floatToString(unit.type.shieldRegen, 1) + " HP");
+                            shieldRegen.render(g);
                         }
                         if (!unit.weapons.isEmpty()) {
                             g.translate(0, -1);
@@ -76,6 +87,11 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             ammo.setLabelColour(weapon == null || weapon.ammo != 0 ? UIColourTheme.LIGHT_BLUE : UIColourTheme.RED);
                             ammo.render(g);
                         }
+                        if (unit.type.canPerformAction(Action.REPAIR)) {
+                            g.translate(0, -1);
+                            repair.updateTextRight("+" + MathUtil.floatToString(unit.type.repair, 1) + " HP");
+                            repair.render(g);
+                        }
                     });
                 });
             }).setZOrder(-1);
@@ -84,7 +100,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         Unit unit = level.selectedUnit;
                         if (unit != null)
                             level.levelRenderer.unitInfoScreen.enable(unit);
-                    });
+                    }).tooltip(t -> t.add(-1, UITooltip.dark(), "Click to view detailed unit info"));
             viewFiringRange = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 7.5f, 12.5f, 1.5f, 1.5f, true)
                     .setShape(UIShapeButton::target).drawShape(0.12f).setColourTheme(UIColourTheme.RED).setBoxCorner(0.3f).setOnClick(() -> {
                         Unit unit = level.selectedUnit;
@@ -95,11 +111,12 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             return;
                         }
                         level.endAction();
-                        HashSet<Point> tiles = unit.tilesInFiringRange(level.currentVisibility, new UnitData(unit), false);
+                        TileSet tiles = unit.tilesInFiringRange(level.currentVisibility, new UnitData(unit), false);
                         level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(Action.FIRE.tileColour, tiles, level);
                         level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(tiles, FIRE_TILE_BORDER_COLOUR);
                         showFiringRange = true;
-                    }).setOnDeselect(this::closeFiringRangeView).toggleMode();
+                    }).setOnDeselect(this::closeFiringRangeView).toggleMode()
+                    .tooltip(t -> t.add(-1, UITooltip.dark(), "Click to view unit firing range"));
             new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type.c == 'x', () -> {
                 if (viewFiringRange.isSelected())
                     viewFiringRange.deselect();

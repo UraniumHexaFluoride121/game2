@@ -12,13 +12,13 @@ import level.tutorial.sequence.event.TutorialEventListener;
 import render.RenderOrder;
 import render.UIColourTheme;
 import render.types.text.TextAlign;
-import render.types.text.UIMultiLineDisplayBox;
+import render.types.text.UIMLTextBoxRenderElement;
 
 import java.util.function.Supplier;
 
 public class BlockingTextBox implements TutorialSequenceElement, EventConsumer {
-    private UIMultiLineDisplayBox textBox;
-    private Supplier<UIMultiLineDisplayBox> textBoxSupplier;
+    private UIMLTextBoxRenderElement textBox;
+    private Supplier<UIMLTextBoxRenderElement> textBoxSupplier;
     private TutorialEventListener eventListener;
 
     public static BlockingTextBox onMap(Level l, BoxSize size, float x, float y, TextAlign textAlign, String text, TutorialEventListener eventListener) {
@@ -32,9 +32,9 @@ public class BlockingTextBox implements TutorialSequenceElement, EventConsumer {
     private BlockingTextBox(Level l, float x, float y, BoxSize boxSize, TextAlign textAlign, String text, TutorialEventListener eventListener, boolean map) {
         this.eventListener = eventListener;
         ObjPos pos = map ? Tile.getFractionalRenderPos(x, y) : new ObjPos(x, y);
-        textBoxSupplier = () -> new UIMultiLineDisplayBox(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
+        textBoxSupplier = () -> new UIMLTextBoxRenderElement(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
                 pos.x - boxSize.size.x / 2, pos.y, boxSize.size.x, boxSize.size.y, 0.7f, textAlign, box ->
-                box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER))
+                box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER), false)
                 .setText(text);
     }
 

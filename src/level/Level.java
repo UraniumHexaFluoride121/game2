@@ -7,6 +7,7 @@ import level.structure.Structure;
 import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileSelector;
+import level.tile.TileSet;
 import level.tile.TileType;
 import level.tutorial.TutorialLevel;
 import level.tutorial.TutorialManager;
@@ -197,14 +198,6 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             tileSelector.select(getTile(newPos));
         updateFoW();
         unit.updateActionUI();
-    }
-
-    public Tile getTile(Point pos) {
-        return tiles[pos.x][pos.y];
-    }
-
-    public Tile getTile(int x, int y) {
-        return tiles[x][y];
     }
 
     public Unit getUnit(Point pos) {
@@ -402,7 +395,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             tileSelector.tileSet.forEach(t -> t.isFoW = false);
             unitSet.forEach(u -> u.visibleInStealthMode = true);
             levelRenderer.fowTileBorder = null;
-            HashSet<Point> points = new HashSet<>();
+            TileSet points = new TileSet(tilesX, tilesY);
             for (Tile t : tileSelector.tileSet) {
                 points.add(t.pos);
             }
@@ -418,7 +411,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public VisibilityData getVisibilityData(UnitTeam team) {
-        HashSet<Point> visible = new HashSet<>();
+        TileSet visible = new TileSet(tilesX, tilesY);
         HashSet<Unit> stealthVisible = new HashSet<>();
         unitSet.forEach(u -> {
             if (samePlayerTeam(u.team, team)) {

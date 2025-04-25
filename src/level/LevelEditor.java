@@ -52,7 +52,7 @@ public class LevelEditor extends AbstractLevel<EditorLevelRenderer, EditorTileSe
                 baseTeams.add(t.structure.team);
         });
         if (baseTeams.size() != playerCount) {
-            levelRenderer.setInvalid("All teams must have a Base structure.");
+            levelRenderer.setInvalid("All players must have a Base structure.");
             return;
         }
 
@@ -64,7 +64,7 @@ public class LevelEditor extends AbstractLevel<EditorLevelRenderer, EditorTileSe
             }
         }
         if (unitTeams.size() != playerCount) {
-            levelRenderer.setInvalid("All teams must have at least one unit of any type.");
+            levelRenderer.setInvalid("All players must have at least one unit of any type.");
             return;
         }
         valid = true;

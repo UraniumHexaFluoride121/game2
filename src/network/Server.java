@@ -106,6 +106,24 @@ public class Server implements Deletable {
         })));
     }
 
+    public void sendUnitRepairPacket(Unit from, Unit to) {
+        UnitData fromData = new UnitData(from);
+        UnitData toData = new UnitData(to);
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_REPAIR, w -> {
+            fromData.write(w);
+            toData.write(w);
+        })));
+    }
+
+    public void sendUnitResupplyPacket(Unit from, Unit to) {
+        UnitData fromData = new UnitData(from);
+        UnitData toData = new UnitData(to);
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_RESUPPLY, w -> {
+            fromData.write(w);
+            toData.write(w);
+        })));
+    }
+
     public void sendUnitCapturePacket(Unit unit) {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_CAPTURE_UNIT, w -> {
             PacketWriter.writePoint(unit.pos, w);
@@ -315,6 +333,28 @@ public class Server implements Deletable {
                         fromUnit.clientAttack(toUnit);
                     });
                 }
+                case CLIENT_REQUEST_REPAIR -> {
+                    Point from = PacketReceiver.readPoint(reader), to = PacketReceiver.readPoint(reader);
+                    MainPanel.addTaskAfterAnimBlock(() -> {
+                        Unit fromUnit = server.level.getUnit(from), toUnit = server.level.getUnit(to);
+                        if (fromUnit == null || toUnit == null || server.teamClientIDs.get(fromUnit.team) != clientID || fromUnit.hasPerformedAction(Action.REPAIR) || !server.level.levelRenderer.energyManager.canAfford(fromUnit, Action.REPAIR, true)) {
+                            queueUnitUpdatePacket();
+                            return;
+                        }
+                        fromUnit.repair(toUnit);
+                    });
+                }
+                case CLIENT_REQUEST_RESUPPLY -> {
+                    Point from = PacketReceiver.readPoint(reader), to = PacketReceiver.readPoint(reader);
+                    MainPanel.addTaskAfterAnimBlock(() -> {
+                        Unit fromUnit = server.level.getUnit(from), toUnit = server.level.getUnit(to);
+                        if (fromUnit == null || toUnit == null || server.teamClientIDs.get(fromUnit.team) != clientID || fromUnit.hasPerformedAction(Action.RESUPPLY) || !server.level.levelRenderer.energyManager.canAfford(fromUnit, Action.RESUPPLY, true)) {
+                            queueUnitUpdatePacket();
+                            return;
+                        }
+                        fromUnit.resupply(toUnit);
+                    });
+                }
                 case CLIENT_REQUEST_CAPTURE_UNIT -> {
                     Point pos = PacketReceiver.readPoint(reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
@@ -335,9 +375,7 @@ public class Server implements Deletable {
                             queueUnitUpdatePacket();
                             return;
                         }
-                        u.addPerformedAction(Action.SHIELD_REGEN);
-                        u.setShieldHP(u.shieldHP + u.type.shieldRegen);
-                        server.sendUnitShieldRegenPacket(u);
+                        u.regenShield();
                     });
                 }
                 case CLIENT_REQUEST_STEALTH -> {
@@ -349,7 +387,7 @@ public class Server implements Deletable {
                             return;
                         }
                         u.addPerformedAction(Action.STEALTH);
-                        u.setStealthMode(!u.stealthMode, true);
+                        u.setStealthMode(!u.stealthMode);
                         server.sendUnitStealthPacket(u);
                     });
                 }

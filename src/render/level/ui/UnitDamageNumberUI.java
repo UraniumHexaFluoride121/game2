@@ -1,34 +1,13 @@
 package render.level.ui;
 
-import render.GameRenderer;
-import render.anim.PowAnimation;
-import render.types.text.FixedTextRenderer;
-import render.types.text.TextAlign;
-
 import java.awt.*;
 
 import static level.energy.EnergyManager.*;
 
-public class UnitDamageNumberUI {
-    private final FixedTextRenderer text;
-    private final PowAnimation anim = new PowAnimation(1, .7f);
-    private final float x, y, moveFactor;
+public class UnitDamageNumberUI extends UnitTextUI {
+    private static final Color SHIELD_COLOR = new Color(97, 204, 216);
 
-    public UnitDamageNumberUI(float damage, float x, float y, float moveFactor) {
-        text = new FixedTextRenderer(null, .7f, numberColour(damage))
-                .setBold(true).setTextAlign(TextAlign.CENTER);
-        this.x = x;
-        this.y = y;
-        this.moveFactor = moveFactor;
-        text.updateText(numberText(damage, 1));
-    }
-
-    public boolean render(Graphics2D g) {
-        if (anim.finished())
-            return true;
-        GameRenderer.renderOffset(x, y + anim.normalisedProgress() * moveFactor, g, () -> {
-            text.render(g);
-        });
-        return false;
+    public UnitDamageNumberUI(float damage, float x, float y, float moveFactor, boolean shield) {
+        super(numberText(damage, 1), x, y, 0.7f, moveFactor, shield ? SHIELD_COLOR : numberColour(damage));
     }
 }

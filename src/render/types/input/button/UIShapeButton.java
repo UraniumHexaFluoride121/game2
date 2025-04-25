@@ -3,13 +3,14 @@ package render.types.input.button;
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.*;
-import render.UIColourTheme;
 import render.types.box.UIBox;
+import render.types.text.TooltipManager;
 import render.types.text.UITextLabel;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static level.tile.Tile.*;
@@ -35,6 +36,7 @@ public class UIShapeButton extends AbstractUIButton {
                     });
                 }
             });
+            tooltip.render(g);
         };
     }
 
@@ -53,7 +55,14 @@ public class UIShapeButton extends AbstractUIButton {
                     });
                 }
             });
+            tooltip.render(g);
         };
+        return this;
+    }
+
+    @Override
+    public UIShapeButton tooltip(Consumer<TooltipManager> action) {
+        super.tooltip(action);
         return this;
     }
 
@@ -154,8 +163,8 @@ public class UIShapeButton extends AbstractUIButton {
         }, 3);
     }
 
-    public static Shape plus(UIBox b) {
-        float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * 0.7f, width = size * .3f;
+    public static Shape plus(UIBox b, float sizeMultiplier, float widthMultiplier) {
+        float cx = b.width / 2, cy = b.height / 2, size = Math.min(cx, cy) * sizeMultiplier, width = size * widthMultiplier;
         return new Polygon(new int[]{
                 (int) ((cx - size) * SCALING),
                 (int) ((cx - size) * SCALING),
@@ -183,6 +192,10 @@ public class UIShapeButton extends AbstractUIButton {
                 (int) ((cy - size) * SCALING),
                 (int) ((cy - width) * SCALING),
         }, 12);
+    }
+
+    public static Shape plus(UIBox b) {
+        return plus(b, 0.7f, 0.3f);
     }
 
     public static Shape minus(UIBox b) {

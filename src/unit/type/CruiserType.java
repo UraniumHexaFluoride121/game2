@@ -12,6 +12,7 @@ import unit.weapon.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,18 +35,19 @@ public class CruiserType extends UnitType {
             Action.FIRE, Action.MOVE
     }, 1, 25, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAIL_GUN, WeaponType.RAIL_GUN);
-        float s = 2.2f;
+        float s = 3.0f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.GOOD_HIGH);
         w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.HIGH);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.MODERATE_GOOD);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.MODERATE_GOOD);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.GOOD);
         w.addData("fighter", new AttackData(1.3f, s));
         w.addData("bomber", new AttackData(1.2f, s));
         w.addData("scout", new AttackData(1.0f, s));
         w.addData("corvette", new AttackData(4.6f, s));
         w.addData("defender", new AttackData(4.3f, s));
         w.addData("artillery", new AttackData(5.0f, s));
+        w.addData("supply", new AttackData(4.4f, s));
         w.addData("cruiser", new AttackData(6.8f, s));
         list.add(w);
     }, map -> {
@@ -54,7 +56,6 @@ public class CruiserType extends UnitType {
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
-        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 10);
         map.put(Action.FIRE, 12);
@@ -64,7 +65,7 @@ public class CruiserType extends UnitType {
             NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_FIGHTER
     }, FiringRenderer.TWO_UNITS);
 
-    CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+    CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
         super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
     }
 
@@ -91,5 +92,11 @@ public class CruiserType extends UnitType {
     @Override
     public float movementFixedCost() {
         return 1;
+    }
+
+    @Override
+    public CruiserType modify(Consumer<UnitType> action) {
+        super.modify(action);
+        return this;
     }
 }

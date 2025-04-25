@@ -1,6 +1,7 @@
 package level.tutorial.sequence.action;
 
 import level.Level;
+import level.tile.TileSet;
 import render.level.tile.HexagonBorder;
 import render.level.tile.HighlightTileRenderer;
 
@@ -11,17 +12,17 @@ import java.util.function.Supplier;
 
 public class TutorialHighlight extends TutorialAction {
     public static TutorialHighlight tile(Level l, Color c, int x, int y) {
-        HashSet<Point> tiles = new HashSet<>();
+        TileSet tiles = new TileSet(l.tilesX, l.tilesY);
         tiles.add(new Point(x, y));
         return new TutorialHighlight(l, tiles, c);
     }
 
     public static TutorialHighlight tiles(Level l, Color c, Point... points) {
-        HashSet<Point> tiles = new HashSet<>(List.of(points));
+        TileSet tiles = new TileSet(l.tilesX, l.tilesY, List.of(points));
         return new TutorialHighlight(l, tiles, c);
     }
     public static TutorialHighlight radius(Level l, Color c, int x, int y, int r) {
-        HashSet<Point> tiles = l.tileSelector.tilesInRadius(new Point(x, y), r);
+        TileSet tiles = TileSet.tilesInRadius(new Point(x, y), r, l);
         return new TutorialHighlight(l, tiles, c);
     }
 
@@ -40,10 +41,10 @@ public class TutorialHighlight extends TutorialAction {
         return new TutorialHighlight(l, () -> l.tileSelector.tileSet.stream()
                 .map(t -> t.pos)
                 .filter(p -> !l.currentVisibility.visibleTiles().contains(p))
-                .collect(HashSet::new, HashSet::add, HashSet::addAll), c);
+                .collect(() -> new TileSet(l.tilesX, l.tilesY), TileSet::add, TileSet::addAll), c);
     }
 
-    private TutorialHighlight(Level l, HashSet<Point> tiles, Color c) {
+    private TutorialHighlight(Level l, TileSet tiles, Color c) {
         super(() -> {
             Color middle = new Color(c.getRed(), c.getGreen(), c.getBlue(), 40);
             l.levelRenderer.tutorialHighlightRenderer = new HighlightTileRenderer(middle, tiles, l);
@@ -51,9 +52,9 @@ public class TutorialHighlight extends TutorialAction {
         });
     }
 
-    private TutorialHighlight(Level l, Supplier<HashSet<Point>> tiles, Color c) {
+    private TutorialHighlight(Level l, Supplier<TileSet> tiles, Color c) {
         super(() -> {
-            HashSet<Point> points = tiles.get();
+            TileSet points = tiles.get();
             Color middle = new Color(c.getRed(), c.getGreen(), c.getBlue(), 40);
             l.levelRenderer.tutorialHighlightRenderer = new HighlightTileRenderer(middle, points, l);
             l.levelRenderer.tutorialBorderRenderer = new HexagonBorder(points, c);

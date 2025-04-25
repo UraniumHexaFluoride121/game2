@@ -26,6 +26,7 @@ import render.types.input.button.LevelUIShapeButton;
 import render.types.input.button.UIButton;
 import render.types.input.button.UIShapeButton;
 import render.types.text.UITextNotification;
+import render.types.text.UITooltip;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -140,7 +141,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
                     mapUI.update();
-                });
+                }).tooltip(t -> t.add(-1, UITooltip.dark(), "Open map"));
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
 
@@ -224,16 +225,17 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         return isFiring;
     }
 
-    public void beginFiring(Unit a, Unit b, WeaponInstance weaponA, WeaponInstance weaponB) {
+    public void beginFiring(Unit attacking, Unit defending, WeaponInstance weaponA, WeaponInstance weaponB) {
         isFiring = true;
         registerAnimBlock(firingAnimRenderer);
-        firingRenderer.start(a, b, weaponA, weaponB);
+        firingRenderer.start(attacking, defending, weaponA, weaponB);
     }
 
     public void endFiring(Unit attacking, Unit defending) {
         isFiring = false;
         attacking.postFiring(defending, true, true);
         defending.postFiring(attacking, false, true);
+        defending.tileFlash(defending.pos, Unit.ATTACK_TILE_FLASH);
         removeAnimBlock(firingAnimRenderer);
     }
 

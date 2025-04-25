@@ -2,15 +2,14 @@ package render.types.input.button;
 
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
-import render.GameRenderer;
-import render.OrderedRenderable;
-import render.RenderOrder;
-import render.RenderRegister;
+import render.*;
+import render.types.box.UIBox;
 import render.types.text.FixedTextRenderer;
 import render.types.text.TextAlign;
-import render.UIColourTheme;
-import render.types.box.UIBox;
+import render.types.text.TooltipManager;
 import render.types.text.UITextLabel;
+
+import java.util.function.Consumer;
 
 public class UIButton extends AbstractUIButton {
     protected final FixedTextRenderer text;
@@ -38,7 +37,14 @@ public class UIButton extends AbstractUIButton {
                 g.translate(width / 2f, height / 2 - getTextSize() * 0.75 / 2);
                 text.render(g);
             });
+            tooltip.render(g);
         };
+    }
+
+    @Override
+    public UIButton tooltip(Consumer<TooltipManager> action) {
+        super.tooltip(action);
+        return this;
     }
 
     @Override

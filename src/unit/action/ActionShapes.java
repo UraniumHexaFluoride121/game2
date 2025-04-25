@@ -2,6 +2,8 @@ package unit.action;
 
 import render.GameRenderer;
 import render.Renderable;
+import render.types.box.UIBox;
+import render.types.input.button.UIShapeButton;
 
 import java.awt.*;
 import java.awt.geom.Path2D;
@@ -10,6 +12,8 @@ public abstract class ActionShapes {
     public static final Path2D.Float FLAG = new Path2D.Float();
     public static final Path2D.Float SHIELD = new Path2D.Float();
     public static final Path2D.Float SHIP = new Path2D.Float();
+    public static final Path2D.Float SUPPLY = new Path2D.Float();
+    public static final Shape PLUS = UIShapeButton.plus(new UIBox(1, 1), 0.6f, 0.3f);
 
     static {
         FLAG.moveTo(.4, .2);
@@ -93,6 +97,26 @@ public abstract class ActionShapes {
         SHIP.lineTo(.6, .37);
         SHIP.lineTo(.38, .37);
         SHIP.closePath();
+    }
+
+    static {
+        float size = 0.3f;
+        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 0)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 0)) * size);
+        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 1)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 1)) * size);
+        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 2)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 2)) * size);
+        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 3)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 3)) * size);
+        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 4)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 4)) * size);
+        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 5)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 5)) * size);
+        SUPPLY.closePath();
+        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 0)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 0)) * size);
+        SUPPLY.lineTo(.5f, .5f);
+        SUPPLY.closePath();
+        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 2)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 2)) * size);
+        SUPPLY.lineTo(.5f, .5f);
+        SUPPLY.closePath();
+        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 4)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 4)) * size);
+        SUPPLY.lineTo(.5f, .5f);
+        SUPPLY.closePath();
     }
 
     public static void stealthIcon(Graphics2D g) {

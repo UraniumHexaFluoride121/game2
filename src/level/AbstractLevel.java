@@ -5,15 +5,12 @@ import foundation.input.ButtonRegister;
 import foundation.math.ObjPos;
 import foundation.math.RandomHandler;
 import foundation.tick.RegisteredTickable;
-import level.tile.AbstractTileSelector;
-import level.tile.Tile;
-import level.tile.TileType;
+import level.tile.*;
 import render.Renderable;
 import unit.TileMapDisplayable;
 import unit.UnitTeam;
 
 import java.awt.*;
-import java.util.HashSet;
 import java.util.function.BiConsumer;
 
 public abstract class AbstractLevel<T extends AbstractLevelRenderer<?>, U extends AbstractTileSelector<?>> implements Renderable, Deletable, RegisteredTickable, TileMapDisplayable {
@@ -52,27 +49,32 @@ public abstract class AbstractLevel<T extends AbstractLevelRenderer<?>, U extend
 
     public void generateTiles() {
         tileSelector.tileSet.forEach(t -> t.setTileType(TileType.EMPTY, this));
-        HashSet<Point> nebula = tileSelector.pointTerrain(40, 3, TileType.EMPTY, r -> switch (r) {
-            case 0 -> .7f;
-            case 1 -> .3f;
-            case 2 -> .1f;
-            default -> 0f;
-        });
+        TileSet nebula = TileSet.all(this).m(this, t -> t
+                .pointTerrain(20, 3, r -> switch (r) {
+                    case 0 -> .55f;
+                    case 1 -> .25f;
+                    case 2 -> .1f;
+                    default -> 0f;
+                }));
         for (Point p : nebula) {
             tileSelector.getTile(p).setTileType(TileType.NEBULA, this);
         }
-        HashSet<Point> denseNebula = tileSelector.pointTerrain(10, 1, TileType.NEBULA, r -> switch (r) {
-            case 0 -> .1f;
-            default -> 0f;
-        });
+        TileSet denseNebula = TileSet.all(this).m(this, t -> t
+                .tileFilter(TileModifier.tileOfType(TileType.NEBULA))
+                .pointTerrain(10, 1, r -> switch (r) {
+                    case 0 -> .1f;
+                    default -> 0f;
+                }));
         for (Point p : denseNebula) {
             tileSelector.getTile(p).setTileType(TileType.DENSE_NEBULA, this);
         }
-        HashSet<Point> asteroids = tileSelector.pointTerrain(18, 2, TileType.EMPTY, r -> switch (r) {
-            case 0 -> .25f;
-            case 1 -> .12f;
+        TileSet asteroids = TileSet.all(this).m(this, t -> t
+                .tileFilter(TileModifier.tileOfType(TileType.EMPTY))
+                .pointTerrain(15, 2, r -> switch (r) {
+            case 0 -> .18f;
+            case 1 -> .1f;
             default -> 0f;
-        });
+        }));
         for (Point p : asteroids) {
             tileSelector.getTile(p).setTileType(TileType.ASTEROIDS, this);
         }
@@ -80,6 +82,14 @@ public abstract class AbstractLevel<T extends AbstractLevelRenderer<?>, U extend
 
     public void init() {
         registerTickable();
+    }
+
+    public Tile getTile(Point pos) {
+        return tiles[pos.x][pos.y];
+    }
+
+    public Tile getTile(int x, int y) {
+        return tiles[x][y];
     }
 
     public boolean rendered = false;

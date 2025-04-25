@@ -4,19 +4,19 @@ import foundation.MainPanel;
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
 import level.Level;
+import level.energy.EnergyCostDisplay;
 import level.tile.Tile;
 import level.tile.TileSelector;
+import level.tile.TileSet;
 import render.GameRenderer;
 import render.Renderable;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
-import level.energy.EnergyCostDisplay;
 import unit.type.UnitType;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -28,14 +28,14 @@ public class TilePath implements Renderable {
     public static final float END_DOT_RADIUS = 0.15f, END_DOT_RADIUS_INNER = 0.12f;
     private static final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay(false);
     private final UnitType type;
-    private final HashSet<Point> tiles;
+    private final TileSet tiles;
     private final Point origin;
     private Point end = null;
     private final TileSelector tileSelector;
 
     private ArrayList<Point> path = new ArrayList<>();
 
-    public TilePath(UnitType type, HashSet<Point> tiles, Point origin, TileSelector tileSelector) {
+    public TilePath(UnitType type, TileSet tiles, Point origin, TileSelector tileSelector) {
         this.type = type;
         this.tiles = tiles;
         this.origin = origin;

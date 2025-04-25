@@ -18,6 +18,8 @@ import render.anim.AnimationTimer;
 import render.level.tile.HexagonBorder;
 import render.level.tile.HighlightTileRenderer;
 import render.level.tile.RenderElement;
+import render.level.tile.TileFlash;
+import render.level.ui.TooltipRenderer;
 import render.texture.BackgroundRenderer;
 import render.texture.BackgroundTexture;
 import unit.TileMapDisplayable;
@@ -25,8 +27,10 @@ import unit.TileMapDisplayable;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Vector;
 
 import static level.tile.Tile.*;
 
@@ -34,6 +38,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
     public static final float MOUSE_EDGE_CAMERA_BORDER = 0.5f;
     private static final float MOUSE_EDGE_CAMERA_MOVE_SPEED = 20;
 
+    public Vector<TileFlash> tileFlashes = new Vector<>();
     public HighlightTileRenderer highlightTileRenderer = null, tutorialHighlightRenderer = null;
     public HexagonBorder unitTileBorderRenderer = null, fowTileBorder = null, tutorialBorderRenderer = null;
     private BufferedImage borderImage;
@@ -48,7 +53,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
     protected ObjPos shakeVector = null;
     protected boolean cameraShake = false;
 
-    //Object in this set indicate that they are running an animation
+    //Objects in this set indicate that they are running an animation
     private final HashSet<Object> animationBlocks = new HashSet<>();
     private final HashMap<AnimationTimer, Runnable> animationTimerBlocks = new HashMap<>();
 
@@ -94,6 +99,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
                 if (tutorialHighlightRenderer.finished())
                     tutorialHighlightRenderer = null;
             }
+            tileFlashes.forEach(f -> f.renderHighlight(g));
         });
 
         new RenderElement(mainRenderer, RenderOrder.FOG_OF_WAR, g -> {
@@ -111,11 +117,13 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
                 tutorialBorderRenderer.render(g);
             if (level.tileSelector.getSelectedTile() != null && renderSelectedTile())
                 level.tileSelector.getSelectedTile().renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
+            tileFlashes.forEach(f -> f.renderBorder(g));
         });
         new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
-            if (level.tileSelector.mouseOverTile != null && renderMouseOverTile())
+            if (level.tileSelector.mouseOverTile != null && renderMouseOverTile() && tileFlashes.isEmpty())
                 level.tileSelector.mouseOverTile.renderTile(g, Tile.BLUE_TRANSPARENT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
         }).setZOrder(1);
+        new TooltipRenderer(levelUIRenderer, RenderOrder.TOOLTIP);
     }
 
     protected boolean renderMouseOverTile() {

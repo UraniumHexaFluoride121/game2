@@ -34,6 +34,18 @@ public class UIBox implements Renderable {
         return this;
     }
 
+    public UIBox setWidth(float width) {
+        this.width = width;
+        updateShape();
+        return this;
+    }
+
+    public UIBox setHeight(float height) {
+        this.height = height;
+        updateShape();
+        return this;
+    }
+
     public UIBox setCorner(float corner) {
         this.corner = corner;
         updateShape();

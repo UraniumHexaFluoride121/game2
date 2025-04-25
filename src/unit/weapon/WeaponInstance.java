@@ -1,6 +1,7 @@
 package unit.weapon;
 
 import level.Level;
+import level.tile.TileSet;
 import unit.Unit;
 import unit.UnitData;
 import unit.type.UnitType;
@@ -16,7 +17,7 @@ public class WeaponInstance {
     public int ammo;
     public final HashMap<UnitType, AttackData> data;
     public final ProjectileType projectileType;
-    public final BiFunction<UnitData, Level, HashSet<Point>> tilesInFiringRange;
+    public final BiFunction<UnitData, Level, TileSet> tilesInFiringRange;
     public final WeaponTemplate template;
 
     public WeaponInstance(WeaponTemplate template) {

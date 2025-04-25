@@ -264,18 +264,18 @@ public class FiringRenderer extends AbstractRenderElement {
 
     private float leftShieldBarTime = 0, rightShieldBarTime = 0;
 
-    public void start(Unit a, Unit b, WeaponInstance weaponA, WeaponInstance weaponB) {
-        attackingUnit = a;
-        defendingUnit = b;
+    public void start(Unit attacking, Unit defending, WeaponInstance weaponA, WeaponInstance weaponB) {
+        attackingUnit = attacking;
+        defendingUnit = defending;
         boolean aIsLeft;
-        if (a.pos.x > b.pos.x) {
+        if (attacking.pos.x > defending.pos.x) {
             aIsLeft = false;
-        } else if (a.pos.x < b.pos.x) {
+        } else if (attacking.pos.x < defending.pos.x) {
             aIsLeft = true;
         } else
-            aIsLeft = a.pos.y <= b.pos.y;
-        leftUnit = aIsLeft ? a : b;
-        rightUnit = aIsLeft ? b : a;
+            aIsLeft = attacking.pos.y <= defending.pos.y;
+        leftUnit = aIsLeft ? attacking : defending;
+        rightUnit = aIsLeft ? defending : attacking;
         leftWeapon = aIsLeft ? weaponA : weaponB;
         rightWeapon = aIsLeft ? weaponB : weaponA;
         leftShieldBarTime = (leftUnit.shieldHP - leftUnit.shieldFiringTempHP) / (leftUnit.hitPoints - leftUnit.firingTempHP + leftUnit.shieldHP - leftUnit.shieldFiringTempHP);
@@ -293,7 +293,7 @@ public class FiringRenderer extends AbstractRenderElement {
             leftUnitRenderer[i] = new UnitRenderer(image, leftWeapon, leftUnit.getFireAnimState(leftWeapon), leftProjectiles, i >= leftUnitCountRemaining, leftUnit == attackingUnit, leftPositions[i].x, leftPositions[i].y, leftUnit.type);
         }
         for (int i = 0; i < rightUnitCount; i++) {
-            ImageCounter image = new CachedImageCounter(rightUnit.type.firingSequenceLeft.get(rightUnit.team));
+            ImageCounter image = new CachedImageCounter(rightUnit.type.firingSequenceRight.get(rightUnit.team));
             rightUnitRenderer[i] = new UnitRenderer(image, rightWeapon, rightUnit.getFireAnimState(rightWeapon), rightProjectiles, i >= rightUnitCountRemaining, rightUnit == attackingUnit, rightPositions[i].x, rightPositions[i].y, rightUnit.type);
         }
         leftImage = level.getTile(leftUnit.pos).type.firingTexturesLeft.getRandomImage();

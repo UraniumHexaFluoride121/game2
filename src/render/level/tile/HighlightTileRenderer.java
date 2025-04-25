@@ -2,6 +2,7 @@ package render.level.tile;
 
 import level.Level;
 import level.tile.Tile;
+import level.tile.TileSet;
 import render.Renderable;
 import render.anim.ReversableAnimationTimer;
 import render.anim.PowAnimation;
@@ -16,15 +17,7 @@ public class HighlightTileRenderer implements Renderable {
     private final Color tileColour;
     private final ReversableAnimationTimer timer;
 
-    public HighlightTileRenderer(Color tileColour, ReversableAnimationTimer timer, HashSet<Point> positions, Level l) {
-        this.tileColour = tileColour;
-        this.timer = timer;
-        timer.setReversed(true);
-        timer.startTimer();
-        positions.forEach(p -> tiles.add(l.getTile(p)));
-    }
-
-    public HighlightTileRenderer(Color tileColour, HashSet<Point> positions, Level l) {
+    public HighlightTileRenderer(Color tileColour, TileSet positions, Level l) {
         this.tileColour = tileColour;
         this.timer = new PowAnimation(0.2f, 0.3f);
         timer.setReversed(true);

@@ -9,6 +9,10 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
 
     //Positive
     public static final AttributeData
+            SUPPLY = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
+            "Can resupply allied units", orderCounter++),
+            REPAIR = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
+            "Can repair allied units", orderCounter++),
             HAS_SHIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
             "Has a powerful shield for defence", orderCounter++),
             HIGH_MOVEMENT_SPEED = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
@@ -32,7 +36,9 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
             ANTI_CAPITAL_SHIP = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Effective against " + ShipClass.CAPITAL_SHIP.getName().toLowerCase() + " class", orderCounter++),
             BALANCED = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
-                    "Generally an all-round, balanced ship", orderCounter++);
+                    "Generally an all-round, balanced ship", orderCounter++),
+            HIGH_HP = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
+                    "Large amount of HP", orderCounter++);
     //Neutral
     public static final AttributeData
             STEALTH_INSTEAD_OF_CAPTURE = new AttributeData(UnitInfoScreen.AttributeType.NEUTRAL,
@@ -47,6 +53,8 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
             "Cannot move through asteroid fields", orderCounter++),
             LOW_VIEW_RANGE = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Limited view range", orderCounter++),
+            NO_WEAPON = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
+                    "Has no weapons for defence", orderCounter++),
             MAIN_GUN_LIMITED_AMMO = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Primary weapon has limited ammo", orderCounter++),
             INEFFECTIVE_AGAINST_ALL = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,

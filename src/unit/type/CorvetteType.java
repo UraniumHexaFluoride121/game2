@@ -12,6 +12,7 @@ import unit.weapon.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,18 +35,19 @@ public class CorvetteType extends UnitType {
             Action.FIRE, Action.MOVE
     }, 1, 17, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CORVETTE_CANNON, WeaponType.CANNON);
-        float s = 3.4f;
+        float s = 4.2f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.HIGH_MAX);
         w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.MODERATE_GOOD);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.LOW_MODERATE);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.GOOD);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.GOOD_HIGH);
         w.addData("fighter", new AttackData(1.6f, s));
         w.addData("bomber", new AttackData(1.4f, s));
         w.addData("scout", new AttackData(1.8f, s));
         w.addData("corvette", new AttackData(6.3f, s));
         w.addData("defender", new AttackData(6.0f, s));
         w.addData("artillery", new AttackData(6.5f, s));
+        w.addData("supply", new AttackData(5.8f, s));
         w.addData("cruiser", new AttackData(3.2f, s));
         list.add(w);
     }, map -> {
@@ -54,7 +56,6 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
-        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 6);
         map.put(Action.FIRE, 10);
@@ -78,18 +79,19 @@ public class CorvetteType extends UnitType {
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
     }, 1, 22, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.DEFENDER_PLASMA, WeaponType.PLASMA);
-        float s = 5.5f;
+        float s = 6.5f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.HIGH_MAX);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.MODERATE_GOOD);
         w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE_LOW);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH_MAX);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.MAX);
         w.addData("fighter", new AttackData(6.2f, s));
         w.addData("bomber", new AttackData(5.8f, s));
         w.addData("scout", new AttackData(6.0f, s));
         w.addData("corvette", new AttackData(2.7f, s));
         w.addData("defender", new AttackData(2.5f, s));
         w.addData("artillery", new AttackData(2.9f, s));
+        w.addData("supply", new AttackData(2.4f, s));
         w.addData("cruiser", new AttackData(1.1f, s));
         list.add(w);
     }, map -> {
@@ -99,6 +101,7 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.MODERATE);
+        map.put(UnitCharacteristic.SHIELD_REGEN, UnitCharacteristicValue.MODERATE_GOOD);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 6);
         map.put(Action.FIRE, 12);
@@ -136,6 +139,7 @@ public class CorvetteType extends UnitType {
         w.addData("corvette", new AttackData(3.5f, s));
         w.addData("defender", new AttackData(3.8f, s));
         w.addData("artillery", new AttackData(3.5f, s));
+        w.addData("supply", new AttackData(3.4f, s));
         w.addData("cruiser", new AttackData(5.2f, s));
         list.add(w);
     }, map -> {
@@ -144,7 +148,6 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.GOOD_HIGH);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.GOOD);
-        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 8);
         map.put(Action.FIRE, 12);
@@ -162,9 +165,37 @@ public class CorvetteType extends UnitType {
         public float movementFixedCost() {
             return 4;
         }
-    };
+    },
 
-    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+    SUPPLY = new CorvetteType("supply", "Supply Unit", 10, 5.5f, 3.5f, type -> switch (type) {
+        case EMPTY -> 1f;
+        case NEBULA -> 1.5f;
+        case DENSE_NEBULA -> 1.7f;
+        case ASTEROIDS -> 5.5f;
+    }, type -> switch (type) {
+        case EMPTY -> 1f;
+        case NEBULA -> 1.5f;
+        case DENSE_NEBULA -> 100f;
+        case ASTEROIDS -> 1.2f;
+    }, new Action[]{
+            Action.MOVE, Action.REPAIR, Action.RESUPPLY
+    }, 1, 22, list -> {
+    }, map -> {
+        map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.MODERATE_GOOD);
+        map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.GOOD);
+        map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
+        map.put(UnitCharacteristic.REPAIR, UnitCharacteristicValue.MODERATE);
+    }, (map, perTurnMap) -> {
+        map.put(Action.CAPTURE, 6);
+        map.put(Action.REPAIR, 10);
+        map.put(Action.RESUPPLY, 8);
+    }, new AttributeData[]{
+            AttributeData.SUPPLY, REPAIR,
+            SLOW_ASTEROID_FIELD, CARRIER_LOADING,
+            NO_WEAPON
+    }, FiringRenderer.TWO_UNITS).modify(u -> u.setRepair(3));
+
+    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
         super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
     }
 
@@ -207,5 +238,11 @@ public class CorvetteType extends UnitType {
     @Override
     protected ShipClass getShipClass() {
         return ShipClass.CORVETTE;
+    }
+
+    @Override
+    public CorvetteType modify(Consumer<UnitType> action) {
+        super.modify(action);
+        return this;
     }
 }

@@ -12,6 +12,7 @@ import unit.weapon.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -35,18 +36,19 @@ public class FighterType extends UnitType {
             Action.FIRE, Action.MOVE
     }, 1, 15, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA, WeaponType.PLASMA);
-        float s = 5f;
+        float s = 5.3f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.GOOD);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
         w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE_LOW);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH);
+        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.HIGH_MAX);
         w.addData("fighter", new AttackData(3.8f, s));
         w.addData("bomber", new AttackData(3.2f, s));
         w.addData("scout", new AttackData(3.9f, s));
         w.addData("corvette", new AttackData(1.8f, s));
         w.addData("defender", new AttackData(1.6f, s));
         w.addData("artillery", new AttackData(2.1f, s));
+        w.addData("supply", new AttackData(1.6f, s));
         w.addData("cruiser", new AttackData(1.0f, s));
         list.add(w);
     }, map -> {
@@ -55,7 +57,6 @@ public class FighterType extends UnitType {
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
-        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 4);
         map.put(Action.FIRE, 7);
@@ -91,10 +92,11 @@ public class FighterType extends UnitType {
         w1.addData("corvette", new AttackData(2.7f, s1));
         w1.addData("defender", new AttackData(2.6f, s1));
         w1.addData("artillery", new AttackData(2.8f, s1));
+        w1.addData("supply", new AttackData(2.5f, s1));
         w1.addData("cruiser", new AttackData(5.2f, s1));
         list.add(w1);
         WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BOMBER_PLASMA, WeaponType.PLASMA);
-        float s2 = 4.4f;
+        float s2 = 5.0f;
         w2.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.GOOD_HIGH);
         w2.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.LOW_MODERATE);
         w2.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
@@ -106,6 +108,7 @@ public class FighterType extends UnitType {
         w2.addData("corvette", new AttackData(1.6f, s2));
         w2.addData("defender", new AttackData(1.5f, s2));
         w2.addData("artillery", new AttackData(1.9f, s2));
+        w2.addData("supply", new AttackData(1.5f, s2));
         w2.addData("cruiser", new AttackData(1.0f, s2));
         list.add(w2);
     }, map -> {
@@ -114,7 +117,6 @@ public class FighterType extends UnitType {
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
-        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 4);
         map.put(Action.FIRE, 8);
@@ -138,7 +140,7 @@ public class FighterType extends UnitType {
             Action.FIRE, Action.MOVE, Action.STEALTH
     }, 1, 15, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.SCOUT_PLASMA, WeaponType.PLASMA);
-        float s = 2.5f;
+        float s = 2.8f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.NONE_LOW);
         w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.NONE_LOW);
@@ -150,6 +152,7 @@ public class FighterType extends UnitType {
         w.addData("corvette", new AttackData(0.4f, s));
         w.addData("defender", new AttackData(0.4f, s));
         w.addData("artillery", new AttackData(0.5f, s));
+        w.addData("supply", new AttackData(0.4f, s));
         w.addData("cruiser", new AttackData(0.3f, s));
         list.add(w);
     }, map -> {
@@ -158,7 +161,6 @@ public class FighterType extends UnitType {
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.NONE_LOW);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.HIGH_MAX);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
-        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.NONE);
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 4);
         map.put(Action.STEALTH, 10);
@@ -167,9 +169,9 @@ public class FighterType extends UnitType {
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, HIGH_VIEW_RANGE,
             CARRIER_LOADING, STEALTH_INSTEAD_OF_CAPTURE,
             INEFFECTIVE_AGAINST_ALL, LOW_HP
-    }, FiringRenderer.THREE_UNITS).noCapture();
+    }, FiringRenderer.THREE_UNITS).modify(UnitType::noCapture);
 
-    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<HashMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
+    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
         super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
     }
 
@@ -199,8 +201,8 @@ public class FighterType extends UnitType {
     }
 
     @Override
-    public FighterType noCapture() {
-        super.noCapture();
+    public FighterType modify(Consumer<UnitType> action) {
+        super.modify(action);
         return this;
     }
 }

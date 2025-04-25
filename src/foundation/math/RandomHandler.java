@@ -59,7 +59,7 @@ public class RandomHandler {
         return array;
     }
 
-    public <T> ArrayList<T> randomSelection(ArrayList<T> array, int count, RandomType type) {
+    public <T> ArrayList<T> randomSelection(List<T> array, int count, RandomType type) {
         ArrayList<T> list = new ArrayList<>(array), newList = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             newList.add(list.remove((int) (generateFloat(type) * list.size())));

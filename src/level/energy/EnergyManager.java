@@ -22,6 +22,7 @@ import render.types.input.button.UIButton;
 import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
 import render.types.container.UIScrollSurface;
+import render.types.text.UITooltip;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -72,7 +73,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                         incomeBox.setEnabled(true);
                     }).setOnDeselect(() -> {
                         incomeBox.setEnabled(false);
-                    }).toggleMode().setZOrder(-1);
+                    }).toggleMode().tooltip(t -> t.add(13, UITooltip.dark(), displayName + " is used by your units to perform actions. Income is credited to you at the start of each turn. Click this window to see more details.")).setZOrder(-1);
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     new FixedTextRenderer("Available:", .7f, UITextLabel.TEXT_COLOUR)
                             .setBold(true).setTextAlign(TextAlign.LEFT).translate(.5f, 1.75f),
@@ -162,7 +163,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         if (availableMap.get(team) + added < 0) {
             level.unitSet.forEach(u -> {
                 if (u.team == team && u.stealthMode) {
-                    u.setStealthMode(false, false);
+                    u.setStealthMode(false);
                     if (level.networkState == NetworkState.SERVER) {
                         level.server.sendUnitStealthPacket(u);
                     }

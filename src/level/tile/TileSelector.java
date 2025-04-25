@@ -14,40 +14,11 @@ import unit.bot.VisibilityData;
 
 import java.awt.*;
 import java.util.HashSet;
+import java.util.function.Predicate;
 
 public class TileSelector extends AbstractTileSelector<Level> {
     public TileSelector(Level level) {
         super(level);
-    }
-
-    public HashSet<Point> withEnemyUnits(HashSet<Point> tiles, Unit unit, VisibilityData visibility) {
-        HashSet<Point> enemyTiles = new HashSet<>();
-        tiles.forEach(t -> {
-            Unit u = level.getUnit(t);
-            if (u != null && u.visible(visibility) && unit.canFireAt(u))
-                enemyTiles.add(t);
-        });
-        return enemyTiles;
-    }
-
-    public HashSet<Point> tilesWithoutEnemies(HashSet<Point> tiles, UnitTeam team) {
-        HashSet<Point> newTiles = new HashSet<>();
-        for (Point tile : tiles) {
-            Unit u = level.getUnit(tile);
-            if (u == null || level.samePlayerTeam(u.team, team) || !u.renderVisible())
-                newTiles.add(tile);
-        }
-        return newTiles;
-    }
-
-    public HashSet<Point> tilesWithoutEnemies(HashSet<Point> tiles, UnitTeam team, VisibilityData visibility) {
-        HashSet<Point> newTiles = new HashSet<>();
-        for (Point tile : tiles) {
-            Unit u = level.getUnit(tile);
-            if (u == null || level.samePlayerTeam(u.team, team) || !u.visible(visibility))
-                newTiles.add(tile);
-        }
-        return newTiles;
     }
 
     @Override

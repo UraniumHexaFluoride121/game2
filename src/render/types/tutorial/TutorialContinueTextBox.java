@@ -7,7 +7,7 @@ import render.UIColourTheme;
 import render.types.container.UIContainer;
 import render.types.input.button.UIButton;
 import render.types.text.TextAlign;
-import render.types.text.UIMultiLineDisplayBox;
+import render.types.text.UIMLTextBoxRenderElement;
 
 public class TutorialContinueTextBox extends UIContainer {
     public final float width, height;
@@ -17,9 +17,9 @@ public class TutorialContinueTextBox extends UIContainer {
         this.width = width;
         this.height = height;
         addRenderables((r, b) -> {
-            new UIMultiLineDisplayBox(r, RenderOrder.TUTORIAL_UI, -width / 2, 0, width, height, 0.7f, textAlign, box -> {
+            new UIMLTextBoxRenderElement(r, RenderOrder.TUTORIAL_UI, -width / 2, 0, width, height, 0.7f, textAlign, box -> {
                 box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER);
-            }).setText(text);
+            }, false).setText(text);
             new UIButton(r, b, RenderOrder.TUTORIAL_UI, ButtonOrder.TUTORIAL_UI, -2, -2, 4, 1.5f, 0.8f, false)
                     .setBold().setText("Continue").setColourTheme(UIColourTheme.DEEP_GREEN).setOnClick(onContinue);
         });

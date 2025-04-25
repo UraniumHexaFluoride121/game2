@@ -28,98 +28,37 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
     protected T level;
     public final Tile[][] tiles;
     public final HashSet<Tile> tileSet = new HashSet<>();
+    public final int w, h;
 
     public AbstractTileSelector(T level) {
         this.level = level;
         tiles = level.tiles;
+        w = tiles.length;
+        h = tiles[0].length;
         for (Tile[] tileRow : tiles) {
             tileSet.addAll(Arrays.asList(tileRow));
         }
     }
 
-    public HashSet<Point> allTiles() {
-        HashSet<Point> points = new HashSet<>();
-        tileSet.forEach(t -> points.add(t.pos));
-        return points;
-    }
-
-    public HashSet<Point> allTilesOfType(TileType type) {
-        HashSet<Point> points = new HashSet<>();
-        tileSet.forEach(t -> {
-            if (t.type == type)
-                points.add(t.pos);
-        });
-        return points;
-    }
-
-    public HashSet<Point> allTilesExceptType(TileType type) {
-        HashSet<Point> points = new HashSet<>();
-        tileSet.forEach(t -> {
-            if (t.type != type)
-                points.add(t.pos);
-        });
-        return points;
-    }
-
-    public HashSet<Point> tilesInRadius(Point origin, int radius) {
-        HashSet<Point> tileSet = new HashSet<>();
-        tileSet.add(origin);
+    public void forEachTilesInRadius(Point origin, int radius, BiConsumer<TileSet, Integer> action) {
+        TileSet set = new TileSet(w, h);
+        set.add(origin);
+        action.accept(set, 0);
         for (int i = 0; i < radius; i++) {
-            HashSet<Point> newTiles = new HashSet<>();
-            for (Point tile : tileSet) {
+            TileSet newTiles = new TileSet(w, h);
+            for (Point tile : set) {
                 for (HexagonalDirection d : HexagonalDirection.values()) {
                     Point p = d.offset(tile);
-                    if (validCoordinate(p))
-                        newTiles.add(p);
+                    newTiles.add(p);
                 }
             }
-            tileSet.addAll(newTiles);
-        }
-        return tileSet;
-    }
-
-    public ArrayList<Point> tilesInRadiusDeterministic(Point origin, int radius) {
-        ArrayList<Point> tileSet = new ArrayList<>();
-        tileSet.add(origin);
-        for (int i = 0; i < radius; i++) {
-            ArrayList<Point> newTiles = new ArrayList<>();
-            for (Point tile : tileSet) {
-                for (HexagonalDirection d : HexagonalDirection.values()) {
-                    Point p = d.offset(tile);
-                    if (validCoordinate(p))
-                        newTiles.add(p);
-                }
-            }
-            tileSet.addAll(newTiles);
-        }
-        ArrayList<Point> noDuplicates = new ArrayList<>();
-        tileSet.forEach(t -> {
-            if (!noDuplicates.contains(t))
-                noDuplicates.add(t);
-        });
-        return noDuplicates;
-    }
-
-    public void forEachTilesInRadius(Point origin, int radius, BiConsumer<HashSet<Point>, Integer> action) {
-        HashSet<Point> tileSet = new HashSet<>();
-        tileSet.add(origin);
-        action.accept(tileSet, 0);
-        for (int i = 0; i < radius; i++) {
-            HashSet<Point> newTiles = new HashSet<>();
-            for (Point tile : tileSet) {
-                for (HexagonalDirection d : HexagonalDirection.values()) {
-                    Point p = d.offset(tile);
-                    if (validCoordinate(p))
-                        newTiles.add(p);
-                }
-            }
-            newTiles.removeAll(tileSet);
+            newTiles.removeAll(set);
             action.accept(newTiles, i + 1);
-            tileSet.addAll(newTiles);
+            set.addAll(newTiles);
         }
     }
 
-    public ArrayList<Point> shortestPathTo(Point origin, Point end, HashSet<Point> tiles, Function<TileType, Float> tileCostFunction) {
+    public ArrayList<Point> shortestPathTo(Point origin, Point end, TileSet tiles, Function<TileType, Float> tileCostFunction) {
         HashMap<Point, Float> costMap = new HashMap<>();
         HashMap<Point, ArrayList<Point>> pathMap = new HashMap<>();
         tiles.forEach(t -> costMap.put(t, -1f));
@@ -153,11 +92,7 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
         return pathMap.get(end);
     }
 
-    public HashSet<Point> tilesInRange(Point origin, HashSet<Point> tiles, Function<TileType, Float> tileCostFunction, float maxCost) {
-        return new HashSet<>(tilesInRangeCostMap(origin, tiles, tileCostFunction, maxCost).keySet());
-    }
-
-    public HashMap<Point, Float> tilesInRangeCostMap(Point origin, HashSet<Point> tiles, Function<TileType, Float> tileCostFunction, float maxCost) {
+    public HashMap<Point, Float> tilesInRangeCostMap(Point origin, TileSet tiles, Function<TileType, Float> tileCostFunction, float maxCost) {
         HashMap<Point, Float> costMap = new HashMap<>(), finalMap = new HashMap<>();
         tiles.forEach(t -> costMap.put(t, -1f));
         costMap.put(origin, 0f);
@@ -191,47 +126,16 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
         return finalMap;
     }
 
-    public HashSet<Point> pointTerrain(float tilesPerPoint, int radius, TileType generateOn, Function<Integer, Float> generationChance) {
-        HashSet<Point> available = allTilesOfType(generateOn);
-        int pointCount = (int) (available.size() / tilesPerPoint);
-        float probability = available.size() / tilesPerPoint - pointCount;
-        if (MathUtil.randBoolean(probability, level.random.getDoubleSupplier(RandomType.TILE_GENERATION)))
-            pointCount++;
-        HashSet<Point> points = new HashSet<>();
-        for (int i = 0; i < pointCount; i++) {
-            float x = level.random.generateFloat(RandomType.TILE_GENERATION) * tiles.length;
-            float y = level.random.generateFloat(RandomType.TILE_GENERATION) * tiles[0].length;
-            Point p = new Point((int) x, (int) y);
-            if (points.contains(p) || !available.contains(p))
-                i--;
-            else
-                points.add(p);
-        }
-        HashSet<Point> terrain = new HashSet<>(points), tested = new HashSet<>(points);
-        for (int i = 0; i < radius; i++) {
-            HashSet<Point> newTerrain = new HashSet<>();
-            terrain.forEach(t -> {
-                for (HexagonalDirection d : HexagonalDirection.values()) {
-                    Point p = d.offset(t);
-                    if (validCoordinate(p) && !tested.contains(p) && available.contains(p))
-                        newTerrain.add(p);
-                }
-            });
-            tested.addAll(newTerrain);
-            for (Point tile : newTerrain) {
-                if (level.random.generateFloat(RandomType.TILE_GENERATION) < generationChance.apply(i))
-                    terrain.add(tile);
-            }
-        }
-        return terrain;
-    }
-
     public boolean validCoordinate(int x, int y) {
         return x >= 0 && y >= 0 && x < tiles.length && y < tiles[0].length;
     }
 
     public boolean validCoordinate(Point pos) {
         return pos.x >= 0 && pos.y >= 0 && pos.x < tiles.length && pos.y < tiles[0].length;
+    }
+
+    public static boolean validCoordinate(int width, int height, Point pos) {
+        return pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height;
     }
 
     @Override

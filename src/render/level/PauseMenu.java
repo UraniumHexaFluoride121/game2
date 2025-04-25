@@ -6,6 +6,7 @@ import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.OnButtonInput;
 import level.Level;
+import network.NetworkState;
 import render.*;
 import render.level.tile.RenderElement;
 import render.save.UISaveBox;
@@ -36,11 +37,7 @@ public class PauseMenu extends LevelUIContainer<Level> {
                 g.fillRect(0, 0, (int) Math.ceil(Renderable.right()), (int) Math.ceil(Renderable.top()));
                 if (botPlaying != level.bots.get(level.getActiveTeam())) {
                     botPlaying = !botPlaying;
-                    saveGame.setText(botPlaying ? "Cannot save while bot is playing" : "Save");
-                    saveGame.setClickEnabled(!botPlaying);
-                    saveGame.setColourTheme(botPlaying ? UIColourTheme.GRAYED_OUT : UIColourTheme.LIGHT_BLUE);
-                    if (botPlaying)
-                        saveContainer.setEnabled(false);
+                    updateSaveGameButton();
                 }
             });
             newButton(r, b, 0, WIDTH / 2 - 0.25f, 0, false)
@@ -52,11 +49,12 @@ public class PauseMenu extends LevelUIContainer<Level> {
                         setEnabled(false);
                     });
             saveGame = newButton(r, b, 1, true)
-                    .setText("Save").setOnClick(() -> {
+                    .setOnClick(() -> {
                         saveContainer.setEnabled(true);
                     }).noDeselect().setOnDeselect(() -> {
                         saveContainer.setEnabled(false);
                     });
+            updateSaveGameButton();
             saveContainer = new UIContainer(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 + WIDTH / 2, Renderable.top() / 2 - 12);
             saveContainer.addRenderables((r2, b2) -> {
                 saveBox = new UISaveBox<>(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
@@ -88,7 +86,24 @@ public class PauseMenu extends LevelUIContainer<Level> {
         return newButton(r, b, i, WIDTH, 0, staySelected);
     }
 
-    public void updateSaveButton() {
+    public void updateSaveGameButton() {
+        saveGame.setClickEnabled(false);
+        saveGame.setColourTheme(UIColourTheme.GRAYED_OUT);
+        if (level.networkState == NetworkState.CLIENT) {
+            saveGame.setText("Only the host can save");
+            return;
+        }
+        if (botPlaying) {
+            saveGame.setText("Cannot save while bot is playing");
+            saveContainer.setEnabled(false);
+            return;
+        }
+        saveGame.setText("Save");
+        saveGame.setClickEnabled(true);
+        saveGame.setColourTheme(UIColourTheme.LIGHT_BLUE);
+    }
+
+    private void updateSaveButton() {
         if (saveFileNameBox.getText().isEmpty()) {
             saveButton.setColourTheme(UIColourTheme.GRAYED_OUT)
                     .setText("Save").setClickEnabled(false);

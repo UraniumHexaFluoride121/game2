@@ -25,15 +25,18 @@ public class Action implements NamedEnum, Serializable {
     public static final float ROUNDING = 1, BORDER = 0.15f;
 
     public static final BasicStroke ICON_STROKE = new BasicStroke(0.2f * SCALING, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
-    public static final BasicStroke ICON_STROKE_NARROW = new BasicStroke(0.15f * SCALING, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
-    public static final BasicStroke ICON_STROKE_NARROW_NON_SCALED = new BasicStroke(0.15f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
-    public static final BasicStroke ICON_STROKE_EXTRA_NARROW_NON_SCALED = new BasicStroke(0.04f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
+    public static final BasicStroke ICON_STROKE_NARROW_1 = new BasicStroke(0.15f * SCALING, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
+    public static final BasicStroke ICON_STROKE_NARROW_1_NON_SCALED = new BasicStroke(0.15f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
+    public static final BasicStroke ICON_STROKE_NARROW_2_NON_SCALED = new BasicStroke(0.08f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
+    public static final BasicStroke ICON_STROKE_NARROW_3_NON_SCALED = new BasicStroke(0.04f / ACTION_BUTTON_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     public static final Color ICON_COLOUR = new Color(214, 214, 214);
     public static final Color ICON_COLOUR_UNUSABLE = new Color(195, 195, 195);
 
     public static final Color
             MOVE_ACTION_HIGHLIGHT = new Color(122, 210, 248, 26),
-            FIRE_ACTION_HIGHLIGHT = new Color(248, 122, 122, 26);
+            FIRE_ACTION_HIGHLIGHT = new Color(248, 122, 122, 26),
+            REPAIR_ACTION_HIGHLIGHT = new Color(135, 246, 105, 33),
+            RESUPPLY_ACTION_HIGHLIGHT = new Color(246, 190, 105, 33);
 
     public static final Action
             MOVE = new Action("MOVE", "Move", BLUE, BLUE, MOVE_ACTION_HIGHLIGHT, true, g -> {
@@ -56,9 +59,10 @@ public class Action implements NamedEnum, Serializable {
     }, "Allows you to move this unit to nearby tiles. The distance a unit can move each turn " +
             "depends primarily on the speed of the unit, but, hard to navigate terrain, such as nebulae or " +
             "asteroid fields, can limit movement. The " + EnergyManager.displayName + " cost is per-tile, with " +
-            "larger ship classes generally costing more to move.", 2),
+            "larger ship classes generally costing more to move. By default, the lowest cost path is used when moving a unit, " +
+            "but you can hold CTRL when dragging the mouse to the destination tile to trace out a path of your choice.", 2),
             FIRE = new Action("FIRE", "Fire", RED, RED_UNUSABLE, FIRE_ACTION_HIGHLIGHT, true, g -> {
-                g.setStroke(ICON_STROKE_NARROW);
+                g.setStroke(ICON_STROKE_NARROW_1);
                 g.drawOval(
                         scale(0.25f), scale(0.25f),
                         scale(0.5f), scale(0.5f)
@@ -84,16 +88,16 @@ public class Action implements NamedEnum, Serializable {
                     "attacking first gives you the upper hand as you'll weaken the enemy before the counterattack. " +
                     "Being on terrain with high defence reduces all incoming damage.", 1),
             CAPTURE = new Action("CAPTURE", "Capture", DARK_GREEN, DARK_GREEN, FIRE_ACTION_HIGHLIGHT, false, g -> {
-                g.setStroke(ICON_STROKE_NARROW_NON_SCALED);
+                g.setStroke(ICON_STROKE_NARROW_1_NON_SCALED);
                 GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
                     g.draw(ActionShapes.FLAG);
                     g.fill(ActionShapes.FLAG);
                 });
             }, "This action only appears when over the top of an enemy structure that can be captured. Capturing " +
                     "takes several turns, and each time you're attacked during a capture (not including counterattacks), " +
-                    "your capture progress gets reduced. Capturing an enemy base leads to that team being eliminated.", -1),
+                    "your capture progress gets reduced. Capturing an enemy base leads to that player being eliminated.", -21),
             SHIELD_REGEN = new Action("SHIELD_REGEN", "Regenerate Shield", LIGHT_BLUE, LIGHT_BLUE_UNUSABLE, FIRE_ACTION_HIGHLIGHT, false, g -> {
-                g.setStroke(ICON_STROKE_EXTRA_NARROW_NON_SCALED);
+                g.setStroke(ICON_STROKE_NARROW_3_NON_SCALED);
                 GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
                     g.draw(ActionShapes.SHIELD);
                     g.fill(ActionShapes.SHIELD);
@@ -116,7 +120,19 @@ public class Action implements NamedEnum, Serializable {
                     EnergyManager.displayName + " at the end of each turn, on top of the fixed cost " +
                     "to enter stealth mode in the first place. This is visible in the form of a reduction in " +
                     EnergyManager.displayName + " income. Not only that, ships that have this ability " +
-                    "are also unable to capture structures, regardless of whether or not they're in stealth mode.", -2);
+                    "are also unable to capture structures, regardless of whether or not they're in stealth mode.", -20),
+            REPAIR = new Action("REPAIR", "Repair", GREEN, GREEN_UNUSABLE, REPAIR_ACTION_HIGHLIGHT, true, g -> {
+                GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
+                    g.fill(ActionShapes.PLUS);
+                });
+            }, "Repair some of the HP of an allied unit. You must be adjacent to the unit that needs repairs, " +
+                    "and HP cannot go above the max HP for the repaired unit.", -10),
+            RESUPPLY = new Action("RESUPPLY", "Resupply", BROWN, BROWN_UNUSABLE, RESUPPLY_ACTION_HIGHLIGHT, false, g -> {
+                g.setStroke(ICON_STROKE_NARROW_1_NON_SCALED);
+                GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
+                    g.draw(ActionShapes.SUPPLY);
+                });
+            }, "Resupply the ammunition of an allied unit. You must be adjacent to the unit that needs resupplying.", -5);
 
     private final String name, displayName;
     private final ActionColour colour, unusableColour;
@@ -125,8 +141,6 @@ public class Action implements NamedEnum, Serializable {
     private final boolean scaled;
     public final String infoText;
     private final int order;
-
-    private final HashMap<ButtonState, Renderable> defaultIcons = new HashMap<>(), unusableIcons = new HashMap<>(), disabledIcons = new HashMap<>();
 
     public static final StaticHitBox buttonBox = new StaticHitBox(ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, ACTION_BUTTON_SIZE / 2);
 
@@ -141,21 +155,16 @@ public class Action implements NamedEnum, Serializable {
         this.tileColour = tileColour;
         this.scaled = scaled;
         this.iconImageRenderer = iconImageRenderer;
-        for (ButtonState state : ButtonState.values()) {
-            defaultIcons.put(state, Renderable.renderImage(createImage(state, ActionIconType.ENABLED), false, false, -1));
-            unusableIcons.put(state, Renderable.renderImage(createImage(state, ActionIconType.UNUSABLE), false, false, -1));
-            disabledIcons.put(state, Renderable.renderImage(createImage(state, ActionIconType.DISABLED), false, false, -1));
-        }
     }
 
     public void render(Graphics2D g, ActionData data) {
         float offset = (ACTION_BUTTON_SIZE) / 2;
         g.translate(-offset, -offset);
-        switch (data.type) {
-            case ENABLED -> defaultIcons.get(data.clickHandler.state).render(g);
-            case UNUSABLE -> unusableIcons.get(ButtonState.DEFAULT).render(g);
-            case DISABLED -> disabledIcons.get(ButtonState.DEFAULT).render(g);
-        }
+        renderIcon(g, data.type,
+                switch (data.type) {
+                    case ENABLED -> data.clickHandler.state;
+                    case UNUSABLE, DISABLED -> ButtonState.DEFAULT;
+                });
         g.translate(offset, offset);
     }
 
@@ -173,7 +182,8 @@ public class Action implements NamedEnum, Serializable {
                 (int) (ACTION_BUTTON_SIZE * SCALING),
                 (int) (SCALING * ROUNDING),
                 (int) (SCALING * ROUNDING)
-        );g.setColor(switch (type) {
+        );
+        g.setColor(switch (type) {
             case ENABLED -> colour.background;
             case UNUSABLE -> unusableColour.background;
             case DISABLED -> ActionColour.DISABLED.background;
@@ -194,25 +204,6 @@ public class Action implements NamedEnum, Serializable {
         g.scale(SCALING, SCALING);
         if (!scaled)
             iconImageRenderer.render(g);
-    }
-
-    private BufferedImage createImage(ButtonState state, ActionIconType type) {
-        BufferedImage image = Renderable.renderToImage(Renderable.createImage(ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE, BufferedImage.TYPE_INT_ARGB), g -> {
-            renderIcon(g, type, state);
-        });
-        Graphics2D g = image.createGraphics();
-        new RescaleOp(stateBrightness(type == ActionIconType.UNUSABLE ? ButtonState.DEFAULT : state), 0, g.getRenderingHints()).filter(image, image);
-        g.dispose();
-        return image;
-    }
-
-    private static float stateBrightness(ButtonState state) {
-        return switch (state) {
-            case DEFAULT -> 1;
-            case HOVER -> 1.1f;
-            case PRESSED -> 0.85f;
-            case SELECTED -> 0.75f;
-        };
     }
 
     private static float stateBorderScale(ButtonState state) {

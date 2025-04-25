@@ -9,6 +9,10 @@ import level.Level;
 import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
+import render.types.box.UIBox;
+import render.types.text.TooltipManager;
+
+import java.util.function.Consumer;
 
 public class LevelUIShapeButton extends UIShapeButton {
     public AbstractLevel<?, ?> level;
@@ -21,6 +25,12 @@ public class LevelUIShapeButton extends UIShapeButton {
     public LevelUIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean staySelected, Runnable onClick, AbstractLevel<?, ?> level) {
         super(register, buttonRegister, order, buttonOrder, x, y, width, height, staySelected, onClick);
         this.level = level;
+    }
+
+    @Override
+    public LevelUIShapeButton tooltip(Consumer<TooltipManager> action) {
+        super.tooltip(action);
+        return this;
     }
 
     @Override

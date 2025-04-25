@@ -26,6 +26,7 @@ import render.types.UIHitPointBar;
 import render.types.text.FixedTextRenderer;
 import render.types.text.TextAlign;
 import render.types.text.UITextLabel;
+import render.types.text.UITooltip;
 import save.GameSave;
 import save.MapSave;
 import save.SaveManager;
@@ -36,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -78,6 +80,8 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     public static boolean controlHeld = false, shiftHeld = false;
     public static boolean loaded = false, loadFadeComplete = false;
+    public static ObjPos lastUIMousePos = new ObjPos();
+    public static final ArrayList<Renderable> generatedTooltipRenderers = new ArrayList<>();
 
     public void init() {
         new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BACKGROUND, LOAD_SCREEN_IMAGE);
@@ -209,11 +213,16 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     @Override
     public void paintComponents(Graphics g) {
+        generatedTooltipRenderers.clear();
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+
+        Point p = getMousePosition();
+        if (p != null)
+            lastUIMousePos = new ObjPos(p).subtract(INSETS_OFFSET).scaleToBlocks().flipY().addY(MainPanel.BLOCK_DIMENSIONS.y);
 
         if (loadFadeComplete) {
             if (activeLevel != null && (fadeScreen.reversed() || fadeScreen.finished())) {

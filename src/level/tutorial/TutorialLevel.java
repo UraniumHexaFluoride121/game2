@@ -287,8 +287,8 @@ public enum TutorialLevel implements NamedEnum {
                             "Most units can capture by simply being on the same tile as an enemy structure. Capturing takes multiple turns, as shown by the progress bar above the enemy unit that's currently capturing."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 0, 5, TextAlign.LEFT,
                             "Once the progress bar fills, the enemy gains control over the structure, or the structure is destroyed, depending on the type of structure.\n\n" +
-                                    "As for the base structure, not only is it destroyed, the entire team gets eliminated if it is successfully captured.\n\n" +
-                                    "You must stop the capture of your base at any cost."),
+                                    "As for the base structure, not only is it destroyed, the player gets eliminated if it is successfully captured.\n\n" +
+                                    "You must stop the capture of your base at any cost!"),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 0, 5, TextAlign.LEFT,
                             "To stop a capture, simply attack the capturing unit.\n\n" +
                                     "Each time the capturing unit is attacked, or if it itself performs an attack, the capture progress bar is reduced by one turn."),

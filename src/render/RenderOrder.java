@@ -37,5 +37,7 @@ public enum RenderOrder {
     TITLE_SCREEN_BUTTON_BACKGROUND,
     TITLE_SCREEN_BUTTONS,
 
-    CONFIRM_UI
+    CONFIRM_UI,
+
+    TOOLTIP
 }

@@ -5,6 +5,7 @@ import foundation.input.ButtonRegister;
 import render.*;
 
 import java.util.ArrayList;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -20,7 +21,7 @@ public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIS
 
     public void addElement(IndexedElementFunction<T> function) {
         elements.add(function.create(renderer, internal, elements.size()));
-        setScrollMax(scrollMaxFunction.apply(elements.size()) - height);
+        updateScrollMax();
     }
 
     public UIElementScrollSurface<T> addElements(int count, IndexedElementFunction<T> function) {
@@ -34,6 +35,12 @@ public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIS
         elements.forEach(action);
     }
 
+    public void forEach(BiConsumer<T, Integer> action) {
+        for (int i = 0; i < elements.size(); i++) {
+            action.accept(elements.get(i), i);
+        }
+    }
+
     public void replaceAllElements(int count, IndexedElementFunction<T> function) {
         clear();
         for (int i = 0; i < count; i++) {
@@ -44,11 +51,36 @@ public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIS
     public void clear() {
         elements.forEach(AbstractRenderElement::delete);
         elements.clear();
-        setScrollMax(scrollMaxFunction.apply(0) - height);
+        updateScrollMax();
+    }
+
+    public void trimToSize(int size) {
+        int s = elements.size();
+        for (int i = size; i < s; i++) {
+            elements.get(size).delete();
+            elements.remove(size);
+        }
+        updateScrollMax();
     }
 
     public ArrayList<T> getElements() {
         return elements;
+    }
+
+    public T getElement(int index) {
+        return elements.get(index);
+    }
+
+    private void updateScrollMax() {
+        setScrollMax(scrollMaxFunction.apply(elements.size()) - height);
+    }
+
+    public void modifyAndResize(int size, IndexedElementFunction<T> add, BiConsumer<T, Integer> modify) {
+        if (size < elements.size())
+            trimToSize(size);
+        forEach(modify);
+        if (size > elements.size())
+            addElements(size - elements.size(), add);
     }
 
     @FunctionalInterface

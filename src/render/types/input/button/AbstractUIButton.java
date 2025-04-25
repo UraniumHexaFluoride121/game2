@@ -9,14 +9,18 @@ import render.RenderOrder;
 import render.RenderRegister;
 import render.UIColourTheme;
 import render.types.box.UIBox;
+import render.types.text.TooltipManager;
 
-public abstract class AbstractUIButton extends AbstractRenderElement implements RegisteredButtonInputReceiver {
+import java.util.function.Consumer;
+
+public abstract class AbstractUIButton extends AbstractRenderElement implements RegisteredButtonInputReceiver, TooltipHolder {
     public final float x, y, height, width;
     protected final ButtonClickHandler clickHandler;
     protected final UIBox box;
     protected final StaticHitBox hitBox;
     protected final ButtonOrder buttonOrder;
     protected ButtonRegister buttonRegister;
+    protected TooltipManager tooltip = new TooltipManager(this);
 
     protected boolean clickEnabled = true;
 
@@ -34,6 +38,11 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
         clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, staySelected, onClick);
         box = new UIBox(width, height).setClickHandler(clickHandler);
         hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
+    }
+
+    @Override
+    public TooltipManager getManager() {
+        return tooltip;
     }
 
     public AbstractUIButton noDeselect() {
@@ -96,6 +105,11 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
         return this;
     }
 
+    @Override
+    public ButtonClickHandler getClickHandler() {
+        return clickHandler;
+    }
+
     public boolean isSelected() {
         return clickHandler.isSelected();
     }
@@ -136,5 +150,6 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
             buttonRegister.remove(this);
             buttonRegister = null;
         }
+        tooltip.delete();
     }
 }

@@ -5,6 +5,7 @@ import level.Level;
 import level.energy.EnergyDisplay;
 import render.*;
 import render.types.UIHitPointBar;
+import render.types.container.*;
 import render.types.text.*;
 import render.level.tile.RenderElement;
 import render.texture.ImageRenderer;
@@ -12,16 +13,13 @@ import render.UIColourTheme;
 import render.types.box.*;
 import render.types.input.button.UIButton;
 import render.types.input.button.UIShapeButton;
-import render.types.container.LevelUIContainer;
-import render.types.container.UIContainer;
-import render.types.container.UIScrollSurface;
-import render.types.container.UITabSwitcher;
 import unit.Unit;
 import unit.UnitPose;
 import unit.action.Action;
 import unit.action.ActionIconType;
 import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
+import unit.info.UnitCharacteristicValue;
 import unit.weapon.DamageType;
 import unit.weapon.WeaponTemplate;
 
@@ -44,8 +42,9 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
     private UIScrollSurface attributesScrollSurface, actionScrollSurface, weaponsScrollSurface;
     private UITabSwitcher tabSwitcher;
     private final HashMap<DamageType, BarDisplay> weaponDetailBars = new HashMap<>();
-    private final MultiLineTextBox weaponTypeText = new MultiLineTextBox(30, 24, 15, .7f, TextAlign.LEFT);
+    private final MultiLineTextBox weaponTypeText = new MultiLineTextBox(30, 24, 16, .7f, TextAlign.LEFT);
     private final UITextLabel weaponTypeLabel = new UITextLabel(17, 1, true).updateTextLeft("Weapon type info:").setTextLeftBold();
+    private UIElementScrollSurface<BarDisplay> characteristicDisplay;
 
     public UnitInfoScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
         super(register, buttonRegister, order, buttonOrder, 0, 0, level);
@@ -77,11 +76,8 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                                 .setZOrder(-1);
                         attributesScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, 1, 0, 27, 15, false, (r3, b3) -> {
                             attributeRenderer = new AttributeRenderer(r3);
-                        }).addScrollBar(0.5f, 0.4f, 0);
-                        for (int i = 0; i < UnitCharacteristic.values().length; i++) {
-                            UnitCharacteristic characteristic = UnitCharacteristic.values()[i];
-                            overviewBars.put(characteristic, new BarDisplay(r2, b2, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, width - 14.3f, 12 - i * 1.7f, 7, characteristic.getName()));
-                        }
+                        }).addScrollBar(0.5f, 0.4f, 0).setScrollSpeed(0.3f);
+                        characteristicDisplay = new UIElementScrollSurface<>(r2, b2, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, width - 15.3f, 0, 15, 14, false, count -> 0f);
                     }).addTab(4, "Actions", (r2, b2) -> {
                         new RenderElement(r2, RenderOrder.UNIT_INFO_SCREEN, new UITextLabel(27, 2.5f, false).setTextLeftBold().updateTextLeft("Action overview")
                                 .translate(2, height - 3));
@@ -94,7 +90,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                                 new UITextLabel(17, 1, true).updateTextLeft("About weapons:").setTextLeftBold().translate(29, 8),
                                 new UITextLabel(17, 1, true).updateTextLeft("Weapon effectiveness:").setTextLeftBold().translate(29, 18),
                                 weaponTypeLabel.translate(29, 25),
-                                new MultiLineTextBox(30, 7, 15, .7f, TextAlign.LEFT)
+                                new MultiLineTextBox(30, 7, 16, .7f, TextAlign.LEFT)
                                         .updateText("When firing at an enemy unit, the weapon that can do the most damage to the shield and / or hull " +
                                                 "will automatically be selected. Each weapon type has its strengths and weaknesses, so having multiple weapons " +
                                                 "allows a ship to be effective against a broader selection of enemies. Some weapons also require ammunition. Once " +
@@ -128,6 +124,15 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                 .translate(width - 1 - 14, height - 1 - 14);
         nameText.updateTextLeft(unit.type.getName());
         classText.updateTextLeft(unit.type.shipClass.getName() + " class");
+        List<Map.Entry<UnitCharacteristic, UnitCharacteristicValue>> characteristics = unit.type.unitCharacteristics.sequencedEntrySet().stream().toList();
+        characteristicDisplay.modifyAndResize(characteristics.size(), (r, b, i) -> {
+            BarDisplay barDisplay = new BarDisplay(r, b, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, 0, -(i + 1) * 1.7f, 8, characteristics.get(i).getKey().getName());
+            barDisplay.bar.setFill(characteristics.get(i).getValue().fill);
+            return barDisplay;
+        }, (b, i) -> {
+            b.bar.setFill(characteristics.get(i).getValue().fill);
+            b.setText(characteristics.get(i).getKey().getName());
+        });
         overviewBars.forEach((c, b) -> b.bar.setFill(unit.type.unitCharacteristics.get(c).fill));
         attributes = unit.type.infoAttributes;
         attributeRenderer.refreshRenderer();
@@ -175,6 +180,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
         overviewBars.clear();
         actionElements.clear();
         tabSwitcher = null;
+        characteristicDisplay = null;
     }
 
     private final ArrayList<WeaponElement> weaponElements = new ArrayList<>();
@@ -238,11 +244,9 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
         private final UITextLabel name = new UITextLabel(12, 1, false).setTextCenterBold();
         private final MultiLineTextBox infoText = new MultiLineTextBox(5, 3, 35, 0.65f, TextAlign.LEFT)
                 .setTextColour(UITextLabel.TEXT_COLOUR_DARK);
-        private final Action action;
 
         private ActionOverviewElement(GameRenderer renderer, ButtonRegister buttonRegister, int index, Action action, Unit unit) {
             super(renderer, buttonRegister, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, 0, -index * 6 + .5f);
-            this.action = action;
             name.updateTextCenter(action.getName());
             infoText.updateText(action.infoText);
             addRenderables((r, b) -> {
@@ -260,7 +264,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                     });
                     infoText.render(g);
                 }).translate(1, 0), new EnergyDisplay(actionCostText.length() > 4 ? 2.8f : 2f).setText(actionCostText)
-                        .translate(2 + 3 / 2f, 0.3f));
+                        .translate(2 + 3 / 2f, 0.4f));
             });
         }
     }
@@ -295,12 +299,16 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
 
         public BarDisplay(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float spacing, String text) {
             super(register, buttonRegister, order, buttonOrder, x, y);
-            textLabel = new UITextLabel(6, 1, false)
+            textLabel = new UITextLabel(7, 1, false)
                     .setTextLeftBold().updateTextLeft(text);
             bar = new UIHitPointBar(0.2f, 6, 1, 0.15f, 5, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
             addRenderables((r, b) -> {
                 new RenderElement(r, RenderOrder.UNIT_INFO_SCREEN, textLabel, bar.translate(spacing, -0.1f));
             });
+        }
+
+        public void setText(String text) {
+            textLabel.updateTextLeft(text);
         }
     }
 

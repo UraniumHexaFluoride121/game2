@@ -4,6 +4,7 @@ import foundation.math.HexagonCorner;
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
 import level.tile.Tile;
+import level.tile.TileSet;
 import render.Renderable;
 
 import java.awt.*;
@@ -14,9 +15,9 @@ import java.util.HashSet;
 public class HexagonBorder implements Renderable {
     private static final BasicStroke stroke = new BasicStroke(Tile.HIGHLIGHT_STROKE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     private final Path2D.Float path;
-    private final Color colour;
+    private Color colour;
 
-    public HexagonBorder(HashSet<Point> tiles, Color colour) {
+    public HexagonBorder(TileSet tiles, Color colour) {
         this.colour = colour;
         path = new Path2D.Float();
         HashMap<Point, HashSet<HexagonalDirection>> borders = new HashMap<>(), usedBorders = new HashMap<>();
@@ -63,6 +64,11 @@ public class HexagonBorder implements Renderable {
             usedBorders.clear();
             path.closePath();
         }
+    }
+
+    public HexagonBorder setColor(Color colour) {
+        this.colour = colour;
+        return this;
     }
 
     @Override

@@ -1,12 +1,13 @@
 package render.types.text;
 
+import foundation.Deletable;
 import render.GameRenderer;
 import render.Renderable;
 
 import java.awt.*;
 import java.util.ArrayList;
 
-public class MultiLineTextBox implements Renderable {
+public class MultiLineTextBox implements Renderable, Deletable {
     private String s, newString;
     private final float x, y, width;
     public float textSize;
@@ -15,6 +16,7 @@ public class MultiLineTextBox implements Renderable {
     private Color textColour = UITextLabel.TEXT_COLOUR;
     private boolean bold = true;
     private boolean forceUpdate = false;
+    private Runnable updateCallback = null;
 
     public MultiLineTextBox(float x, float y, float width, float textSize, TextAlign textAlign) {
         this.x = x;
@@ -26,8 +28,10 @@ public class MultiLineTextBox implements Renderable {
 
     public MultiLineTextBox updateText(String s) {
         newString = s;
-        if (newString == null)
+        if (newString == null) {
+            this.s = null;
             textRenderers.clear();
+        }
         return this;
     }
 
@@ -75,6 +79,13 @@ public class MultiLineTextBox implements Renderable {
                 }
             }
         }
+        if (updateCallback != null)
+            updateCallback.run();
+    }
+
+    public MultiLineTextBox setOnUpdate(Runnable callback) {
+        updateCallback = callback;
+        return this;
     }
 
     public MultiLineTextBox setTextColour(Color textColour) {
@@ -89,8 +100,19 @@ public class MultiLineTextBox implements Renderable {
         return this;
     }
 
-    @Override
-    public void render(Graphics2D g) {
+    public float getTextWidth() {
+        float max = 0;
+        for (FixedTextRenderer t : textRenderers) {
+            max = Math.max(max, t.getTextWidth());
+        }
+        return max;
+    }
+
+    public int rows() {
+        return textRenderers.size();
+    }
+
+    public void attemptUpdate(Graphics2D g) {
         if (newString != null) {
             if (!newString.equals(s)) {
                 s = newString;
@@ -103,11 +125,25 @@ public class MultiLineTextBox implements Renderable {
             if (s != null)
                 updateText(g);
         }
+    }
+
+    public boolean isEmpty() {
+        return rows() == 0;
+    }
+
+    @Override
+    public void render(Graphics2D g) {
+        attemptUpdate(g);
         for (int i = 0; i < textRenderers.size(); i++) {
             int finalI = i;
             GameRenderer.renderOffset(x, y - textSize * i, g, () -> {
                 textRenderers.get(finalI).render(g);
             });
         }
+    }
+
+    @Override
+    public void delete() {
+        updateCallback = null;
     }
 }
