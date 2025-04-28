@@ -6,6 +6,7 @@ import render.types.box.UIBox;
 import render.types.input.button.UIShapeButton;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 
 public abstract class ActionShapes {
@@ -13,6 +14,7 @@ public abstract class ActionShapes {
     public static final Path2D.Float SHIELD = new Path2D.Float();
     public static final Path2D.Float SHIP = new Path2D.Float();
     public static final Path2D.Float SUPPLY = new Path2D.Float();
+    public static Path2D.Float ANTIMATTER;
     public static final Shape PLUS = UIShapeButton.plus(new UIBox(1, 1), 0.6f, 0.3f);
 
     static {
@@ -117,6 +119,31 @@ public abstract class ActionShapes {
         SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 4)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 4)) * size);
         SUPPLY.lineTo(.5f, .5f);
         SUPPLY.closePath();
+    }
+
+    static {
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(0.35f, 0.22f);
+        path.lineTo(0.35f, 0.3f);
+        path.lineTo(1 - 0.35f, 0.3f);
+        path.lineTo(1 - 0.35f, 0.22f);
+        path.closePath();
+        path.moveTo(0.35f, 1 - 0.22f);
+        path.lineTo(0.35f, 1 - 0.3f);
+        path.lineTo(1 - 0.35f, 1 - 0.3f);
+        path.lineTo(1 - 0.35f, 1 - 0.22f);
+        path.closePath();
+        path.moveTo(0.4f, 0.33f);
+        path.lineTo(0.4f, 1 - 0.33f);
+        path.lineTo(1 - 0.4f, 1 - 0.33f);
+        path.lineTo(1 - 0.4f, 0.33f);
+        path.closePath();
+        AffineTransform t = new AffineTransform();
+        t.rotate(Math.toRadians(30), 0.5f, 0.5f);
+        t.translate(0.5f, 0.5f);
+        t.scale(1.1f, 1.1f);
+        t.translate(-0.5f, -0.5f);
+        ANTIMATTER = (Path2D.Float) path.createTransformedShape(t);
     }
 
     public static void stealthIcon(Graphics2D g) {

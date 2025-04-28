@@ -174,7 +174,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     }
 
     private void addAvailable(UnitTeam team, int amount) {
-        availableMap.compute(team, (t, i) -> Math.clamp(i + amount, 0, getEnergyCapacity(team)));
+        availableMap.compute(team, (t, i) -> Math.clamp(i + amount, 0, Math.max(i, getEnergyCapacity(team))));
         if (level.getThisTeam() == team) {
             updateDisplay(team);
             changeTexts.add(new NumberChangeText(amount, false));
@@ -213,6 +213,14 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                     costsMap.compute(u.team, (team, i) -> {
                         if (team == thisTeam)
                             LineItemData.addToList(u.type.getName() + " (" + Action.STEALTH.getName() + ")", -cost, expenseList);
+                        return i - cost;
+                    });
+                });
+            if (u.mining)
+                u.getPerTurnActionCost(Action.MINE).ifPresent(cost -> {
+                    incomeMap.compute(u.team, (team, i) -> {
+                        if (team == thisTeam)
+                            LineItemData.addToList(u.type.getName() + " (" + Action.MINE.getName() + ")", -cost, incomeList);
                         return i - cost;
                     });
                 });

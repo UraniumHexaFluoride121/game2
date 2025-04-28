@@ -7,14 +7,9 @@ import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventActionDeselect;
 import level.tutorial.sequence.event.EventTileSelect;
-import unit.Unit;
-import unit.UnitTeam;
 import unit.action.Action;
-import unit.bot.VisibilityData;
 
 import java.awt.*;
-import java.util.HashSet;
-import java.util.function.Predicate;
 
 public class TileSelector extends AbstractTileSelector<Level> {
     public TileSelector(Level level) {
@@ -43,8 +38,8 @@ public class TileSelector extends AbstractTileSelector<Level> {
         super.deselect();
         level.levelRenderer.tileInfo.setEnabled(false);
         level.updateSelectedUnit();
-        if (level.levelRenderer.uiUnitInfo.showFiringRange)
-            level.levelRenderer.uiUnitInfo.closeFiringRangeView();
+        level.levelRenderer.uiUnitInfo.closeFiringRangeView();
+        level.levelRenderer.uiUnitInfo.closeEffectivenessView();
     }
 
     @Override

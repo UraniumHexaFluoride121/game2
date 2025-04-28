@@ -52,7 +52,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public static final boolean BOT_DEBUG_RENDER_UNIT = true;
 
     public static final SaveManager<GameSave> levelSaves = new SaveManager<>("saves.sav");
-    public static final SaveManager<MapSave> mapSaves = new SaveManager<>("tutorial-maps.sav");
+    public static final SaveManager<MapSave> mapSaves = new SaveManager<>("custom-maps.sav");
     public static final SaveManager<MapSave> tutorialMaps = new SaveManager<>("tutorial/tutorial-maps.sav");
 
     public static AffineTransform windowTransform = new AffineTransform();

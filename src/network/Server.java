@@ -4,6 +4,7 @@ import foundation.Deletable;
 import foundation.MainPanel;
 import level.Level;
 import level.tile.Tile;
+import level.tile.TileData;
 import render.anim.AnimTilePath;
 import unit.Unit;
 import unit.UnitData;
@@ -84,6 +85,18 @@ public class Server implements Deletable {
         sendEnergyUpdatePacket();
     }
 
+    public void sendUnitUpdatePacket() {
+        clients.forEach((id, c) -> c.queueUnitUpdatePacket());
+    }
+
+    public void sendTileTypePacket(Tile tile) {
+        TileData data = tile.getTileData();
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.TILE_TYPE_UPDATE, w -> {
+            PacketWriter.writePoint(tile.pos, w);
+            data.write(w);
+        })));
+    }
+
     public void sendUnitMovePacket(AnimTilePath path, Point illegalTile, Point pos, Unit unit) {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_MOVE_UNIT, w -> {
             path.write(w);
@@ -104,6 +117,11 @@ public class Server implements Deletable {
             fromData.write(w);
             toData.write(w);
         })));
+    }
+
+    public void sendUnitMinePacket(Unit unit) {
+        UnitData data = new UnitData(unit);
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_MINE, data::write)));
     }
 
     public void sendUnitRepairPacket(Unit from, Unit to) {
@@ -211,7 +229,7 @@ public class Server implements Deletable {
             }
             queuePacket(new PacketWriter(PacketType.CLIENT_INIT, w -> {
                 w.writeInt(clientID);
-                w.writeInt(server.level.playerCount());
+                w.writeInt(server.level.initialPlayerCount());
             }));
             queueTeamsAvailablePacket();
             queueTurnUpdatePacket(false);
@@ -331,6 +349,17 @@ public class Server implements Deletable {
                             return;
                         }
                         fromUnit.clientAttack(toUnit);
+                    });
+                }
+                case CLIENT_REQUEST_MINE -> {
+                    Point pos = PacketReceiver.readPoint(reader);
+                    MainPanel.addTaskAfterAnimBlock(() -> {
+                        Unit u = server.level.getUnit(pos);
+                        if (u == null || u.hasPerformedAction(Action.MINE)) {
+                            queueUnitUpdatePacket();
+                            return;
+                        }
+                        u.performMiningAction();
                     });
                 }
                 case CLIENT_REQUEST_REPAIR -> {

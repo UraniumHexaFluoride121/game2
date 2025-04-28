@@ -3,6 +3,7 @@ package render.level.info;
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import level.Level;
+import level.energy.EnergyManager;
 import level.tile.Tile;
 import render.*;
 import render.level.tile.HexagonRenderer;
@@ -16,29 +17,45 @@ import render.types.text.UITextLabel;
 import java.awt.*;
 
 public class UITileInfo extends UIContainer {
+    public static final float BAR_SPACING = 1.4f, INITIAL_BAR_POS = 0.6f;
     private final UITextLabel title = new UITextLabel(14f, 0.9f, true).setTextLeftBold();
     private final UITextLabel structure = new UITextLabel(12.4f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextLeft("Structure:").setTextRightBold().setTextLeftBold().setRightOffset(0.2f);
     private final UITextLabel visibility = new UITextLabel(5f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextCenter("Visibility:").setTextCenterBold();
     private final UITextLabel defence = new UITextLabel(5f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextCenter("Defence:").setTextCenterBold();
     private final UITextLabel movement = new UITextLabel(5f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextCenter("Movement:").setTextCenterBold();
+    private final UITextLabel mining = new UITextLabel(5f, 1, false, UITextLabel.DEFAULT_LINE_WIDTH, 0.8f).updateTextCenter(EnergyManager.displayName + ":").setTextCenterBold();
+
     private final UIHitPointBar visibilityBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     private final UIHitPointBar defenceBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     private final UIHitPointBar movementBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
+    private final UIHitPointBar miningBar = new UIHitPointBar(0.1f, 6, 1, 0.15f, 3, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     private final HexagonRenderer border = new HexagonRenderer(8, false, 0.3f, Level.FOW_TILE_BORDER_COLOUR);
     private final HexagonRenderer fill = new HexagonRenderer(8, true, 0.2f, new Color(38, 49, 57, 204));
+
     private ImageRenderer tileImage, structureImage;
+    private RenderElement miningElement;
+    private Level level;
 
     public UITileInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Level level) {
         super(register, buttonRegister, order, buttonOrder, x, y);
+        this.level = level;
         addRenderables((r, b) -> {
+            float labelPos = INITIAL_BAR_POS - BAR_SPACING;
+            float barPos = INITIAL_BAR_POS - BAR_SPACING - 0.05f;
             new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, 0, 14, 17, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER_LIGHT))
                     .setPosTransformer(p -> level.levelRenderer.transformCameraPosToBlock(p));
+            miningElement = new RenderElement(r, RenderOrder.LEVEL_UI,
+                    mining.translate(0.5f, labelPos += BAR_SPACING),
+                    miningBar.translate(7, barPos += BAR_SPACING)).setZOrder(2);
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     title.translate(-0.2f, 17.5f),
                     structure.translate(0.5f, 6.5f),
-                    visibility.translate(0.5f, 4.8f),
-                    defence.translate(0.5f, 2.8f),
-                    movement.translate(0.5f, 0.8f),
+                    movement.translate(0.5f, labelPos += BAR_SPACING),
+                    movementBar.translate(7, barPos += BAR_SPACING),
+                    defence.translate(0.5f, labelPos += BAR_SPACING),
+                    defenceBar.translate(7, barPos += BAR_SPACING),
+                    visibility.translate(0.5f, labelPos += BAR_SPACING),
+                    visibilityBar.translate(7, barPos += BAR_SPACING),
                     fill.translate(7, 8.5f),
                     g -> {
                         GameRenderer.renderOffset(7, 8.5f + 8 * Tile.SIN_60_DEG / 2, g, () -> {
@@ -50,23 +67,26 @@ public class UITileInfo extends UIContainer {
                     },
                     border.translate(7, 8.5f)
             ).setZOrder(1);
-            new RenderElement(r, RenderOrder.LEVEL_UI, visibilityBar.translate(7, 4.75f)).setZOrder(2);
-            new RenderElement(r, RenderOrder.LEVEL_UI, defenceBar.translate(7, 2.75f)).setZOrder(2);
-            new RenderElement(r, RenderOrder.LEVEL_UI, movementBar.translate(7, 0.75f)).setZOrder(2);
         });
     }
 
-    public boolean previouslyDisabled = false;
+    public boolean previouslyDisabled = false, miningPreviouslyDisabled = false;
 
     @Override
     public UIContainer setEnabled(boolean enabled) {
-        if (!enabled)
+        if (!enabled) {
             previouslyDisabled = true;
+            miningPreviouslyDisabled = true;
+        }
         return super.setEnabled(enabled);
     }
 
     public void setTile(Tile tile) {
         tileImage = tile.imageRenderer;
+        miningBar.setSegments(tile.miningBarSegments());
+        miningElement.setEnabled(tile.miningBarSegments() != 0 && level.currentVisibility.visibleTiles().contains(tile.pos));
+        if (tile.miningBarSegments() == 0)
+            miningPreviouslyDisabled = true;
         if (tile.hasStructure())
             structureImage = tile.structure.renderer;
         else
@@ -83,5 +103,20 @@ public class UITileInfo extends UIContainer {
             defenceBar.setFill(tile.type.defence.barFill, 0.8f, 0.6f);
             movementBar.setFill(tile.type.movement.barFill, 0.8f, 0.6f);
         }
+        if (!miningElement.isEnabled()) {
+            miningBar.setFill(tile.miningBarFill);
+        } else if (miningPreviouslyDisabled) {
+            miningPreviouslyDisabled = false;
+            miningBar.setFill(tile.miningBarFill);
+        } else {
+            miningBar.setFill(tile.miningBarFill, 0.8f, 0.6f);
+        }
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        miningElement = null;
+        level = null;
     }
 }

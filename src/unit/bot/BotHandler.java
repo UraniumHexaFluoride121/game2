@@ -7,6 +7,7 @@ import foundation.tick.Tickable;
 import level.Level;
 import level.tile.Tile;
 import level.tile.TileSet;
+import level.tile.TileType;
 import level.tutorial.TutorialManager;
 import network.NetworkState;
 import render.anim.AnimTilePath;
@@ -81,6 +82,8 @@ public class BotHandler implements Deletable, Tickable {
                 float v = (d.get(p) - current) / (energyCost + 2) * (float) Math.pow(u.hitPoints / u.type.hitPoints, 0.5f);
                 if (t.hasStructure() && t.structure.canBeCaptured && !u.type.canPerformAction(Action.CAPTURE))
                     v -= 12;
+                if (u.mining)
+                    v -= 5;
                 v *= noise();
                 if (v > value.get()) {
                     unit.set(u);
@@ -181,6 +184,17 @@ public class BotHandler implements Deletable, Tickable {
                     action.set(Action.FIRE);
                     secondaryAction.set(null);
                     target.set(firingTile);
+                    value.set(v);
+                }
+            }
+        });
+        thisTeamUnits.forEach(u -> {
+            if (u.type.canPerformAction(Action.MINE) && !u.mining && !u.hasPerformedAction(Action.MINE) && level.getTile(u.pos).type == TileType.ASTEROIDS) {
+                float v = (noise() + 1) * 5;
+                if (v > value.get()) {
+                    unit.set(u);
+                    action.set(Action.MINE);
+                    secondaryAction.set(null);
                     value.set(v);
                 }
             }
@@ -346,6 +360,10 @@ public class BotHandler implements Deletable, Tickable {
             });
             return true;
         }
+        if (d.action == Action.MINE) {
+            anim.addTask(0.8f, d.unit::performMiningAction);
+            return true;
+        }
         if (d.action == Action.REPAIR) {
             Unit u = d.unit, other = level.getUnit(d.target);
             anim.addTask(0.8f, () -> {
@@ -417,6 +435,12 @@ public class BotHandler implements Deletable, Tickable {
                 data(ALLIED_UNITS).addValue(u.pos, 3, r -> expDecay(10, .5f, r));
             }
         });
+        level.tileSelector.tileSet.forEach(t -> {
+            if (t.type == TileType.ASTEROIDS) {
+                data(ASTEROID_FIELDS).addValue(t.pos, 10, r -> (float) Math.pow(50f - 4 * r, 0.7f) * 4);
+                data(ASTEROID_FIELDS).addPointValue(t.pos, 12);
+            }
+        });
 
         level.basePositions.forEach((t, pos) -> {
             if (!level.samePlayerTeam(t, team)) {
@@ -453,7 +477,12 @@ public class BotHandler implements Deletable, Tickable {
 
             if (unit.type.canPerformAction(Action.FIRE))
                 d.add(data(ALLIED_UNITS_NEEDED), 1);
-            else
+            else if (unit.type.canPerformAction(Action.MINE)) {
+                d.add(data(ASTEROID_FIELDS), 1);
+                d.add(data(ENEMY_UNIT_POSITIONS), 0.1f);
+                d.add(data(ALLIED_UNITS), 0.2f);
+                d.add(data(enemyDamageTypeFromClass(unit.type.shipClass)), -2f);
+            } else
                 d.add(data(ALLIED_UNITS), 1);
             if (unit.stealthMode)
                 d.add(data(SCOUT_NEEDED), 1);

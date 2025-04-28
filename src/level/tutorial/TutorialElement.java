@@ -36,6 +36,18 @@ public enum TutorialElement {
     VIEW_FIRING_RANGE(
             l -> l.levelRenderer.uiUnitInfo.viewFiringRange.deselect(),
             empty()
+    ),
+    VIEW_EFFECTIVENESS(
+            l -> l.levelRenderer.uiUnitInfo.viewEffectiveness.deselect(),
+            empty()
+    ),
+    VIEW_FIRING_RANGE_DESELECT(
+            empty(),
+            empty()
+    ),
+    VIEW_EFFECTIVENESS_DESELECT(
+            empty(),
+            empty()
     );
 
     public final Consumer<Level> onDisable, onEnable;

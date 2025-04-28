@@ -6,6 +6,7 @@ import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.OnButtonInput;
 import level.Level;
+import level.tutorial.TutorialManager;
 import network.NetworkState;
 import render.*;
 import render.level.tile.RenderElement;
@@ -54,7 +55,6 @@ public class PauseMenu extends LevelUIContainer<Level> {
                     }).noDeselect().setOnDeselect(() -> {
                         saveContainer.setEnabled(false);
                     });
-            updateSaveGameButton();
             saveContainer = new UIContainer(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 + WIDTH / 2, Renderable.top() / 2 - 12);
             saveContainer.addRenderables((r2, b2) -> {
                 saveBox = new UISaveBox<>(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
@@ -74,6 +74,7 @@ public class PauseMenu extends LevelUIContainer<Level> {
                             updateSaves();
                         });
             });
+            updateSaveGameButton();
         });
     }
 
@@ -89,6 +90,10 @@ public class PauseMenu extends LevelUIContainer<Level> {
     public void updateSaveGameButton() {
         saveGame.setClickEnabled(false);
         saveGame.setColourTheme(UIColourTheme.GRAYED_OUT);
+        if (TutorialManager.isTutorial()) {
+            saveGame.setText("Cannot save during tutorial");
+            return;
+        }
         if (level.networkState == NetworkState.CLIENT) {
             saveGame.setText("Only the host can save");
             return;

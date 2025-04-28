@@ -8,6 +8,7 @@ import render.types.text.TooltipManager;
 import render.types.text.UITextLabel;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.util.function.Consumer;
@@ -293,6 +294,10 @@ public class UIShapeButton extends AbstractUIButton {
     }
 
     public static Shape target(UIBox b) {
+        return targetRotated(b, 0);
+    }
+
+    public static Shape targetRotated(UIBox b, float angle) {
         float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.5f;
         Path2D.Float path = new Path2D.Float();
         path.moveTo(cx, cy - size * 1.2f);
@@ -305,8 +310,11 @@ public class UIShapeButton extends AbstractUIButton {
         path.lineTo(cx + size * 0.65f, cy);
         Ellipse2D.Float circle = new Ellipse2D.Float(cx - size, cy - size, size * 2, size * 2);
         path.append(circle.getPathIterator(null), false);
-        return path;
+        AffineTransform t = new AffineTransform();
+        t.rotate(Math.toRadians(angle), cx, cy);
+        return path.createTransformedShape(t);
     }
+
 
     public static Shape threeLines(UIBox b) {
         float cx = b.width / 2 * SCALING, cy = b.height / 2 * SCALING, size = Math.min(cx, cy) * 0.5f;

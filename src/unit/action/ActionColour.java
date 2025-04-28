@@ -6,6 +6,7 @@ public enum ActionColour {
     DISABLED(new Color(101, 101, 101), new Color(156, 156, 156)),
     PINK(new Color(191, 49, 213), new Color(177, 118, 184)), //Warp
     PURPLE(new Color(134, 49, 213), new Color(152, 118, 184)), //Mine
+    PURPLE_UNUSABLE(new Color(90, 37, 138), new Color(107, 86, 126)),
     BLUE(new Color(65, 106, 205), new Color(94, 148, 191)), //Move
     LIGHT_BLUE(new Color(33, 122, 179), new Color(94, 163, 184)), //Regen shield
     LIGHT_BLUE_UNUSABLE(new Color(55, 112, 143), new Color(85, 125, 138)),

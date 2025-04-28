@@ -13,7 +13,7 @@ import java.awt.geom.RoundRectangle2D;
 public class UIHitPointBar implements Renderable {
     private final BasicStroke stroke;
     private final float border, width, height, spacing;
-    private final int segments;
+    private int segments;
     private Color borderColour, background, bar;
     private float fill = 0, fillTo;
     private float rounding = 0;
@@ -63,6 +63,12 @@ public class UIHitPointBar implements Renderable {
 
     public UIHitPointBar setBorderColour(Color borderColour) {
         this.borderColour = borderColour;
+        return this;
+    }
+
+    public UIHitPointBar setSegments(int segments) {
+        this.segments = segments;
+        setFill(fill);
         return this;
     }
 

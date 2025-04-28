@@ -49,6 +49,7 @@ public class CorvetteType extends UnitType {
         w.addData("artillery", new AttackData(6.5f, s));
         w.addData("supply", new AttackData(5.8f, s));
         w.addData("cruiser", new AttackData(3.2f, s));
+        w.addData("miner", new AttackData(3.7f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.MODERATE);
@@ -93,6 +94,7 @@ public class CorvetteType extends UnitType {
         w.addData("artillery", new AttackData(2.9f, s));
         w.addData("supply", new AttackData(2.4f, s));
         w.addData("cruiser", new AttackData(1.1f, s));
+        w.addData("miner", new AttackData(1.5f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
@@ -141,6 +143,7 @@ public class CorvetteType extends UnitType {
         w.addData("artillery", new AttackData(3.5f, s));
         w.addData("supply", new AttackData(3.4f, s));
         w.addData("cruiser", new AttackData(5.2f, s));
+        w.addData("miner", new AttackData(5.6f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.MODERATE);

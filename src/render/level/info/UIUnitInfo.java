@@ -8,16 +8,18 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.Level;
+import level.tile.TileModifier;
 import level.tile.TileSet;
 import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EventUIDeselect;
+import level.tutorial.sequence.event.EventUISelect;
+import level.tutorial.sequence.event.UIElement;
 import render.*;
-import render.level.tile.HexagonBorder;
-import render.level.tile.HighlightTileRenderer;
+import render.level.tile.MultiColourHighlight;
 import render.level.tile.RenderElement;
-import render.UIColourTheme;
-import render.types.container.LevelUIContainer;
 import render.types.box.UIBox;
+import render.types.container.LevelUIContainer;
 import render.types.input.button.UIShapeButton;
 import render.types.text.UITextLabel;
 import render.types.text.UITooltip;
@@ -28,7 +30,6 @@ import unit.action.Action;
 import unit.weapon.WeaponInstance;
 
 import java.awt.*;
-import java.util.HashSet;
 
 import static unit.Unit.*;
 
@@ -42,8 +43,8 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
     private final UIBox box = new UIBox(11, 14).setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(0.5f, 0.5f, 11, 14);
     private Level level;
-    public boolean showFiringRange = false;
-    public UIShapeButton viewFiringRange;
+    public UIShapeButton viewFiringRange, viewEffectiveness;
+    private MultiColourHighlight rangeHighlight = null, effectivenessHighlight = null;
 
     public UIUnitInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
         super(register, buttonRegister, order, buttonOrder, 0, 0, level);
@@ -101,34 +102,99 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         if (unit != null)
                             level.levelRenderer.unitInfoScreen.enable(unit);
                     }).tooltip(t -> t.add(-1, UITooltip.dark(), "Click to view detailed unit info"));
-            viewFiringRange = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 7.5f, 12.5f, 1.5f, 1.5f, true)
+            viewFiringRange = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 7.5f, 12.5f, 1.5f, 1.5f, true) {
+                @Override
+                public boolean selectEnabled() {
+                    return TutorialManager.isEnabled(TutorialElement.ACTION_DESELECT) && TutorialManager.isEnabled(TutorialElement.VIEW_FIRING_RANGE);
+                }
+
+                @Override
+                public boolean deselectEnabled() {
+                    return TutorialManager.isEnabled(TutorialElement.VIEW_FIRING_RANGE_DESELECT);
+                }
+            }
                     .setShape(UIShapeButton::target).drawShape(0.12f).setColourTheme(UIColourTheme.RED).setBoxCorner(0.3f).setOnClick(() -> {
                         Unit unit = level.selectedUnit;
-                        if (unit == null)
+                        if (unit == null || level.getActiveTeam() != level.getThisTeam())
                             return;
-                        if (TutorialManager.isDisabled(TutorialElement.ACTION_DESELECT) || TutorialManager.isDisabled(TutorialElement.VIEW_FIRING_RANGE)) {
-                            viewFiringRange.deselect();
-                            return;
-                        }
+                        closeEffectivenessView();
                         level.endAction();
                         TileSet tiles = unit.tilesInFiringRange(level.currentVisibility, new UnitData(unit), false);
-                        level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(Action.FIRE.tileColour, tiles, level);
-                        level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(tiles, FIRE_TILE_BORDER_COLOUR);
-                        showFiringRange = true;
+                        MultiColourHighlight highlight = new MultiColourHighlight(tiles, p -> Action.FIRE.tileColour, 1, FIRE_TILE_BORDER_COLOUR);
+                        highlight.setOnFinish(() -> {
+                            level.levelRenderer.removeTileHighlight(highlight);
+                            if (highlight == rangeHighlight)
+                                viewFiringRange.deselect();
+                        });
+                        rangeHighlight = highlight;
+                        level.levelRenderer.registerTileHighlight(highlight, true);
+                        TutorialManager.acceptEvent(new EventUISelect(level, UIElement.VIEW_FIRING_RANGE));
                     }).setOnDeselect(this::closeFiringRangeView).toggleMode()
                     .tooltip(t -> t.add(-1, UITooltip.dark(), "Click to view unit firing range"));
-            new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type.c == 'x', () -> {
-                if (viewFiringRange.isSelected())
-                    viewFiringRange.deselect();
-                else
-                    viewFiringRange.select();
+            viewEffectiveness = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 5.5f, 12.5f, 1.5f, 1.5f, true) {
+                @Override
+                public boolean selectEnabled() {
+                    return TutorialManager.isEnabled(TutorialElement.ACTION_DESELECT) && TutorialManager.isEnabled(TutorialElement.VIEW_EFFECTIVENESS);
+                }
+
+                @Override
+                public boolean deselectEnabled() {
+                    return TutorialManager.isEnabled(TutorialElement.VIEW_EFFECTIVENESS_DESELECT);
+                }
+            }
+                    .setShape(box -> UIShapeButton.targetRotated(box, 45)).drawShape(0.12f).setColourTheme(UIColourTheme.ORANGE).setBoxCorner(0.3f).setOnClick(() -> {
+                        Unit unit = level.selectedUnit;
+                        if (unit == null || level.getActiveTeam() != level.getThisTeam())
+                            return;
+                        closeFiringRangeView();
+                        level.endAction();
+                        TileSet tiles = TileSet.all(level).m(level, t -> t.unitFilter(TileModifier.withVisibleEnemies(unit.team, level)));
+                        MultiColourHighlight highlight = new MultiColourHighlight(tiles, p -> unit.getWeaponEffectivenessAgainst(level.getUnit(p)).getDamageColour(), 0.25f, new Color(0, 0, 0, 0));
+                        highlight.setOnFinish(() -> {
+                            level.levelRenderer.removeTileHighlight(highlight);
+                            if (highlight == effectivenessHighlight)
+                                viewEffectiveness.deselect();
+                        });
+                        effectivenessHighlight = highlight;
+                        level.levelRenderer.registerTileHighlight(highlight, true);
+                        TutorialManager.acceptEvent(new EventUISelect(level, UIElement.VIEW_EFFECTIVENESS));
+                    }).setOnDeselect(this::closeEffectivenessView).toggleMode()
+                    .tooltip(t -> t.add(12, UITooltip.dark(), "Click to view this unit's weapon effectiveness against enemies. Colour ranges between yellow for low damage and red for high damage. Blue colour means no damage."));
+            new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type.isCharInput, type -> {
+                switch (type.c) {
+                    case 'c' -> {
+                        if (viewFiringRange.isSelected())
+                            viewFiringRange.deselect();
+                        else
+                            viewFiringRange.select();
+                    }
+                    case 'x' -> {
+                        if (viewEffectiveness.isSelected())
+                            viewEffectiveness.deselect();
+                        else
+                            viewEffectiveness.select();
+                    }
+                    default -> {
+                        viewEffectiveness.deselect();
+                        viewFiringRange.deselect();
+                    }
+                }
             });
         });
     }
 
     public void closeFiringRangeView() {
-        level.closeBorderRenderer();
-        showFiringRange = false;
+        if (rangeHighlight != null && viewFiringRange.deselectEnabled()) {
+            rangeHighlight.close();
+            TutorialManager.acceptEvent(new EventUIDeselect(level, UIElement.VIEW_FIRING_RANGE));
+        }
+    }
+
+    public void closeEffectivenessView() {
+        if (effectivenessHighlight != null && viewEffectiveness.deselectEnabled()) {
+            effectivenessHighlight.close();
+            TutorialManager.acceptEvent(new EventUIDeselect(level, UIElement.VIEW_EFFECTIVENESS));
+        }
     }
 
     @Override
@@ -152,5 +218,13 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
     @Override
     public boolean blocking(InputType type) {
         return super.blocking(type) || type.isMouseInput();
+    }
+
+    public boolean showFiringRange() {
+        return rangeHighlight != null && !rangeHighlight.finished();
+    }
+
+    public boolean showEffectiveness() {
+        return effectivenessHighlight != null && !effectivenessHighlight.finished();
     }
 }

@@ -13,8 +13,8 @@ import render.anim.AnimTilePath;
 import unit.Unit;
 import unit.UnitData;
 import unit.UnitTeam;
-import unit.type.UnitType;
 import unit.action.Action;
+import unit.type.UnitType;
 
 import java.awt.*;
 import java.io.DataInputStream;
@@ -114,6 +114,7 @@ public class Client implements Deletable {
                     }
                     unitsUnaccountedFor.forEach(l::qRemoveUnit);
                     l.setCaptureProgressBars();
+                    l.updateSelectedUnit();
                 });
             }
             case CLIENT_INIT -> {
@@ -177,6 +178,17 @@ public class Client implements Deletable {
                     });
                 });
             }
+            case TILE_TYPE_UPDATE -> {
+                Point pos = PacketReceiver.readPoint(reader);
+                TileData data = Tile.read(reader);
+                MainPanel.addTask(() -> {
+                    Level l = MainPanel.getActiveLevel();
+                    Tile t = l.getTile(pos);
+                    t.setTileType(data);
+                    if (l.tileSelector.getSelectedTile() == t)
+                        l.levelRenderer.tileInfo.setTile(t);
+                });
+            }
             case SERVER_MOVE_UNIT -> {
                 AnimTilePath path = new AnimTilePath(reader);
                 boolean hasIllegalTile = reader.readBoolean();
@@ -205,6 +217,14 @@ public class Client implements Deletable {
                     Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
                     fromUnit.attack(toUnit);
                     fromUnit.addPerformedAction(Action.FIRE);
+                });
+            }
+            case SERVER_MINE -> {
+                UnitData data = new UnitData(reader);
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.getActiveLevel();
+                    Unit unit = data.getUnit(l, true);
+                    unit.performMiningAction(unit.mining);
                 });
             }
             case SERVER_REPAIR -> {
@@ -359,6 +379,12 @@ public class Client implements Deletable {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_SHOOT_UNIT, w -> {
             PacketWriter.writePoint(from.pos, w);
             PacketWriter.writePoint(to.pos, w);
+        }));
+    }
+
+    public void sendUnitMineRequest(Unit unit) {
+        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_MINE, w -> {
+            PacketWriter.writePoint(unit.pos, w);
         }));
     }
 

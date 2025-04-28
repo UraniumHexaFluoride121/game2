@@ -49,6 +49,7 @@ public class CruiserType extends UnitType {
         w.addData("artillery", new AttackData(5.0f, s));
         w.addData("supply", new AttackData(4.4f, s));
         w.addData("cruiser", new AttackData(6.8f, s));
+        w.addData("miner", new AttackData(7.3f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
@@ -61,9 +62,48 @@ public class CruiserType extends UnitType {
         map.put(Action.FIRE, 12);
     }, new AttributeData[]{
             ANTI_CORVETTE, ANTI_CRUISER,
-            CARRIER_LOADING,
             NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_FIGHTER
-    }, FiringRenderer.TWO_UNITS);
+    }, FiringRenderer.TWO_UNITS),
+
+    MINER = new CruiserType("miner", "Mining Unit", 6, 4f, 2.5f, type -> switch (type) {
+        case EMPTY -> 1f;
+        case NEBULA -> 1.3f;
+        case DENSE_NEBULA -> 1.5f;
+        case ASTEROIDS -> 1.2f;
+    }, type -> switch (type) {
+        case EMPTY -> 1f;
+        case NEBULA -> 1.7f;
+        case DENSE_NEBULA -> 100f;
+        case ASTEROIDS -> 1.5f;
+    }, new Action[]{
+            Action.MOVE, Action.MINE
+    }, 1, 32, list -> {
+    }, map -> {
+        map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.LOW);
+        map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.MODERATE_GOOD);
+        map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
+    }, (map, perTurnMap) -> {
+        map.put(Action.CAPTURE, 8);
+        perTurnMap.put(Action.MINE, -12);
+    }, new AttributeData[]{
+            MINING, QUICK_ASTEROID_FIELD,
+            NO_WEAPON, LOW_HP
+    }, FiringRenderer.ONE_UNIT) {
+        @Override
+        public float damageReduction(TileType type) {
+            return type == TileType.ASTEROIDS ? 0.86f : super.damageReduction(type);
+        }
+
+        @Override
+        public float movementFixedCost() {
+            return 0;
+        }
+
+        @Override
+        public float movementCostMultiplier() {
+            return 1;
+        }
+    };
 
     CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
         super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);

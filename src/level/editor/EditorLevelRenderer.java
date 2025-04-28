@@ -135,8 +135,11 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                         unitButtons.add(new UIButton(r4, b4, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                                                 0, 0, 12, 4.5f, 0, true).setColourTheme(UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER).noDeselect().setOnClick(() -> {
                                             for (int j = 0; j < unitButtons.size(); j++) {
-                                                if (i != j)
-                                                    unitButtons.get(j).deselect();
+                                                if (i != j) {
+                                                    UIButton button = unitButtons.get(j);
+                                                    if (button.isSelected())
+                                                        button.deselect();
+                                                }
                                             }
                                             level.tileSelector.deselect();
                                             editingUnitType = type;

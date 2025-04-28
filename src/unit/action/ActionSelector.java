@@ -6,6 +6,7 @@ import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
 import level.energy.EnergyCostDisplay;
+import level.tile.TileType;
 import render.GameRenderer;
 import render.Renderable;
 import render.types.text.FixedTextRenderer;
@@ -59,15 +60,15 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         actionMap.forEach((a, d) -> {
             if (!d.clickHandler.isDefault()) {
                 if (d.type == ActionIconType.ENABLED) {
-                    unit.getActionCost(a).ifPresent(cost -> {
-                        Optional<Integer> perTurnActionCost = unit.getPerTurnActionCost(a);
-                        perTurnActionCost.ifPresent(perTurnCost -> {
-                            energyCostPerTurnDisplay.setCost(unit.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
-                            energyCostPerTurnDisplay.renderToEnergyManager(unit.getLevel());
-                            GameRenderer.renderOffset(0, -4.5f, g, () -> {
-                                energyCostPerTurnDisplay.render(g);
-                            });
+                    Optional<Integer> perTurnActionCost = unit.getPerTurnActionCost(a);
+                    perTurnActionCost.ifPresent(perTurnCost -> {
+                        energyCostPerTurnDisplay.setCost(unit.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
+                        energyCostPerTurnDisplay.renderToEnergyManager(unit.getLevel());
+                        GameRenderer.renderOffset(0, -4.5f, g, () -> {
+                            energyCostPerTurnDisplay.render(g);
                         });
+                    });
+                    unit.getActionCost(a).ifPresent(cost -> {
                         if (unit.removeActionEnergyCost(a))
                             return;
                         energyCostDisplay.setCost(-cost, unit.getLevel());
@@ -129,6 +130,9 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         }
         if (actionMap.containsKey(STEALTH)) {
             actionMap.get(STEALTH).type = ActionIconType.ENABLED;
+        }
+        if (actionMap.containsKey(MINE)) {
+            actionMap.get(MINE).type = unit.getLevel().getTile(unit.pos).type == TileType.ASTEROIDS ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
         }
         if (actionMap.containsKey(REPAIR)) {
             actionMap.get(REPAIR).type = unit.getRepairTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;

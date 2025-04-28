@@ -4,15 +4,16 @@ import foundation.input.*;
 import level.Level;
 import level.energy.EnergyDisplay;
 import render.*;
-import render.types.UIHitPointBar;
-import render.types.container.*;
-import render.types.text.*;
 import render.level.tile.RenderElement;
 import render.texture.ImageRenderer;
-import render.UIColourTheme;
-import render.types.box.*;
+import render.types.UIHitPointBar;
+import render.types.box.UIBox;
+import render.types.box.UIImageBox;
+import render.types.box.UIShapeDisplayBox;
+import render.types.container.*;
 import render.types.input.button.UIButton;
 import render.types.input.button.UIShapeButton;
+import render.types.text.*;
 import unit.Unit;
 import unit.UnitPose;
 import unit.action.Action;
@@ -82,7 +83,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                         new RenderElement(r2, RenderOrder.UNIT_INFO_SCREEN, new UITextLabel(27, 2.5f, false).setTextLeftBold().updateTextLeft("Action overview")
                                 .translate(2, height - 3));
                         actionScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, 1, 0, width - 2, height - 5, false, (r3, b3) -> {
-                        }).addScrollBar(0.5f, 0.4f, 0);
+                        }).addScrollBar(0.5f, 0.4f, 0).setScrollSpeed(0.4f);
                     }).addTab(4, "Weapons", (r2, b2) -> {
                         new RenderElement(r2, RenderOrder.UNIT_INFO_SCREEN, new UITextLabel(27, 2.5f, false).setTextLeftBold().updateTextLeft("Weapons")
                                 .translate(2, height - 3), weaponTypeText,
@@ -250,20 +251,20 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
             name.updateTextCenter(action.getName());
             infoText.updateText(action.infoText);
             addRenderables((r, b) -> {
-                new UIButton(r, b, RenderOrder.UNIT_INFO_SCREEN_BACKGROUND, ButtonOrder.UNIT_INFO_SCREEN, 1, 0, 44, 5, 0, true)
-                        .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER);
                 String actionCostText = unit.getActionCostText(action);
-                new RenderElement(r, RenderOrder.UNIT_INFO_SCREEN, ((Renderable) g -> {
-                    GameRenderer.renderOffset(1, 1.7f, g, () -> {
-                        GameRenderer.renderScaled(3 / Action.ACTION_BUTTON_SIZE, g, () -> {
-                            action.renderIcon(g, ActionIconType.ENABLED, ButtonState.DEFAULT);
-                        });
-                    });
-                    GameRenderer.renderOffset((44 - 12) / 2f, 3.8f, g, () -> {
-                        name.render(g);
-                    });
-                    infoText.render(g);
-                }).translate(1, 0), new EnergyDisplay(actionCostText.length() > 4 ? 2.8f : 2f).setText(actionCostText)
+                new RenderElement(r, RenderOrder.UNIT_INFO_SCREEN,
+                        new UIBox(44, 5).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(1, 0),
+                        ((Renderable) g -> {
+                            GameRenderer.renderOffset(1, 1.7f, g, () -> {
+                                GameRenderer.renderScaled(3 / Action.ACTION_BUTTON_SIZE, g, () -> {
+                                    action.renderIcon(g, ActionIconType.ENABLED, ButtonState.DEFAULT);
+                                });
+                            });
+                            GameRenderer.renderOffset((44 - 12) / 2f, 3.8f, g, () -> {
+                                name.render(g);
+                            });
+                            infoText.render(g);
+                        }).translate(1, 0), new EnergyDisplay(actionCostText.length() > 4 ? 2.8f : 2f).setText(actionCostText)
                         .translate(2 + 3 / 2f, 0.4f));
             });
         }

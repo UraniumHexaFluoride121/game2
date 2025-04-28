@@ -13,6 +13,8 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
             "Can resupply allied units", orderCounter++),
             REPAIR = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
             "Can repair allied units", orderCounter++),
+            MINING = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
+            "Can mine asteroid fields", orderCounter++),
             HAS_SHIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
             "Has a powerful shield for defence", orderCounter++),
             HIGH_MOVEMENT_SPEED = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,

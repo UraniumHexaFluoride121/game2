@@ -3,15 +3,9 @@ package render.types.input.button;
 import foundation.input.*;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
-import render.AbstractRenderElement;
-import render.OrderedRenderable;
-import render.RenderOrder;
-import render.RenderRegister;
-import render.UIColourTheme;
+import render.*;
 import render.types.box.UIBox;
 import render.types.text.TooltipManager;
-
-import java.util.function.Consumer;
 
 public abstract class AbstractUIButton extends AbstractRenderElement implements RegisteredButtonInputReceiver, TooltipHolder {
     public final float x, y, height, width;
@@ -50,13 +44,19 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
         return this;
     }
 
+    public AbstractUIButton setNoDeselect(boolean noDeselect) {
+        clickHandler.setNoDeselect(noDeselect);
+        return this;
+    }
+
     public AbstractUIButton toggleMode() {
         clickHandler.toggleMode();
         return this;
     }
 
     public AbstractUIButton deselect() {
-        clickHandler.deselect();
+        if (deselectEnabled())
+            clickHandler.deselect();
         return this;
     }
 
@@ -86,7 +86,8 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
     }
 
     public AbstractUIButton select() {
-        clickHandler.select();
+        if (selectEnabled())
+            clickHandler.select();
         return this;
     }
 
@@ -103,6 +104,14 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
     public AbstractUIButton setBoxCorner(float corner) {
         box.setCorner(corner);
         return this;
+    }
+
+    public boolean selectEnabled() {
+        return true;
+    }
+
+    public boolean deselectEnabled() {
+        return true;
     }
 
     @Override
@@ -131,13 +140,13 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (isEnabled() && clickEnabled)
+        if (isEnabled() && clickEnabled && (type == InputType.MOUSE_OVER || (isSelected() ? deselectEnabled() : selectEnabled())))
             clickHandler.buttonPressed(pos, inside, blocked, type);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (isEnabled() && clickEnabled)
+        if (isEnabled() && clickEnabled && (isSelected() ? deselectEnabled() : selectEnabled()))
             clickHandler.buttonReleased(pos, inside, blocked, type);
     }
 

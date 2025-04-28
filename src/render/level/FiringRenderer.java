@@ -18,6 +18,7 @@ import unit.weapon.ProjectileSpawner;
 import unit.weapon.WeaponInstance;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
@@ -174,17 +175,20 @@ public class FiringRenderer extends AbstractRenderElement {
     }
 
     private void renderUnits(boolean right, UnitRenderer[] units, Graphics2D g) {
+        Shape prevClip = g.getClip();
         GameRenderer.renderTransformed(g, () -> {
             if (right) {
                 g.translate(60, 0);
                 g.scale(-1, 1);
             }
+            g.clip(new Rectangle2D.Float(0, 0, Renderable.right() / 2, Renderable.top()));
             for (UnitRenderer unit : units) {
                 GameRenderer.renderOffset(unit.x, unit.y, g, () -> {
                     unit.render(g);
                 });
             }
         });
+        g.setClip(prevClip);
     }
 
     private void renderProjectilesBack(boolean right, Graphics2D g) {
@@ -347,6 +351,10 @@ public class FiringRenderer extends AbstractRenderElement {
     public static Supplier<ObjPos[]> TWO_UNITS = () -> new ObjPos[]{
             new ObjPos(14, Renderable.top() * 0.7f),
             new ObjPos(17, Renderable.top() * 0.3f)
+    };
+
+    public static Supplier<ObjPos[]> ONE_UNIT = () -> new ObjPos[]{
+            new ObjPos(15, Renderable.top() * 0.5f),
     };
 
     public static float estimatedAnimationTime() {

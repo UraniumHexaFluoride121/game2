@@ -17,6 +17,10 @@ public class BotActionData {
         return () -> new BotActionData(Action.MOVE, null, new Point(toX, toY), null, l.getUnit(new Point(fromX, fromY)), 10);
     }
 
+    public static Supplier<BotActionData> attack(Level l, int fromX, int fromY, int toX, int toY) {
+        return () -> new BotActionData(Action.FIRE, null, new Point(toX, toY), null, l.getUnit(new Point(fromX, fromY)), 10);
+    }
+
     public static Supplier<BotActionData> capture(Level l, int x, int y) {
         return () -> new BotActionData(Action.CAPTURE, null, null, null, l.getUnit(new Point(x, y)), 10);
     }

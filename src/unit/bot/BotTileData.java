@@ -69,8 +69,7 @@ public class BotTileData implements Deletable, Renderable {
     }
 
     public void addPointValue(Point p, float value) {
-        if (level.tileSelector.validCoordinate(p))
-            tiles[p.x][p.y] += value;
+        tiles[p.x][p.y] += value;
     }
 
     public void resetTiles() {

@@ -9,7 +9,6 @@ import level.tile.Tile;
 import level.tile.TileSelector;
 import level.tile.TileSet;
 import level.tile.TileType;
-import level.tutorial.TutorialLevel;
 import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventTurnStart;
 import network.NetworkState;
@@ -267,7 +266,8 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             levelRenderer.setLastCameraPos(team);
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
         levelRenderer.energyManager.incrementTurn(activeTeam);
-        structureEndTurnUpdate();
+        structureStartTurnUpdate();
+        unitStartTurnUpdate();
         if (bots.get(getActiveTeam()))
             botHandlerMap.get(getActiveTeam()).startTurn();
         if (networkState == NetworkState.SERVER)
@@ -292,17 +292,42 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
     }
 
-    public void structureEndTurnUpdate() {
+    public void structureStartTurnUpdate() {
         tileSelector.tileSet.forEach(t -> {
             if (!t.hasStructure())
                 return;
             Unit u = getUnit(t.pos);
             Structure s = t.structure;
-            if (u == null || u.team != activeTeam || s.team != u.team)
+            if (u == null || u.team != getActiveTeam() || s.team != u.team)
                 return;
             if (s.type.resupply)
                 u.resupply();
             u.regenerateHP(s.type.unitRegen);
+        });
+    }
+
+    public void unitStartTurnUpdate() {
+        tileSelector.tileSet.forEach(t -> {
+            Unit u = getUnit(t.pos);
+            if (u == null)
+                return;
+            boolean unitUpdate = false;
+            if (u.mining && u.team == getActiveTeam()) {
+                t.miningBarFill--;
+                if (t.miningBarFill == 0) {
+                    t.setTileType(TileType.EMPTY, this);
+                    u.setMining(false);
+                    unitUpdate = true;
+                }
+                if (t == tileSelector.getSelectedTile()) {
+                    levelRenderer.tileInfo.setTile(t);
+                }
+                if (networkState == NetworkState.SERVER)
+                    server.sendTileTypePacket(t);
+            }
+            updateSelectedUnit();
+            if (unitUpdate && networkState == NetworkState.SERVER)
+                server.sendUnitUpdatePacket();
         });
     }
 
@@ -346,6 +371,10 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
 
     public int playerCount() {
         return playerTeam.size();
+    }
+
+    public int initialPlayerCount() {
+        return initialPlayerTeams.size();
     }
 
     public void removePlayer(UnitTeam team) {

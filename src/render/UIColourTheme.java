@@ -123,6 +123,12 @@ public enum UIColourTheme {
             new Color(147, 137, 75), new Color(159, 145, 74, 115),
             new Color(166, 149, 81), new Color(175, 158, 88, 128)
     ),
+    ORANGE(
+            new Color(228, 156, 105), new Color(189, 123, 87, 144),
+            new Color(191, 134, 99), new Color(181, 119, 92, 133),
+            new Color(147, 100, 75), new Color(159, 100, 74, 115),
+            new Color(166, 111, 81), new Color(175, 124, 88, 128)
+    ),
     RED_UNAVAILABLE(
             new Color(135, 87, 87), new Color(145, 92, 92, 144),
             new Color(135, 87, 87), new Color(145, 92, 92, 144),

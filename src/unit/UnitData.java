@@ -28,7 +28,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
     public transient HashSet<Action> performedActions = new HashSet<>();
     public final HashSet<String> performedActionNames = new HashSet<>();
     public int weaponAmmo = -1;
-    public final boolean stealthMode;
+    public final boolean stealthMode, mining;
 
     public UnitData(Unit unit) {
         pos = unit.getPos();
@@ -44,6 +44,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         if (ammoWeapon != null)
             weaponAmmo = ammoWeapon.ammo;
         stealthMode = unit.stealthMode;
+        mining = unit.mining;
     }
 
     public UnitData(DataInputStream reader) throws IOException {
@@ -58,6 +59,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         weaponAmmo = reader.readInt();
         performedActions.forEach(a -> performedActionNames.add(a.getInternalName()));
         stealthMode = reader.readBoolean();
+        mining = reader.readBoolean();
     }
 
     @Override
@@ -71,6 +73,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         PacketWriter.writeCollection(performedActions, v -> w.writeUTF(v.toString()), w);
         w.writeInt(weaponAmmo);
         w.writeBoolean(stealthMode);
+        w.writeBoolean(mining);
     }
 
     public Unit getUnit(Level level, boolean requestDataOnFail) {

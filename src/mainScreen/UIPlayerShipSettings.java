@@ -34,12 +34,13 @@ public class UIPlayerShipSettings extends UIContainer {
     static {
         DEFAULT_PRESET.put(FighterType.FIGHTER, 2);
         DEFAULT_PRESET.put(FighterType.BOMBER, 2);
-        DEFAULT_PRESET.put(FighterType.SCOUT, 2);
+        DEFAULT_PRESET.put(FighterType.SCOUT, 1);
         DEFAULT_PRESET.put(CorvetteType.CORVETTE, 2);
         DEFAULT_PRESET.put(CorvetteType.DEFENDER, 0);
         DEFAULT_PRESET.put(CorvetteType.ARTILLERY, 1);
         DEFAULT_PRESET.put(CorvetteType.SUPPLY, 1);
         DEFAULT_PRESET.put(CruiserType.CRUISER, 0);
+        DEFAULT_PRESET.put(CruiserType.MINER, 1);
     }
 
     private final HashMap<UnitTeam, TeamSettings> teamSettingsMap = new HashMap<>();

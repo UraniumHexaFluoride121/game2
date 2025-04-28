@@ -3,15 +3,20 @@ package foundation.input;
 import foundation.Deletable;
 import foundation.math.ObjPos;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class OnButtonInput implements RegisteredButtonInputReceiver, Deletable {
     private ButtonRegister register;
     private final ButtonOrder order;
     private Predicate<InputType> typePredicate;
-    private Runnable onClick;
+    private Consumer<InputType> onClick;
 
     public OnButtonInput(ButtonRegister register, ButtonOrder order, Predicate<InputType> typePredicate, Runnable onClick) {
+        this(register, order, typePredicate, type -> onClick.run());
+    }
+
+    public OnButtonInput(ButtonRegister register, ButtonOrder order, Predicate<InputType> typePredicate, Consumer<InputType> onClick) {
         this.register = register;
         this.onClick = onClick;
         if (register != null)
@@ -41,7 +46,7 @@ public class OnButtonInput implements RegisteredButtonInputReceiver, Deletable {
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (!blocked && inside && typePredicate.test(type)) {
             blocking = true;
-            onClick.run();
+            onClick.accept(type);
         } else
             blocking = false;
     }

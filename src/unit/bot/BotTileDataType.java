@@ -4,6 +4,7 @@ import unit.ShipClass;
 
 public enum BotTileDataType {
     ENEMY_UNIT_POSITIONS,
+    ASTEROID_FIELDS,
     ALLIED_UNITS,
     ALLIED_UNITS_NEEDED,
     SCOUT_NEEDED,

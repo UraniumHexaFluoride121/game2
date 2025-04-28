@@ -102,6 +102,10 @@ public class TileModifier {
         return u -> u == null || level.samePlayerTeam(u.team, thisTeam) || !u.renderVisible();
     }
 
+    public static Predicate<Unit> withVisibleEnemies(UnitTeam thisTeam, Level level) {
+        return u -> u != null && !level.samePlayerTeam(u.team, thisTeam) && u.renderVisible();
+    }
+
     public static Predicate<Unit> withoutVisibleEnemies(UnitTeam thisTeam, Level level, VisibilityData v) {
         return u -> u == null || level.samePlayerTeam(u.team, thisTeam) || !u.visible(v);
     }

@@ -19,7 +19,7 @@ public abstract class TutorialManager {
             GREEN_HIGHLIGHT = new Color(102, 227, 60);
     private static boolean isTutorial = false;
     public static TutorialLevel level = null;
-    private static final HashSet<TutorialElement> disabledElements = new HashSet<>();
+    public static final HashSet<TutorialElement> disabledElements = new HashSet<>(), permanentlyEnabledElements = new HashSet<>();
     public static final HashSet<Action> allowedActions = new HashSet<>();
     public static final HashSet<Point> selectableTiles = new HashSet<>();
     public static final HashMap<Action, HashSet<Point>> actionTiles = new HashMap<>();
@@ -30,6 +30,7 @@ public abstract class TutorialManager {
     public static void startTutorial(TutorialLevel level) {
         TutorialManager.level = level;
         disabledElements.clear();
+        permanentlyEnabledElements.clear();
         allowedActions.clear();
         selectableTiles.clear();
         clearActionTiles();
@@ -68,7 +69,7 @@ public abstract class TutorialManager {
     }
 
     public static void disableElement(Level l, TutorialElement element) {
-        if (isEnabled(element)) {
+        if (isEnabled(element) && !permanentlyEnabledElements.contains(element)) {
             disabledElements.add(element);
             element.onDisable.accept(l);
         }
@@ -79,6 +80,11 @@ public abstract class TutorialManager {
             disabledElements.remove(element);
             element.onEnable.accept(l);
         }
+    }
+
+    public static void permanentlyEnableElement(Level l, TutorialElement element) {
+        enableElement(l, element);
+        permanentlyEnabledElements.add(element);
     }
 
     public static boolean isDisabled(TutorialElement element) {

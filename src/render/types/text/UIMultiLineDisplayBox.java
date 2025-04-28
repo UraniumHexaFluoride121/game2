@@ -8,7 +8,6 @@ import java.awt.*;
 import java.util.function.Consumer;
 
 public class UIMultiLineDisplayBox implements Renderable, Deletable {
-    private static final float WIDTH_MARGIN = 0.4f;
     public final float x, y, textSize;
     public float width, height;
     protected UIBox box;
@@ -22,11 +21,12 @@ public class UIMultiLineDisplayBox implements Renderable, Deletable {
         this.textSize = textSize;
         box = new UIBox(width, height);
         boxModifier.accept(box);
+        float widthMargin = box.corner;
         text = new MultiLineTextBox(switch (textAlign) {
-            case LEFT -> WIDTH_MARGIN;
+            case LEFT -> widthMargin;
             case CENTER -> width / 2;
-            case RIGHT -> width - WIDTH_MARGIN;
-        }, 0, width - WIDTH_MARGIN * 2, textSize, textAlign);
+            case RIGHT -> width - widthMargin;
+        }, 0, width - widthMargin * 2, textSize, textAlign);
         if (height == -1 && dynamicWidth)
             text.setOnUpdate(() -> {
                 setHeightToTextSize();
@@ -48,18 +48,18 @@ public class UIMultiLineDisplayBox implements Renderable, Deletable {
         text.attemptUpdate(g);
         GameRenderer.renderOffset(x, y, g, () -> {
             box.render(g);
-            g.translate(0, height - 0.3f - textSize);
+            g.translate(0, height - textSize * 0.75f - box.corner);
             text.render(g);
         });
     }
 
     private void setHeightToTextSize() {
-        height = (text.rows() + 0.25f) * text.textSize + 0.6f;
+        height = (text.rows() - 0.15f) * text.textSize + box.corner * 2;
         box.setHeight(height);
     }
 
     private void setWidthToTextSize() {
-        width = text.getTextWidth() + WIDTH_MARGIN * 2;
+        width = text.getTextWidth() + box.corner * 2;
         box.setWidth(width);
     }
 

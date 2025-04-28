@@ -121,6 +121,15 @@ public class Action implements NamedEnum, Serializable {
                     "to enter stealth mode in the first place. This is visible in the form of a reduction in " +
                     EnergyManager.displayName + " income. Not only that, ships that have this ability " +
                     "are also unable to capture structures, regardless of whether or not they're in stealth mode.", -20),
+            MINE = new Action("MINE", "Mine", PURPLE, PURPLE_UNUSABLE, REPAIR_ACTION_HIGHLIGHT, false, g -> {
+                GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
+                    g.fill(ActionShapes.ANTIMATTER);
+                });
+            }, "Mine asteroid fields for " + EnergyManager.displayName + ". Mining increases income, meaning that " +
+                    "the additional " + EnergyManager.displayName + " is credited at the start of each turn as long as this unit is mining. " +
+                    "Each turn that this unit is mining for, the asteroid field has its " + EnergyManager.displayName + " depleted, until the asteroid " +
+                    "field is gone. The number of turns remaining until an asteroid field is depleted can be seen in the tile info " +
+                    "in the bottom right when the tile is selected, unless the tile is outside of view range. Moving the unit interrupts mining.", -30),
             REPAIR = new Action("REPAIR", "Repair", GREEN, GREEN_UNUSABLE, REPAIR_ACTION_HIGHLIGHT, true, g -> {
                 GameRenderer.renderScaled(ACTION_BUTTON_SIZE, g, () -> {
                     g.fill(ActionShapes.PLUS);

@@ -109,6 +109,11 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
         return this;
     }
 
+    public ButtonClickHandler setNoDeselect(boolean noDeselect) {
+        this.noDeselect = noDeselect;
+        return this;
+    }
+
     public ButtonClickHandler toggleMode() {
         toggle = true;
         return this;

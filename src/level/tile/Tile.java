@@ -54,21 +54,16 @@ public class Tile implements Writable {
     public Structure structure = null;
     public double randomValue = 0;
     public ImageRenderer imageRenderer;
+    public int miningBarFill = 0;
     private UIHitPointBar captureBar = null;
 
     public LerpAnimation illegalTileTimer = new LerpAnimation(0.8f).finish();
 
     public Tile(int x, int y, TileType type, AbstractLevel<?, ?> level) {
-        this.type = type;
         pos = new Point(x, y);
         renderPos = getRenderPos(x, y);
         renderPosCentered = getCenteredRenderPos(x, y);
-        if (type.tileTexturesSupplier == null)
-            imageRenderer = null;
-        else {
-            randomValue = level.random.getDoubleSupplier(RandomType.TILE_TEXTURE).get();
-            imageRenderer = type.tileTextures.getRandomImage(randomValue);
-        }
+        setTileType(type, level);
     }
 
     public boolean posInside(ObjPos pos) {
@@ -86,6 +81,10 @@ public class Tile implements Writable {
 
     public static void renderTile(Graphics2D g, HexagonRenderer renderer, float tileSize, ObjPos renderPos) {
         GameRenderer.renderOffset(renderPos.copy().multiply(tileSize / TILE_SIZE), g, () -> renderer.render(g));
+    }
+
+    public static void renderTile(Graphics2D g, HexagonRenderer renderer, Point pos) {
+        renderTile(g, renderer, TILE_SIZE, getRenderPos(pos));
     }
 
     public void renderTerrain(Graphics2D g) {
@@ -141,18 +140,15 @@ public class Tile implements Writable {
     }
 
     public void setTileType(TileType type, AbstractLevel<?, ?> level) {
-        this.type = type;
-        if (type.tileTexturesSupplier == null) {
-            imageRenderer = null;
-        } else {
-            randomValue = level.random.getDoubleSupplier(RandomType.TILE_TEXTURE).get();
-            imageRenderer = type.tileTextures.getRandomImage(randomValue);
-        }
+        setTileType(type, level.random.getDoubleSupplier(RandomType.TILE_TEXTURE).get());
     }
 
     public void setTileType(TileType type, double randomValue) {
+        if (type == this.type)
+            return;
         this.randomValue = randomValue;
         this.type = type;
+        miningBarFill = initialMiningFill();
         if (type.tileTexturesSupplier == null) {
             imageRenderer = null;
         } else {
@@ -162,6 +158,7 @@ public class Tile implements Writable {
 
     public void setTileType(TileData data) {
         setTileType(data.type(), data.randomValue());
+        miningBarFill = data.miningBarFill();
     }
 
     public void setStructure(StructureType type, UnitTeam team) {
@@ -214,18 +211,35 @@ public class Tile implements Writable {
         level.levelRenderer.registerTimerBlock(captureBar.getFillAnimation(), onFillComplete);
     }
 
+    public int miningBarSegments() {
+        return switch (type) {
+            case ASTEROIDS -> 5;
+            default -> 0;
+        };
+    }
+
+    public int initialMiningFill() {
+        return switch (type) {
+            case ASTEROIDS -> 5;
+            default -> 0;
+        };
+    }
+
     @Override
     public void write(DataOutputStream w) throws IOException {
-        PacketWriter.writeEnum(type, w);
-        w.writeDouble(randomValue);
-        w.writeBoolean(structure != null);
-        if (structure != null) {
+        TileData d = getTileData();
+        d.write(w);
+        if (d.hasStructure()) {
             structure.write(w);
         }
     }
 
+    public TileData getTileData() {
+        return new TileData(type, randomValue, hasStructure(), miningBarFill);
+    }
+
     public static TileData read(DataInputStream reader) throws IOException {
-        return new TileData(PacketReceiver.readEnum(TileType.class, reader), reader.readDouble(), reader.readBoolean());
+        return new TileData(PacketReceiver.readEnum(TileType.class, reader), reader.readDouble(), reader.readBoolean(), reader.readInt());
     }
 
     public static ObjPos getRenderPos(Point pos) {
