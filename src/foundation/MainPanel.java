@@ -100,10 +100,6 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
             tutorialMaps.loadSavesInternal();
             loadText.updateText("Loading units...");
             UnitType.initAll();
-            loadText.updateText("Loading main menu...");
-            titleScreen = new TitleScreen();
-            titleScreen.init();
-            activeInputReceiver = titleScreen;
             registerTickable();
             loadText.updateText("Loading background textures...");
             BackgroundTexture.init();
@@ -113,6 +109,10 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
             ImageSequenceGroup.init();
             loadText.updateText("Loading structures...");
             StructureType.init();
+            loadText.updateText("Loading main menu...");
+            titleScreen = new TitleScreen();
+            titleScreen.init();
+            activeInputReceiver = titleScreen;
             loadText.updateText("Loading complete!");
             fadeScreen.setReversed(false);
             loaded = true;

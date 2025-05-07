@@ -74,7 +74,7 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
 
                 @Override
                 public boolean blocking(InputType type) {
-                    return type != InputType.MOUSE_RIGHT;
+                    return true;
                 }
 
                 @Override

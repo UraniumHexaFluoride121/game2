@@ -259,6 +259,7 @@ public class Client implements Deletable {
             case SERVER_STRUCTURE_UPDATE -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 boolean hasStructure = reader.readBoolean();
+                boolean cameraTo = reader.readBoolean();
                 Structure structure;
                 if (hasStructure)
                     structure = new Structure(reader);
@@ -271,21 +272,40 @@ public class Client implements Deletable {
                         if (hasStructure) {
                             if (!structure.equals(tile.structure)) {
                                 tile.setStructure(structure);
-                                l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+                                if (cameraTo)
+                                    l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
                             }
                         } else {
                             if (tile.structure.type == StructureType.BASE)
                                 l.removePlayer(tile.structure.team);
                             tile.explodeStructure();
-                            l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+                            if (cameraTo)
+                                l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
                         }
                     } else if (hasStructure) {
-                        l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+                        if (cameraTo)
+                            l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
                         tile.setStructure(structure);
                     }
                     Unit u = l.getUnit(pos);
-                    if (!u.canCapture())
+                    if (u != null && !u.canCapture())
                         u.stopCapture();
+                    l.levelRenderer.energyManager.recalculateIncome();
+                });
+            }
+            case SERVER_DESTROY_STRUCTURE -> {
+                Point pos = PacketReceiver.readPoint(reader);
+                boolean cameraTo = reader.readBoolean();
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.getActiveLevel();
+                    Tile tile = l.getTile(pos);
+                    if (!tile.hasStructure()) {
+                        requestLevelData();
+                        return;
+                    }
+                    tile.explodeStructure();
+                    if (cameraTo)
+                        l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
                 });
             }
             case SERVER_SHIELD_REGEN -> {
@@ -403,7 +423,7 @@ public class Client implements Deletable {
     }
 
     public void sendUnitCaptureRequest(Unit unit) {
-        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_CAPTURE_UNIT, w -> {
+        queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_CAPTURE, w -> {
             PacketWriter.writePoint(unit.pos, w);
         }));
     }

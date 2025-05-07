@@ -134,10 +134,10 @@ public enum TutorialLevel implements NamedEnum {
                     BlockingTextBox.onUI(l, BoxSize.MEDIUM_TALL, 7, Renderable.top() - 10, TextAlign.LEFT,
                             "Now that you've performed all the actions you can, it's time to end this turn.\n\nThe enemy will now attack, but by attacking first, you've gained the upper hand.",
                             TurnListener.start()),
+                    TutorialUI.remove("endTurnHighlight"),
 
                     BlockingAction.waitFor(TurnListener.start(UnitTeam.BLUE)),
 
-                    TutorialUI.remove("endTurnHighlight"),
                     AllowedActions.all(),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, TextAlign.LEFT,
                             "Use what you've learnt to destroy the remaining enemy units.",
@@ -153,7 +153,7 @@ public enum TutorialLevel implements NamedEnum {
             l -> new TutorialSequenceElement[]{
                     ModifyElements.disable(l, TILE_DESELECTION, TILE_SELECTION, CAMERA_MOVEMENT, ACTIONS, ACTION_DESELECT, ACTION_TILE_SELECTION, END_TURN, VIEW_FIRING_RANGE, VIEW_EFFECTIVENESS),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, TextAlign.LEFT,
-                            "Welcome to the second tutorial, about fog of war, tile types, and action costs."),
+                            "Welcome to the second tutorial, about fog of war, tile types, and structure capturing."),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, -3, 5, TextAlign.LEFT,
                             "As you can quite clearly see, many of the tiles are greyed out this time. That's because of the fog of war setting, which is enabled by default.\n\nExpect to see it in most future tutorials."),
 
@@ -201,7 +201,7 @@ public enum TutorialLevel implements NamedEnum {
                             .rectangle(Renderable.right() - 8f, 2 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, TextAlign.LEFT,
                             "Here you can see the defence bonus that units receive when on this tile. The defence bonus is a " +
-                                    "damage reduction when being attacked or counterattacked.\n\nIt is therefore ideal to always be attacking " +
+                                    "damage reduction when being attacked or counterattacked.\n\nIt is therefore ideal to attack " +
                                     "from tiles with high defence to reduce the damage of the subsequent counterattack, and to reduce the damage when it's the " +
                                     "enemy's turn to retaliate."),
                     TutorialUI.remove("tileDefence"),
@@ -209,8 +209,8 @@ public enum TutorialLevel implements NamedEnum {
                     TutorialUI.onUI(l, "tileMovement")
                             .rectangle(Renderable.right() - 8f, 1 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, TextAlign.LEFT,
-                            "This one represents the ease with which units can move through the tile. Moving a unit through tiles with low movement " +
-                                    "will reduce the distance the unit can travel, and also increase the cost to move the unit (more on that later).\n\nHigh movement " +
+                            "This value represents the ease with which units can move through the tile. Moving a unit through tiles with low movement " +
+                                    "will reduce the distance the unit can travel.\n\nHigh movement " +
                                     "tiles are ideal when moving units across long distances."),
                     TutorialUI.remove("tileMovement"),
 
@@ -350,6 +350,7 @@ public enum TutorialLevel implements NamedEnum {
                     TutorialHighlight.disable(l),
                     BlockingAction.waitFor(ActionListener.complete()),
                     ModifyElements.action(l, true),
+                    ModifyElements.forceTileSelect(l, 8, 3),
                     AllowedTiles.only(8, 3),
                     AllowedActions.only(Action.CAPTURE),
 
@@ -386,6 +387,11 @@ public enum TutorialLevel implements NamedEnum {
                     ContinueTextBox.onUI(l, BoxSize.LARGE, 11, 18, TextAlign.LEFT,
                             "Welcome to the third tutorial. So far, the only units we've come across have been Fighter units. As you can see, this is no longer the case.\n\n" +
                                     "Each ship belongs to a ship class. There are four different classes: fighters, corvettes, cruisers and capital ships."),
+                    ContinueTextBox.onUI(l, BoxSize.EXTRA_EXTRA_LARGE, 11, 18, TextAlign.LEFT,
+                            "Fighters are small, agile units, which usually have weak weaponry.\n\n" +
+                                    "Corvettes are slightly larger and slower to allow for more powerful weapons, and come in many unique variants.\n\n" +
+                                    "Even larger than that, cruiser-class units often feature heavy armour to protect themselves from smaller units.\n\n" +
+                                    "The largest units, capital ships, have the largest guns and strongest armour, often including shields or other specialised equipment."),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 7, 2),
                     ContinueTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, TextAlign.LEFT,
                             "This Fighter unit is, of course, a fighter-class unit, but it is not the only one of its kind."),
@@ -440,7 +446,7 @@ public enum TutorialLevel implements NamedEnum {
                     BlockingAction.waitFor(ActionListener.complete()),
                     TileSelect.deselect(l),
                     ModifyElements.endTurn(l),
-                    BlockingTextBox.onMap(l, BoxSize.SMALL_MEDIUM, 1, 3, TextAlign.LEFT,
+                    BlockingTextBox.onUI(l, BoxSize.SMALL_MEDIUM, 8, Renderable.top() - 8, TextAlign.LEFT,
                             "All the units have been moved, you can now end the turn.",
                             TurnListener.start()),
                     ModifyElements.disableAll(l),
@@ -473,7 +479,7 @@ public enum TutorialLevel implements NamedEnum {
                                     "As you know, lower HP means lower damage dealt, but that does not change the base characteristics of the weapons, which is what you're seeing now."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
                             "It does, however, give us a rough estimate of the damage dealt by a full HP unit, which all of our units currently are.\n\n" +
-                                    "Yellow means low damage (usually around 1 HP), while red means high damage (often more than half a unit's HP). Blue, not seen here, means no damage at all."),
+                                    "Yellow means low damage (usually around 1 HP), while red means high damage (often more than half the unit's HP). Blue, not seen here, means no damage at all."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
                             "You can see by the orange colour that the Fighter can do moderate damage to the enemy Fighter which is next to the base.\n\n" +
                                     "When it comes to the Cruisers however, the yellow colour shows that this unit is almost useless against them."),
@@ -496,7 +502,7 @@ public enum TutorialLevel implements NamedEnum {
                             "Each of the four unit classes has a corresponding weapon type that counters it. Here's a list showing which weapon type counters which unit class, in order of unit size:\n\n" +
                                     "Plasma > Fighter-class units\n\n" +
                                     "Cannon > Corvette-class units\n\n" +
-                                    "Rail Gun > Cruiser-class units\n\n" +
+                                    "Railgun > Cruiser-class units\n\n" +
                                     "Explosive > Capital ships\n\n"),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
                             "Furthermore, weapons often (but not always) perform moderately well against " +
@@ -529,8 +535,8 @@ public enum TutorialLevel implements NamedEnum {
                     ModifyElements.viewEffectiveness(l, true).add(false),
                     SequenceTextBox.onMap(l, BoxSize.MEDIUM, 8, 5, TextAlign.LEFT,
                             "Move a Bomber to this asteroid field and attack.",
-                            TutorialHighlight.disable(l),
                             BlockingAction.waitFor(ActionListener.complete()),
+                            TutorialHighlight.disable(l),
                             ModifyElements.forceTileSelect(l, 7, 3),
                             ModifyElements.attack(l, true, 7, 3),
                             BlockingAction.waitFor(ActionListener.perform())
@@ -567,8 +573,8 @@ public enum TutorialLevel implements NamedEnum {
                     SequenceTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
                             "That info screen also contains many other useful things about the selected unit, for example view range, move distance and any special features the unit may have.\n\n" +
                                     "Back to the game, it's time to move the other Bomber that still has ammo to attack. Move it to the highlighted tile, and attack the Cruiser.",
-                            TutorialHighlight.disable(l),
                             BlockingAction.waitFor(ActionListener.complete()),
+                            TutorialHighlight.disable(l),
                             ModifyElements.forceTileSelect(l, 4, 3),
                             ModifyElements.attack(l, true, 4, 3),
                             BlockingAction.waitFor(ActionListener.perform())
@@ -579,8 +585,8 @@ public enum TutorialLevel implements NamedEnum {
                     SequenceTextBox.onMap(l, BoxSize.MEDIUM_TALL, 8, 2, TextAlign.LEFT,
                             "The Fighter unit, which isn't of much use against the enemy Cruisers, can be used to defend the base from the enemy Fighter.\n\n" +
                                     "Move the Fighter and attack.",
-                            TutorialHighlight.disable(l),
                             BlockingAction.waitFor(ActionListener.complete()),
+                            TutorialHighlight.disable(l),
                             ModifyElements.forceTileSelect(l, 6, 0),
                             ModifyElements.attack(l, true, 6, 0),
                             BlockingAction.waitFor(ActionListener.perform())
@@ -595,8 +601,8 @@ public enum TutorialLevel implements NamedEnum {
                     SequenceTextBox.onMap(l, BoxSize.MEDIUM, 1, 1.5f, TextAlign.LEFT,
                             "Move the Artillery into the dense nebula, and attack one of the Cruisers. The dense nebula will " +
                                     "hide the defenceless unit from the enemies next turn.",
-                            TutorialHighlight.disable(l),
                             BlockingAction.waitFor(ActionListener.complete()),
+                            TutorialHighlight.disable(l),
                             ModifyElements.forceTileSelect(l, 5, 2),
                             ModifyElements.attack(l, true, 5, 2),
                             AllowedActionTiles.only(Action.FIRE, new Point(5, 4), new Point(6, 3)),
@@ -604,7 +610,7 @@ public enum TutorialLevel implements NamedEnum {
                     ),
                     BlockingAction.waitFor(ActionListener.complete()),
                     ModifyElements.endTurn(l),
-                    BlockingTextBox.onMap(l, BoxSize.SMALL_MEDIUM, 0, 4, TextAlign.LEFT,
+                    BlockingTextBox.onUI(l, BoxSize.SMALL_MEDIUM, 8, Renderable.top() - 8, TextAlign.LEFT,
                             "We've done all we can, it's time to end the turn.",
                             TurnListener.start()),
                     ModifyElements.disableAll(l),

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class ProjectileType implements Renderable {
-    private static final String INFO_RAIL_GUN_BULLET = "projectile/rail_gun_bullet/bullet_info.png";
+    private static final String INFO_RAILGUN_BULLET = "projectile/railgun_bullet/bullet_info.png";
     private static final String INFO_BULLET = "projectile/bullet/bullet_info.png";
     private static final String INFO_MISSILE = "projectile/missile/missile_info.png";
     private static final String INFO_PLASMA = "projectile/plasma/plasma_info.png";
@@ -68,8 +68,8 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(936), y(401), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(940), y(287), 400));
         return spawnPoints;
-    }).renderBehind(), CRUISER_RAIL_GUN = new ProjectileType("projectile/rail_gun_bullet/bullet_1.png", 2,
-            INFO_RAIL_GUN_BULLET, 120, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, null, () -> {
+    }).renderBehind(), CRUISER_RAILGUN = new ProjectileType("projectile/railgun_bullet/bullet_1.png", 2,
+            INFO_RAILGUN_BULLET, 120, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(690), y(357), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(900), y(470), 100));

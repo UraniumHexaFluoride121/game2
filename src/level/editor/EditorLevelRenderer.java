@@ -23,7 +23,7 @@ import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
 import render.types.container.UIElementScrollSurface;
 import render.types.container.UITabSwitcher;
-import render.types.input.UIClickBlockingBox;
+import render.types.box.UIClickBlockingBox;
 import render.types.input.UIEnumSelector;
 import render.types.input.UITextInputBox;
 import render.types.input.button.LevelUIButton;

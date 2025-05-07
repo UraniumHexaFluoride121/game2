@@ -13,6 +13,7 @@ import render.*;
 import render.level.FiringRenderer;
 import render.level.GameEndScreen;
 import render.level.PauseMenu;
+import render.level.info.StructureInfoScreen;
 import render.level.info.UITileInfo;
 import render.level.info.UIUnitInfo;
 import render.level.info.UnitInfoScreen;
@@ -54,6 +55,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
     public UITileInfo tileInfo;
     public UIButton exitActionButton;
     public UnitInfoScreen unitInfoScreen;
+    public StructureInfoScreen structureInfoScreen;
     public EnergyManager energyManager;
     public UIShapeButton pauseMenuButton, mapButton;
     public PauseMenu pauseMenu;
@@ -136,7 +138,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
         firingRenderer = new FiringRenderer(firingAnimRenderer, RenderOrder.BACKGROUND, level);
 
-        mapButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.MAP, ButtonOrder.MAP,
+        mapButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                 36.5f, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
@@ -148,8 +150,10 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         endScreen = new GameEndScreen(levelUIRenderer, level.buttonRegister, level);
         endScreen.setEnabled(false);
 
-        unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.UNIT_INFO_SCREEN, ButtonOrder.UNIT_INFO_SCREEN, level);
+        unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, level);
         unitInfoScreen.setEnabled(false);
+        structureInfoScreen = new StructureInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, level);
+        structureInfoScreen.setEnabled(false);
 
         energyManager = new EnergyManager(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2 - 5, Renderable.top() - 3.5f, level);
 

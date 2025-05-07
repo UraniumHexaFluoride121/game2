@@ -393,6 +393,19 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
                 u.onDestroyed(null);
             }
         });
+        tileSelector.tileSet.forEach(t -> {
+            if (t.hasStructure() && t.structure.team == team) {
+                if (t.structure.type.destroyedOnCapture) {
+                    t.explodeStructure();
+                    if (networkState == NetworkState.SERVER)
+                        server.sendStructureDestroy(t, false);
+                } else {
+                    t.structure.setTeam(null);
+                    if (networkState == NetworkState.SERVER)
+                        server.sendStructurePacket(t, false);
+                }
+            }
+        });
         updateFoW();
         if (!isThisPlayerAlive())
             levelRenderer.endTurn.setGrayedOut(true);
