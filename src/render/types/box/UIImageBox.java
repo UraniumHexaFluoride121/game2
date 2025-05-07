@@ -7,7 +7,7 @@ import render.texture.ImageRenderer;
 import java.awt.*;
 
 public class UIImageBox extends UIBox {
-    private final ImageRenderer image;
+    private ImageRenderer image;
 
     public UIImageBox(float width, float height, ImageRenderer image) {
         super(width, height);
@@ -17,6 +17,11 @@ public class UIImageBox extends UIBox {
     public UIImageBox(float width, float height, float corner, BoxShape shape, ImageRenderer image) {
         super(width, height, corner, shape);
         this.image = image;
+    }
+
+    public UIImageBox setImage(ImageRenderer image) {
+        this.image = image;
+        return this;
     }
 
     @Override

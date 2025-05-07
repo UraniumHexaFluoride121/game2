@@ -8,7 +8,7 @@ public enum ButtonOrder {
 
     END_SCREEN,
     PAUSE_MENU,
-    UNIT_INFO_SCREEN,
+    INFO_SCREEN,
 
     MAP,
     TUTORIAL_LEVEL_UI,
@@ -22,5 +22,6 @@ public enum ButtonOrder {
     HEXAGON,
 
     //Main menu screen
-    MAIN_BUTTONS
+    MAIN_BUTTONS,
+    MAIN_BUTTONS_BACK
 }

@@ -31,7 +31,8 @@ public class Structure implements Writable {
     public Structure(DataInputStream reader) throws IOException {
         pos = PacketReceiver.readPoint(reader);
         type = PacketReceiver.readEnum(StructureType.class, reader);
-        setTeam(PacketReceiver.readEnum(UnitTeam.class, reader));
+        boolean neutral = reader.readBoolean();
+        setTeam(neutral ? null : PacketReceiver.readEnum(UnitTeam.class, reader));
         canBeCaptured = reader.readBoolean();
     }
 
@@ -62,7 +63,9 @@ public class Structure implements Writable {
     public void write(DataOutputStream w) throws IOException {
         PacketWriter.writePoint(pos, w);
         PacketWriter.writeEnum(type, w);
-        PacketWriter.writeEnum(team, w);
+        w.writeBoolean(team == null);
+        if (team != null)
+            PacketWriter.writeEnum(team, w);
         w.writeBoolean(canBeCaptured);
     }
 

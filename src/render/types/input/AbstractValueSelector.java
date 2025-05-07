@@ -78,28 +78,26 @@ public abstract class AbstractValueSelector<T> extends AbstractRenderElement imp
 
     public AbstractValueSelector<T> setValue(T value, boolean triggerOnChanged) {
         if (this.value != value) {
-            updateIndex(indexOf(value));
-            if (triggerOnChanged && onChanged != null)
-                onChanged.run();
+            updateIndex(indexOf(value), triggerOnChanged);
         }
         return this;
     }
 
     private void increment() {
-        updateIndex(Math.min(index + 1, maxIndex()));
+        updateIndex(Math.min(index + 1, maxIndex()), true);
     }
 
     private void decrement() {
-        updateIndex(Math.max(index - 1, 0));
+        updateIndex(Math.max(index - 1, 0), true);
     }
 
-    private void updateIndex(int index) {
+    private void updateIndex(int index, boolean runOnChanged) {
         this.index = index;
         T prevValue = value;
         value = getItem(index);
         displayBox.setText(getName(value));
         updateColour();
-        if (onChanged != null && prevValue != value)
+        if (runOnChanged && onChanged != null && prevValue != value)
             onChanged.run();
     }
 

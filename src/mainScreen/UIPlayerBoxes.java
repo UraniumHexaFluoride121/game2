@@ -106,7 +106,9 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         boolean noCustomMapSelected = t.customMap && !t.loadCustomBox.hasSelectedSave();
         boolean invalidMap = t.customMap && t.loadCustomBox.hasSelectedSave() && !t.loadCustomBox.getSelected().valid;
         boolean tooManyUnits = !t.customMap && t.playerShipSettings != null && t.widthSelector.getValue() * t.heightSelector.getValue() * 0.4f < t.playerShipSettings.unitCount();
-        if (!unitsVerified || noCustomMapSelected || invalidMap || tooManyUnits)
+        StructureGenerationPreset structurePreset = t.structureGenerationSettings.getPreset();
+        boolean tooManyStructures = !t.customMap && structurePreset.capturedCount() * getTeamCount() + structurePreset.neutralCount() > t.widthSelector.getValue() * t.heightSelector.getValue() * 0.1f;
+        if (!unitsVerified || noCustomMapSelected || invalidMap || tooManyUnits || tooManyStructures)
             verified = false;
         if (t.multiplayerTabs != null && t.multiplayerTabs.isEnabled()) {
             t.startLanGame.setEnabled(verified);
@@ -119,6 +121,8 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                 box.setText("The selected map has an invalid layout");
             else if (tooManyUnits)
                 box.setText("Map is too small for this many units");
+            else if (tooManyStructures)
+                box.setText("Map is too small for this many structures");
             else if (boxes.size() <= 1)
                 box.setText("At least 2 players are needed to start game");
             else if (!playerTeamsVerified)

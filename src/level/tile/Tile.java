@@ -198,10 +198,6 @@ public class Tile implements Writable {
         captureBar.setColour(theme);
     }
 
-    public void instantSetProgress(int progress) {
-        captureBar.setFill(progress);
-    }
-
     public void setProgress(int progress) {
         captureBar.setFill(progress, 1, 0.8f);
     }

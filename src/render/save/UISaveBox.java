@@ -14,6 +14,8 @@ import save.LoadedFromSave;
 import save.SaveManager;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class UISaveBox<T extends LoadedFromSave> extends UIContainer {
     private final float width, height, elementHeight;
@@ -21,7 +23,7 @@ public class UISaveBox<T extends LoadedFromSave> extends UIContainer {
     private final SaveManager<T> saveManager;
     private String selectedName = null;
     private boolean clickEnabled = false;
-    private Runnable onClickOrUpdate = null;
+    private Consumer<Boolean> onClickOrUpdate = null;
 
     public UISaveBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float elementHeight, SaveManager<T> saveManager) {
         super(register, buttonRegister, order, buttonOrder, x, y);
@@ -36,7 +38,7 @@ public class UISaveBox<T extends LoadedFromSave> extends UIContainer {
             scrollSurface.setScrollSpeed(0.2f);
             new RenderElement(r, RenderOrder.LEVEL_UI, new UIBox(width, height).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).borderOnly()).setZOrder(1);
         });
-        updateSaves();
+        updateSaves(false);
     }
 
     public UISaveBox<T> enableClick() {
@@ -48,7 +50,7 @@ public class UISaveBox<T extends LoadedFromSave> extends UIContainer {
             });
             selectedName = e.saveName;
             if (onClickOrUpdate != null)
-                onClickOrUpdate.run();
+                onClickOrUpdate.accept(false);
         })));
         return this;
     }
@@ -65,28 +67,34 @@ public class UISaveBox<T extends LoadedFromSave> extends UIContainer {
         return selectedName != null;
     }
 
-    public UISaveBox<T> setOnClickOrUpdate(Runnable onClickOrUpdate) {
+    public UISaveBox<T> setOnClickOrUpdate(Consumer<Boolean> onClickOrUpdate) {
         this.onClickOrUpdate = onClickOrUpdate;
         return this;
     }
 
-    public void updateSaves() {
-        selectedName = null;
+    public void updateSaves(boolean fromUpdate) {
+        AtomicBoolean hasSelected = new AtomicBoolean(false);
         scrollSurface.clear();
         saveManager.forEachSave((name, save) -> {
             scrollSurface.addElement((r, b, i) -> new UISaveElement<>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                     .5f, -(elementHeight + 0.5f) * (i + 1), width - 1, elementHeight, name, saveManager)
-                    .setOnRemoved(this::updateSaves));
+                    .setOnRemoved(() -> updateSaves(false)));
+            if (name.equals(selectedName)) {
+                scrollSurface.getLast().button.select();
+                hasSelected.set(true);
+            }
         });
+        if (!hasSelected.get())
+            selectedName = null;
         if (clickEnabled)
             enableClick();
         if (onClickOrUpdate != null)
-            onClickOrUpdate.run();
+            onClickOrUpdate.accept(fromUpdate);
     }
 
     public void addSave(T save, String name) {
         saveManager.addSave(save, name);
-        updateSaves();
+        updateSaves(false);
     }
 
     @Override

@@ -65,7 +65,9 @@ public class FighterType extends UnitType {
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_FIGHTER, ANTI_SHIELD,
             CARRIER_LOADING,
             INEFFECTIVE_AGAINST_LARGE
-    }, FiringRenderer.THREE_UNITS),
+    }, FiringRenderer.THREE_UNITS, "Basic fighter-class unit. Excels in dogfights with other fighter-class units, as wll as taking down enemy shields. " +
+            "Its high speed makes this unit great for capturing structures, and when combined with its above average view distance, it makes for a decent improvised scout unit. " +
+            "It is, however, mostly useless for destroying larger units."),
 
     BOMBER = new FighterType("bomber", "Bomber", 7, 6f, 3.5f, type -> switch (type) {
         case EMPTY -> 1f;
@@ -127,7 +129,9 @@ public class FighterType extends UnitType {
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_CAPITAL_SHIP_MISSILES,
             CARRIER_LOADING,
             MAIN_GUN_LIMITED_AMMO
-    }, FiringRenderer.THREE_UNITS),
+    }, FiringRenderer.THREE_UNITS, "This special variant of the Fighter unit comes equipped with missiles that deal high damage against cruiser-class units and capital ships. " +
+            "It only has an ammo capacity of one, making resupply an especially important consideration when using this unit. Besides the missile weapon, it has a slightly weaker version of " +
+            "the plasma gun that the regular Fighter has, as well as being slightly slower and more vulnerable than the regular Fighter."),
 
     SCOUT = new FighterType("scout", "Scout", 5, 8f, 5f, type -> switch (type) {
         case EMPTY -> 1f;
@@ -173,10 +177,13 @@ public class FighterType extends UnitType {
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, HIGH_VIEW_RANGE,
             CARRIER_LOADING, STEALTH_INSTEAD_OF_CAPTURE,
             INEFFECTIVE_AGAINST_ALL, LOW_HP
-    }, FiringRenderer.THREE_UNITS).modify(UnitType::noCapture);
+    }, FiringRenderer.THREE_UNITS, "The scout is a purpose-built unit that specialises in reconnaissance. It has exceptional movement speed and view range, and comes equipped with the stealth ability, " +
+            "allowing the unit to stay hidden while performing reconnaissance. While it does have weapons, their firepower leaves much to be desired, and are not intended for frontline use. Can be used in a pinch to " +
+            "take down shields, or to destroy a low HP enemy.")
+            .modify(UnitType::noCapture);
 
-    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
+    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
     }
 
     @Override

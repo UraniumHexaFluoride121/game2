@@ -71,6 +71,10 @@ public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIS
         return elements.get(index);
     }
 
+    public T getLast() {
+        return elements.getLast();
+    }
+
     private void updateScrollMax() {
         setScrollMax(scrollMaxFunction.apply(elements.size()) - height);
     }

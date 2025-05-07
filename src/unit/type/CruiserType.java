@@ -1,6 +1,7 @@
 package unit.type;
 
 import foundation.math.ObjPos;
+import level.energy.EnergyManager;
 import level.tile.TileType;
 import render.level.FiringRenderer;
 import unit.ShipClass;
@@ -34,7 +35,7 @@ public class CruiserType extends UnitType {
     }, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 25, list -> {
-        WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAIL_GUN, WeaponType.RAIL_GUN);
+        WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAILGUN, WeaponType.RAILGUN);
         float s = 3.0f;
         w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
         w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.GOOD_HIGH);
@@ -63,9 +64,10 @@ public class CruiserType extends UnitType {
     }, new AttributeData[]{
             ANTI_CORVETTE, ANTI_CRUISER,
             NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_FIGHTER
-    }, FiringRenderer.TWO_UNITS),
+    }, FiringRenderer.TWO_UNITS, "The base variant of the cruiser class. Comes with strong armour and a powerful armour-piercing railgun. This railgun performs " +
+            "well against well-armoured units, especially other cruiser-class units."),
 
-    MINER = new CruiserType("miner", "Mining Unit", 6, 4f, 2.5f, type -> switch (type) {
+    MINER = new CruiserType("miner", "Mining Unit", 6, 4f, 2.8f, type -> switch (type) {
         case EMPTY -> 1f;
         case NEBULA -> 1.3f;
         case DENSE_NEBULA -> 1.5f;
@@ -88,7 +90,9 @@ public class CruiserType extends UnitType {
     }, new AttributeData[]{
             MINING, QUICK_ASTEROID_FIELD,
             NO_WEAPON, LOW_HP
-    }, FiringRenderer.ONE_UNIT) {
+    }, FiringRenderer.ONE_UNIT, "While it doesn't have any weapons, this unit plays a crucial role in successful fleet operations. " +
+            "When placed on an asteroid field, using the Mine action will begin extracting " + EnergyManager.displayName + " over several turns, increasing income, until " +
+            "the asteroid field is depleted. Lacks the level of armour plating seen on other cruisers, which has the side effect of reducing " + EnergyManager.displayName + " cost when moving.") {
         @Override
         public float damageReduction(TileType type) {
             return type == TileType.ASTEROIDS ? 0.86f : super.damageReduction(type);
@@ -105,8 +109,8 @@ public class CruiserType extends UnitType {
         }
     };
 
-    CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
+    CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
     }
 
     @Override

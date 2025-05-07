@@ -167,14 +167,22 @@ public class Server implements Deletable {
         })));
     }
 
-    public void sendStructurePacket(Tile tile) {
+    public void sendStructurePacket(Tile tile, boolean cameraTo) {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STRUCTURE_UPDATE, w -> {
             PacketWriter.writePoint(tile.pos, w);
             boolean hasStructure = tile.hasStructure();
             w.writeBoolean(hasStructure);
+            w.writeBoolean(cameraTo);
             if (hasStructure) {
                 tile.structure.write(w);
             }
+        })));
+    }
+
+    public void sendStructureDestroy(Tile tile, boolean cameraTo) {
+        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_DESTROY_STRUCTURE, w -> {
+            PacketWriter.writePoint(tile.pos, w);
+            w.writeBoolean(cameraTo);
         })));
     }
 
@@ -384,7 +392,7 @@ public class Server implements Deletable {
                         fromUnit.resupply(toUnit);
                     });
                 }
-                case CLIENT_REQUEST_CAPTURE_UNIT -> {
+                case CLIENT_REQUEST_CAPTURE -> {
                     Point pos = PacketReceiver.readPoint(reader);
                     MainPanel.addTaskAfterAnimBlock(() -> {
                         Unit u = server.level.getUnit(pos);

@@ -504,18 +504,12 @@ public class Unit implements Deletable, Tickable {
         if (this.captureProgress == -1 && captureProgress != -1)
             tile.startCapturing(team.uiColour);
         if (captureProgress != -1) {
-            if (tile.isFoW) {
-                tile.instantSetProgress(captureProgress);
+            tile.setProgress(captureProgress, level, () -> {
                 finishCapture(tile);
-            } else {
-                tile.setProgress(captureProgress, level, () -> {
-                    finishCapture(tile);
-                });
-            }
+            });
         }
         if (action) {
-            if (!isRenderFoW())
-                level.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
+            cameraTo();
             addPerformedAction(CAPTURE);
         }
         this.captureProgress = captureProgress;
@@ -535,8 +529,9 @@ public class Unit implements Deletable, Tickable {
                 tile.structure.setTeam(team);
             }
             stopCapture();
+            level.levelRenderer.energyManager.recalculateIncome();
             if (level.networkState == NetworkState.SERVER) {
-                level.server.sendStructurePacket(tile);
+                level.server.sendStructurePacket(tile, true);
             }
         }
     }

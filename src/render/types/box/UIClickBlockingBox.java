@@ -1,4 +1,4 @@
-package render.types.input;
+package render.types.box;
 
 import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
@@ -10,7 +10,6 @@ import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
 import render.level.tile.RenderElement;
-import render.types.box.UIBox;
 
 import java.util.function.UnaryOperator;
 

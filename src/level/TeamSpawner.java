@@ -3,9 +3,11 @@ package level;
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
+import level.structure.StructureType;
 import level.tile.TileModifier;
 import level.tile.TileSet;
 import level.tile.TileType;
+import mainScreen.StructureGenerationPreset;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.type.UnitType;
@@ -14,6 +16,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class TeamSpawner {
     private static final ObjPos[][] TWO_TEAMS = new ObjPos[][]{
@@ -68,13 +71,11 @@ public class TeamSpawner {
     };
 
     private HashMap<UnitTeam, ArrayList<UnitType>> units;
+    private StructureGenerationPreset structures;
 
-    public TeamSpawner(HashMap<UnitTeam, ArrayList<UnitType>> units) {
+    public TeamSpawner(HashMap<UnitTeam, ArrayList<UnitType>> units, StructureGenerationPreset structures) {
         this.units = units;
-    }
-
-    public TeamSpawner() {
-        units = new HashMap<>();
+        this.structures = structures;
     }
 
     public boolean generateTeams(Level level) {
@@ -82,16 +83,16 @@ public class TeamSpawner {
             case 3 -> THREE_TEAMS;
             case 4 -> FOUR_TEAMS;
             default -> TWO_TEAMS;
-        }, RandomType.STRUCTURE_SPAWNING);
+        }, RandomType.BASE_SPAWNING);
 
         Point[] basePositions = new Point[level.playerCount()];
         for (int i = 0; i < level.playerCount(); i++) {
             basePositions[i] = teamPositions[i].copy().multiply(level.tilesX, level.tilesY).add(
-                            MathUtil.randFloatBetween(-0.1f, 0.1f, level.random.getDoubleSupplier(RandomType.STRUCTURE_SPAWNING)),
-                            MathUtil.randFloatBetween(-0.1f, 0.1f, level.random.getDoubleSupplier(RandomType.STRUCTURE_SPAWNING)))
+                            MathUtil.randFloatBetween(-0.1f, 0.1f, level.random.getDoubleSupplier(RandomType.BASE_SPAWNING)),
+                            MathUtil.randFloatBetween(-0.1f, 0.1f, level.random.getDoubleSupplier(RandomType.BASE_SPAWNING)))
                     .roundToPoint();
         }
-        level.random.randomise(basePositions, RandomType.STRUCTURE_SPAWNING);
+        level.random.randomise(basePositions, RandomType.BASE_SPAWNING);
         HashSet<Point> connectedPoints = new HashSet<>();
         HashMap<UnitTeam, Point> basePositionsByTeam = new HashMap<>();
         HashMap<UnitTeam, ArrayList<Point>> unitPositions = new HashMap<>();
@@ -122,6 +123,48 @@ public class TeamSpawner {
         for (Point point : connectedPoints) {
             if (!dfsResult.contains(point))
                 return false;
+        }
+        TileSet allStructures = new TileSet(level.tilesX, level.tilesY);
+        allStructures.addAll(List.of(basePositions));
+        int c = structures.capturedCount();
+        for (int i = 0; i < basePositions.length; i++) {
+            UnitTeam team = UnitTeam.ORDERED_TEAMS[i];
+            int size = 1;
+            while (true) {
+                TileSet positions = TileSet.tilesInRadius(basePositions[i], size, level);
+                positions.removeAll(allStructures);
+                if (positions.size() * 0.7f > c) {
+                    TileSet expandedPositions = TileSet.tilesInRadius(basePositions[i], size + 2, level);
+                    expandedPositions.removeAll(allStructures);
+                    ArrayList<Point> spawnPoints = level.random.randomSelection(expandedPositions.stream().toList(), c, RandomType.STRUCTURE_SPAWNING);
+                    ArrayList<StructureType> types = structures.getList(false);
+                    for (int j = 0; j < spawnPoints.size(); j++) {
+                        level.getTile(spawnPoints.get(j)).setStructure(types.get(j), team);
+                        allStructures.add(spawnPoints.get(j));
+                    }
+                    break;
+                }
+                size++;
+            }
+        }
+        {
+            int n = structures.neutralCount();
+            int size = 1;
+            Point middle = new Point(level.tilesX / 2, level.tilesY / 2);
+            while (true) {
+                TileSet positions = TileSet.tilesInRadius(middle, size, level);
+                positions.removeAll(allStructures);
+                if (positions.size() * 0.1f > n) {
+                    ArrayList<Point> spawnPoints = level.random.randomSelection(positions.stream().toList(), n, RandomType.STRUCTURE_SPAWNING);
+                    ArrayList<StructureType> types = structures.getList(true);
+                    for (int j = 0; j < spawnPoints.size(); j++) {
+                        level.getTile(spawnPoints.get(j)).setStructure(types.get(j), null);
+                        allStructures.add(spawnPoints.get(j));
+                    }
+                    break;
+                }
+                size++;
+            }
         }
         for (int i = 0; i < basePositions.length; i++) {
             UnitTeam team = UnitTeam.ORDERED_TEAMS[i];

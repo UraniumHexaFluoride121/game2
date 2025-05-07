@@ -8,7 +8,8 @@ public enum BoxSize {
     MEDIUM(new ObjPos(12, 4.25f)),
     MEDIUM_TALL(new ObjPos(12, 6.5f)),
     LARGE(new ObjPos(15, 8.5f)),
-    EXTRA_LARGE(new ObjPos(17, 10));
+    EXTRA_LARGE(new ObjPos(17, 10)),
+    EXTRA_EXTRA_LARGE(new ObjPos(19, 12));
 
     public final ObjPos size;
 

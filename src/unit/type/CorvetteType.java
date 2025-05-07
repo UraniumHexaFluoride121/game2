@@ -1,6 +1,7 @@
 package unit.type;
 
 import foundation.math.ObjPos;
+import level.energy.EnergyManager;
 import level.tile.TileType;
 import render.level.FiringRenderer;
 import unit.ShipClass;
@@ -64,7 +65,8 @@ public class CorvetteType extends UnitType {
             ANTI_CORVETTE, BALANCED,
             SLOW_ASTEROID_FIELD, CARRIER_LOADING,
             INEFFECTIVE_AGAINST_FIGHTER, INEFFECTIVE_AGAINST_SHIELDS
-    }, FiringRenderer.THREE_UNITS),
+    }, FiringRenderer.THREE_UNITS, "Standard corvette-class unit with moderate speed and armour. Excellent for destroying other corvette-class units, while also being good " +
+            "in fights against cruisers."),
 
     DEFENDER = new CorvetteType("defender", "Defender", 10, 4f, 2.5f, type -> switch (type) {
         case EMPTY -> 1f;
@@ -102,7 +104,7 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.FIREPOWER, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
-        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.MODERATE);
+        map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.MODERATE_GOOD);
         map.put(UnitCharacteristic.SHIELD_REGEN, UnitCharacteristicValue.MODERATE_GOOD);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 6);
@@ -112,7 +114,9 @@ public class CorvetteType extends UnitType {
             ANTI_FIGHTER, ANTI_SHIELD, HAS_SHIELD,
             SLOW_ASTEROID_FIELD, CARRIER_LOADING,
             INEFFECTIVE_AGAINST_LARGE, LOW_VIEW_RANGE
-    }, FiringRenderer.TWO_UNITS).addShield(4, 1.5f, 27),
+    }, FiringRenderer.TWO_UNITS, "This unit is primarily designed to support larger units in destroying fighters-class enemies using high-power plasma weapons. " +
+            "Features an advanced shield module with decent durability, which works to protect against enemies with anti-corvette weaponry. Has reduced view range and movement speed.")
+            .addShield(4, 1.5f, 27),
 
     ARTILLERY = new CorvetteType("artillery", "Artillery", 8, 4f, 3.5f, type -> switch (type) {
         case EMPTY -> 1f;
@@ -158,7 +162,9 @@ public class CorvetteType extends UnitType {
             ANTI_CAPITAL_SHIP, RANGED_WEAPON,
             SLOW_ASTEROID_FIELD, CARRIER_LOADING,
             INEFFECTIVE_AGAINST_SMALL, MAIN_GUN_LIMITED_AMMO
-    }, FiringRenderer.THREE_UNITS) {
+    }, FiringRenderer.THREE_UNITS, "This unit serves as a medium range missile platform, with limited ammo capacity. " +
+            "As a ranged unit, it doesn't receive counterattacks, while also not being able to counterattack enemies when attacked. It also " +
+            "has reduced armour, and in general, should not be used on the frontline without support.") {
         @Override
         public float movementCostMultiplier() {
             return 1;
@@ -190,16 +196,19 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.REPAIR, UnitCharacteristicValue.MODERATE);
     }, (map, perTurnMap) -> {
         map.put(Action.CAPTURE, 6);
-        map.put(Action.REPAIR, 10);
+        map.put(Action.REPAIR, 12);
         map.put(Action.RESUPPLY, 8);
     }, new AttributeData[]{
             AttributeData.SUPPLY, REPAIR,
             SLOW_ASTEROID_FIELD, CARRIER_LOADING,
             NO_WEAPON
-    }, FiringRenderer.TWO_UNITS).modify(u -> u.setRepair(3));
+    }, FiringRenderer.TWO_UNITS, "This unit's primary goal is to support other units with its repair and resupply actions. " +
+            "Having one of these is almost a necessity when operating units with limited ammo, and its repair action, although it costs quite a bit of " + EnergyManager.displayName + ", " +
+            "can be a useful asset in many situations. Keep in mind that this unit does not feature any kind of weaponry to defend itself with.")
+            .modify(u -> u.setRepair(3));
 
-    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions);
+    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
     }
 
     @Override

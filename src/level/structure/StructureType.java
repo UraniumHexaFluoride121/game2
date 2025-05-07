@@ -2,6 +2,7 @@ package level.structure;
 
 import foundation.MainPanel;
 import foundation.NamedEnum;
+import level.energy.EnergyManager;
 import render.texture.AssetManager;
 import render.texture.ImageRenderer;
 import render.texture.ResourceLocation;
@@ -12,9 +13,18 @@ import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
 public enum StructureType implements NamedEnum {
-    BASE("structures/base/base_", "Base", true, true, 3, 60, 2, true, false);
+    BASE("structures/base/base_", "Base", true, true, 3, 60, 2, true, false,
+            "The base is the centre for fleet command. Make sure it is not captured, as without it, your fleet cannot operate. " +
+                    "Provides a substantial amount of " + EnergyManager.displayName + " income, as well as being able to resupply and perform basic repairs on allied units."),
 
-    public static final RescaleOp op = new RescaleOp(0.7f, 0, null);
+    REFINERY("structures/refinery/refinery_", "Refinery", true, false, 2, 8, 0, false, true,
+            "Refineries increase production efficiency and income of " + EnergyManager.displayName + ". This " +
+                    "allows your fleet to perform more actions each turn, giving you the upper hand in battle. Not equipped to resupply combat units.");
+
+    public static final StructureType[] SPAWNABLE_TYPES = new StructureType[]{
+            REFINERY
+    };
+    private static final RescaleOp op = new RescaleOp(0.7f, 0, null);
     private final String displayName;
     private final HashMap<UnitTeam, ImageRenderer> renderers = new HashMap<>();
     private final HashMap<UnitTeam, ImageRenderer> lightRenderers = new HashMap<>();
@@ -24,8 +34,9 @@ public enum StructureType implements NamedEnum {
     public final boolean resupply;
     public final String path;
     public final boolean hasNeutral;
+    public final String description;
 
-    StructureType(String path, String displayName, boolean canBeCapturedByDefault, boolean destroyedOnCapture, int captureSteps, int energyIncome, float unitRegen, boolean resupply, boolean hasNeutral) {
+    StructureType(String path, String displayName, boolean canBeCapturedByDefault, boolean destroyedOnCapture, int captureSteps, int energyIncome, float unitRegen, boolean resupply, boolean hasNeutral, String description) {
         this.path = path;
         this.displayName = displayName;
         this.canBeCapturedByDefault = canBeCapturedByDefault;
@@ -35,6 +46,7 @@ public enum StructureType implements NamedEnum {
         this.unitRegen = unitRegen;
         this.resupply = resupply;
         this.hasNeutral = hasNeutral;
+        this.description = description;
     }
 
     public ImageRenderer getImage(UnitTeam team) {

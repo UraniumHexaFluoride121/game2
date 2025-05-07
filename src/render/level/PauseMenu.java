@@ -122,7 +122,7 @@ public class PauseMenu extends LevelUIContainer<Level> {
     }
 
     public void updateSaves() {
-        saveBox.updateSaves();
+        saveBox.updateSaves(false);
     }
 
     @Override
