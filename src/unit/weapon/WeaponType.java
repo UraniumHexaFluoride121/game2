@@ -9,9 +9,9 @@ public enum WeaponType implements NamedEnum {
             "any amount of armour, often found on larger ships, is enough to block most damage. " +
             "They are, however, still the best weapon for taking down shields."),
     CANNON("Cannon",
-            "The cannon is a powerful weapon when used against corvette class ships, " +
-            "and can also deal significant damage to cruisers. It does, however, struggle to damage " +
-            "to capital ships, fighters, and shields."),
+            "The cannon is most powerful when used against corvette-class units, " +
+            "and can also deal significant damage to cruisers and shields. It can also take down fighters " +
+                    "in a pinch, but struggles against capital ships."),
     RAILGUN("Railgun",
             "These high-powered guns are enough to punch through even the toughest of hull " +
             "armour, making them effective against capital ships and especially cruisers. While the armour " +

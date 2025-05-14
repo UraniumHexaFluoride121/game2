@@ -10,7 +10,7 @@ import level.Level;
 import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
 import render.*;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 import render.UIColourTheme;
 import render.types.box.UIBox;
@@ -19,7 +19,7 @@ import render.types.text.UITextLabel;
 import java.awt.*;
 
 public class UIEndTurn extends AbstractRenderElement implements RegisteredButtonInputReceiver {
-    private final FixedTextRenderer text = new FixedTextRenderer("End Turn", 1.4f, UITextLabel.TEXT_COLOUR)
+    private final TextRenderer text = new TextRenderer("End Turn", 1.4f, UITextLabel.TEXT_COLOUR)
             .setTextAlign(TextAlign.CENTER).setBold(true);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(3.5f, Renderable.top() - 2.5f, 9, 2);
     private Level level;
@@ -57,7 +57,7 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
     }
 
     private void onClick() {
-        level.levelRenderer.confirm.makeVisible("End Turn?", level::endTurn, level.levelRenderer.confirm::makeInvisible);
+        level.levelRenderer.confirm.makeVisible("End Turn?", level::preEndTurn, level.levelRenderer.confirm::makeInvisible);
     }
 
     @Override

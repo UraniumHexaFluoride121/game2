@@ -189,6 +189,12 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
         interpCameraTo = newPos;
     }
 
+    public void setCameraBlockPosInstant(ObjPos pos) {
+        ObjPos newPos = pos.copy().inverse().add(level.tileBound.copy().divide(2));
+        newPos.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
+        cameraPosition.set(newPos);
+    }
+
     public ObjPos getCameraInterpBlockPos(ObjPos pos) {
         return pos.copy().subtract(level.tileBound.copy().divide(2)).inverse();
     }

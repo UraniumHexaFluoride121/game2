@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static level.tile.Tile.*;
@@ -42,8 +41,6 @@ public abstract class UnitType implements NamedEnum {
     public final String description;
     public final ShipClass shipClass;
     public final float hitPoints, maxMovement, maxViewRange;
-
-    public final Function<TileType, Float> tileMovementCostFunction, tileViewRangeCostFunction;
 
     public final Action[] actions;
     public final int firingAnimFrames;
@@ -66,18 +63,16 @@ public abstract class UnitType implements NamedEnum {
     public ImageRenderer shieldRenderer = null;
 
     public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
-            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY, SUPPLY, CRUISER, MINER
+            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY, SUPPLY, CRUISER, BATTLECRUISER, MINER
     };
 
-    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
         this.name = name;
         this.displayName = displayName;
         this.description = description;
         this.hitPoints = hitPoints;
         this.maxMovement = maxMovement;
         this.maxViewRange = maxViewRange;
-        this.tileMovementCostFunction = tileMovementCostFunction;
-        this.tileViewRangeCostFunction = tileViewRangeCostFunction;
         this.actions = actions;
         this.firingAnimFrames = firingAnimFrames;
         this.firingAnimUnitWidth = firingAnimUnitWidth;
@@ -162,6 +157,8 @@ public abstract class UnitType implements NamedEnum {
     }
 
     public abstract float damageReduction(TileType type);
+    public abstract float moveCost(TileType type);
+    public abstract float viewRange(TileType type);
     protected abstract ShipClass getShipClass();
 
     public float getBobbingAmount() {

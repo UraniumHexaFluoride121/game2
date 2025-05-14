@@ -22,34 +22,20 @@ import java.util.function.Supplier;
 import static unit.info.AttributeData.*;
 
 public class CorvetteType extends UnitType {
-    public static final CorvetteType CORVETTE = new CorvetteType("corvette", "Corvette", 10, 5f, 3.5f, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.7f;
-        case DENSE_NEBULA -> 1.9f;
-        case ASTEROIDS -> 5f;
-    }, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.7f;
-        case DENSE_NEBULA -> 100f;
-        case ASTEROIDS -> 1.5f;
-    }, new Action[]{
+    public static final CorvetteType CORVETTE = new CorvetteType("corvette", "Corvette", 10, 5f, 3.5f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 17, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CORVETTE_CANNON, WeaponType.CANNON);
         float s = 4.2f;
-        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
-        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.HIGH_MAX);
-        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.MODERATE_GOOD);
-        w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.LOW_MODERATE);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.GOOD_HIGH);
         w.addData("fighter", new AttackData(1.6f, s));
         w.addData("bomber", new AttackData(1.4f, s));
         w.addData("scout", new AttackData(1.8f, s));
-        w.addData("corvette", new AttackData(6.3f, s));
-        w.addData("defender", new AttackData(6.0f, s));
-        w.addData("artillery", new AttackData(6.5f, s));
-        w.addData("supply", new AttackData(5.8f, s));
+        w.addData("corvette", new AttackData(5.8f, s));
+        w.addData("defender", new AttackData(6.2f, s));
+        w.addData("artillery", new AttackData(6.1f, s));
+        w.addData("supply", new AttackData(5.7f, s));
         w.addData("cruiser", new AttackData(3.2f, s));
+        w.addData("battlecruiser", new AttackData(3.4f, s));
         w.addData("miner", new AttackData(3.7f, s));
         list.add(w);
     }, map -> {
@@ -68,26 +54,11 @@ public class CorvetteType extends UnitType {
     }, FiringRenderer.THREE_UNITS, "Standard corvette-class unit with moderate speed and armour. Excellent for destroying other corvette-class units, while also being good " +
             "in fights against cruisers."),
 
-    DEFENDER = new CorvetteType("defender", "Defender", 10, 4f, 2.5f, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.5f;
-        case DENSE_NEBULA -> 1.7f;
-        case ASTEROIDS -> 4f;
-    }, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.5f;
-        case DENSE_NEBULA -> 100f;
-        case ASTEROIDS -> 1.2f;
-    }, new Action[]{
+    DEFENDER = new CorvetteType("defender", "Defender", 8, 4.5f, 2.5f, new Action[]{
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
     }, 1, 22, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.DEFENDER_PLASMA, WeaponType.PLASMA);
         float s = 6.5f;
-        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.HIGH_MAX);
-        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.MODERATE_GOOD);
-        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.LOW);
-        w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.NONE_LOW);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.MAX);
         w.addData("fighter", new AttackData(6.2f, s));
         w.addData("bomber", new AttackData(5.8f, s));
         w.addData("scout", new AttackData(6.0f, s));
@@ -96,6 +67,7 @@ public class CorvetteType extends UnitType {
         w.addData("artillery", new AttackData(2.9f, s));
         w.addData("supply", new AttackData(2.4f, s));
         w.addData("cruiser", new AttackData(1.1f, s));
+        w.addData("battlecruiser", new AttackData(1.2f, s));
         w.addData("miner", new AttackData(1.5f, s));
         list.add(w);
     }, map -> {
@@ -115,30 +87,15 @@ public class CorvetteType extends UnitType {
             SLOW_ASTEROID_FIELD, CARRIER_LOADING,
             INEFFECTIVE_AGAINST_LARGE, LOW_VIEW_RANGE
     }, FiringRenderer.TWO_UNITS, "This unit is primarily designed to support larger units in destroying fighters-class enemies using high-power plasma weapons. " +
-            "Features an advanced shield module with decent durability, which works to protect against enemies with anti-corvette weaponry. Has reduced view range and movement speed.")
-            .addShield(4, 1.5f, 27),
+            "Features an advanced shield system with decent durability, which works to protect against enemies with anti-corvette weaponry. Has reduced view range and movement speed.")
+            .addShield(3, 1, 27),
 
-    ARTILLERY = new CorvetteType("artillery", "Artillery", 8, 4f, 3.5f, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.5f;
-        case DENSE_NEBULA -> 1.7f;
-        case ASTEROIDS -> 4f;
-    }, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.6f;
-        case DENSE_NEBULA -> 100f;
-        case ASTEROIDS -> 1.3f;
-    }, new Action[]{
+    ARTILLERY = new CorvetteType("artillery", "Artillery", 8, 4.5f, 3.5f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 16, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.ARTILLERY_MISSILE, WeaponType.EXPLOSIVE);
         w.consumeAmmo(3).firingRange(2, 3).noCounterattack();
         float s = 1.2f;
-        w.addDamageType(DamageType.FIGHTER, UnitCharacteristicValue.LOW_MODERATE);
-        w.addDamageType(DamageType.CORVETTE, UnitCharacteristicValue.GOOD);
-        w.addDamageType(DamageType.CRUISER, UnitCharacteristicValue.GOOD_HIGH);
-        w.addDamageType(DamageType.CAPITAL_SHIP, UnitCharacteristicValue.HIGH_MAX);
-        w.addDamageType(DamageType.SHIELD, UnitCharacteristicValue.LOW_MODERATE);
         w.addData("fighter", new AttackData(1.2f, s));
         w.addData("bomber", new AttackData(1.1f, s));
         w.addData("scout", new AttackData(1.2f, s));
@@ -146,8 +103,9 @@ public class CorvetteType extends UnitType {
         w.addData("defender", new AttackData(3.8f, s));
         w.addData("artillery", new AttackData(3.5f, s));
         w.addData("supply", new AttackData(3.4f, s));
-        w.addData("cruiser", new AttackData(5.2f, s));
-        w.addData("miner", new AttackData(5.6f, s));
+        w.addData("cruiser", new AttackData(4.5f, s));
+        w.addData("battlecruiser", new AttackData(4.2f, s));
+        w.addData("miner", new AttackData(4.6f, s));
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.MODERATE);
@@ -164,29 +122,9 @@ public class CorvetteType extends UnitType {
             INEFFECTIVE_AGAINST_SMALL, MAIN_GUN_LIMITED_AMMO
     }, FiringRenderer.THREE_UNITS, "This unit serves as a medium range missile platform, with limited ammo capacity. " +
             "As a ranged unit, it doesn't receive counterattacks, while also not being able to counterattack enemies when attacked. It also " +
-            "has reduced armour, and in general, should not be used on the frontline without support.") {
-        @Override
-        public float movementCostMultiplier() {
-            return 1;
-        }
+            "has reduced armour, and in general, should not be used on the frontline without support."),
 
-        @Override
-        public float movementFixedCost() {
-            return 4;
-        }
-    },
-
-    SUPPLY = new CorvetteType("supply", "Supply Unit", 10, 5.5f, 3.5f, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.5f;
-        case DENSE_NEBULA -> 1.7f;
-        case ASTEROIDS -> 5.5f;
-    }, type -> switch (type) {
-        case EMPTY -> 1f;
-        case NEBULA -> 1.5f;
-        case DENSE_NEBULA -> 100f;
-        case ASTEROIDS -> 1.2f;
-    }, new Action[]{
+    SUPPLY = new CorvetteType("supply", "Supply Unit", 10, 5.5f, 3.5f, new Action[]{
             Action.MOVE, Action.REPAIR, Action.RESUPPLY
     }, 1, 22, list -> {
     }, map -> {
@@ -207,8 +145,8 @@ public class CorvetteType extends UnitType {
             "can be a useful asset in many situations. Keep in mind that this unit does not feature any kind of weaponry to defend itself with.")
             .modify(u -> u.setRepair(3));
 
-    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Function<TileType, Float> tileMovementCostFunction, Function<TileType, Float> tileViewRangeCostFunction, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, tileMovementCostFunction, tileViewRangeCostFunction, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
+    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
     }
 
     @Override
@@ -234,7 +172,7 @@ public class CorvetteType extends UnitType {
 
     @Override
     public float movementFixedCost() {
-        return 2;
+        return 0;
     }
 
     @Override
@@ -244,6 +182,26 @@ public class CorvetteType extends UnitType {
             case NEBULA -> 0.88f;
             case DENSE_NEBULA -> 0.82f;
             case ASTEROIDS -> 0.76f;
+        };
+    }
+
+    @Override
+    public float moveCost(TileType type) {
+        return switch (type) {
+            case EMPTY -> 1f;
+            case NEBULA -> 1.7f;
+            case DENSE_NEBULA -> 1.9f;
+            case ASTEROIDS -> maxMovement * 2 / 3;
+        };
+    }
+
+    @Override
+    public float viewRange(TileType type) {
+        return switch (type) {
+            case EMPTY -> 1f;
+            case NEBULA -> 1.7f;
+            case DENSE_NEBULA -> 100f;
+            case ASTEROIDS -> 1.5f;
         };
     }
 

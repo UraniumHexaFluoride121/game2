@@ -24,7 +24,7 @@ public class EditorTileSelector extends AbstractTileSelector<LevelEditor> {
         if (t != null) {
             UnitType u = level.levelRenderer.getEditingUnitType();
             if (u != null) {
-                if (t.type != TileType.ASTEROIDS || u.tileMovementCostFunction.apply(TileType.ASTEROIDS) < 50)
+                if (t.type != TileType.ASTEROIDS || u.moveCost(TileType.ASTEROIDS) < 50)
                     level.unitData[t.pos.x][t.pos.y] = new EditorUnitData(u.getInternalName(), level.levelRenderer.editingTeam.unitTeam, getTile(t.pos).renderPos);
                 level.onMapChanged();
             } else if (level.levelRenderer.removeUnit()) {

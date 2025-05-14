@@ -98,6 +98,7 @@ public class UIHitPointBar implements Renderable {
 
     public UIHitPointBar setFill(float fill) {
         this.fill = Math.clamp(fill, 0, segments);
+        fillTo = this.fill;
         return this;
     }
 

@@ -23,10 +23,9 @@ import render.texture.BackgroundTexture;
 import render.texture.ImageSequenceGroup;
 import render.texture.ResourceLocation;
 import render.types.UIHitPointBar;
-import render.types.text.FixedTextRenderer;
 import render.types.text.TextAlign;
+import render.types.text.TextRenderer;
 import render.types.text.UITextLabel;
-import render.types.text.UITooltip;
 import save.GameSave;
 import save.MapSave;
 import save.SaveManager;
@@ -73,7 +72,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     private static final Renderable LOAD_SCREEN_IMAGE = Renderable.renderImage(new ResourceLocation("load_screen.png"), false, true, 60, true);
     private static final GameRenderer loadRenderer = new GameRenderer(MainPanel.windowTransform, null);
-    private static final FixedTextRenderer loadText = new FixedTextRenderer("Initializing...", 1f, UITextLabel.TEXT_COLOUR_DARK)
+    private static final TextRenderer loadText = new TextRenderer("Initializing...", 1f, UITextLabel.TEXT_COLOUR_DARK)
             .setTextAlign(TextAlign.CENTER).setBold(true);
     private static final UIHitPointBar loadBar = new UIHitPointBar(0.1f, 16, 1, 0.15f, 1, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     private static boolean loadBarEnabled = false;

@@ -238,7 +238,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         levelRenderer.unitTileBorderRenderer = null;
     }
 
-    public void endTurn() {
+    public void preEndTurn() {
         levelRenderer.confirm.makeInvisible();
         if (networkState == NetworkState.CLIENT) {
             MainPanel.client.sendEndTurn();
@@ -246,8 +246,18 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         }
         if (networkState == NetworkState.LOCAL) {
             tileSelector.deselect();
+            if (showNextPlayerScreen()) {
+                UnitTeam nextTeam = getNextTeam(activeTeam);
+                levelRenderer.nextPlayerScreen.enable(nextTeam);
+                if (!bots.get(nextTeam))
+                    return;
+            }
         }
-        UnitTeam team = activeTeam;
+        endTurn();
+    }
+
+    public void endTurn() {
+        UnitTeam prevTeam = activeTeam;
         activeTeam = getNextTeam(activeTeam);
         if (!bots.get(activeTeam))
             lastActiveNonBot = activeTeam;
@@ -260,10 +270,11 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         levelRenderer.onNextTurn.start("Turn " + turn, activeTeam);
         levelRenderer.turnBox.setNewTurn();
         updateFoW();
-        if (!bots.get(activeTeam))
-            levelRenderer.useLastCameraPos(team, activeTeam);
-        else
-            levelRenderer.setLastCameraPos(team);
+        if (networkState == NetworkState.LOCAL) {
+            levelRenderer.setLastCameraPos(prevTeam);
+            if (!bots.get(activeTeam))
+                levelRenderer.useLastCameraPos(activeTeam, showNextPlayerScreen());
+        }
         levelRenderer.endTurn.setGrayedOut(getThisTeam() != getActiveTeam());
         levelRenderer.energyManager.incrementTurn(activeTeam);
         structureStartTurnUpdate();
@@ -273,6 +284,10 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         if (networkState == NetworkState.SERVER)
             server.sendTurnUpdatePacket();
         TutorialManager.acceptEvent(new EventTurnStart(this, getActiveTeam()));
+    }
+
+    public boolean showNextPlayerScreen() {
+        return networkState == NetworkState.LOCAL && realPlayerCount() > 1 && gameplaySettings.isFoWEnabled;
     }
 
     public void setTurn(UnitTeam activeTeam, int turn, boolean endIfDifferent) {
@@ -373,13 +388,22 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         return playerTeam.size();
     }
 
+    public int realPlayerCount() {
+        int count = 0;
+        for (UnitTeam team : playerTeam.keySet()) {
+            if (!bots.get(team))
+                count++;
+        }
+        return count;
+    }
+
     public int initialPlayerCount() {
         return initialPlayerTeams.size();
     }
 
     public void removePlayer(UnitTeam team) {
         if (activeTeam == team && networkState != NetworkState.CLIENT)
-            endTurn();
+            preEndTurn();
         if (!playerTeam.containsKey(team))
             return;
         levelRenderer.onTeamEliminated.start(team.getName() + " Eliminated!", team);
@@ -486,9 +510,8 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         });
     }
 
-    public void setThisTeam(UnitTeam team) {
+    public void clientSetThisTeam(UnitTeam team) {
         thisTeam = team;
-        levelRenderer.useLastCameraPos(team);
     }
 
     public boolean isThisPlayerAlive() {

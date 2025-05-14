@@ -220,17 +220,17 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                                 name.render(g);
                             });
                         }).translate(1, 0),
-                        new FixedTextRenderer("Weapon Type:", .7f, UITextLabel.TEXT_COLOUR_DARK)
+                        new TextRenderer("Weapon Type:", .7f, UITextLabel.TEXT_COLOUR_DARK)
                                 .setTextAlign(TextAlign.LEFT).setBold(true).translate(7, 2.9f),
-                        new FixedTextRenderer(weapon.weaponType.getName(), .7f, UITextLabel.TEXT_COLOUR_DARK)
+                        new TextRenderer(weapon.weaponType.getName(), .7f, UITextLabel.TEXT_COLOUR_DARK)
                                 .setTextAlign(TextAlign.RIGHT).setBold(true).translate(19, 2.9f),
-                        new FixedTextRenderer("Firing Range:", .7f, UITextLabel.TEXT_COLOUR_DARK)
+                        new TextRenderer("Firing Range:", .7f, UITextLabel.TEXT_COLOUR_DARK)
                                 .setTextAlign(TextAlign.LEFT).setBold(true).translate(7, 1.8f),
-                        new FixedTextRenderer(weapon.rangeText, .7f, UITextLabel.TEXT_COLOUR_DARK)
+                        new TextRenderer(weapon.rangeText, .7f, UITextLabel.TEXT_COLOUR_DARK)
                                 .setTextAlign(TextAlign.RIGHT).setBold(true).translate(19, 1.8f),
-                        new FixedTextRenderer("Ammo Capacity:", .7f, UITextLabel.TEXT_COLOUR_DARK)
+                        new TextRenderer("Ammo Capacity:", .7f, UITextLabel.TEXT_COLOUR_DARK)
                                 .setTextAlign(TextAlign.LEFT).setBold(true).translate(7, .7f),
-                        new FixedTextRenderer(weapon.requiresAmmo ? String.valueOf(weapon.ammoCapacity) : "Infinite", .7f, UITextLabel.TEXT_COLOUR_DARK)
+                        new TextRenderer(weapon.requiresAmmo ? String.valueOf(weapon.ammoCapacity) : "Infinite", .7f, UITextLabel.TEXT_COLOUR_DARK)
                                 .setTextAlign(TextAlign.RIGHT).setBold(true).translate(19, .7f)
                 );
             });

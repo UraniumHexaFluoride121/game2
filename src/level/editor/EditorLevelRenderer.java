@@ -287,7 +287,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     new UITextLabel(6, 0.8f, false).setTextCenterBold()
                             .updateTextCenter("Enter seed:").translate(0.9f, 6),
-                    new FixedTextRenderer("Removes all units", 0.6f, TEXT_COLOUR)
+                    new TextRenderer("Removes all units", 0.6f, TEXT_COLOUR)
                             .setItalic(true).setTextAlign(TextAlign.CENTER).translate(4, 1f)
             ).setZOrder(-1);
             UITextInputBox seedBox = new UITextInputBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,

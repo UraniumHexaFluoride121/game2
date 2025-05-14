@@ -353,6 +353,11 @@ public class FiringRenderer extends AbstractRenderElement {
             new ObjPos(17, Renderable.top() * 0.3f)
     };
 
+    public static Supplier<ObjPos[]> TWO_UNITS_BACK = () -> new ObjPos[]{
+            new ObjPos(12, Renderable.top() * 0.7f),
+            new ObjPos(15, Renderable.top() * 0.3f)
+    };
+
     public static Supplier<ObjPos[]> ONE_UNIT = () -> new ObjPos[]{
             new ObjPos(15, Renderable.top() * 0.5f),
     };

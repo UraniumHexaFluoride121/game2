@@ -8,7 +8,7 @@ import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.AbstractLevel;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.MultiLineTextBox;
 import render.types.text.TextAlign;
 import render.types.box.UIBox;
@@ -19,10 +19,10 @@ import java.awt.*;
 public class UIConfirm extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private static final float width = 12, height = 5;
     private final MultiLineTextBox text = new MultiLineTextBox(0, 0, width - 2, 1.5f, TextAlign.CENTER);
-    private final FixedTextRenderer
-            confirmText = new FixedTextRenderer("Confirm", 0.85f, UITextLabel.TEXT_COLOUR)
+    private final TextRenderer
+            confirmText = new TextRenderer("Confirm", 0.85f, UITextLabel.TEXT_COLOUR)
                     .setTextAlign(TextAlign.CENTER).setBold(true),
-            cancelText = new FixedTextRenderer("Cancel", 0.85f, UITextLabel.TEXT_COLOUR)
+            cancelText = new TextRenderer("Cancel", 0.85f, UITextLabel.TEXT_COLOUR)
                     .setTextAlign(TextAlign.CENTER).setBold(true);
     private final StaticHitBox
             confirmBox = StaticHitBox.createFromOriginAndSize(Renderable.right() / 2 + width / 2f - 1.5f - width / 3, Renderable.top() / 2 - height / 2f + 0.5f,

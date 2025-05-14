@@ -6,7 +6,7 @@ import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import render.*;
 import render.level.tile.RenderElement;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 import render.UIColourTheme;
 import render.types.box.UIBox;
@@ -151,7 +151,7 @@ public class UITabSwitcher extends UIContainer {
         public final UIBox box;
         public final ButtonClickHandler clickHandler;
         public final float x, y, width, height, textSize;
-        public final FixedTextRenderer text;
+        public final TextRenderer text;
         public UITabSwitcher parent;
         public final int index;
 
@@ -181,7 +181,7 @@ public class UITabSwitcher extends UIContainer {
             }).noDeselect();
             hitBox = StaticHitBox.createFromOriginAndSize(x + parent.x, y + parent.y, width, height);
             box = new UIBox(width, height, 0.4f, UIBox.BoxShape.RECTANGLE_TOP_CORNERS_CUT).setClickHandler(clickHandler).setColourTheme(UIColourTheme.GREEN_SELECTED_TAB);
-            text = new FixedTextRenderer(s, textSize, UITextLabel.TEXT_COLOUR).setTextAlign(TextAlign.CENTER).setBold(true);
+            text = new TextRenderer(s, textSize, UITextLabel.TEXT_COLOUR).setTextAlign(TextAlign.CENTER).setBold(true);
         }
 
         public void select() {

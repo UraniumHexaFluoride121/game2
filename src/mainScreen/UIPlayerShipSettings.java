@@ -32,7 +32,7 @@ public class UIPlayerShipSettings extends UIContainer {
     private static final float SIZE = 4;
 
     static {
-        DEFAULT_PRESET.put(FighterType.FIGHTER, 2);
+        DEFAULT_PRESET.put(FighterType.FIGHTER, 1);
         DEFAULT_PRESET.put(FighterType.BOMBER, 2);
         DEFAULT_PRESET.put(FighterType.SCOUT, 1);
         DEFAULT_PRESET.put(CorvetteType.CORVETTE, 2);
@@ -40,6 +40,7 @@ public class UIPlayerShipSettings extends UIContainer {
         DEFAULT_PRESET.put(CorvetteType.ARTILLERY, 1);
         DEFAULT_PRESET.put(CorvetteType.SUPPLY, 1);
         DEFAULT_PRESET.put(CruiserType.CRUISER, 0);
+        DEFAULT_PRESET.put(CruiserType.BATTLECRUISER, 1);
         DEFAULT_PRESET.put(CruiserType.MINER, 1);
     }
 

@@ -20,6 +20,11 @@ public class UIMLTextBoxRenderElement extends AbstractRenderElement {
         };
     }
 
+    public UIMLTextBoxRenderElement setBoxAlign(TextAlign boxAlign) {
+        text.setBoxAlign(boxAlign);
+        return this;
+    }
+
     public UIMLTextBoxRenderElement setText(String s) {
         text.setText(s);
         return this;

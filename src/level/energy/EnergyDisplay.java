@@ -4,7 +4,7 @@ import render.GameRenderer;
 import render.Renderable;
 import render.UIColourTheme;
 import render.types.box.UIBox;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 
 import java.awt.*;
@@ -13,7 +13,7 @@ import static render.types.text.UITextLabel.*;
 
 public class EnergyDisplay implements Renderable {
     private final UIBox energyBox;
-    public final FixedTextRenderer text = new FixedTextRenderer(null, .6f, TEXT_COLOUR)
+    public final TextRenderer text = new TextRenderer(null, .6f, TEXT_COLOUR)
             .setBold(true).setTextAlign(TextAlign.CENTER);
     private final float width;
 

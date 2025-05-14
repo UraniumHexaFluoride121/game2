@@ -296,7 +296,7 @@ public class Server implements Deletable {
                     UnitTeam endTeam = server.getClientTeam(clientID);
                     MainPanel.addTask((() -> {
                         if (server.level.getActiveTeam() == endTeam) {
-                            server.level.endTurn();
+                            server.level.preEndTurn();
                         }
                     }));
                 }

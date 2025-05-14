@@ -56,7 +56,7 @@ public class WeaponInstance {
     public void fire(FiringData firingData) {
         if (requiresAmmo)
             firingData.thisData().weaponAmmo--;
-        float damageLeft = Math.max(0.1f, firingData.thisData().hitPoints / firingData.thisData().type.hitPoints);
+        float damageLeft = 0.25f + 0.75f * (firingData.thisData().hitPoints / firingData.thisData().type.hitPoints);
         float shieldDamage = getShieldDamage(firingData, damageLeft);
         damageLeft = newDamageLeft(damageLeft, shieldDamage, firingData.otherData().shieldHP);
         float hullDamage = getHullDamage(firingData, damageLeft);

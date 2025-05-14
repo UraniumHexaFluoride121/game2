@@ -7,13 +7,13 @@ import foundation.math.ObjPos;
 import foundation.math.StaticHitBox;
 import level.Level;
 import render.*;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 import render.types.box.UIBox;
 import render.types.text.UITextLabel;
 
 public class UITurnBox extends AbstractRenderElement implements RegisteredButtonInputReceiver {
-    private final FixedTextRenderer text = new FixedTextRenderer(null, 1.5f, UITextLabel.TEXT_COLOUR)
+    private final TextRenderer text = new TextRenderer(null, 1.5f, UITextLabel.TEXT_COLOUR)
             .setTextAlign(TextAlign.CENTER).setBold(true);
     private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(13.5f, Renderable.top() - 2.5f, 10, 2);
     private Level level;

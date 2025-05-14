@@ -27,9 +27,9 @@ public class ContinueTextBox implements TutorialSequenceElement {
     private ContinueTextBox(Level l, float x, float y, BoxSize boxSize, TextAlign textAlign, String text, boolean map) {
         ObjPos pos = map ? Tile.getFractionalRenderPos(x, y) : new ObjPos(x, y);
         if (map)
-            textBoxSupplier = () -> new TutorialContinueTextBox(l, pos.x, pos.y, boxSize.size.x, boxSize.size.y, textAlign, text, TutorialSequenceElement::next);
+            textBoxSupplier = () -> new TutorialContinueTextBox(l, pos.x, pos.y, boxSize.width, textAlign, text, TutorialSequenceElement::next);
         else
-            textBoxSupplier = () -> new LevelTutorialContinueTextBox(l, pos.x, pos.y, boxSize.size.x, boxSize.size.y, textAlign, text, TutorialSequenceElement::next);
+            textBoxSupplier = () -> new LevelTutorialContinueTextBox(l, pos.x, pos.y, boxSize.width, textAlign, text, TutorialSequenceElement::next);
     }
 
     @Override

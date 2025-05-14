@@ -77,7 +77,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         }
                         if (unit.type.canPerformAction(Action.SHIELD_REGEN)) {
                             g.translate(0, -1);
-                            shieldRegen.updateTextRight("+" + MathUtil.floatToString(unit.type.shieldRegen, 1) + " HP");
+                            shieldRegen.updateTextRight("+" + MathUtil.floatToString(unit.stats.shieldRegen(), 1) + " HP");
                             shieldRegen.render(g);
                         }
                         if (!unit.weapons.isEmpty()) {

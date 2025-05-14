@@ -1,7 +1,8 @@
 package render.types.text;
 
 import foundation.Deletable;
-import render.*;
+import render.GameRenderer;
+import render.Renderable;
 import render.types.box.UIBox;
 
 import java.awt.*;
@@ -9,9 +10,10 @@ import java.util.function.Consumer;
 
 public class UIMultiLineDisplayBox implements Renderable, Deletable {
     public final float x, y, textSize;
-    public float width, height;
+    public float width, height, widthMargin;
     protected UIBox box;
     protected final MultiLineTextBox text;
+    protected TextAlign textAlign, boxAlign = TextAlign.LEFT;
 
     public UIMultiLineDisplayBox(float x, float y, float width, float height, float textSize, TextAlign textAlign, Consumer<UIBox> boxModifier, boolean dynamicWidth) {
         this.x = x;
@@ -19,14 +21,12 @@ public class UIMultiLineDisplayBox implements Renderable, Deletable {
         this.width = width;
         this.height = height;
         this.textSize = textSize;
+        this.textAlign = textAlign;
         box = new UIBox(width, height);
         boxModifier.accept(box);
         float widthMargin = box.corner;
-        text = new MultiLineTextBox(switch (textAlign) {
-            case LEFT -> widthMargin;
-            case CENTER -> width / 2;
-            case RIGHT -> width - widthMargin;
-        }, 0, width - widthMargin * 2, textSize, textAlign);
+        this.widthMargin = widthMargin;
+        text = new MultiLineTextBox(0, 0, width - widthMargin * 2, textSize, textAlign);
         if (height == -1 && dynamicWidth)
             text.setOnUpdate(() -> {
                 setHeightToTextSize();
@@ -43,12 +43,30 @@ public class UIMultiLineDisplayBox implements Renderable, Deletable {
         return this;
     }
 
+    public UIMultiLineDisplayBox setBoxAlign(TextAlign boxAlign) {
+        this.boxAlign = boxAlign;
+        return this;
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
     @Override
     public void render(Graphics2D g) {
         text.attemptUpdate(g);
         GameRenderer.renderOffset(x, y, g, () -> {
+            switch (boxAlign) {
+                case CENTER -> g.translate(-width / 2, 0);
+                case RIGHT -> g.translate(-width, 0);
+            }
             box.render(g);
             g.translate(0, height - textSize * 0.75f - box.corner);
+            g.translate(switch (textAlign) {
+                case LEFT -> widthMargin;
+                case CENTER -> width / 2;
+                case RIGHT -> width - widthMargin;
+            }, 0);
             text.render(g);
         });
     }

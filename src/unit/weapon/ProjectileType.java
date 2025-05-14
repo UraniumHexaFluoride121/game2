@@ -76,6 +76,22 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(690), y(357), 350));
         spawnPoints.add(new ProjectileSpawnPoint(x(900), y(470), 450));
         return spawnPoints;
+    }), BATTLECRUISER_CANNON = new ProjectileType("projectile/bullet/bullet_1.png", 2,
+            INFO_BULLET, 90, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, ImageSequenceGroup.EXPLOSION, () -> {
+        ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
+        spawnPoints.add(new ProjectileSpawnPoint(x(960), y(420), 0));
+        spawnPoints.add(new ProjectileSpawnPoint(x(975), y(465), 100));
+        spawnPoints.add(new ProjectileSpawnPoint(x(960), y(420), 350));
+        spawnPoints.add(new ProjectileSpawnPoint(x(975), y(465), 450));
+        return spawnPoints;
+    }), BATTLECRUISER_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
+            INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
+        ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
+        spawnPoints.add(new ProjectileSpawnPoint(x(710), y(326), 0));
+        spawnPoints.add(new ProjectileSpawnPoint(x(980), y(482), 150));
+        spawnPoints.add(new ProjectileSpawnPoint(x(855), y(285), 300));
+        spawnPoints.add(new ProjectileSpawnPoint(x(980), y(430), 450));
+        return spawnPoints;
     });
 
     private final Renderable image;

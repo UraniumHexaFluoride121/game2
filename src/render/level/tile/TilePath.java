@@ -12,6 +12,8 @@ import render.GameRenderer;
 import render.Renderable;
 import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
+import unit.StatManager;
+import unit.Unit;
 import unit.type.UnitType;
 
 import java.awt.*;
@@ -27,7 +29,6 @@ public class TilePath implements Renderable {
     public static final Color MOVE_PATH_COLOUR = new Color(61, 148, 193);
     public static final float END_DOT_RADIUS = 0.15f, END_DOT_RADIUS_INNER = 0.12f;
     private static final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay(false);
-    private final UnitType type;
     private final TileSet tiles;
     private final Point origin;
     private Point end = null;
@@ -35,14 +36,13 @@ public class TilePath implements Renderable {
 
     private ArrayList<Point> path = new ArrayList<>();
 
-    public TilePath(UnitType type, TileSet tiles, Point origin, TileSelector tileSelector) {
-        this.type = type;
+    public TilePath(TileSet tiles, Point origin, TileSelector tileSelector) {
         this.tiles = tiles;
         this.origin = origin;
         this.tileSelector = tileSelector;
     }
 
-    public void setEnd(Point end, Level level) {
+    public void setEnd(Point end, StatManager stats, Level level) {
         if (end.equals(this.end))
             return;
         if (!tiles.contains(end) || end.equals(origin)) {
@@ -57,38 +57,38 @@ public class TilePath implements Renderable {
             } else if (HexagonalDirection.isNextTo(end, this.end)) {
                 path.add(end);
                 AtomicReference<Float> cost = new AtomicReference<>(0f);
-                path.forEach(p -> cost.updateAndGet(v -> v + type.tileMovementCostFunction.apply(tileSelector.getTile(p).type)));
-                if (cost.get() > type.maxMovement) {
-                    setShortestPath(end, level);
+                path.forEach(p -> cost.updateAndGet(v -> v + stats.moveCost(tileSelector.getTile(p).type)));
+                if (cost.get() > stats.maxMovement()) {
+                    setShortestPath(end, stats, level);
                 }
             } else {
-                setShortestPath(end, level);
+                setShortestPath(end, stats, level);
             }
         } else {
-            setShortestPath(end, level);
+            setShortestPath(end, stats, level);
         }
         this.end = end;
     }
 
-    public void setShortestPath(Point end, Level level) {
-        path = level.tileSelector.shortestPathTo(origin, end, tiles, type.tileMovementCostFunction);
+    public void setShortestPath(Point end, StatManager stats, Level level) {
+        path = level.tileSelector.shortestPathTo(origin, end, tiles, stats::moveCost);
     }
 
-    public static int getEnergyCost(UnitType type, ArrayList<Point> path, Level level) {
+    public static int getEnergyCost(ArrayList<Point> path, StatManager stats, Level level) {
         float cost = 0;
         for (Point t : path) {
-            cost += type.tileMovementCostFunction.apply(level.getTile(t).type);
+            cost += stats.moveCost(level.getTile(t).type);
         }
-        return (int) Math.ceil(cost * type.movementCostMultiplier() + type.movementFixedCost());
+        return (int) Math.ceil(cost * stats.movementCostMultiplier() + stats.movementFixedCost());
     }
 
-    public static int getEnergyCost(UnitType type, HashMap<Point, Float> costMap, Point to) {
+    public static int getEnergyCost(StatManager stats, HashMap<Point, Float> costMap, Point to) {
         float cost = costMap.get(to);
-        return (int) Math.ceil(cost * type.movementCostMultiplier() + type.movementFixedCost());
+        return (int) Math.ceil(cost * stats.movementCostMultiplier() + stats.movementFixedCost());
     }
 
-    public int getEnergyCost(Level level) {
-        return getEnergyCost(type, path, level);
+    public int getEnergyCost(StatManager stats, Level level) {
+        return getEnergyCost(path, stats, level);
     }
 
     public Point getLastTile() {
@@ -115,10 +115,10 @@ public class TilePath implements Renderable {
         g.translate(0, -Tile.TILE_SIZE / 2 * Tile.SIN_60_DEG);
     }
 
-    public void renderEnergyCost(Graphics2D g, Level level) {
+    public void renderEnergyCost(Graphics2D g, StatManager stats, Level level) {
         if (end == null)
             return;
-        energyCostDisplay.setCost(-getEnergyCost(level), level);
+        energyCostDisplay.setCost(-getEnergyCost(stats, level), level);
         GameRenderer.renderOffset(level.getTile(end).renderPos, g, () -> {
             g.translate(0, -1.5f);
             energyCostDisplay.render(g);

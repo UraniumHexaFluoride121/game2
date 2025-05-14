@@ -5,7 +5,7 @@ import render.types.box.UIBox;
 import render.UIColourTheme;
 
 public class UITextDisplayBox extends AbstractRenderElement {
-    protected final FixedTextRenderer text;
+    protected final TextRenderer text;
     public final float x, y, height, width;
     protected final UIBox box;
 
@@ -16,7 +16,7 @@ public class UITextDisplayBox extends AbstractRenderElement {
         this.height = height;
         this.width = width;
         box = new UIBox(width, height);
-        text = new FixedTextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
+        text = new TextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
                 .setTextAlign(TextAlign.CENTER);
         renderable = g -> {
             if (!isEnabled())

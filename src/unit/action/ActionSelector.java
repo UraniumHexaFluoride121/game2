@@ -9,7 +9,7 @@ import level.energy.EnergyCostDisplay;
 import level.tile.TileType;
 import render.GameRenderer;
 import render.Renderable;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 import render.UIColourTheme;
 import render.types.box.UIBox;
@@ -36,7 +36,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     private Supplier<Boolean> isVisible;
 
     private final UIBox actionUnusableBox = new UIBox(4f, 1).setCorner(.25f).setColourTheme(UIColourTheme.DARK_GRAY);
-    private final FixedTextRenderer actionUnusableText = new FixedTextRenderer("Unavailable", .6f, TEXT_COLOUR)
+    private final TextRenderer actionUnusableText = new TextRenderer("Unavailable", .6f, TEXT_COLOUR)
             .setBold(true).setTextAlign(TextAlign.CENTER);
 
     private Unit unit;
@@ -60,7 +60,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         actionMap.forEach((a, d) -> {
             if (!d.clickHandler.isDefault()) {
                 if (d.type == ActionIconType.ENABLED) {
-                    Optional<Integer> perTurnActionCost = unit.getPerTurnActionCost(a);
+                    Optional<Integer> perTurnActionCost = unit.stats.getPerTurnActionCost(a);
                     perTurnActionCost.ifPresent(perTurnCost -> {
                         energyCostPerTurnDisplay.setCost(unit.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
                         energyCostPerTurnDisplay.renderToEnergyManager(unit.getLevel());
@@ -68,7 +68,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
                             energyCostPerTurnDisplay.render(g);
                         });
                     });
-                    unit.getActionCost(a).ifPresent(cost -> {
+                    unit.stats.getActionCost(a).ifPresent(cost -> {
                         if (unit.removeActionEnergyCost(a))
                             return;
                         energyCostDisplay.setCost(-cost, unit.getLevel());
@@ -135,10 +135,10 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
             actionMap.get(MINE).type = unit.getLevel().getTile(unit.pos).type == TileType.ASTEROIDS ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
         }
         if (actionMap.containsKey(REPAIR)) {
-            actionMap.get(REPAIR).type = unit.getRepairTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
+            actionMap.get(REPAIR).type = unit.stats.getRepairTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(RESUPPLY)) {
-            actionMap.get(RESUPPLY).type = unit.getResupplyTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
+            actionMap.get(RESUPPLY).type = unit.stats.getResupplyTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(SHIELD_REGEN)) {
             actionMap.get(SHIELD_REGEN).type = unit.shieldHP < unit.type.shieldHP ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;

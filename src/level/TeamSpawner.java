@@ -147,25 +147,44 @@ public class TeamSpawner {
                 size++;
             }
         }
-        {
-            int n = structures.neutralCount();
+        ObjPos middle = new ObjPos(level.tilesX / 2f, level.tilesY / 2f);
+        structures.neutralMap.forEach((type, count) -> {
+            boolean b = count / basePositions.length > 1;
+            int ringCount = b ? count / (basePositions.length * 2) : count / basePositions.length;
+            int centerCount = b ? count % (basePositions.length * 2) : count % basePositions.length;
+            float angle = (float) (level.random.generateFloat(RandomType.STRUCTURE_SPAWNING) * Math.PI * 2);
+            for (int i = 0; i < (b ? 2 * basePositions.length : basePositions.length); i++) {
+                Point p = middle.copy().add(new ObjPos(MathUtil.randFloatBetween(0.25f, 0.65f, level.random.getDoubleSupplier(RandomType.STRUCTURE_SPAWNING))).rotate((float) (angle + (Math.PI * 2 / basePositions.length / (b ? 2 : 1)) * i)).multiply(level.tilesX / 2f, level.tilesY / 2f)).roundToPoint();
+                int size = 1;
+                while (true) {
+                    TileSet positions = TileSet.tilesInRadius(p, size, level);
+                    positions.removeAll(allStructures);
+                    if (positions.size() * 0.25f > ringCount) {
+                        ArrayList<Point> spawnPoints = level.random.randomSelection(positions.stream().toList(), ringCount, RandomType.STRUCTURE_SPAWNING);
+                        for (int j = 0; j < ringCount; j++) {
+                            level.getTile(spawnPoints.get(j)).setStructure(type, null);
+                            allStructures.add(spawnPoints.get(j));
+                        }
+                        break;
+                    }
+                    size++;
+                }
+            }
             int size = 1;
-            Point middle = new Point(level.tilesX / 2, level.tilesY / 2);
             while (true) {
-                TileSet positions = TileSet.tilesInRadius(middle, size, level);
+                TileSet positions = TileSet.tilesInRadius(middle.roundToPoint(), size, level);
                 positions.removeAll(allStructures);
-                if (positions.size() * 0.1f > n) {
-                    ArrayList<Point> spawnPoints = level.random.randomSelection(positions.stream().toList(), n, RandomType.STRUCTURE_SPAWNING);
-                    ArrayList<StructureType> types = structures.getList(true);
-                    for (int j = 0; j < spawnPoints.size(); j++) {
-                        level.getTile(spawnPoints.get(j)).setStructure(types.get(j), null);
+                if (positions.size() * 0.25f > centerCount) {
+                    ArrayList<Point> spawnPoints = level.random.randomSelection(positions.stream().toList(), centerCount, RandomType.STRUCTURE_SPAWNING);
+                    for (int j = 0; j < centerCount; j++) {
+                        level.getTile(spawnPoints.get(j)).setStructure(type, null);
                         allStructures.add(spawnPoints.get(j));
                     }
                     break;
                 }
                 size++;
             }
-        }
+        });
         for (int i = 0; i < basePositions.length; i++) {
             UnitTeam team = UnitTeam.ORDERED_TEAMS[i];
             ArrayList<Point> spawnPoints = level.random.randomise(unitPositions.get(team), RandomType.TEAM_SPAWNING);

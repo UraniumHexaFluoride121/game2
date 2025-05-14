@@ -15,7 +15,7 @@ public class UITextLabel implements Renderable {
 
     private Polygon label;
     private final Polygon line;
-    private final FixedTextRenderer textRight, textLeft, textCenter;
+    private final TextRenderer textRight, textLeft, textCenter;
     private final float height, lineWidth;
     private float width, rightOffset = 0, leftOffset = 0;
     private final boolean hasLines;
@@ -36,9 +36,9 @@ public class UITextLabel implements Renderable {
         this.hasLines = hasLines;
         line = line(lineWidth, height * 1.1f, height * 0.1f, (float) Math.toRadians(60));
         label = line(width, height, (float) Math.toRadians(60));
-        textRight = new FixedTextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.RIGHT);
-        textLeft = new FixedTextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.LEFT);
-        textCenter = new FixedTextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.CENTER);
+        textRight = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.RIGHT);
+        textLeft = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.LEFT);
+        textCenter = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.CENTER);
     }
 
     @Override

@@ -44,7 +44,7 @@ public class InputType {
     }
 
     public boolean isFileNameChar() {
-        return isCharInput && (Character.isLetter(c) || Character.isDigit(c) || c == '_' || c == '-');
+        return isCharInput && (Character.isLetter(c) || Character.isDigit(c) || c == '_' || c == '-' || c == ' ');
     }
 
     public static InputType getInputType(InputEvent e) {

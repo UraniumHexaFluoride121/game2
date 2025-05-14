@@ -8,10 +8,10 @@ import level.energy.EnergyManager;
 import level.tile.Tile;
 import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventAnim;
-import network.NetworkState;
 import render.*;
 import render.level.FiringRenderer;
 import render.level.GameEndScreen;
+import render.level.LocalNextPlayerScreen;
 import render.level.PauseMenu;
 import render.level.info.StructureInfoScreen;
 import render.level.info.UITileInfo;
@@ -61,6 +61,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
     public PauseMenu pauseMenu;
     public LevelMapUI mapUI;
     public GameEndScreen endScreen;
+    public LocalNextPlayerScreen nextPlayerScreen;
 
     @Override
     public void createRenderers() {
@@ -150,6 +151,9 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         endScreen = new GameEndScreen(levelUIRenderer, level.buttonRegister, level);
         endScreen.setEnabled(false);
 
+        nextPlayerScreen = new LocalNextPlayerScreen(levelUIRenderer, level.buttonRegister, level);
+        nextPlayerScreen.setEnabled(false);
+
         unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, level);
         unitInfoScreen.setEnabled(false);
         structureInfoScreen = new StructureInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, level);
@@ -185,26 +189,20 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
     public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
 
-    public void useLastCameraPos(UnitTeam prev, UnitTeam current) {
-        if (level.networkState == NetworkState.LOCAL) {
-            if (prev == null) {
-                setCameraInterpBlockPos(lastCameraPos.get(current));
-            } else {
-                setLastCameraPos(prev);
-                setCameraInterpBlockPos(lastCameraPos.get(current));
-            }
-        }
-    }
-
     public void setLastCameraPos(UnitTeam team) {
+        if (team == null)
+            return;
         lastCameraPos.put(team, getCameraInterpBlockPos(cameraPosition.copy()));
     }
 
-    public void useLastCameraPos(UnitTeam team) {
+    public void useLastCameraPos(UnitTeam team, boolean instant) {
         ObjPos pos = lastCameraPos.get(team);
         if (pos == null)
             return;
-        setCameraInterpBlockPos(pos);
+        if (instant)
+            setCameraBlockPosInstant(pos);
+        else
+            setCameraInterpBlockPos(pos);
     }
 
     @Override

@@ -17,6 +17,7 @@ import render.level.tile.HexagonRenderer;
 import render.texture.ImageRenderer;
 import render.UIColourTheme;
 import render.types.UIHitPointBar;
+import unit.Unit;
 import unit.UnitTeam;
 import unit.action.ActionShapes;
 
@@ -121,7 +122,14 @@ public class Tile implements Writable {
     public static final BasicStroke ICON_STROKE = new BasicStroke(0.02f * TILE_SIZE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
 
     public void renderCaptureBar(Graphics2D g, Level level) {
-        if (isFoW || !hasStructure() || captureBar == null || level.getUnit(pos) == null || level.getUnit(pos).getCaptureProgress() == -1)
+        if (captureBar == null)
+            return;
+        Unit u = level.getUnit(pos);
+        if (u == null || u.getCaptureProgress() == -1) {
+            captureBar.setFill(0);
+            return;
+        }
+        if (isFoW || !hasStructure())
             return;
         GameRenderer.renderOffset(renderPos.x - TILE_SIZE * 0.5f / 2, renderPos.y + TILE_SIZE * 0.7f, g, () -> {
             captureBar.render(g);
@@ -209,14 +217,14 @@ public class Tile implements Writable {
 
     public int miningBarSegments() {
         return switch (type) {
-            case ASTEROIDS -> 5;
+            case ASTEROIDS -> 4;
             default -> 0;
         };
     }
 
     public int initialMiningFill() {
         return switch (type) {
-            case ASTEROIDS -> 5;
+            case ASTEROIDS -> 4;
             default -> 0;
         };
     }

@@ -214,7 +214,7 @@ public class TitleScreen implements Renderable, InputReceiver {
 
         connectContainer = new UIContainer(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0).addRenderables((r, b) -> {
             enterIPBox = new UITextInputBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                    Renderable.right() - 36, 14, 16, 2, .7f, true, 39,
+                    Renderable.right() - 36, 14, 16, 2, .7f, true, -1,
                     InputType::isIPChar);
             enterIPBox.tooltip(t -> t.add(10, UITooltip.light(), "Enter the local IP address of the device hosting the game"));
             enterIPBox.setBold().setColourTheme(UIColourTheme.GREEN_SELECTED);
@@ -328,11 +328,11 @@ public class TitleScreen implements Renderable, InputReceiver {
                     UIContainer customContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0).setEnabled(false);
                     customContainer.addRenderables((r2, b2) -> {
                         RenderElement noMapsAvailableText = new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
-                                new FixedTextRenderer("No custom maps available", 0.7f, UITextLabel.TEXT_COLOUR)
+                                new TextRenderer("No custom maps available", 0.7f, UITextLabel.TEXT_COLOUR)
                                         .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 11),
-                                new FixedTextRenderer("Use the Map Editor to create", 0.7f, UITextLabel.TEXT_COLOUR)
+                                new TextRenderer("Use the Map Editor to create", 0.7f, UITextLabel.TEXT_COLOUR)
                                         .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 9),
-                                new FixedTextRenderer("custom maps", 0.7f, UITextLabel.TEXT_COLOUR)
+                                new TextRenderer("custom maps", 0.7f, UITextLabel.TEXT_COLOUR)
                                         .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 8)
                         );
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,

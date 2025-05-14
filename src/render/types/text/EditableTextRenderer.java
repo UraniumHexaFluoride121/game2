@@ -10,7 +10,7 @@ import render.anim.SineAnimation;
 import java.awt.*;
 import java.awt.font.TextLayout;
 
-public class EditableTextRenderer extends FixedTextRenderer implements ButtonInputReceiver, Deletable {
+public class EditableTextRenderer extends TextRenderer implements ButtonInputReceiver, Deletable {
     public StringBuilder s = new StringBuilder();
     private final int maxLength;
     private int caretPosition = 0;
@@ -93,13 +93,12 @@ public class EditableTextRenderer extends FixedTextRenderer implements ButtonInp
         if (string.isEmpty()) {
             caretRenderPosition = 0;
         } else {
-            Shape textShape = new TextLayout(string, font, g.getFontRenderContext()).getOutline(null);
-            caretRenderPosition = (float) (textShape.getBounds2D().getWidth() + textShape.getBounds2D().getX());
+            caretRenderPosition = new TextLayout(string, font, g.getFontRenderContext()).getAdvance();
         }
     }
 
     public void addChar(char c) {
-        if (s.length() < maxLength) {
+        if (s.length() < maxLength && c != '[' && c != ']') {
             s.insert(caretPosition, c);
             caretPosition++;
             updateText(s.toString());

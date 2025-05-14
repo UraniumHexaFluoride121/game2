@@ -38,50 +38,50 @@ public enum TutorialLevel implements NamedEnum {
                     CameraMove.toTile(l, 1, 4),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 1, 4),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 4.7f, TextAlign.LEFT,
-                            "This is your Base, which serves as the starting point for your units."),
+                            "This is your [BLUE]Base[NO_COLOUR], which serves as the starting point for your units."),
 
                     CameraMove.toTile(l, 2, 4),
                     TutorialHighlight.tiles(l, BLUE_HIGHLIGHT, new Point(1, 5), new Point(2, 4)),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, TextAlign.LEFT,
-                            "These are your units. For this tutorial, you've been provided with two Fighter units."),
+                            "These are your [BLUE]units[NO_COLOUR]. For this tutorial, you've been provided with two [BLUE]Fighter[NO_COLOUR] units."),
 
                     ModifyElements.enable(l, TILE_SELECTION),
                     TutorialHighlight.disable(l),
-                    BlockingTextBox.onMap(l, BoxSize.SMALL, 1.5f, 6f, TextAlign.CENTER,
+                    BlockingTextBox.onMap(l, BoxSize.SMALL, 1.5f, 6f, TextAlign.LEFT,
                             "Select one of the Fighters by left-clicking it.",
                             UnitSelectListener.ofTeam(UnitTeam.BLUE)),
 
                     ModifyElements.disable(l, TILE_SELECTION),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, TextAlign.LEFT,
                             "Below the unit you can see two icons. These are the actions that the unit is able to perform."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 1.6f, 6.4f, TextAlign.LEFT,
-                            "The red one to the left is the Fire action, which is currently unavailable as there are no enemies in range.\n\nThis can be seen by hovering over the action."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, TextAlign.LEFT,
+                            "The red one to the left is the [RED]Fire[NO_COLOUR] action, which is currently unavailable as there are no enemies in range.\n\nThis can be seen by hovering over the action."),
                     ModifyElements.enable(l, ACTIONS),
                     AllowedActions.only(Action.MOVE),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, TextAlign.LEFT,
-                            "The other action on the right is the Move action. Try selecting it now.",
+                            "The other action on the right is the [BLUE]Move[NO_COLOUR] action. Try selecting it now.",
                             ActionListener.select(Action.MOVE)),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, TextAlign.LEFT,
                             "Highlighted in blue you can see all the tiles that the selected Fighter can be moved to."),
 
                     TutorialHighlight.tiles(l, RED_HIGHLIGHT, new Point(6, 4), new Point(6, 5)),
                     CameraMove.toTile(l, 6, 5),
-                    ContinueTextBox.onMap(l, BoxSize.SMALL, 4, 5.5f, TextAlign.CENTER,
+                    ContinueTextBox.onMap(l, BoxSize.SMALL, 4, 5.5f, TextAlign.LEFT,
                             "These are the enemy units."),
 
                     TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, new Point(5, 6)),
                     ModifyElements.enable(l, ACTION_TILE_SELECTION, TILE_SELECTION),
                     AllowedActionTiles.only(Action.MOVE, 5, 6),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.8f, TextAlign.LEFT,
-                            "Most units can only attack enemies on adjacent tiles. Left-click the highlighted tile to move the selected unit in range to attack.",
+                            "Most units can only attack enemies on [RED]adjacent tiles[NO_COLOUR].\n\nLeft-click the highlighted tile to move the selected unit in range to attack.",
                             ActionListener.perform(Action.MOVE)),
 
                     TutorialHighlight.disable(l),
                     BlockingAction.waitFor(ActionListener.complete(Action.MOVE)),
 
                     ModifyElements.disable(l, TILE_SELECTION),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 2, 6, TextAlign.LEFT,
-                            "You can see that the Move action is now greyed out.\n\nEach unit can only perform each of its actions once per turn."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, TextAlign.LEFT,
+                            "You can see that the Move action is now greyed out.\n\nEach unit can only perform each of its actions [BLUE]once per turn[NO_COLOUR]."),
 
                     AllowedActions.only(Action.FIRE),
                     AllowedActionTiles.only(Action.FIRE, 6, 5),
@@ -98,13 +98,13 @@ public enum TutorialLevel implements NamedEnum {
                             .rectangle(5.18f, 6.01f, 0.8f, 1, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW)
                             .rectangle(6.18f, 5.01f, 0.8f, 1, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, TextAlign.LEFT,
-                            "There is a number in the bottom right corner of each unit. This number shows the remaining HP of the unit, rounded up."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 2, 6, TextAlign.LEFT,
-                            "Fighter units start with " + ((int) (FighterType.FIGHTER.hitPoints)) + " HP, and, as you can see, both the attacking unit and " +
-                                    "the enemy unit have taken some damage.\n\nNotice that the enemy unit took much more damage than the attacking one."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 2, 6, TextAlign.LEFT,
-                            "This is because after you attack a unit, the now weakened enemy will counterattack with whatever strength it has left.\n\n" +
-                                    "The less HP a unit has, the less damage it will be able to do."),
+                            "There is a number in the bottom right corner of each unit. This number shows the [GREEN]remaining HP[NO_COLOUR] of the unit, rounded up."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, TextAlign.LEFT,
+                            "Fighter units start with " + ((int) (FighterType.FIGHTER.hitPoints)) + " HP, and, as you can see, [BLUE]both the attacking unit and " +
+                                    "the enemy unit[NO_COLOUR] have taken some damage.\n\nNotice that the enemy unit took much more damage than the attacking one."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, TextAlign.LEFT,
+                            "This is because after you attack a unit, the now weakened enemy will [BLUE]counterattack[NO_COLOUR] with whatever strength it has left.\n\n" +
+                                    "[RED]The less HP a unit has, the less damage it will be able to do.[NO_COLOUR]"),
 
                     TutorialUI.remove("unitHPHighlight"),
                     TutorialUI.onUI(l, "unitInfoHP")
@@ -119,8 +119,8 @@ public enum TutorialLevel implements NamedEnum {
                     AllowedTiles.all(),
                     AllowedActionTiles.only(Action.MOVE, new Point(5, 5), new Point(5, 4)),
                     TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, new Point(5, 5), new Point(5, 4)),
-                    SequenceTextBox.onMap(l, BoxSize.MEDIUM_TALL, 2, 6, TextAlign.LEFT,
-                            "Move the other Fighter to the one of the highlighted tiles and attack the enemy.\n\nTo move the camera, use right-click + drag, or move the mouse to the edge of the screen.",
+                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, TextAlign.LEFT,
+                            "Move the other Fighter to the one of the highlighted tiles and attack the enemy.\n\nTo move the camera, use [BLUE]right-click + drag[NO_COLOUR], or move the mouse to the edge of the screen.",
                             BlockingAction.waitFor(ActionListener.complete(Action.MOVE)),
 
                             TutorialHighlight.disable(l),
@@ -131,7 +131,7 @@ public enum TutorialLevel implements NamedEnum {
                     TutorialUI.onUI(l, "endTurnHighlight")
                             .rectangle(8f, Renderable.top() - 3, 10, 3, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NORMAL),
                     ModifyElements.enable(l, END_TURN, ACTION_DESELECT),
-                    BlockingTextBox.onUI(l, BoxSize.MEDIUM_TALL, 7, Renderable.top() - 10, TextAlign.LEFT,
+                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 7, Renderable.top() - 10, TextAlign.LEFT,
                             "Now that you've performed all the actions you can, it's time to end this turn.\n\nThe enemy will now attack, but by attacking first, you've gained the upper hand.",
                             TurnListener.start()),
                     TutorialUI.remove("endTurnHighlight"),
@@ -154,21 +154,21 @@ public enum TutorialLevel implements NamedEnum {
                     ModifyElements.disable(l, TILE_DESELECTION, TILE_SELECTION, CAMERA_MOVEMENT, ACTIONS, ACTION_DESELECT, ACTION_TILE_SELECTION, END_TURN, VIEW_FIRING_RANGE, VIEW_EFFECTIVENESS),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, TextAlign.LEFT,
                             "Welcome to the second tutorial, about fog of war, tile types, and structure capturing."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, -3, 5, TextAlign.LEFT,
-                            "As you can quite clearly see, many of the tiles are greyed out this time. That's because of the fog of war setting, which is enabled by default.\n\nExpect to see it in most future tutorials."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, TextAlign.LEFT,
+                            "As you can quite clearly see, many of the tiles are greyed out this time. That's because of the [BLUE]fog of war[NO_COLOUR] setting, which is enabled by default.\n\nExpect to see it in most future tutorials."),
 
                     TutorialHighlight.visibleTiles(l, GREEN_HIGHLIGHT),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, -3, 5, TextAlign.LEFT,
-                            "The highlighted tiles are the ones that are visible. Each unit has a view range in which tiles are visible.\n\nTiles not visible will hide the positions of enemy units."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, TextAlign.LEFT,
+                            "The highlighted tiles are the ones that are visible. Each unit has a [BLUE]view range[NO_COLOUR] in which tiles are visible.\n\nTiles not visible will hide the positions of enemy units."),
 
                     TutorialHighlight.fowTiles(l, RED_HIGHLIGHT),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, -3, 5, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, TextAlign.LEFT,
                             "That means that there could be enemy units on any of these tiles that aren't visible.\n\nBefore you can attack, you'll need to find the enemy units."),
 
                     TutorialHighlight.radius(l, RED_HIGHLIGHT, 8, 3, 1),
                     CameraMove.toTile(l, 8, 3),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 5, 5, TextAlign.LEFT,
-                            "We do, however, know where the enemy base is, as structures are always visible regardless of fog of war.\n\n" +
+                            "We do, however, know where the enemy base is, as [BLUE]structures[NO_COLOUR] are always visible regardless of fog of war.\n\n" +
                                     "We also know that units spawn close to the base, so we can expect the enemy units to be somewhere in the highlighted area."),
 
                     TutorialHighlight.disable(l),
@@ -187,20 +187,20 @@ public enum TutorialLevel implements NamedEnum {
                     TutorialUI.onUI(l, "tileName")
                             .rectangle(Renderable.right() - 8f, 17.65f, 15, 1.5f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onUI(l, BoxSize.MEDIUM, Renderable.right() - 23, 16, TextAlign.LEFT,
-                            "Here you can see the type of tile that is selected, in this case a nebula tile."),
+                            "Here you can see the type of tile that is selected, in this case a [BLUE]nebula tile[NO_COLOUR]."),
                     TutorialUI.remove("tileName"),
 
                     TutorialUI.onUI(l, "tileVisibility")
                             .rectangle(Renderable.right() - 8f, 3 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, TextAlign.LEFT,
-                            "This bar shows the visibility of the tile type.\n\nLow visibility is good for keeping your units hidden, but remember that it's not just " +
+                            "This bar shows the [BLUE]visibility[NO_COLOUR] of the tile type.\n\nLow visibility is good for keeping your units hidden, but remember that it's not just " +
                                     "about the tile the unit is on, but also which tiles lie between you and your enemy that matter for staying hidden."),
                     TutorialUI.remove("tileVisibility"),
 
                     TutorialUI.onUI(l, "tileDefence")
                             .rectangle(Renderable.right() - 8f, 2 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, TextAlign.LEFT,
-                            "Here you can see the defence bonus that units receive when on this tile. The defence bonus is a " +
+                            "Here you can see the [BLUE]defence[NO_COLOUR] bonus that units receive when on this tile. The defence bonus is a " +
                                     "damage reduction when being attacked or counterattacked.\n\nIt is therefore ideal to attack " +
                                     "from tiles with high defence to reduce the damage of the subsequent counterattack, and to reduce the damage when it's the " +
                                     "enemy's turn to retaliate."),
@@ -209,7 +209,7 @@ public enum TutorialLevel implements NamedEnum {
                     TutorialUI.onUI(l, "tileMovement")
                             .rectangle(Renderable.right() - 8f, 1 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, TextAlign.LEFT,
-                            "This value represents the ease with which units can move through the tile. Moving a unit through tiles with low movement " +
+                            "This value represents the ease with which units can move through the tile, the [BLUE]movement speed[NO_COLOUR]. Moving a unit through tiles with low movement " +
                                     "will reduce the distance the unit can travel.\n\nHigh movement " +
                                     "tiles are ideal when moving units across long distances."),
                     TutorialUI.remove("tileMovement"),
@@ -221,13 +221,13 @@ public enum TutorialLevel implements NamedEnum {
                     AllowedTiles.only(3, 3),
                     TileSelect.tile(l, 3, 3),
                     ContinueTextBox.onUI(l, BoxSize.MEDIUM, Renderable.right() - 25, 8, TextAlign.LEFT,
-                            "This empty tile right next to it is almost the opposite. With no defence and high visibility, its main advantage is its low movement cost."),
+                            "This [BLUE]empty tile[NO_COLOUR] right next to it is almost the opposite. With no defence and high visibility, its main advantage is its low movement cost."),
 
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 4, 2),
                     AllowedTiles.only(4, 2),
                     TileSelect.tile(l, 4, 2),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 0, 1, TextAlign.LEFT,
-                            "For the asteroid field tile, while it does have a slightly lower visibility than an empty tile, its main advantage is its high defence bonus.\n\n" +
+                            "For the [BLUE]asteroid field tile[NO_COLOUR], while it does have a slightly lower visibility than an empty tile, its main advantage is its high defence bonus.\n\n" +
                                     "While small units like the Fighters in this tutorial can move through asteroid fields without much difficulty, larger units either can't move through them at all, or can only move one tile at a time."),
 
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 5, 5),
@@ -235,10 +235,10 @@ public enum TutorialLevel implements NamedEnum {
                     TileSelect.tile(l, 5, 5),
                     CameraMove.toTile(l, 5, 5),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 5, 2, TextAlign.LEFT,
-                            "Lastly, the dense nebula tile. These appear scattered throughout regular nebula tiles, and have a defence bonus somewhere between a regular nebula and an asteroid field.\n\n" +
-                                    "Most importantly, they have a special property. No matter how good the view distance is for a given unit, the only way for it to see inside a dense nebula is if the unit is directly adjacent to it."),
+                            "Lastly, the [BLUE]dense nebula tile[NO_COLOUR]. These appear scattered throughout regular nebula tiles, and have a defence bonus somewhere between a regular nebula and an asteroid field.\n\n" +
+                                    "Most importantly, they have a special property. No matter how good the view distance is for a given unit, the only way for it to see inside a dense nebula is if the unit is [BLUE]directly adjacent[NO_COLOUR] to it."),
 
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 5, 3, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 5, 3, TextAlign.LEFT,
                             "We can use this property to our advantage in this situation. By moving a Fighter to this tile, it'll reveal the enemy positions without risking detection, preventing the enemy from attacking first on the next turn."),
                     SequenceTextBox.onMap(l, BoxSize.SMALL, 5, 4, TextAlign.LEFT,
                             "Move one of the fighters to the dense nebula tile.",
@@ -254,13 +254,13 @@ public enum TutorialLevel implements NamedEnum {
                     BlockingAction.waitFor(ActionListener.complete()),
                     ModifyElements.disableAll(l),
 
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 5, 3, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 5, 3, TextAlign.LEFT,
                             "Enemy spotted!\n\nWhile you could attack the enemy with your other Fighter, it'll only lead to the enemy retaliating two on one next turn."),
 
                     ModifyElements.actionCameraNoDeselect(l),
                     TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 4, 6),
                     AllowedActionTiles.only(Action.MOVE, 4, 6),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM_TALL, 5, 3, TextAlign.LEFT,
+                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 5, 3, TextAlign.LEFT,
                             "Instead, move the other Fighter to the highlighted tile, away from the enemy.\n\nWe'll wait until next turn to attack.",
                             ActionListener.perform(Action.MOVE)),
 
@@ -285,15 +285,15 @@ public enum TutorialLevel implements NamedEnum {
 
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 0, 5, TextAlign.LEFT,
                             "The enemy could not find the Fighter units, and decided to start capturing the base instead!"),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 0, 5, TextAlign.LEFT,
-                            "Most units can capture by simply being on the same tile as an enemy structure. Capturing takes multiple turns, as shown by the progress bar above the enemy unit that's currently capturing."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 0, 5, TextAlign.LEFT,
+                            "Most units can [DARK_GREEN]capture[NO_COLOUR] by simply being on the same tile as an enemy structure. Capturing takes multiple turns, as shown by the [BLUE]progress bar[NO_COLOUR] above the enemy unit that's currently capturing."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 0, 5, TextAlign.LEFT,
                             "Once the progress bar fills, the enemy gains control over the structure, or the structure is destroyed, depending on the type of structure.\n\n" +
                                     "As for the base structure, not only is it destroyed, the player gets eliminated if it is successfully captured.\n\n" +
                                     "You must stop the capture of your base at any cost!"),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 0, 5, TextAlign.LEFT,
-                            "To stop a capture, simply attack the capturing unit.\n\n" +
-                                    "Each time the capturing unit is attacked, or if it itself performs an attack, the capture progress bar is reduced by one turn."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 0, 5, TextAlign.LEFT,
+                            "To stop a capture, simply [RED]attack[NO_COLOUR] the capturing unit.\n\n" +
+                                    "Each time the capturing unit is attacked, or performs an attack, the capture progress bar is reduced by one turn."),
 
                     TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 0, 4),
                     CameraMove.toTile(l, 0, 4),
@@ -316,7 +316,7 @@ public enum TutorialLevel implements NamedEnum {
 
                     BlockingTextBox.onMap(l, BoxSize.LARGE, -3, 6, TextAlign.LEFT,
                             "You can see that the tile is just out of range.\n\n" +
-                                    "After selecting an action, you can go back by using the Exit Action button below the End Turn button, or by using the Escape key, but remember that you cannot undo actions that have been completed.\n\n" +
+                                    "After selecting an action, you can go back by using the [BLUE]Exit Action[NO_COLOUR] button below the End Turn button, or by using the [BLUE]Escape key[NO_COLOUR], but remember that you cannot undo actions that have been completed.\n\n" +
                                     "Exit the move action so you can select the other Fighter that is in range.",
                             ActionListener.deselect()),
 
@@ -324,7 +324,7 @@ public enum TutorialLevel implements NamedEnum {
                     TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 0, 4),
 
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1, 7, TextAlign.LEFT,
-                            "Move the other Fighter to the highlighted asteroid field tile.",
+                            "Move the other Fighter to the highlighted asteroid field tile instead.",
                             ActionListener.perform()),
 
                     TutorialHighlight.disable(l),
@@ -362,8 +362,8 @@ public enum TutorialLevel implements NamedEnum {
 
 
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 5, 4, TextAlign.LEFT,
-                            "It takes " + StructureType.BASE.captureSteps + " turns to capture a base, and on each of those turns you have to perform the capture action; it is not automatic. " +
-                                    "Moving the capturing unit away from the structure will reset the progress.\n\n" +
+                            "It takes " + StructureType.BASE.captureSteps + " turns to capture a base, and on each of those turns you have to perform the capture action; [BLUE]it is not automatic[NO_COLOUR]. " +
+                                    "Moving the capturing unit away from the structure will [RED]reset[NO_COLOUR] the progress.\n\n" +
                                     "Players always have visibility over tiles with allied structures, meaning that the enemy can see the capture progress of their structures, even if there are no units nearby with view range over the area."),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 5, 4, TextAlign.LEFT,
                             "It is likely that the enemy will come after your capturing unit. It's up to you now to win the game."),
@@ -386,24 +386,24 @@ public enum TutorialLevel implements NamedEnum {
                     CameraMove.toTile(l, 7, 1),
                     ContinueTextBox.onUI(l, BoxSize.LARGE, 11, 18, TextAlign.LEFT,
                             "Welcome to the third tutorial. So far, the only units we've come across have been Fighter units. As you can see, this is no longer the case.\n\n" +
-                                    "Each ship belongs to a ship class. There are four different classes: fighters, corvettes, cruisers and capital ships."),
+                                    "Each ship belongs to a ship class. There are [BLUE]four different classes[NO_COLOUR]: fighters, corvettes, cruisers and capital ships."),
                     ContinueTextBox.onUI(l, BoxSize.EXTRA_EXTRA_LARGE, 11, 18, TextAlign.LEFT,
-                            "Fighters are small, agile units, which usually have weak weaponry.\n\n" +
-                                    "Corvettes are slightly larger and slower to allow for more powerful weapons, and come in many unique variants.\n\n" +
-                                    "Even larger than that, cruiser-class units often feature heavy armour to protect themselves from smaller units.\n\n" +
-                                    "The largest units, capital ships, have the largest guns and strongest armour, often including shields or other specialised equipment."),
+                            "[BLUE]Fighters[NO_COLOUR] are small, agile units, which usually have weak weaponry.\n\n" +
+                                    "[BLUE]Corvettes[NO_COLOUR] are slightly larger and slower to allow for more powerful weapons, and come in many unique variants.\n\n" +
+                                    "Even larger than that, [BLUE]cruiser-class[NO_COLOUR] units often feature heavy armour to protect themselves from smaller units.\n\n" +
+                                    "The largest units, [BLUE]capital ships[NO_COLOUR], have the largest guns and strongest armour, often including shields or other specialised equipment."),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 7, 2),
                     ContinueTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, TextAlign.LEFT,
-                            "This Fighter unit is, of course, a fighter-class unit, but it is not the only one of its kind."),
+                            "This [BLUE]Fighter unit[NO_COLOUR][NO_COLOUR][NO_COLOUR] is, of course, a fighter-class unit, but it is not the only one of its kind."),
                     TutorialHighlight.tiles(l, BLUE_HIGHLIGHT, new Point(6, 1), new Point(7, 1)),
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM_TALL, 11, 18, TextAlign.LEFT,
-                            "These are Bomber units. They are also fighter-class units, but are slightly weaker and slower than the Fighter unit is.\n\n" +
+                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, TextAlign.LEFT,
+                            "These are [BLUE]Bomber units[NO_COLOUR]. They are also fighter-class units, but are slightly weaker and slower than the Fighter unit is.\n\n" +
                                     "They do, however, have a powerful missile weapon that we'll get to later."),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 6, 0),
                     ModifyElements.tileSelect(l, false),
                     AllowedTiles.only(6, 0),
                     BlockingTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, TextAlign.LEFT,
-                            "Finally, this is an Artillery unit. It is a ranged corvette-class unit. Start by selecting this unit.",
+                            "Finally, this is an [BLUE]Artillery unit[NO_COLOUR]. It is a ranged corvette-class unit. Start by selecting this unit.",
                             TileSelectListener.any()),
                     TutorialHighlight.disable(l),
                     TutorialUI.onUI(l, "viewRange").rectangle(8.25f, 12.25f, 2, 2, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
@@ -413,19 +413,19 @@ public enum TutorialLevel implements NamedEnum {
                             UIListener.select(UIElement.VIEW_FIRING_RANGE)),
                     TutorialUI.remove("viewRange"),
                     BlockingTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, TextAlign.LEFT,
-                            "Highlighted in red you can see the tiles that the selected unit is in firing range of. Click anywhere on the screen to exit firing range view.",
+                            "Highlighted in red you can see the tiles that the selected unit is in [RED]firing range[NO_COLOUR] of. Click anywhere on the screen to exit firing range view.",
                             UIListener.deselect(UIElement.VIEW_FIRING_RANGE)),
                     ModifyElements.disableAll(l),
                     CameraMove.toTile(l, 5, 3),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 8, 4, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
                             "Now with that out of the way, we can get to moving the units.\n\nYou can see that the enemy base is in the top left corner of the map, outside of our view range."),
                     TutorialHighlight.radius(l, RED_HIGHLIGHT, 5, 4, 1),
                     ModifyElements.enable(l, TILE_DESELECTION),
                     TileSelect.deselect(l),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 8, 4, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
                             "The enemy will most likely move their units to this region on the next turn. We could hide our units in the nebula below this region to ambush them."),
                     ModifyElements.moveUnit(l, false, 7, 2, 5, 2),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM_TALL, 8, 4, TextAlign.LEFT,
+                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
                             "Move the Fighter unit to the front of the nebula. It has the longest view range, and by moving it to the front, we can see further out of the nebula.",
                             ActionListener.perform()),
                     TutorialHighlight.disable(l),
@@ -460,9 +460,9 @@ public enum TutorialLevel implements NamedEnum {
                     BlockingAction.waitFor(AnimStateListener.ended()),
                     CameraMove.toTile(l, 6, 3),
                     TutorialHighlight.tiles(l, RED_HIGHLIGHT, new Point(6, 3), new Point(5, 4)),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 8, 4, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
                             "The enemy has deployed Cruisers against us!\n\n" +
-                                    "Cruiser units are the base configuration of the cruiser class, in the same way that Fighter units are the basic variant of the fighter class."),
+                                    "[BLUE]Cruiser units[NO_COLOUR] are the base configuration of the cruiser class, in the same way that Fighter units are the basic variant of the fighter class."),
                     ModifyElements.tileSelect(l, false, 5, 2),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
                             "Select the Fighter unit to see what kind damage we can do with it.",
@@ -479,10 +479,10 @@ public enum TutorialLevel implements NamedEnum {
                                     "As you know, lower HP means lower damage dealt, but that does not change the base characteristics of the weapons, which is what you're seeing now."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
                             "It does, however, give us a rough estimate of the damage dealt by a full HP unit, which all of our units currently are.\n\n" +
-                                    "Yellow means low damage (usually around 1 HP), while red means high damage (often more than half the unit's HP). Blue, not seen here, means no damage at all."),
+                                    "Yellow means [YELLOW]low damage[NO_COLOUR] (usually around 1 HP), while red means [RED]high damage[NO_COLOUR] (often more than half the unit's HP). Blue, not seen here, means [BLUE]no damage[NO_COLOUR] at all."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
-                            "You can see by the orange colour that the Fighter can do moderate damage to the enemy Fighter which is next to the base.\n\n" +
-                                    "When it comes to the Cruisers however, the yellow colour shows that this unit is almost useless against them."),
+                            "You can see by the orange colour that the Fighter can do [ORANGE]moderate damage[NO_COLOUR] to the enemy Fighter which is next to the base.\n\n" +
+                                    "When it comes to the Cruisers however, the yellow colour shows that this unit is [YELLOW]almost useless[NO_COLOUR] against them."),
                     ModifyElements.tileSelect(l, false, new Point(4, 1), new Point(4, 0)),
                     ModifyElements.viewEffectiveness(l, true).add(false),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
@@ -492,12 +492,12 @@ public enum TutorialLevel implements NamedEnum {
                     BlockingTextBox.onMap(l, BoxSize.SMALL_MEDIUM, 8, 4, TextAlign.LEFT,
                             "Click the orange button to view weapon effectiveness.", UIListener.select(UIElement.VIEW_EFFECTIVENESS)),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
-                            "As you can see, Bombers perform well not only against the Fighter unit, but also against the Cruisers.\n\n" +
+                            "As you can see, Bombers perform well not only against the [ORANGE]Fighter unit[NO_COLOUR], but also against the [ORANGE]Cruisers[NO_COLOUR].\n\n" +
                                     "This is because they have two weapons. The first is a plasma gun, effective at destroying fighter-class units. The Fighter we looked " +
                                     "at before has similar gun, which is why both that unit and this unit are effective at destroying the enemy Fighter."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 8, 4, TextAlign.LEFT,
-                            "The Bomber unit also has a missile weapon, which is most powerful when used against capital ships.\n\n" +
-                                    "It does, however, still perform well against cruiser-class ships."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
+                            "The Bomber unit also has a missile weapon, which is most powerful when used against [RED]capital ships[NO_COLOUR].\n\n" +
+                                    "It does, however, still perform well against [ORANGE]cruiser-class[NO_COLOUR] ships."),
                     ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 8, 4, TextAlign.LEFT,
                             "Each of the four unit classes has a corresponding weapon type that counters it. Here's a list showing which weapon type counters which unit class, in order of unit size:\n\n" +
                                     "Plasma > Fighter-class units\n\n" +
@@ -511,13 +511,13 @@ public enum TutorialLevel implements NamedEnum {
                                     "are meant for countering capital ships."),
                     ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 8, 4, TextAlign.LEFT,
                             "Keep in mind that not all weapons of a given type are created equal. Some are stronger than others.\n\n" +
-                                    "A weak plasma gun might be moderately effective against fighters, and useless against other classes\n\nA strong " +
-                                    "plasma gun, on the other hand, may be highly effective against fighter-class units, moderately effective against the corvette class, " +
-                                    "and useless against any unit larger than a corvette."),
+                                    "A weak plasma gun might be [ORANGE]moderately effective[NO_COLOUR] against fighters, and [YELLOW]useless[NO_COLOUR] against other classes\n\nA strong " +
+                                    "plasma gun, on the other hand, may be [RED]highly effective[NO_COLOUR] against fighter-class units, [ORANGE]moderately effective[NO_COLOUR] against the corvette class, " +
+                                    "and [YELLOW]useless[NO_COLOUR] against any unit larger than a corvette."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
                             "You don't necessarily have to remember the exact details of the weapon each unit carries, what's important is that " +
-                                    "that each unit has one, or sometimes several classes it counters effectively, and possibly has other classes that it's moderately effective against.\n\n" +
-                                    "You can, and should, use the orange button to view weapon effectiveness."),
+                                    "that each unit has one, or sometimes several classes it [RED]counters effectively[NO_COLOUR], and possibly has other classes that it's [ORANGE]moderately effective[NO_COLOUR] against.\n\n" +
+                                    "[BLUE]You can, and should, use the orange button to view weapon effectiveness.[NO_COLOUR]"),
                     ModifyElements.tileSelect(l, false, new Point(6, 3), new Point(5, 4)),
                     ModifyElements.viewEffectiveness(l, true).add(false),
                     SequenceTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
@@ -529,7 +529,7 @@ public enum TutorialLevel implements NamedEnum {
                     ),
                     ModifyElements.viewEffectiveness(l, false),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, TextAlign.LEFT,
-                            "We see that the enemy Cruiser is not effective against our fighter-class units, meaning that the Bombers can attack without taking much damage in return."),
+                            "We see that the enemy Cruiser is [YELLOW]not effective[NO_COLOUR] against our fighter-class units, meaning that the Bombers can attack without taking much damage in return."),
 
                     ModifyElements.moveUnit(l, true, new Point[]{new Point(4, 0), new Point(4, 1)}, new Point[]{new Point(7, 3)}),
                     ModifyElements.viewEffectiveness(l, true).add(false),
@@ -543,27 +543,32 @@ public enum TutorialLevel implements NamedEnum {
                     ),
                     BlockingAction.waitFor(ActionListener.complete()),
                     CameraMove.toTile(l, 7, 3),
-                    ModifyElements.viewEffectiveness(l, false).add(false),
-                    BlockingTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
+                    SequenceTextBox.onMap(l, BoxSize.LARGE, 8, 4, TextAlign.LEFT,
                             "You can see that the enemy Cruiser took significantly more damage than the Bomber, which came out almost unscathed.\n\n" +
                                     "The Bomber's missile weapon does, however, have one major drawback.\n\n" +
-                                    "Select the Bomber, then select the button to view the Bomber's weapon effectiveness.", UIListener.select(UIElement.VIEW_EFFECTIVENESS)),
+                                    "Select the Bomber, then select the button to view the Bomber's weapon effectiveness.",
+                            ModifyElements.tileSelect(l, false, 7, 3),
+                            BlockingAction.waitFor(TileSelectListener.any()),
+                            TutorialHighlight.disable(l),
+                            ModifyElements.viewEffectiveness(l, false),
+                            BlockingAction.waitFor(UIListener.select(UIElement.VIEW_EFFECTIVENESS))
+                    ),
                     ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 5, 0, TextAlign.LEFT,
                             "You can see that the Cruisers are now coloured yellow, meaning that the Bomber is no longer effective against them.\n\n" +
-                                    "This is due to the missile weapon having limited ammo capacity, just one round of ammo in this case.\n\n" +
+                                    "This is due to the missile weapon having [BLUE]limited ammo capacity[NO_COLOUR], just one round of ammo in this case.\n\n" +
                                     "Since the missile weapon is out of ammo, attacking the Cruisers now will lead to the Bomber resorting to using its plasma gun, which is much less effective."),
                     TutorialUI.onUI(l, "ammoLabel")
                             .rectangle(1 + 9.4f / 2 + 0.5f / 2, 5 - 1 - 0.5f / 2, 9.4f + 0.5f, 1 + 0.5f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 5, 0, TextAlign.LEFT,
                             "The remaining ammo can be seen on the panel to the left, where you can see that the ammo is at 0 / 1.\n\n" +
                                     "Units can have at most one weapon that uses ammo, and using the unit's other weapons will not consume any ammo.\n\n" +
-                                    "If none of the weapons for a unit consume ammo, the ammo counter will display \"--\" instead."),
+                                    "If none of the weapons for a unit consume ammo, the ammo counter will not display a number."),
                     TutorialUI.remove("ammoLabel"),
                     TutorialUI.onUI(l, "unitInfo").rectangle(10.25f, 12.25f, 2, 2, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
                     ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 5, 0, TextAlign.LEFT,
                             "When attacking an enemy, the most effective weapon not out of ammo will automatically be selected. Attacking a Fighter using " +
                                     "a Bomber, for example, will use the plasma gun, even if the missile is available.\n\n" +
-                                    "To view the weapons a unit has, open the unit info screen using the button in the top right of the panel to the left. " +
+                                    "To view the weapons a unit has, [BLUE]open the unit info screen[NO_COLOUR] using the button in the top right of the panel to the left. " +
                                     "Then, navigate to the weapons tab, and click a weapon to view info about it. There, you can see the range, ammo usage, and effectiveness of " +
                                     "each weapon."),
                     TutorialUI.remove("unitInfo"),
@@ -582,7 +587,7 @@ public enum TutorialLevel implements NamedEnum {
                     BlockingAction.waitFor(ActionListener.complete()),
                     CameraMove.toTile(l, 5, 2),
                     ModifyElements.moveUnit(l, true, 5, 2, 6, 0),
-                    SequenceTextBox.onMap(l, BoxSize.MEDIUM_TALL, 8, 2, TextAlign.LEFT,
+                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 8, 2, TextAlign.LEFT,
                             "The Fighter unit, which isn't of much use against the enemy Cruisers, can be used to defend the base from the enemy Fighter.\n\n" +
                                     "Move the Fighter and attack.",
                             BlockingAction.waitFor(ActionListener.complete()),
@@ -592,13 +597,13 @@ public enum TutorialLevel implements NamedEnum {
                             BlockingAction.waitFor(ActionListener.perform())
                     ),
                     BlockingAction.waitFor(ActionListener.complete()),
-                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 1, 1.5f, TextAlign.LEFT,
-                            "The Artillery unit has a ranged missile weapon, meaning that it is effective against Cruisers, similar to the Bomber unit. Unlike the Bomber unit, it has an " +
+                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 1.3f, 1.5f, TextAlign.LEFT,
+                            "The Artillery unit has a [BLUE]ranged missile weapon[NO_COLOUR], meaning that it is effective against Cruisers, similar to the Bomber unit. Unlike the Bomber unit, it has an " +
                                     "ammo capacity of " + CorvetteType.ARTILLERY.weapons.getFirst().ammoCapacity + ".\n\n" +
-                                    "Ranged units have a special property. They do not receive counterattacks when attacking enemies, even if the enemy is also a ranged unit.\n\n" +
-                                    "They are, however, not able to defend themselves with a counterattack when attacked by an enemy."),
+                                    "Ranged units have a special property. [BLUE]They do not receive counterattacks[NO_COLOUR] when attacking enemies, even if the enemy is also a ranged unit.\n\n" +
+                                    "They are, however, [BLUE]not able to defend themselves[NO_COLOUR] with a counterattack when attacked by an enemy."),
                     ModifyElements.moveUnit(l, true, 5, 0, 5, 2),
-                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 1, 1.5f, TextAlign.LEFT,
+                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 1.3f, 1.5f, TextAlign.LEFT,
                             "Move the Artillery into the dense nebula, and attack one of the Cruisers. The dense nebula will " +
                                     "hide the defenceless unit from the enemies next turn.",
                             BlockingAction.waitFor(ActionListener.complete()),
@@ -626,12 +631,12 @@ public enum TutorialLevel implements NamedEnum {
                     BlockingAction.waitFor(AnimStateListener.ended()),
 
 
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 1, 3, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1, 3, TextAlign.LEFT,
                                     "As you saw during the enemy's turn, the Bomber units were not able to do much damage to the Cruisers when they counterattacked. " +
-                                            "We need to be able to resupply the Bombers."),
+                                            "We need to be able to [RESUPPLY]resupply[NO_COLOUR] the Bombers."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 1, 3, TextAlign.LEFT,
                                     "There are several ways to replenish ammo, but for this tutorial, we'll only cover one of them.\n\n" +
-                                            "At the start of your turn, if a unit is on the same tile as an allied base structure, it gets all its ammo resupplied.\n\n" +
+                                            "At the start of your turn, if a unit is on the [BLUE]same tile as an allied base structure[NO_COLOUR], it gets all its ammo resupplied.\n\n" +
                                             "Not only that, it also regains some HP."),
                     ModifyElements.moveUnit(l, true, new Point[]{new Point(4, 3), new Point(7, 3)}, new Point[]{new Point(8, 1)}),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1, 3, TextAlign.LEFT,
@@ -639,7 +644,7 @@ public enum TutorialLevel implements NamedEnum {
                             ActionListener.perform()),
                     TutorialHighlight.disable(l),
                     BlockingAction.waitFor(ActionListener.complete()),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM_TALL, 4, 2, TextAlign.LEFT,
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 4, 2, TextAlign.LEFT,
                             "That's it for this tutorial, use the weapon effectiveness view to make the best use of your units, and resupply ammo at the base when needed.\n\n" +
                                     "Good luck."),
                     ModifyElements.enableAll(l),

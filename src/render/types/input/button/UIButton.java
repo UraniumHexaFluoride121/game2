@@ -4,7 +4,7 @@ import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.*;
 import render.types.box.UIBox;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 import render.types.text.TooltipManager;
 import render.types.text.UITextLabel;
@@ -12,7 +12,7 @@ import render.types.text.UITextLabel;
 import java.util.function.Consumer;
 
 public class UIButton extends AbstractUIButton {
-    protected final FixedTextRenderer text;
+    protected final TextRenderer text;
     public float textSize;
 
     public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected) {
@@ -21,11 +21,11 @@ public class UIButton extends AbstractUIButton {
 
     public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick) {
         this(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, onClick,
-                new FixedTextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
+                new TextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
                         .setTextAlign(TextAlign.CENTER));
     }
 
-    protected UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick, FixedTextRenderer text) {
+    protected UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick, TextRenderer text) {
         super(register, buttonRegister, order, buttonOrder, x, y, height, width, staySelected, onClick);
         this.textSize = textSize;
         this.text = text;

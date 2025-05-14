@@ -13,7 +13,7 @@ import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
 public enum StructureType implements NamedEnum {
-    BASE("structures/base/base_", "Base", true, true, 3, 60, 2, true, false,
+    BASE("structures/base/base_", "Base", true, true, 3, 40, 2, true, false,
             "The base is the centre for fleet command. Make sure it is not captured, as without it, your fleet cannot operate. " +
                     "Provides a substantial amount of " + EnergyManager.displayName + " income, as well as being able to resupply and perform basic repairs on allied units."),
 

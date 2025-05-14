@@ -33,9 +33,9 @@ public class SequenceTextBox implements TutorialSequenceElement, EventConsumer, 
         tutorialSequence.setSequence(sequence);
         ObjPos pos = map ? Tile.getFractionalRenderPos(x, y) : new ObjPos(x, y);
         textBoxSupplier = () -> new UIMLTextBoxRenderElement(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
-                pos.x - boxSize.size.x / 2, pos.y, boxSize.size.x, boxSize.size.y, 0.7f, textAlign, box ->
-                box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER), false)
-                .setText(text);
+                pos.x, pos.y, boxSize.width, -1, 0.7f, textAlign, box ->
+                box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER), true)
+                .setText(text).setBoxAlign(TextAlign.CENTER);
     }
 
     @Override

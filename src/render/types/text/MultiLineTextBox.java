@@ -12,7 +12,7 @@ public class MultiLineTextBox implements Renderable, Deletable {
     private final float x, y, width;
     public float textSize;
     private final TextAlign textAlign;
-    private final ArrayList<FixedTextRenderer> textRenderers = new ArrayList<>();
+    private final ArrayList<TextRenderer> textRenderers = new ArrayList<>();
     private Color textColour = UITextLabel.TEXT_COLOUR;
     private boolean bold = true;
     private boolean forceUpdate = false;
@@ -37,7 +37,8 @@ public class MultiLineTextBox implements Renderable, Deletable {
 
     private void updateText(Graphics2D g) {
         textRenderers.clear();
-        FixedTextRenderer prevText = null;
+        TextRenderer prevText = null;
+        TextStyle prevStyle = new TextStyle();
         StringBuilder builder = new StringBuilder();
         int prevSpace = 0;
         while (true) {
@@ -54,8 +55,9 @@ public class MultiLineTextBox implements Renderable, Deletable {
             } else {
                 builder.append(s, prevSpace, nextSpace);
             }
-            FixedTextRenderer text = new FixedTextRenderer(builder.toString(), textSize, textColour)
+            TextRenderer text = new TextRenderer(builder.toString(), textSize, textColour)
                     .setBold(bold).setTextAlign(textAlign);
+            text.setInitialStyle(prevStyle);
             text.updateText(g);
 
             if (text.getTextWidth() > width) {
@@ -64,11 +66,13 @@ public class MultiLineTextBox implements Renderable, Deletable {
                 textRenderers.add(prevText);
                 builder = new StringBuilder();
                 prevSpace++;
+                prevStyle = prevText.getFinalStyle();
                 prevText = null;
             } else if (lineBreak) {
                 textRenderers.add(text);
                 builder = new StringBuilder();
                 prevSpace = nextSpace;
+                prevStyle = text.getFinalStyle();
                 prevText = null;
             } else {
                 prevText = text;
@@ -102,7 +106,7 @@ public class MultiLineTextBox implements Renderable, Deletable {
 
     public float getTextWidth() {
         float max = 0;
-        for (FixedTextRenderer t : textRenderers) {
+        for (TextRenderer t : textRenderers) {
             max = Math.max(max, t.getTextWidth());
         }
         return max;

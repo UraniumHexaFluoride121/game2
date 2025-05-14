@@ -154,7 +154,7 @@ public class Client implements Deletable {
                     MainPanel.startNewLevel(() -> {
                         Level l = new Level(playerTeams, seed, width, height, bots, gameplaySettings, NetworkState.CLIENT, botDifficulty);
                         l.initialPlayerTeams = initialPlayerTeams;
-                        l.setThisTeam(team);
+                        l.clientSetThisTeam(team);
                         HashMap<UnitTeam, Point> basePositions = new HashMap<>();
                         for (int x = 0; x < width; x++) {
                             for (int y = 0; y < height; y++) {

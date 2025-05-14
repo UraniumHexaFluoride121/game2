@@ -101,7 +101,7 @@ public class AnimTilePath implements Writable {
     public int getEnergyCost(Unit unit, Level level) {
         ArrayList<Point> path = new ArrayList<>(tiles);
         path.removeFirst();
-        return TilePath.getEnergyCost(unit.type, path, level);
+        return TilePath.getEnergyCost(path, unit.stats, level);
     }
 
     public Point illegalTile(TilePath original) {

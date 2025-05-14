@@ -3,7 +3,7 @@ package level.energy;
 import level.Level;
 import render.GameRenderer;
 import render.Renderable;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 import render.UIColourTheme;
 import render.types.box.UIBox;
@@ -15,9 +15,9 @@ import static render.types.text.UITextLabel.*;
 public class EnergyCostDisplay implements Renderable {
     private final UIBox energyBox;
     private final boolean perTurn;
-    private final FixedTextRenderer energyText = new FixedTextRenderer(null, .6f, RED_TEXT_COLOUR)
+    private final TextRenderer energyText = new TextRenderer(null, .6f, RED_TEXT_COLOUR)
             .setBold(true).setTextAlign(TextAlign.CENTER);
-    private final FixedTextRenderer perTurnText = new FixedTextRenderer(null, .6f, RED_TEXT_COLOUR)
+    private final TextRenderer perTurnText = new TextRenderer(null, .6f, RED_TEXT_COLOUR)
             .setBold(true).setTextAlign(TextAlign.RIGHT);
     private int cost = 0;
 

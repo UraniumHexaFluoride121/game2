@@ -11,7 +11,7 @@ import network.Writable;
 import render.*;
 import render.anim.PowAnimation;
 import render.level.tile.RenderElement;
-import render.types.text.FixedTextRenderer;
+import render.types.text.TextRenderer;
 import render.types.text.TextAlign;
 import render.texture.ImageRenderer;
 import render.texture.ResourceLocation;
@@ -39,7 +39,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     public static final ImageRenderer ENERGY_IMAGE = ImageRenderer.renderImageCentered(new ResourceLocation("icons/energy.png"), true, true);
     public static final String displayName = "Antimatter";
 
-    private final FixedTextRenderer availableText, incomeText, availableChangeText, incomeChangeText;
+    private final TextRenderer availableText, incomeText, availableChangeText, incomeChangeText;
     public HashMap<UnitTeam, Integer> availableMap = new HashMap<>();
     public HashMap<UnitTeam, Integer> incomeMap = new HashMap<>();
     public HashMap<UnitTeam, Integer> costsMap = new HashMap<>();
@@ -47,8 +47,8 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     private UIContainer incomeBox;
     private UIScrollSurface incomeLineItemsScroll, costLineItemsScroll;
     private final ArrayList<UIContainer> incomeLineItems = new ArrayList<>(), costLineItems = new ArrayList<>();
-    private final FixedTextRenderer maxCapacityText = new FixedTextRenderer(null, 0.7f, TEXT_COLOUR_DARK),
-            noCostsText = new FixedTextRenderer(null, 0.6f, TEXT_COLOUR_DARK);
+    private final TextRenderer maxCapacityText = new TextRenderer(null, 0.7f, TEXT_COLOUR_DARK),
+            noCostsText = new TextRenderer(null, 0.6f, TEXT_COLOUR_DARK);
 
     public EnergyManager(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Level level) {
         super(register, buttonRegister, order, buttonOrder, x, y, level);
@@ -57,13 +57,13 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
             incomeMap.put(team, 0);
             costsMap.put(team, 0);
         }
-        availableText = new FixedTextRenderer(null, .7f, UITextLabel.TEXT_COLOUR)
+        availableText = new TextRenderer(null, .7f, UITextLabel.TEXT_COLOUR)
                 .setBold(true).setTextAlign(TextAlign.LEFT);
-        incomeText = new FixedTextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
+        incomeText = new TextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
                 .setBold(true).setTextAlign(TextAlign.LEFT);
-        availableChangeText = new FixedTextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
+        availableChangeText = new TextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
                 .setBold(true).setTextAlign(TextAlign.RIGHT);
-        incomeChangeText = new FixedTextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
+        incomeChangeText = new TextRenderer(null, .7f, UITextLabel.GREEN_TEXT_COLOUR)
                 .setBold(true).setTextAlign(TextAlign.RIGHT);
         Renderable availableChangeTranslated = availableChangeText.translate(8.4f, 1.75f);
         Renderable incomeChangeTranslated = incomeChangeText.translate(8.4f, .15f);
@@ -75,9 +75,9 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                         incomeBox.setEnabled(false);
                     }).toggleMode().tooltip(t -> t.add(13, UITooltip.dark(), displayName + " is used by your units to perform actions. Income is credited to you at the start of each turn. Click this window to see more details.")).setZOrder(-1);
             new RenderElement(r, RenderOrder.LEVEL_UI,
-                    new FixedTextRenderer("Available:", .7f, UITextLabel.TEXT_COLOUR)
+                    new TextRenderer("Available:", .7f, UITextLabel.TEXT_COLOUR)
                             .setBold(true).setTextAlign(TextAlign.LEFT).translate(.5f, 1.75f),
-                    new FixedTextRenderer("Income:", .7f, UITextLabel.TEXT_COLOUR)
+                    new TextRenderer("Income:", .7f, UITextLabel.TEXT_COLOUR)
                             .setBold(true).setTextAlign(TextAlign.LEFT).translate(.5f, .15f),
                     new UIBox(5, 1.2f).setCorner(.25f).setColourTheme(UIColourTheme.DARK_GRAY).translate(4.6f, 1.4f),
                     new UIBox(5, 1.2f).setCorner(.25f).setColourTheme(UIColourTheme.DARK_GRAY).translate(4.6f, -.2f),
@@ -85,7 +85,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                     g -> {
                         GameRenderer.renderTransformed(g, () -> {
                             if (level.hasActiveAction()) {
-                                level.selectedUnit.getActionCost(level.getActiveAction()).ifPresent(cost -> {
+                                level.selectedUnit.stats.getActionCost(level.getActiveAction()).ifPresent(cost -> {
                                     updateAvailableChange(-cost);
                                 });
                             }
@@ -113,8 +113,8 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                 new RenderElement(r2, RenderOrder.LEVEL_UI,
                         new UIBox(10, 13).setColourTheme(UIColourTheme.LIGHT_BLUE_FULLY_OPAQUE_CENTER),
                         new UITextLabel(8, 1, false).setTextCenterBold().updateTextCenter(displayName).translate(.7f, 11.5f),
-                        new FixedTextRenderer("Income:", 0.7f, TEXT_COLOUR_DARK).setBold(true).setTextAlign(TextAlign.LEFT).translate(0.5f, 10.7f),
-                        new FixedTextRenderer("Expenses:", 0.7f, TEXT_COLOUR_DARK).setBold(true).setTextAlign(TextAlign.LEFT).translate(0.5f, 5.7f),
+                        new TextRenderer("Income:", 0.7f, TEXT_COLOUR_DARK).setBold(true).setTextAlign(TextAlign.LEFT).translate(0.5f, 10.7f),
+                        new TextRenderer("Expenses:", 0.7f, TEXT_COLOUR_DARK).setBold(true).setTextAlign(TextAlign.LEFT).translate(0.5f, 5.7f),
                         noCostsText.setItalic(true).setTextAlign(TextAlign.CENTER).translate(5, 4.7f),
                         maxCapacityText.setBold(true).setTextAlign(TextAlign.LEFT).translate(0.5f, 0.6f),
                         g -> {
@@ -209,7 +209,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         });
         level.unitSet.forEach(u -> {
             if (u.stealthMode)
-                u.getPerTurnActionCost(Action.STEALTH).ifPresent(cost -> {
+                u.stats.getPerTurnActionCost(Action.STEALTH).ifPresent(cost -> {
                     costsMap.compute(u.team, (team, i) -> {
                         if (team == thisTeam)
                             LineItemData.addToList(u.type.getName() + " (" + Action.STEALTH.getName() + ")", -cost, expenseList);
@@ -217,7 +217,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                     });
                 });
             if (u.mining)
-                u.getPerTurnActionCost(Action.MINE).ifPresent(cost -> {
+                u.stats.getPerTurnActionCost(Action.MINE).ifPresent(cost -> {
                     incomeMap.compute(u.team, (team, i) -> {
                         if (team == thisTeam)
                             LineItemData.addToList(u.type.getName() + " (" + Action.MINE.getName() + ")", -cost, incomeList);
@@ -240,9 +240,9 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                 incomeLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
                     new RenderElement(r2, RenderOrder.LEVEL_UI,
                             new UIBox(9, 1f).setColourTheme(UIColourTheme.DARK_GRAY).setCorner(0.25f),
-                            new FixedTextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
+                            new TextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
                                     .setBold(true).setTextAlign(TextAlign.LEFT).translate(0.3f, 0.3f),
-                            new FixedTextRenderer(numberText(s.income), 0.7f, numberColour(s.income))
+                            new TextRenderer(numberText(s.income), 0.7f, numberColour(s.income))
                                     .setBold(true).setTextAlign(TextAlign.RIGHT).translate(9 - 0.3f, 0.25f)
                     );
                 }));
@@ -258,9 +258,9 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                 costLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
                     new RenderElement(r2, RenderOrder.LEVEL_UI,
                             new UIBox(9, 1f).setColourTheme(UIColourTheme.DARK_GRAY).setCorner(0.25f),
-                            new FixedTextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
+                            new TextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
                                     .setBold(true).setTextAlign(TextAlign.LEFT).translate(0.3f, 0.3f),
-                            new FixedTextRenderer(numberText(s.income), 0.7f, numberColour(s.income))
+                            new TextRenderer(numberText(s.income), 0.7f, numberColour(s.income))
                                     .setBold(true).setTextAlign(TextAlign.RIGHT).translate(9 - 0.3f, 0.25f)
                     );
                 }));
@@ -285,7 +285,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     public boolean canAfford(Unit unit, Action action, boolean consume) {
         if (unit.removeActionEnergyCost(action))
             return true;
-        Optional<Integer> actionCost = unit.getActionCost(action);
+        Optional<Integer> actionCost = unit.stats.getActionCost(action);
         return actionCost.map(cost -> canAfford(unit.team, cost, consume)).orElse(true);
     }
 
@@ -364,12 +364,12 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     }
 
     private static class NumberChangeText implements Renderable {
-        public final FixedTextRenderer text;
+        public final TextRenderer text;
         public final PowAnimation anim = new PowAnimation(1, .7f);
         public final boolean incomeChange;
 
         public NumberChangeText(int change, boolean incomeChange) {
-            text = new FixedTextRenderer(null, .7f, numberColour(change))
+            text = new TextRenderer(null, .7f, numberColour(change))
                     .setBold(true).setTextAlign(TextAlign.RIGHT);
             this.incomeChange = incomeChange;
             text.updateText(numberText(change));

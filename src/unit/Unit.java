@@ -8,10 +8,7 @@ import foundation.math.ObjPos;
 import foundation.tick.Tickable;
 import level.Level;
 import level.structure.StructureType;
-import level.tile.Tile;
-import level.tile.TileModifier;
-import level.tile.TileSelector;
-import level.tile.TileSet;
+import level.tile.*;
 import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventActionComplete;
 import level.tutorial.sequence.event.EventActionPerform;
@@ -31,7 +28,7 @@ import render.level.ui.UnitDamageNumberUI;
 import render.level.ui.UnitTextUI;
 import render.texture.ImageSequenceGroup;
 import render.types.text.TextAlign;
-import render.types.text.TextRenderer;
+import render.types.text.DynamicTextRenderer;
 import unit.action.Action;
 import unit.action.ActionSelector;
 import unit.action.ActionShapes;
@@ -48,7 +45,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Optional;
 
 import static level.tile.Tile.*;
 import static unit.action.Action.*;
@@ -58,6 +54,7 @@ public class Unit implements Deletable, Tickable {
     public static final Color SHIELD_HP_BACKGROUND_COLOUR = new Color(79, 115, 140);
     public final UnitType type;
     public final UnitTeam team;
+    public StatManager stats;
     public Point pos;
     private int captureProgress = -1;
     public boolean stealthMode = false, visibleInStealthMode = true, mining = false;
@@ -82,11 +79,11 @@ public class Unit implements Deletable, Tickable {
     public float hitPoints, firingTempHP;
     public float shieldHP, shieldFiringTempHP;
     private final ArrayList<UnitTextUI> damageUIs = new ArrayList<>();
-    private final TextRenderer hitPointText = new TextRenderer(() -> MathUtil.floatToString((float) Math.ceil(hitPoints), 0), 0.7f, Color.WHITE)
+    private final DynamicTextRenderer hitPointText = new DynamicTextRenderer(() -> MathUtil.floatToString((float) Math.ceil(hitPoints), 0), 0.7f, Color.WHITE)
             .setTextAlign(TextAlign.RIGHT)
             .setBold(true)
             .setRenderBorder(0.1f, 0.3f, HP_BACKGROUND_COLOUR);
-    private final TextRenderer shieldHitPointText = new TextRenderer(() -> MathUtil.floatToString((float) Math.ceil(shieldHP), 0), 0.7f, Color.WHITE)
+    private final DynamicTextRenderer shieldHitPointText = new DynamicTextRenderer(() -> MathUtil.floatToString((float) Math.ceil(shieldHP), 0), 0.7f, Color.WHITE)
             .setTextAlign(TextAlign.LEFT)
             .setBold(true)
             .setRenderBorder(0.1f, 0.3f, SHIELD_HP_BACKGROUND_COLOUR);
@@ -98,6 +95,7 @@ public class Unit implements Deletable, Tickable {
         this.team = team;
         this.pos = pos;
         this.level = level;
+        stats = new StatManager(this);
         selectableTiles = new TileSet(level.tilesX, level.tilesY);
         hitPoints = type.hitPoints;
         firingTempHP = hitPoints;
@@ -174,7 +172,7 @@ public class Unit implements Deletable, Tickable {
         if (level.selectedUnit == this) {
             if (movePath != null) {
                 if (selector().mouseOverTile != null)
-                    movePath.setEnd(selector().mouseOverTile.pos, level);
+                    movePath.setEnd(selector().mouseOverTile.pos, stats, level);
                 if (!level.hasActiveAction())
                     movePath = null;
                 else
@@ -239,7 +237,7 @@ public class Unit implements Deletable, Tickable {
     public synchronized void renderEnergyCostIndicator(Graphics2D g) {
         if (level == null) return;
         if (level.selectedUnit == this && movePath != null)
-            movePath.renderEnergyCost(g, level);
+            movePath.renderEnergyCost(g, stats, level);
     }
 
     public static final Color MOVE_TILE_BORDER_COLOUR = new Color(107, 184, 248, 192),
@@ -260,7 +258,7 @@ public class Unit implements Deletable, Tickable {
         TutorialManager.acceptEvent(new EventActionSelect(level, action));
         if (action == MOVE) {
             setSelectableTiles(action, FIRE_TILE_BORDER_COLOUR, tilesInMoveRange(level.currentVisibility));
-            movePath = new TilePath(type, selectableTiles, pos, selector());
+            movePath = new TilePath(selectableTiles, pos, selector());
             level.levelRenderer.highlightTileRenderer = new HighlightTileRenderer(action.tileColour, selectableTiles, level);
             level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, MOVE_TILE_BORDER_COLOUR);
             level.levelRenderer.exitActionButton.setEnabled(true);
@@ -298,10 +296,10 @@ public class Unit implements Deletable, Tickable {
             performMiningAction();
             TutorialManager.acceptEvent(new EventActionPerform(level, MINE));
         } else if (action == REPAIR) {
-            setSelectableTiles(action, REPAIR_TILE_BORDER_COLOUR, getRepairTiles(pos));
+            setSelectableTiles(action, REPAIR_TILE_BORDER_COLOUR, stats.getRepairTiles(pos));
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else if (action == RESUPPLY) {
-            setSelectableTiles(action, RESUPPLY_TILE_BORDER_COLOUR, getResupplyTiles(pos));
+            setSelectableTiles(action, RESUPPLY_TILE_BORDER_COLOUR, stats.getResupplyTiles(pos));
             level.levelRenderer.exitActionButton.setEnabled(true);
         } else {
             selectableTiles.clear();
@@ -318,7 +316,7 @@ public class Unit implements Deletable, Tickable {
         }
         if (selectableTiles.contains(tile.pos)) {
             if (action == MOVE) {
-                if (canUnitAppearToBeMoved(tile, level.currentVisibility) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), false)) {
+                if (canUnitAppearToBeMoved(tile, level.currentVisibility) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(stats, level), false)) {
                     AnimTilePath path = movePath.getAnimPath(p -> isIllegalTile(p, level.currentVisibility));
                     level.levelRenderer.energyManager.canAfford(team, path.getEnergyCost(this, level), true);
                     startMove(path, path.illegalTile(movePath));
@@ -353,7 +351,7 @@ public class Unit implements Deletable, Tickable {
     public synchronized void onTileClickedAsClient(Tile tile, Action action) {
         if (selectableTiles.contains(tile.pos)) {
             if (action == MOVE) {
-                if (canUnitAppearToBeMoved(tile, level.currentVisibility) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(level), false)) {
+                if (canUnitAppearToBeMoved(tile, level.currentVisibility) && level.levelRenderer.energyManager.canAfford(team, movePath.getEnergyCost(stats, level), false)) {
                     AnimTilePath path = movePath.getAnimPath(p -> isIllegalTile(p, level.currentVisibility));
                     level.levelRenderer.energyManager.canAfford(team, path.getEnergyCost(this, level), true);
                     MainPanel.client.sendUnitMoveRequest(path, path.illegalTile(movePath), this);
@@ -433,7 +431,7 @@ public class Unit implements Deletable, Tickable {
             MainPanel.client.sendUnitShieldRegenRequest(this);
             return;
         }
-        regenShield(shieldHP + type.shieldRegen);
+        regenShield(shieldHP + stats.shieldRegen());
         if (level.networkState == NetworkState.SERVER)
             level.server.sendUnitShieldRegenPacket(this);
     }
@@ -451,7 +449,7 @@ public class Unit implements Deletable, Tickable {
         if (level.networkState == NetworkState.SERVER) {
             level.server.sendUnitRepairPacket(this, other);
         }
-        other.setHP(other.hitPoints + getRepair());
+        other.setHP(other.hitPoints + stats.repair());
         addPerformedAction(REPAIR);
         other.tileFlash(REPAIR_TILE_FLASH);
     }
@@ -838,7 +836,7 @@ public class Unit implements Deletable, Tickable {
     public TileSet getVisibleTiles() {
         Point renderTilePos = renderTile().pos;
         return TileSet.all(level).m(level, t -> t
-                .tilesInRange(renderTilePos, type.tileViewRangeCostFunction, type.maxViewRange)
+                .tilesInRange(renderTilePos, stats::viewRange, stats.maxViewRange())
                 .add(TileSet.tilesInRadius(renderTilePos, 1, level)));
     }
 
@@ -948,6 +946,7 @@ public class Unit implements Deletable, Tickable {
         actionUI = null;
         movePath = null;
         hitPointText.delete();
+        stats = null;
     }
 
     @Override
@@ -993,14 +992,14 @@ public class Unit implements Deletable, Tickable {
     public TileSet tilesInMoveRange(VisibilityData visibility) {
         return TileSet.all(level).m(level, t -> t
                 .unitFilter(TileModifier.withoutVisibleEnemies(team, level, visibility))
-                .tilesInRange(pos, type.tileMovementCostFunction, type.maxMovement)
+                .tilesInRange(pos, stats::moveCost, stats.maxMovement())
         );
     }
 
     public HashMap<Point, Float> tilesInMoveRangeCostMap(VisibilityData visibility) {
         return selector().tilesInRangeCostMap(pos, TileSet.all(level).m(level, t -> t
                 .unitFilter(TileModifier.withoutVisibleEnemies(team, level, visibility))
-        ), type.tileMovementCostFunction, type.maxMovement);
+        ), stats::moveCost, stats.maxMovement());
     }
 
     public float getDamageAgainstType(DamageType damageType) {
@@ -1017,33 +1016,11 @@ public class Unit implements Deletable, Tickable {
         return new FiringData(new UnitData(this), new UnitData(otherUnit), weapons, level);
     }
 
-    public Optional<Integer> getActionCost(Action action) {
-        return type.getActionCost(action);
-    }
-
-    public Optional<Integer> getPerTurnActionCost(Action action) {
-        return type.getPerTurnActionCost(action);
-    }
-
     public String getActionCostText(Action a) {
         if (a == MOVE) {
             int fixedCost = (int) (type.movementFixedCost()), maxCost = fixedCost + (int) Math.ceil(type.maxMovement * type.movementCostMultiplier());
             return (fixedCost + 1) + " - " + maxCost;
         }
-        return String.valueOf(getActionCost(a).orElse(0));
-    }
-
-    public TileSet getRepairTiles(Point pos) {
-        return TileSet.tilesInRadius(pos, 1, 1, level)
-                .m(level, t -> t.unitFilter(TileModifier.hasAlliedUnit(team, level).and(u -> u.hitPoints < u.type.hitPoints)));
-    }
-
-    public TileSet getResupplyTiles(Point pos) {
-        return TileSet.tilesInRadius(pos, 1, 1, level)
-                .m(level, t -> t.unitFilter(TileModifier.hasAlliedUnit(team, level).and(u -> u.getAmmoWeapon() != null && u.getAmmoWeapon().ammo < u.getAmmoWeapon().ammoCapacity)));
-    }
-
-    public float getRepair() {
-        return type.repair;
+        return String.valueOf(stats.getActionCost(a).orElse(0));
     }
 }
