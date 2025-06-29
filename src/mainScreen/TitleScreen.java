@@ -9,16 +9,14 @@ import level.TeamSpawner;
 import level.tutorial.TutorialLevel;
 import level.tutorial.TutorialLevelData;
 import network.NetworkState;
-import render.GameRenderer;
-import render.RenderOrder;
-import render.Renderable;
-import render.UIColourTheme;
+import render.*;
 import render.level.map.MapUI;
 import render.level.tile.RenderElement;
 import render.level.ui.TooltipRenderer;
 import render.save.UISaveBox;
 import render.texture.ResourceLocation;
 import render.types.box.UIBox;
+import render.types.box.UIDisplayBoxRenderElement;
 import render.types.container.UIContainer;
 import render.types.container.UIElementScrollSurface;
 import render.types.container.UIScrollSurface;
@@ -76,7 +74,7 @@ public class TitleScreen implements Renderable, InputReceiver {
     public UISaveBox<GameSave> loadBox;
 
     public UIEnumSelector<BotDifficulty> botDifficultySelector;
-    public UIButton toggleFoW;
+    public UIButton toggleFoW, showFiringAnim;
 
     public UIContainer levelEditorContainer;
     public UINumberSelector levelEditorWidthSelector, levelEditorHeightSelector, levelEditorPlayerSelector;
@@ -95,7 +93,7 @@ public class TitleScreen implements Renderable, InputReceiver {
         titleScreenImage = Renderable.renderImage(new ResourceLocation("title_screen.png"), false, true, 60, true);
         new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, () -> System.exit(0))
                 .setText("Quit").setColourTheme(UIColourTheme.DEEP_RED).setBold()
-                .tooltip(t -> t.add(6, UITooltip.light(), "Exit to desktop"));
+                .tooltip(t -> t.add(6, AbstractUITooltip.light(), "Exit to desktop"));
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BACKGROUND, titleScreenImage);
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(10 + MAIN_BUTTON_SPACING * 2, MAIN_BUTTON_B0X_HEIGHT).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(Renderable.right() - 15 - MAIN_BUTTON_SPACING, MAIN_BUTTON_Y_OFFSET));
         tutorialButton = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
@@ -108,7 +106,7 @@ public class TitleScreen implements Renderable, InputReceiver {
         }).setOnDeselect(() -> {
                     tutorialContainer.setEnabled(false);
                 }).setText("Tutorial").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED)
-                .tooltip(t -> t.add(11, UITooltip.light(), "Learn the game through tutorials. Highly recommended for beginners."));
+                .tooltip(t -> t.add(11, AbstractUITooltip.light(), "Learn the game through tutorials. Highly recommended for beginners."));
 
         newGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, mainButtonHeight(1), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
@@ -117,7 +115,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                     button.deselect();
             }
         }).setText("Singleplayer").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED)
-                .tooltip(t -> t.add(9, UITooltip.light(), "Start new singleplayer campaign. Coming soon."));
+                .tooltip(t -> t.add(9, AbstractUITooltip.light(), "Start new singleplayer campaign. Coming soon."));
 
         multiplayer = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, mainButtonHeight(2), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
@@ -133,7 +131,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                     startLanGame.setEnabled(false);
                     gameCannotBeStarted.setEnabled(false);
                 }).setText("Multiplayer").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED)
-                .tooltip(t -> t.add(9, UITooltip.light(), "Start new local or online multiplayer game"));
+                .tooltip(t -> t.add(9, AbstractUITooltip.light(), "Start new local or online multiplayer game"));
 
         connectToLan = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, mainButtonHeight(3), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
@@ -147,7 +145,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                     connectContainer.setEnabled(false);
                     updateColourSelectorVisibility();
                 }).setText("Join Game").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED)
-                .tooltip(t -> t.add(9, UITooltip.light(), "Join an existing online game on the local network"));
+                .tooltip(t -> t.add(9, AbstractUITooltip.light(), "Join an existing online game on the local network"));
 
         loadGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, mainButtonHeight(4), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
@@ -162,7 +160,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                     loadContainer.setEnabled(false);
                     updateLoadButtons();
                 }).setText("Load Game").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED)
-                .tooltip(t -> t.add(9, UITooltip.light(), "Load a previously saved game"));
+                .tooltip(t -> t.add(9, AbstractUITooltip.light(), "Load a previously saved game"));
 
         levelEditorButton = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 15, mainButtonHeight(5), 10, MAIN_BUTTON_HEIGHT, 1.2f, true, () -> {
@@ -174,7 +172,7 @@ public class TitleScreen implements Renderable, InputReceiver {
         }).setOnDeselect(() -> {
                     levelEditorContainer.setEnabled(false);
                 }).setText("Map Editor").setBold().noDeselect().setColourTheme(UIColourTheme.GREEN_SELECTED)
-                .tooltip(t -> t.add(9, UITooltip.light(), "Create custom maps for use in multiplayer mode"));
+                .tooltip(t -> t.add(9, AbstractUITooltip.light(), "Create custom maps for use in multiplayer mode"));
 
         allMainButtons.add(tutorialButton);
         allMainButtons.add(newGame);
@@ -187,8 +185,8 @@ public class TitleScreen implements Renderable, InputReceiver {
             new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
                     new UIBox(10, 14).setColourTheme(LIGHT_BLUE_TRANSPARENT_CENTER),
                     new UITextLabel(10.3f, 1, true).setTextLeftBold().updateTextLeft("Select tutorial:").translate(-0.3f, 14.5f));
-            UIMLTextBoxRenderElement textBox = new UIMLTextBoxRenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS, -10, 2, 8, 10, 0.7f, TextAlign.LEFT, box -> box.setColourTheme(LIGHT_BLUE_OPAQUE_CENTER), false);
-            textBox.setEnabled(false);
+            UIDisplayBoxRenderElement textBox = new UIDisplayBoxRenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS, -10, 2, 8, 10, box -> box.setColourTheme(LIGHT_BLUE_BOX_DARK), false);
+            textBox.addText(0.7f, HorizontalAlign.LEFT, null).setEnabled(false);
             UIButton startButton = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 1.5f, -2.5f, 7, 1.5f, 1.2f, false)
                     .setBold().setText("Start").setClickEnabled(false).setColourTheme(GRAYED_OUT).setOnClick(() -> {
                         MainPanel.startNewLevel(selectedTutorialLevel, () -> loadTutorialLevel(MainPanel.tutorialMaps.gameSaves.get(selectedTutorialLevel.saveFileName), selectedTutorialLevel.levelData));
@@ -205,7 +203,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                             other.deselect();
                     });
                     textBox.setEnabled(true);
-                    textBox.setText(level.description);
+                    textBox.box.setText(level.description);
                     startButton.setClickEnabled(true).setColourTheme(LIGHT_BLUE);
                     selectedTutorialLevel = level;
                 });
@@ -216,7 +214,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             enterIPBox = new UITextInputBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                     Renderable.right() - 36, 14, 16, 2, .7f, true, -1,
                     InputType::isIPChar);
-            enterIPBox.tooltip(t -> t.add(10, UITooltip.light(), "Enter the local IP address of the device hosting the game"));
+            enterIPBox.tooltip(t -> t.add(10, AbstractUITooltip.light(), "Enter the local IP address of the device hosting the game"));
             enterIPBox.setBold().setColourTheme(UIColourTheme.GREEN_SELECTED);
             enterIPLabel = new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
                     new UITextLabel(7.5f, 1, false).setTextCenterBold()
@@ -269,7 +267,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                     updateMultiplayerConnectButtons();
                 }
             }
-        }).setBold().setEnabled(false).tooltip(t -> t.add(10, UITooltip.light(), null));
+        }).setBold().setEnabled(false).tooltip(t -> t.add(10, AbstractUITooltip.light(), null));
         startLanGame = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                 Renderable.right() - 37 + 9, 3.5f - 2, 8, 1.5f, 0.7f, false, () -> {
             if (multiplayerTabs.lastTabSelected()) {
@@ -281,7 +279,7 @@ public class TitleScreen implements Renderable, InputReceiver {
                 multiplayerTabs.selectTab(multiplayerTabs.getSelectedTab() + 1);
                 updateMultiplayerConnectButtons();
             }
-        }).setBold().setEnabled(false).tooltip(t -> t.add(13, UITooltip.light(), null));
+        }).setBold().setEnabled(false).tooltip(t -> t.add(13, AbstractUITooltip.light(), null));
         gameCannotBeStarted = new UITextDisplayBox(renderer, RenderOrder.TITLE_SCREEN_BUTTONS,
                 Renderable.right() - 37 + 1, 3.5f - 2, 16, 1.5f, 0.7f)
                 .setBold().setEnabled(false).setColourTheme(UIColourTheme.DEEP_RED);
@@ -294,10 +292,10 @@ public class TitleScreen implements Renderable, InputReceiver {
                                 structureGenerationSettings.setEnabled(false);
                                 widthSelector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                                         1.75f, 9f, 1f, 1.5f, Level.MIN_WIDTH, Level.MAX_WIDTH, 20).setCorner(0.35f)
-                                        .setOnChanged(() -> playerBoxes.verifyTeams()).tooltip(t -> t.add(-1, UITooltip.light(), "Map width"));
+                                        .setOnChanged(() -> playerBoxes.verifyTeams()).tooltip(t -> t.add(-1, AbstractUITooltip.light(), "Map width"));
                                 heightSelector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                                         1.75f, 6f, 1f, 1.5f, Level.MIN_HEIGHT, Level.MAX_HEIGHT, 12).setCorner(0.35f)
-                                        .setOnChanged(() -> playerBoxes.verifyTeams()).tooltip(t -> t.add(-1, UITooltip.light(), "Map height"));
+                                        .setOnChanged(() -> playerBoxes.verifyTeams()).tooltip(t -> t.add(-1, AbstractUITooltip.light(), "Map height"));
                                 new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
                                         new UITextLabel(6f, 1, false, 0, 0.8f).setTextCenterBold()
                                                 .updateTextCenter("Generation").translate(9.2f, 10.5f),
@@ -309,8 +307,8 @@ public class TitleScreen implements Renderable, InputReceiver {
                                                 .updateTextLeft("Enter seed:").translate(1.5f, 4f)
                                 );
                                 new RenderElement(r2, RenderOrder.TITLE_SCREEN_BACKGROUND,
-                                        new UIBox(widthSelector.totalWidth() + 1.5f, 6.3f).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER).translate(1, 5.5f),
-                                        new UIBox(16 - (widthSelector.totalWidth() + 1.5f) - 1, 6.3f).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER).translate(1 + widthSelector.totalWidth() + 1.5f + 1, 5.5f)
+                                        new UIBox(widthSelector.totalWidth() + 1.5f, 6.3f).setColourTheme(LIGHT_BLUE_BOX_DARK).translate(1, 5.5f),
+                                        new UIBox(16 - (widthSelector.totalWidth() + 1.5f) - 1, 6.3f).setColourTheme(LIGHT_BLUE_BOX_DARK).translate(1 + widthSelector.totalWidth() + 1.5f + 1, 5.5f)
                                 );
                                 editStructures = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                                         9f, 9f, 7f, 1f, 0.7f, true).setBoxCorner(0.35f)
@@ -323,23 +321,23 @@ public class TitleScreen implements Renderable, InputReceiver {
 
                                 enterSeedBox = new UITextInputBox(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                                         2, 1f, 14, 2.5f, 1.5f, true, 15, InputType::isDigit);
-                                enterSeedBox.setColourTheme(GREEN_SELECTED).setBold().tooltip(t -> t.add(12, UITooltip.light(), "Enter a number to use as a seed. The map generated by a given seed is deterministic. Certain game settings can, however, alter map generation. Leave blank for a random seed."));
+                                enterSeedBox.setColourTheme(GREEN_SELECTED).setBold().tooltip(t -> t.add(12, AbstractUITooltip.light(), "Enter a number to use as a seed. The map generated by a given seed is deterministic. Certain game settings can, however, alter map generation. Leave blank for a random seed."));
                             });
                     UIContainer customContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0).setEnabled(false);
                     customContainer.addRenderables((r2, b2) -> {
                         RenderElement noMapsAvailableText = new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
                                 new TextRenderer("No custom maps available", 0.7f, UITextLabel.TEXT_COLOUR)
-                                        .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 11),
+                                        .setItalic(true).setTextAlign(HorizontalAlign.CENTER).translate(-13.5f + 12 / 2f, 11),
                                 new TextRenderer("Use the Map Editor to create", 0.7f, UITextLabel.TEXT_COLOUR)
-                                        .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 9),
+                                        .setItalic(true).setTextAlign(HorizontalAlign.CENTER).translate(-13.5f + 12 / 2f, 9),
                                 new TextRenderer("custom maps", 0.7f, UITextLabel.TEXT_COLOUR)
-                                        .setItalic(true).setTextAlign(TextAlign.CENTER).translate(-13.5f + 12 / 2f, 8)
+                                        .setItalic(true).setTextAlign(HorizontalAlign.CENTER).translate(-13.5f + 12 / 2f, 8)
                         );
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS,
                                 new UITextLabel(12.3f, 1, true).setTextLeftBold()
                                         .updateTextLeft("Select custom map:").setLeftOffset(0.1f)
                                         .translate(-13.7f, 12.8f),
-                                new UIBox(16, 11).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER).translate(1, 0.7f)
+                                new UIBox(16, 11).setColourTheme(LIGHT_BLUE_BOX_DARK).translate(1, 0.7f)
                         );
                         loadCustomBox = new UISaveBox<>(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                                 -13.5f, 1.5f, 12, 11, 1.5f, MainPanel.mapSaves)
@@ -364,11 +362,11 @@ public class TitleScreen implements Renderable, InputReceiver {
                     UIButton seed = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                             1, 12.5f, 7.5f, 1.5f, 1f, true)
                             .setColourTheme(GREEN_SELECTED).noDeselect().select().setText("Generated").setBold()
-                            .tooltip(t -> t.add(-1, UITooltip.light(), "Use a procedurally generated map"));
+                            .tooltip(t -> t.add(-1, AbstractUITooltip.light(), "Use a procedurally generated map"));
                     UIButton custom = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                             9.5f, 12.5f, 7.5f, 1.5f, 1f, true)
                             .setColourTheme(GREEN_SELECTED).noDeselect().setText("Custom").setBold()
-                            .tooltip(t -> t.add(-1, UITooltip.light(), "Use a custom map created in the Map Editor"));
+                            .tooltip(t -> t.add(-1, AbstractUITooltip.light(), "Use a custom map created in the Map Editor"));
                     seed.setOnClick(() -> {
                         custom.deselect();
                         seedContainer.setEnabled(true);
@@ -388,13 +386,13 @@ public class TitleScreen implements Renderable, InputReceiver {
                     playerBoxScrollWindow = new UIScrollSurface(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, 0.5f, 17, 14, (r2, b2) -> {
                         playerBoxes = new UIPlayerBoxes(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0);
                     }).addScrollBar(0.4f, 0.4f, -0.2f);
-                    playerShipSettingsContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, -20, 0, (r2, b2) -> {
+                    playerShipSettingsContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, -20, 0).addRenderables((r2, b2) -> {
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(18, Renderable.top() - TOP_MARGIN)
-                                .setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
+                                .setColourTheme(LIGHT_BLUE_BOX_DARK)
                                 .centerOnly())
                                 .translate(0, 4);
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS, new UIBox(18, Renderable.top() - TOP_MARGIN)
-                                .setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
+                                .setColourTheme(LIGHT_BLUE_BOX_DARK)
                                 .borderOnly())
                                 .translate(0, 4).setZOrder(1);
                         new UIScrollSurface(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 4, 17, Renderable.top() - TOP_MARGIN, (r3, b3) -> {
@@ -403,8 +401,8 @@ public class TitleScreen implements Renderable, InputReceiver {
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 2, 8.5f, 1.5f, 0.9f, false, () -> {
                             clipboardPreset = playerShipSettings.getCurrentPreset();
                             boolean canPaste = clipboardPreset != null;
-                            pasteSettingsButton.setClickEnabled(canPaste).setColourTheme(canPaste ? LIGHT_BLUE_OPAQUE_CENTER_LIGHT : GRAYED_OUT_OPAQUE);
-                        }).setText("Copy Settings").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
+                            pasteSettingsButton.setClickEnabled(canPaste).setColourTheme(canPaste ? LIGHT_BLUE_BOX : GRAYED_OUT_OPAQUE);
+                        }).setText("Copy Settings").setBold().setColourTheme(LIGHT_BLUE_BOX);
                         pasteSettingsButton = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 9.5f, 2, 8.5f, 1.5f, 0.9f, false, () -> {
                             if (clipboardPreset == null)
                                 return;
@@ -414,35 +412,51 @@ public class TitleScreen implements Renderable, InputReceiver {
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0, 18, 1.5f, 0.9f, false, () -> {
                             playerShipSettings.loadPreset(playerShipSettings.getCurrentPreset());
                             playerBoxes.verifyTeams();
-                        }).setText("Copy settings to all players").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
+                        }).setText("Copy settings to all players").setBold().setColourTheme(LIGHT_BLUE_BOX);
                         new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, -2, 18, 1.5f, 0.9f, false, () -> {
                             playerShipSettings.loadPreset(DEFAULT_PRESET);
                             playerBoxes.verifyTeams();
-                        }).setText("Reset all settings to default").setBold().setColourTheme(LIGHT_BLUE_OPAQUE_CENTER_LIGHT);
+                        }).setText("Reset all settings to default").setBold().setColourTheme(LIGHT_BLUE_BOX);
                     }).setEnabled(false);
                 }).addTab(4, "Gameplay", (r, b) -> {
                     new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS,
-                            new UITextLabel(7f, 1, false).setTextCenterBold()
+                            new UITextLabel(7f, 1, false, 0, 0.7f).setTextCenterBold()
                                     .updateTextCenter("Bot Difficulty:")
                                     .translate(0.7f, 13.5f),
-                            new UITextLabel(7f, 1, false).setTextCenterBold()
+                            new UITextLabel(7f, 1, false, 0, 0.7f).setTextCenterBold()
                                     .updateTextCenter("Fog of War:")
-                                    .translate(0.7f, 12f)
+                                    .translate(0.7f, 13.5f - 1.5f * 1),
+                            new UITextLabel(7f, 1, false, 0, 0.7f).setTextCenterBold()
+                                    .updateTextCenter("Firing Animation:")
+                                    .translate(0.7f, 13.5f - 1.5f * 2)
                     );
                     botDifficultySelector = new UIEnumSelector<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                             9, 13.5f, 1f, 4.5f, BotDifficulty.class, BotDifficulty.VERY_EASY).setCorner(0.3f)
-                            .tooltip(t -> t.add(-1, UITooltip.light(), "Sets the difficulty for all bots"));
+                            .tooltip(t -> t.add(-1, AbstractUITooltip.light(), "Sets the difficulty for all bots"));
                     toggleFoW = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                            9, 12f, botDifficultySelector.totalWidth(), 1f, 0.8f, true)
-                            .setText("Enabled").setColourTheme(GREEN_SELECTED).noDeselect()
-                            .select().setBold().setBoxCorner(0.3f).setOnClick(() -> {
-                                toggleFoW.setColourTheme(GREEN_SELECTED);
-                                toggleFoW.setText("Enabled");
-                            }).setOnDeselect(() -> {
-                                toggleFoW.setColourTheme(DEEP_RED);
-                                toggleFoW.setText("Disabled");
-                            }).toggleMode()
-                            .tooltip(t -> t.add(-1, UITooltip.light(), "If disabled, tiles will always be visible"));
+                            9, 13.5f - 1.5f * 1, botDifficultySelector.totalWidth(), 1f, 0.8f, false)
+                            .noDeselect().setBold().setBoxCorner(0.3f).setOnClick(() -> {
+                                if (toggleFoW.getText().equals("Enabled")) {
+                                    toggleFoW.setColourTheme(DEEP_RED);
+                                    toggleFoW.setText("Disabled");
+                                } else {
+                                    toggleFoW.setColourTheme(ALWAYS_GREEN_SELECTED);
+                                    toggleFoW.setText("Enabled");
+                                }
+                            }).tooltip(t -> t.add(-1, AbstractUITooltip.light(), "If disabled, tiles will always be visible"));
+                    toggleFoW.select();
+                    showFiringAnim = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
+                            9, 13.5f - 1.5f * 2, botDifficultySelector.totalWidth(), 1f, 0.8f, false)
+                            .noDeselect().setBold().setBoxCorner(0.3f).setOnClick(() -> {
+                                if (showFiringAnim.getText().equals("Enabled")) {
+                                    showFiringAnim.setColourTheme(DEEP_RED);
+                                    showFiringAnim.setText("Disabled");
+                                } else {
+                                    showFiringAnim.setColourTheme(ALWAYS_GREEN_SELECTED);
+                                    showFiringAnim.setText("Enabled");
+                                }
+                            }).tooltip(t -> t.add(-1, AbstractUITooltip.light(), "If disabled, the animation when firing will not be shown"));
+                    showFiringAnim.select();
                 }).setOnNewTabSelected(() -> {
                     updateMultiplayerConnectButtons();
                     editStructures.deselect();
@@ -466,7 +480,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             UIContainer mapViewContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                     -28.5f, 1.5f).addRenderables((r2, b2) -> {
                 new RenderElement(r2, RenderOrder.TITLE_SCREEN_BACKGROUND,
-                        new UIBox(25, 16).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
+                        new UIBox(25, 16).setColourTheme(LIGHT_BLUE_BOX_DARK)
                 );
             });
             loadBox = new UISaveBox<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
@@ -527,7 +541,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             UIContainer mapViewContainer = new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                     -40, 1).addRenderables((r2, b2) -> {
                 new RenderElement(r2, RenderOrder.TITLE_SCREEN_BACKGROUND,
-                        new UIBox(25, 16).setColourTheme(LIGHT_BLUE_OPAQUE_CENTER)
+                        new UIBox(25, 16).setColourTheme(LIGHT_BLUE_BOX_DARK)
                 );
             });
             mapSaveBox = new UISaveBox<>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,

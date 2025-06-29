@@ -5,7 +5,7 @@ import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
@@ -14,7 +14,7 @@ import render.level.tile.RenderElement;
 import java.util.function.UnaryOperator;
 
 public class UIClickBlockingBox extends RenderElement implements RegisteredButtonInputReceiver {
-    private final StaticHitBox hitBox;
+    private final HitBox hitBox;
     private UnaryOperator<ObjPos> posTransformer = p -> p;
     private ButtonRegister buttonRegister;
     private final ButtonOrder buttonOrder;
@@ -26,7 +26,7 @@ public class UIClickBlockingBox extends RenderElement implements RegisteredButto
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
-        hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
+        hitBox = HitBox.createFromOriginAndSize(x, y, width, height);
     }
 
     public UIClickBlockingBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, UnaryOperator<UIBox> boxTransformer) {
@@ -36,7 +36,7 @@ public class UIClickBlockingBox extends RenderElement implements RegisteredButto
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
-        hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
+        hitBox = HitBox.createFromOriginAndSize(x, y, width, height);
     }
 
     public UIClickBlockingBox setPosTransformer(UnaryOperator<ObjPos> posTransformer) {

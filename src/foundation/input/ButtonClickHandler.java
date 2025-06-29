@@ -11,7 +11,7 @@ public class ButtonClickHandler implements ButtonInputReceiver, Deletable {
     public boolean toggle = false;
     private boolean lastSelected = false;
 
-    private final InputType clickInput;
+    public final InputType clickInput;
 
     private Runnable onClick = () -> lastSelected = true, onDeselect = () -> lastSelected = false;
 

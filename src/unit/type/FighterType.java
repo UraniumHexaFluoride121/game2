@@ -8,35 +8,33 @@ import unit.action.Action;
 import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
-import unit.weapon.*;
+import unit.stats.Modifier;
+import unit.stats.ModifierCategory;
+import unit.stats.modifiers.MovementModifier;
+import unit.weapon.ProjectileType;
+import unit.weapon.WeaponTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static unit.info.AttributeData.*;
+import static unit.stats.modifiers.WeaponDamageModifier.*;
 
 public class FighterType extends UnitType {
     public static final FighterType
             FIGHTER = new FighterType("fighter", "Fighter", 8, 7f, 3.8f, new Action[]{
             Action.FIRE, Action.MOVE
-    }, 1, 15, list -> {
-        WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA, WeaponType.PLASMA);
-        float s = 5.3f;
-        w.addData("fighter", new AttackData(3.8f, s));
-        w.addData("bomber", new AttackData(3.2f, s));
-        w.addData("scout", new AttackData(3.9f, s));
-        w.addData("corvette", new AttackData(1.8f, s));
-        w.addData("defender", new AttackData(1.6f, s));
-        w.addData("artillery", new AttackData(2.1f, s));
-        w.addData("supply", new AttackData(1.6f, s));
-        w.addData("cruiser", new AttackData(1.0f, s));
-        w.addData("battlecruiser", new AttackData(1.0f, s));
-        w.addData("miner", new AttackData(1.2f, s));
+    }, 1, 15, 1, 1, 3, list -> {
+        WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA);
+        w
+                .classModifier(ShipClass.FIGHTER, STRENGTH_2)
+                .classModifier(ShipClass.CORVETTE, NORMAL_STRENGTH)
+                .classModifier(ShipClass.CRUISER, WEAKNESS_2)
+                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_3);
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.NONE_LOW);
@@ -51,39 +49,20 @@ public class FighterType extends UnitType {
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_FIGHTER, ANTI_SHIELD,
             CARRIER_LOADING,
             INEFFECTIVE_AGAINST_LARGE
-    }, FiringRenderer.THREE_UNITS, "Basic fighter-class unit. Excels in dogfights with other fighter-class units, as wll as taking down enemy shields. " +
+    }, FiringRenderer.THREE_UNITS, "Basic fighter-class unit. Excels in dogfights with other fighter-class units. " +
             "Its high speed makes this unit great for capturing structures, and when combined with its above average view distance, it makes for a decent improvised scout unit. " +
             "It is, however, mostly useless for destroying larger units."),
 
     BOMBER = new FighterType("bomber", "Bomber", 7, 6f, 3f, new Action[]{
             Action.FIRE, Action.MOVE
-    }, 3, 15, list -> {
-        WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BOMBER_MISSILE, WeaponType.EXPLOSIVE).consumeAmmo(1).runAnim();
-        float s1 = 0.4f;
-        w1.addData("fighter", new AttackData(0.8f, s1));
-        w1.addData("bomber", new AttackData(0.7f, s1));
-        w1.addData("scout", new AttackData(0.6f, s1));
-        w1.addData("corvette", new AttackData(2.7f, s1));
-        w1.addData("defender", new AttackData(2.6f, s1));
-        w1.addData("artillery", new AttackData(2.8f, s1));
-        w1.addData("supply", new AttackData(2.5f, s1));
-        w1.addData("cruiser", new AttackData(4.6f, s1));
-        w1.addData("battlecruiser", new AttackData(4.4f, s1));
-        w1.addData("miner", new AttackData(4.9f, s1));
-        list.add(w1);
-        WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BOMBER_PLASMA, WeaponType.PLASMA);
-        float s2 = 5.0f;
-        w2.addData("fighter", new AttackData(3.2f, s2));
-        w2.addData("bomber", new AttackData(2.6f, s2));
-        w2.addData("scout", new AttackData(3.4f, s2));
-        w2.addData("corvette", new AttackData(1.6f, s2));
-        w2.addData("defender", new AttackData(1.5f, s2));
-        w2.addData("artillery", new AttackData(1.9f, s2));
-        w2.addData("supply", new AttackData(1.5f, s2));
-        w2.addData("cruiser", new AttackData(1.0f, s2));
-        w2.addData("battlecruiser", new AttackData(1.0f, s2));
-        w2.addData("miner", new AttackData(1.2f, s2));
-        list.add(w2);
+    }, 3, 15, 1, 1, 4, list -> {
+        WeaponTemplate w = new WeaponTemplate(ProjectileType.BOMBER_MISSILE).runAnim();
+        w
+                .classModifier(ShipClass.FIGHTER, WEAKNESS_2)
+                .classModifier(ShipClass.CORVETTE, NORMAL_STRENGTH)
+                .classModifier(ShipClass.CRUISER, STRENGTH_1)
+                .classModifier(ShipClass.CAPITAL_SHIP, STRENGTH_2);
+        list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.HIGH);
@@ -96,26 +75,21 @@ public class FighterType extends UnitType {
     }, new AttributeData[]{
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_CAPITAL_SHIP_MISSILES,
             CARRIER_LOADING,
-            MAIN_GUN_LIMITED_AMMO
+            LIMITED_AMMO
     }, FiringRenderer.THREE_UNITS, "This special variant of the Fighter unit comes equipped with missiles that deal high damage against cruiser-class units and capital ships. " +
-            "It only has an ammo capacity of one, making resupply an especially important consideration when using this unit. Besides the missile weapon, it has a slightly weaker version of " +
-            "the plasma gun that the regular Fighter has, as well as being slightly slower and more vulnerable than the regular Fighter."),
+            "It only has an ammo capacity of one, making resupply an especially important consideration when using this unit. Compared to the regular Fighter, " +
+            "it has less view distance and is more vulnerable than the regular Fighter.")
+            .modify(u -> u.setAmmoCapacity(1)), //Change unit description if ammo capacity is changed
 
     SCOUT = new FighterType("scout", "Scout", 5, 8f, 5f, new Action[]{
             Action.FIRE, Action.MOVE, Action.STEALTH
-    }, 1, 15, list -> {
-        WeaponTemplate w = new WeaponTemplate(ProjectileType.SCOUT_PLASMA, WeaponType.PLASMA);
-        float s = 2.8f;
-        w.addData("fighter", new AttackData(1.8f, s));
-        w.addData("bomber", new AttackData(1.6f, s));
-        w.addData("scout", new AttackData(2.2f, s));
-        w.addData("corvette", new AttackData(0.4f, s));
-        w.addData("defender", new AttackData(0.4f, s));
-        w.addData("artillery", new AttackData(0.5f, s));
-        w.addData("supply", new AttackData(0.4f, s));
-        w.addData("cruiser", new AttackData(0.3f, s));
-        w.addData("battlecruiser", new AttackData(0.4f, s));
-        w.addData("miner", new AttackData(0.4f, s));
+    }, 1, 15, 1, 1, 2, list -> {
+        WeaponTemplate w = new WeaponTemplate(ProjectileType.SCOUT_PLASMA);
+        w
+                .classModifier(ShipClass.FIGHTER, STRENGTH_2)
+                .classModifier(ShipClass.CORVETTE, NORMAL_STRENGTH)
+                .classModifier(ShipClass.CRUISER, WEAKNESS_2)
+                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_3);
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.NONE);
@@ -131,33 +105,18 @@ public class FighterType extends UnitType {
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, HIGH_VIEW_RANGE,
             CARRIER_LOADING, STEALTH_INSTEAD_OF_CAPTURE,
             INEFFECTIVE_AGAINST_ALL, LOW_HP
-    }, FiringRenderer.THREE_UNITS, "The scout is a purpose-built unit that specialises in reconnaissance. It has exceptional movement speed and view range, and comes equipped with the stealth ability, " +
+    }, FiringRenderer.THREE_UNITS, "The scout is a purpose-built unit that specialises in reconnaissance. It has exceptional " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + " and view range, and comes equipped with the stealth ability, " +
             "allowing the unit to stay hidden while performing reconnaissance. While it does have weapons, their firepower leaves much to be desired, and are not intended for frontline use. Can be used in a pinch to " +
-            "take down shields, or to destroy a low HP enemy.")
+            "destroy low HP enemies.")
             .modify(UnitType::noCapture);
 
-    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
+    FighterType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, minRange, maxRange, damage, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
     }
 
     @Override
-    public float damageReduction(TileType type) {
-        return switch (type) {
-            case EMPTY -> 1f;
-            case NEBULA -> 0.88f;
-            case DENSE_NEBULA -> 0.82f;
-            case ASTEROIDS -> 0.72f;
-        };
-    }
-
-    @Override
-    public float moveCost(TileType type) {
-        return switch (type) {
-            case EMPTY -> 1f;
-            case NEBULA -> 1.8f;
-            case DENSE_NEBULA -> 2f;
-            case ASTEROIDS -> 2.4f;
-        };
+    public void addModifiers(ArrayList<Modifier> list) {
+        list.add(MovementModifier.FAST_ASTEROID_FIELDS);
     }
 
     @Override
@@ -178,11 +137,6 @@ public class FighterType extends UnitType {
     @Override
     public float movementCostMultiplier() {
         return 1;
-    }
-
-    @Override
-    public float movementFixedCost() {
-        return 0;
     }
 
     @Override

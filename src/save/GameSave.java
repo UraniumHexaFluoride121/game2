@@ -27,6 +27,8 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
     public final int levelWidth, levelHeight, turn;
     public final HashSet<UnitData> unitData = new HashSet<>();
     public final HashMap<UnitTeam, PlayerTeam> teams, initialTeams;
+    public final HashMap<UnitTeam, Float> destroyedUnitsDamage;
+    public final HashMap<UnitTeam, Integer> destroyedUnits;
     public final UnitTeam activeTeam;
     public final HashMap<UnitTeam, Integer> availableMap;
     public final HashMap<UnitTeam, Boolean> bots;
@@ -64,6 +66,8 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
         turn = level.getTurn();
         teams = new HashMap<>(level.playerTeam);
         initialTeams = new HashMap<>(level.initialPlayerTeams);
+        destroyedUnitsDamage = new HashMap<>(level.destroyedUnitsDamage);
+        destroyedUnits = new HashMap<>(level.destroyedUnitsByTeam);
         level.unitSet.forEach(u -> unitData.add(new UnitData(u)));
         activeTeam = level.getActiveTeam();
         availableMap = new HashMap<>(level.levelRenderer.energyManager.availableMap);
@@ -128,6 +132,8 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
                 level.botHandlerMap.get(team).loadDestroyedUnits(botDestroyedUnitCount.get(team));
         }
         level.initialPlayerTeams = new HashMap<>(initialTeams);
+        level.destroyedUnitsDamage = new HashMap<>(destroyedUnitsDamage);
+        level.destroyedUnitsByTeam = new HashMap<>(destroyedUnits);
     }
 
     @Override

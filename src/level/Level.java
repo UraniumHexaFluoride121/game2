@@ -27,6 +27,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     public static final int MIN_WIDTH = 8, MAX_WIDTH = 45, MIN_HEIGHT = 6, MAX_HEIGHT = 25;
@@ -36,6 +39,9 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     public Unit selectedUnit;
     public HashMap<UnitTeam, Point> basePositions = new HashMap<>();
     private UnitTeam activeTeam = null, thisTeam = null, lastActiveNonBot = null;
+
+    public HashMap<UnitTeam, Float> destroyedUnitsDamage = new HashMap<>(); //Damage taken by now destroyed units by this team's fleet
+    public HashMap<UnitTeam, Integer> destroyedUnitsByTeam = new HashMap<>(); //Enemies destroyed by this team
 
     private Action activeAction = null;
 
@@ -82,6 +88,10 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             if (isBot) {
                 botHandlerMap.put(team, new BotHandler(this, team));
             }
+        });
+        playerTeam.keySet().forEach(team -> {
+            destroyedUnitsDamage.put(team, 0f);
+            destroyedUnitsByTeam.put(team, 0);
         });
         if (networkState != NetworkState.CLIENT && bots.get(getActiveTeam()))
             botHandlerMap.get(getActiveTeam()).startTurn();
@@ -516,6 +526,57 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
 
     public boolean isThisPlayerAlive() {
         return playerTeam.containsKey(getThisTeam());
+    }
+
+    public static final int VICTORY_SCORE = 100, DAMAGE_SCORE_MAX = 30, TURN_SCORE_MAX = 30, UNITS_DESTROYED_SCORE_MAX = 30;
+
+    public float getDamageScore(UnitTeam team) {
+        float percentage = getTotalRemainingHP(team) / getTotalMaxHP(team);
+        return Math.clamp((float) (1.4f * Math.pow(percentage, 0.8f) * DAMAGE_SCORE_MAX), 0, DAMAGE_SCORE_MAX);
+    }
+
+    public float getTotalRemainingHP(UnitTeam team) {
+        return unitSet.stream().filter(u -> u.team == team).map(u -> u.lowestHP).reduce(Float::sum).get();
+    }
+
+    public float getTotalMaxHP(UnitTeam team) {
+        return destroyedUnitsDamage.get(team) + unitSet.stream().filter(u -> u.team == team).map(u -> u.stats.maxHP()).reduce(Float::sum).get();
+    }
+
+    public float getTurnScore(UnitTeam team) {
+        return Math.clamp((float) (1 - Math.pow(turn / 50f, 0.5f)) * TURN_SCORE_MAX * 1.6f, 0, TURN_SCORE_MAX);
+    }
+
+    public int getUnitsDestroyedByTeam(UnitTeam team) {
+        return destroyedUnitsByTeam.get(team);
+    }
+
+    public float getUnitsDestroyedScore(UnitTeam team) {
+        return Math.clamp((float) (Math.pow(getUnitsDestroyedByTeam(team), 0.5f)) * UNITS_DESTROYED_SCORE_MAX * 0.25f, 0, UNITS_DESTROYED_SCORE_MAX);
+    }
+
+    public float getPlayerTeamScore(Function<UnitTeam, Float> scoreFunction, PlayerTeam pTeam, boolean total) {
+        AtomicReference<Float> score = new AtomicReference<>(0f);
+        AtomicInteger count = new AtomicInteger();
+        playerTeam.forEach((t, p) -> {
+            if (p != pTeam)
+                return;
+            score.updateAndGet(v -> v + scoreFunction.apply(t));
+            count.getAndIncrement();
+        });
+        return total ? score.get() : score.get() / count.get();
+    }
+
+    public int getPlayerTeamScoreInt(Function<UnitTeam, Integer> scoreFunction, PlayerTeam pTeam, boolean total) {
+        AtomicReference<Integer> score = new AtomicReference<>(0);
+        AtomicInteger count = new AtomicInteger();
+        playerTeam.forEach((t, p) -> {
+            if (p != pTeam)
+                return;
+            score.updateAndGet(v -> v + scoreFunction.apply(t));
+            count.getAndIncrement();
+        });
+        return total ? score.get() : score.get() / count.get();
     }
 
     @Override

@@ -15,8 +15,8 @@ import render.types.box.UITooltipBox;
 import render.types.container.UIContainer;
 import render.types.container.UIElementScrollSurface;
 import render.types.input.UINumberSelector;
+import render.types.text.AbstractUITooltip;
 import render.types.text.UITextLabel;
-import render.types.text.UITooltip;
 import unit.UnitTeam;
 
 public class StructureGenerationSettings extends UIContainer {
@@ -29,7 +29,7 @@ public class StructureGenerationSettings extends UIContainer {
         super(register, buttonRegister, order, buttonOrder, x, y);
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
-                    new UIBox(19, 28).setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER)
+                    new UIBox(19, 28).setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK)
             );
             elements = new UIElementScrollSurface<StructureGenerationElement>(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
                     0, 0, 19, 28, false, count -> count * 5.5f + 1f)
@@ -79,9 +79,9 @@ public class StructureGenerationSettings extends UIContainer {
                         11.5f, 0.8f, 0.9f, 1.5f, 0, 10, 0).setCorner(0.3f)
                         .setOnChanged(() -> MainPanel.titleScreen.playerBoxes.verifyTeams());
                 new UITooltipBox(r3, b3, ButtonOrder.MAIN_BUTTONS, 6f, 2.3f, 10.5f, 0.9f)
-                        .tooltip(t -> t.add(12, UITooltip.light(), "The number of neutral structures to spawn close to the centre of the map"));
+                        .tooltip(t -> t.add(12, AbstractUITooltip.light(), "The number of neutral structures to spawn close to the centre of the map"));
                 new UITooltipBox(r3, b3, ButtonOrder.MAIN_BUTTONS, 6f, 0.8f, 10.5f, 0.9f)
-                        .tooltip(t -> t.add(12, UITooltip.light(), "The number of player-controlled structures to spawn for each player. These are spawned close to the player bases"));
+                        .tooltip(t -> t.add(12, AbstractUITooltip.light(), "The number of player-controlled structures to spawn for each player. These are spawned close to the player bases"));
             });
         }
     }

@@ -1,45 +1,22 @@
 package level.energy;
 
-import render.GameRenderer;
-import render.Renderable;
+import render.HorizontalAlign;
 import render.UIColourTheme;
-import render.types.box.UIBox;
-import render.types.text.TextRenderer;
-import render.types.text.TextAlign;
+import render.types.box.UIDisplayBox;
 
-import java.awt.*;
+public class EnergyDisplay extends UIDisplayBox {
+    public EnergyDisplay(float width, boolean dynamicWidth) {
+        this(width, 1, dynamicWidth);
+    }
 
-import static render.types.text.UITextLabel.*;
-
-public class EnergyDisplay implements Renderable {
-    private final UIBox energyBox;
-    public final TextRenderer text = new TextRenderer(null, .6f, TEXT_COLOUR)
-            .setBold(true).setTextAlign(TextAlign.CENTER);
-    private final float width;
-
-    public EnergyDisplay(float width) {
-        this.width = width;
-        energyBox = new UIBox(width, 1).setCorner(.25f).setColourTheme(UIColourTheme.DARK_GRAY);
+    public EnergyDisplay(float width, float height, boolean dynamicWidth) {
+        super(0, 0, width, height, box -> box.setCorner(.5f).setColourTheme(UIColourTheme.DARK_GRAY), dynamicWidth);
+        addText(0.6f, HorizontalAlign.CENTER, null);
+        setHorizontalAlign(HorizontalAlign.CENTER);
     }
 
     public EnergyDisplay setText(String s) {
-        text.updateText(s);
+        super.setText(s);
         return this;
-    }
-
-    @Override
-    public void render(Graphics2D g) {
-        GameRenderer.renderTransformed(g, () -> {
-            g.translate(-width / 2, 0);
-            energyBox.render(g);
-            GameRenderer.renderTransformed(g, () -> {
-                g.translate((width - .5f) / 2, .5f - .23f);
-                text.render(g);
-            });
-            GameRenderer.renderTransformed(g, () -> {
-                g.translate(width - 0.5f, 0.5f);
-                EnergyManager.ENERGY_IMAGE.render(g, 1);
-            });
-        });
     }
 }

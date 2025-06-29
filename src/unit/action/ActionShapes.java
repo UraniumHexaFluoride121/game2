@@ -1,75 +1,83 @@
 package unit.action;
 
-import render.GameRenderer;
 import render.Renderable;
-import render.types.box.UIBox;
-import render.types.input.button.UIShapeButton;
+import render.types.text.TextRenderable;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 
 public abstract class ActionShapes {
-    public static final Path2D.Float FLAG = new Path2D.Float();
-    public static final Path2D.Float SHIELD = new Path2D.Float();
+    public static final Path2D.Float MOVE = new Path2D.Float();
+    public static final Shape FLAG;
+    public static final Shape SHIELD, SHIELD_REGEN;
     public static final Path2D.Float SHIP = new Path2D.Float();
-    public static final Path2D.Float SUPPLY = new Path2D.Float();
-    public static Path2D.Float ANTIMATTER;
-    public static final Shape PLUS = UIShapeButton.plus(new UIBox(1, 1), 0.6f, 0.3f);
+    public static final Shape SUPPLY;
+    public static Path2D.Float ENERGY;
+    public static final Shape REPAIR;
+    public static final Shape STEALTH;
 
     static {
-        FLAG.moveTo(.4, .2);
-        FLAG.lineTo(.2, .75);
-        FLAG.closePath();
+        MOVE.moveTo(.37f, .37f);
+        MOVE.lineTo(.75f, .75f);
+        MOVE.closePath();
 
-        FLAG.moveTo(.32, .7);
-        FLAG.quadTo(
+        MOVE.moveTo(.25f, .25f);
+        MOVE.lineTo(.2501f, .2501f);
+        MOVE.closePath();
+
+        MOVE.moveTo(.45f, .75f);
+        MOVE.lineTo(.75f, .75f);
+        MOVE.closePath();
+
+        MOVE.moveTo(.75f, .45f);
+        MOVE.lineTo(.75f, .75f);
+        MOVE.closePath();
+    }
+
+    static {
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(.4, .2);
+        path.lineTo(.2, .75);
+        path.closePath();
+
+        path.moveTo(.32, .7);
+        path.quadTo(
                 .6, .6,
                 .75, .7
         );
-        FLAG.lineTo(.8, .5);
-        FLAG.quadTo(
+        path.lineTo(.8, .5);
+        path.quadTo(
                 .6, .4,
                 .4, .5
         );
-        FLAG.closePath();
+        path.closePath();
+        FLAG = Renderable.add(Renderable.outlineShape(path, 0.075f), path);
     }
 
-    private static final double SHIELD_P1_X = .58, SHIELD_P2_X = .23, SHIELD_P2_X_2 = .13, SHIELD_P3_X = .38, SHIELD_P1_X_OFFSET = .25, SHIELD_P4_X_OFFSET = .25, SHIELD_P2_Y_OFFSET = .1, SHIELD_P2_Y_OFFSET_2 = .05;
     static {
-        SHIELD.moveTo(SHIELD_P1_X, .7);
-        SHIELD.curveTo(
-                SHIELD_P1_X - SHIELD_P1_X_OFFSET, .7,
-                SHIELD_P2_X, .5 + SHIELD_P2_Y_OFFSET,
-                SHIELD_P2_X, .5
-        );
-        SHIELD.curveTo(
-                SHIELD_P2_X, .5 - SHIELD_P2_Y_OFFSET,
-                SHIELD_P1_X - SHIELD_P1_X_OFFSET, .32,
-                SHIELD_P3_X, .3
-        );
-        SHIELD.curveTo(
-                SHIELD_P1_X - SHIELD_P1_X_OFFSET, .32,
-                SHIELD_P2_X_2, .5 - SHIELD_P2_Y_OFFSET - SHIELD_P2_Y_OFFSET_2,
-                SHIELD_P2_X_2, .5
-        );
-        SHIELD.curveTo(
-                SHIELD_P2_X_2, .5 + SHIELD_P2_Y_OFFSET + SHIELD_P2_Y_OFFSET_2,
-                SHIELD_P1_X - SHIELD_P1_X_OFFSET, .7,
-                SHIELD_P1_X, .7
-        );
-        SHIELD.closePath();
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(0.5f, 0);
+        path.curveTo(1, 0, 1, 0.85f, 1, 0.9f);
+        path.curveTo(0.8f, 0.8f, 0.6f, 0.83f, 0.5f, 0.95f);
+        path.curveTo(0.4f, 0.83f, 0.2f, 0.8f, 0, 0.9f);
+        path.curveTo(0, 0.85f, 0, 0, 0.5f, 0);
+        path.closePath();
+        AffineTransform t = new AffineTransform();
+        t.translate(0.5f, 0.5f);
+        t.scale(0.5f, 0.5f);
+        t.translate(-0.5f, -0.5f);
+        SHIELD = t.createTransformedShape(Renderable.add(Renderable.outlineShape(path, 0.15f), path));
+        AffineTransform t2 = new AffineTransform();
+        t2.translate(0.5f, 0.5f);
+        SHIELD_REGEN = Renderable.subtract(SHIELD, t2.createTransformedShape(TextRenderable.plus(0.5f)));
+    }
 
-        SHIELD.moveTo(SHIELD_P1_X, .7);
-        SHIELD.quadTo(
-                SHIELD_P1_X + SHIELD_P4_X_OFFSET * .7, .7,
-                SHIELD_P1_X + SHIELD_P4_X_OFFSET, .65
-        );
-        SHIELD.quadTo(
-                SHIELD_P1_X + SHIELD_P4_X_OFFSET * .7, .7,
-                SHIELD_P1_X, .7
-        );
-        SHIELD.closePath();
+    static {
+        AffineTransform t = new AffineTransform();
+        t.translate(0.5f, 0.5f);
+        t.scale(0.9f, 0.9f);
+        REPAIR = t.createTransformedShape(TextRenderable.repairShape(0.12f));
     }
 
     static {
@@ -102,23 +110,10 @@ public abstract class ActionShapes {
     }
 
     static {
-        float size = 0.3f;
-        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 0)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 0)) * size);
-        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 1)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 1)) * size);
-        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 2)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 2)) * size);
-        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 3)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 3)) * size);
-        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 4)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 4)) * size);
-        SUPPLY.lineTo(.5f + Math.cos(Math.toRadians(30 + 60 * 5)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 5)) * size);
-        SUPPLY.closePath();
-        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 0)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 0)) * size);
-        SUPPLY.lineTo(.5f, .5f);
-        SUPPLY.closePath();
-        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 2)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 2)) * size);
-        SUPPLY.lineTo(.5f, .5f);
-        SUPPLY.closePath();
-        SUPPLY.moveTo(.5f + Math.cos(Math.toRadians(30 + 60 * 4)) * size, .5f + Math.sin(Math.toRadians(30 + 60 * 4)) * size);
-        SUPPLY.lineTo(.5f, .5f);
-        SUPPLY.closePath();
+        AffineTransform t = new AffineTransform();
+        t.translate(0.5f, 0.5f);
+        t.scale(0.9f, 0.9f);
+        SUPPLY = t.createTransformedShape(TextRenderable.resupplyShape(0.12f));
     }
 
     static {
@@ -143,24 +138,18 @@ public abstract class ActionShapes {
         t.translate(0.5f, 0.5f);
         t.scale(1.1f, 1.1f);
         t.translate(-0.5f, -0.5f);
-        ANTIMATTER = (Path2D.Float) path.createTransformedShape(t);
+        ENERGY = (Path2D.Float) path.createTransformedShape(t);
     }
 
-    public static void stealthIcon(Graphics2D g) {
-        g.setStroke(Renderable.roundedStroke(.02f));
-        Shape clip = g.getClip();
+    static {
         Path2D.Float path = new Path2D.Float();
         path.moveTo(.27f, .27f);
         path.lineTo(.73f, .73f);
-        g.clip(Renderable.inverseShape(Renderable.outlineShape(path, 0.11f)));
-        GameRenderer.renderTransformed(g, () -> {
-            g.scale(1.2, 1.2);
-            g.translate(-.075, -.075);
-            g.draw(ActionShapes.SHIP);
-            g.fill(ActionShapes.SHIP);
-        });
-        g.setClip(clip);
-        g.setStroke(Renderable.roundedStroke(.06f));
-        g.draw(path);
+        Shape line = Renderable.outlineShape(path, 0.06f);
+        AffineTransform t = new AffineTransform();
+        t.scale(1.2, 1.2);
+        t.translate(-.075, -.075);
+        Shape ship = t.createTransformedShape(SHIP);
+        STEALTH = Renderable.add(Renderable.subtract(Renderable.add(ship, Renderable.outlineShape(ship, 0.02f)), Renderable.outlineShape(path, 0.11f)), line);
     }
 }

@@ -1,7 +1,8 @@
 package render.types.text;
 
 import foundation.Deletable;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
+import render.HorizontalAlign;
 import render.Renderable;
 
 import java.awt.*;
@@ -9,14 +10,14 @@ import java.awt.font.TextLayout;
 import java.util.function.Supplier;
 
 public class DynamicTextRenderer implements Renderable, Deletable {
-    private StaticHitBox bounds, boxBounds;
+    private HitBox bounds, boxBounds;
     private String cachedText;
     private Shape textShape;
     private Supplier<String> text;
     private final float textSize;
     private boolean isBold = false;
     private boolean hasOutline = false;
-    private TextAlign textAlign = TextAlign.CENTER;
+    private HorizontalAlign textAlign = HorizontalAlign.CENTER;
     private final Color main;
     private Color border, renderBoxColour;
     private BasicStroke stroke;
@@ -48,7 +49,7 @@ public class DynamicTextRenderer implements Renderable, Deletable {
         return this;
     }
 
-    public DynamicTextRenderer setTextAlign(TextAlign textAlign) {
+    public DynamicTextRenderer setTextAlign(HorizontalAlign textAlign) {
         this.textAlign = textAlign;
         return this;
     }
@@ -59,10 +60,10 @@ public class DynamicTextRenderer implements Renderable, Deletable {
             updateText(g);
         g.scale(textSize, -textSize);
 
-        if (textAlign != TextAlign.LEFT) {
-            if (textAlign == TextAlign.CENTER)
+        if (textAlign != HorizontalAlign.LEFT) {
+            if (textAlign == HorizontalAlign.CENTER)
                 g.translate(-bounds.width() / 2f, 0);
-            if (textAlign == TextAlign.RIGHT)
+            if (textAlign == HorizontalAlign.RIGHT)
                 g.translate(-bounds.width(), 0);
         }
 
@@ -90,7 +91,7 @@ public class DynamicTextRenderer implements Renderable, Deletable {
         Font font = new Font(null, isBold ? Font.BOLD : Font.PLAIN, 20);
         textShape = new TextLayout(text.get(), font, g.getFontRenderContext()).getOutline(null);
         Rectangle b = textShape.getBounds();
-        bounds = StaticHitBox.createFromOriginAndSize(b.x, b.y, b.width, b.height);
+        bounds = HitBox.createFromOriginAndSize(b.x, b.y, b.width, b.height);
         if (renderBoxBorder != -1) {
             boxBounds = bounds.copy().expand(renderBoxBorder * 20);
         }

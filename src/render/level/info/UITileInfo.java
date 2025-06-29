@@ -5,6 +5,7 @@ import foundation.input.ButtonRegister;
 import level.Level;
 import level.energy.EnergyManager;
 import level.tile.Tile;
+import level.tutorial.TutorialManager;
 import render.*;
 import render.level.tile.HexagonRenderer;
 import render.level.tile.RenderElement;
@@ -46,7 +47,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
         addRenderables((r, b) -> {
             float labelPos = INITIAL_BAR_POS - BAR_SPACING;
             float barPos = INITIAL_BAR_POS - BAR_SPACING - 0.05f;
-            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK, 0, 0, 14, 17, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER_LIGHT));
+            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK, 0, 0, 14, 17, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX));
             miningElement = new RenderElement(r, RenderOrder.LEVEL_UI,
                     mining.translate(0.5f, labelPos += BAR_SPACING),
                     miningBar.translate(7, barPos += BAR_SPACING)).setZOrder(2);
@@ -101,7 +102,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
         else
             structureImage = null;
         structureInfoButton.setEnabled(tile.hasStructure());
-        title.updateTextLeft(tile.type.displayName + " tile");
+        title.updateTextLeft(tile.type.getName() + " tile");
         structure.updateTextRight(tile.structure == null ? "None" : tile.structure.type.getName());
         if (previouslyDisabled) {
             visibilityBar.setFill(tile.type.visibility.barFill);
@@ -121,6 +122,11 @@ public class UITileInfo extends LevelUIContainer<Level> {
         } else {
             miningBar.setFill(tile.miningBarFill, 0.8f, 0.6f);
         }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return super.isEnabled() && (!TutorialManager.isTutorial() || TutorialManager.tileInfoEnabled);
     }
 
     @Override

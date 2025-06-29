@@ -3,11 +3,11 @@ package render.types.container;
 import foundation.Deletable;
 import foundation.input.*;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import render.*;
 import render.level.tile.RenderElement;
 import render.types.text.TextRenderer;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.UIColourTheme;
 import render.types.box.UIBox;
 import render.types.text.UITextLabel;
@@ -147,7 +147,7 @@ public class UITabSwitcher extends UIContainer {
     private static class Tab implements Renderable, RegisteredButtonInputReceiver, Deletable {
         public ButtonRegister internal;
         public GameRenderer renderer;
-        public final StaticHitBox hitBox;
+        public final HitBox hitBox;
         public final UIBox box;
         public final ButtonClickHandler clickHandler;
         public final float x, y, width, height, textSize;
@@ -179,9 +179,9 @@ public class UITabSwitcher extends UIContainer {
                 if (runOnNewTabSelected)
                     parent.onNewTabSelected.run();
             }).noDeselect();
-            hitBox = StaticHitBox.createFromOriginAndSize(x + parent.x, y + parent.y, width, height);
+            hitBox = HitBox.createFromOriginAndSize(x + parent.x, y + parent.y, width, height);
             box = new UIBox(width, height, 0.4f, UIBox.BoxShape.RECTANGLE_TOP_CORNERS_CUT).setClickHandler(clickHandler).setColourTheme(UIColourTheme.GREEN_SELECTED_TAB);
-            text = new TextRenderer(s, textSize, UITextLabel.TEXT_COLOUR).setTextAlign(TextAlign.CENTER).setBold(true);
+            text = new TextRenderer(s, textSize, UITextLabel.TEXT_COLOUR).setTextAlign(HorizontalAlign.CENTER).setBold(true);
         }
 
         public void select() {

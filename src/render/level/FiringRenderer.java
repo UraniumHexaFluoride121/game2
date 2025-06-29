@@ -317,10 +317,10 @@ public class FiringRenderer extends AbstractRenderElement {
         overlayTimer.startTimer();
         hitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints).barOnly();
         hitPointBarBorderLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints).borderOnly();
-        shieldHitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) leftUnit.type.shieldHP, UIColourTheme.LIGHT_BLUE).barOnly().setFill(leftUnit.shieldHP);
+        shieldHitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) leftUnit.stats.maxShieldHP(), UIColourTheme.LIGHT_BLUE).barOnly().setFill(leftUnit.shieldHP);
         hitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints).barOnly();
         hitPointBarBorderRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints).borderOnly();
-        shieldHitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) rightUnit.type.shieldHP, UIColourTheme.LIGHT_BLUE).barOnly().setFill(rightUnit.shieldHP);
+        shieldHitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) rightUnit.stats.maxShieldHP(), UIColourTheme.LIGHT_BLUE).barOnly().setFill(rightUnit.shieldHP);
         preRender();
     }
 
@@ -362,8 +362,8 @@ public class FiringRenderer extends AbstractRenderElement {
             new ObjPos(15, Renderable.top() * 0.5f),
     };
 
-    public static float estimatedAnimationTime() {
-        return 6.5f;
+    public static float estimatedAnimationTime(boolean showAnim) {
+        return showAnim ? 6.5f : 2f;
     }
 
     private static class UnitRenderer implements Renderable {

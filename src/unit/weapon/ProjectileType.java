@@ -2,7 +2,6 @@ package unit.weapon;
 
 import render.Renderable;
 import render.anim.ImageSequenceAnim;
-import render.texture.ImageRenderer;
 import render.texture.ImageSequenceGroup;
 import render.texture.ResourceLocation;
 
@@ -11,13 +10,8 @@ import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class ProjectileType implements Renderable {
-    private static final String INFO_RAILGUN_BULLET = "projectile/railgun_bullet/bullet_info.png";
-    private static final String INFO_BULLET = "projectile/bullet/bullet_info.png";
-    private static final String INFO_MISSILE = "projectile/missile/missile_info.png";
-    private static final String INFO_PLASMA = "projectile/plasma/plasma_info.png";
-
     public static final ProjectileType FIGHTER_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
-            INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
+            90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(550), y(170), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(677), y(546), 150));
@@ -25,21 +19,13 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(677), y(546), 450));
         return spawnPoints;
     }), BOMBER_MISSILE = new ProjectileType("projectile/missile/bomber_missile.png", 5,
-            INFO_MISSILE, 70, 13, 0, .5f, 0, ImageSequenceGroup.EXPLOSION, null, () -> {
+            70, 13, 0, .5f, 0, ImageSequenceGroup.EXPLOSION, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(555), y(245), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(643), y(534), 400));
         return spawnPoints;
-    }), BOMBER_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
-            INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
-        ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
-        spawnPoints.add(new ProjectileSpawnPoint(x(681), y(278), 0));
-        spawnPoints.add(new ProjectileSpawnPoint(x(720), y(459), 150));
-        spawnPoints.add(new ProjectileSpawnPoint(x(681), y(278), 300));
-        spawnPoints.add(new ProjectileSpawnPoint(x(720), y(459), 450));
-        return spawnPoints;
     }), SCOUT_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
-            INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
+            90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(808), y(270), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(858), y(420), 150));
@@ -47,7 +33,7 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(808), y(420), 450));
         return spawnPoints;
     }), CORVETTE_CANNON = new ProjectileType("projectile/bullet/bullet_1.png", 2,
-            INFO_BULLET, 90, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, ImageSequenceGroup.EXPLOSION, () -> {
+            90, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, ImageSequenceGroup.EXPLOSION, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(620), y(310), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(622), y(258), 100));
@@ -55,7 +41,7 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(932), y(432), 450));
         return spawnPoints;
     }), DEFENDER_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
-            INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
+            90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(800), y(333), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(808), y(233), 150));
@@ -63,13 +49,13 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(914), y(381), 450));
         return spawnPoints;
     }), ARTILLERY_MISSILE = new ProjectileType("projectile/missile/bomber_missile.png", 8,
-            INFO_MISSILE, 70, 13, 0, .5f, 0, ImageSequenceGroup.EXPLOSION, null, () -> {
+            70, 13, 0, .5f, 0, ImageSequenceGroup.EXPLOSION, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(936), y(401), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(940), y(287), 400));
         return spawnPoints;
     }).renderBehind(), CRUISER_RAILGUN = new ProjectileType("projectile/railgun_bullet/bullet_1.png", 2,
-            INFO_RAILGUN_BULLET, 120, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, null, () -> {
+            120, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(690), y(357), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(900), y(470), 100));
@@ -77,7 +63,7 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(900), y(470), 450));
         return spawnPoints;
     }), BATTLECRUISER_CANNON = new ProjectileType("projectile/bullet/bullet_1.png", 2,
-            INFO_BULLET, 90, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, ImageSequenceGroup.EXPLOSION, () -> {
+            90, 10, 6, .5f, .3f, ImageSequenceGroup.BULLET_HIT, ImageSequenceGroup.EXPLOSION, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(960), y(420), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(975), y(465), 100));
@@ -85,7 +71,7 @@ public class ProjectileType implements Renderable {
         spawnPoints.add(new ProjectileSpawnPoint(x(975), y(465), 450));
         return spawnPoints;
     }), BATTLECRUISER_PLASMA = new ProjectileType("projectile/plasma/plasma_1.png", 2,
-            INFO_PLASMA, 90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
+            90, 5, 0, .5f, 0, ImageSequenceGroup.PLASMA_HIT, null, () -> {
         ArrayList<ProjectileSpawnPoint> spawnPoints = new ArrayList<>();
         spawnPoints.add(new ProjectileSpawnPoint(x(710), y(326), 0));
         spawnPoints.add(new ProjectileSpawnPoint(x(980), y(482), 150));
@@ -95,15 +81,13 @@ public class ProjectileType implements Renderable {
     });
 
     private final Renderable image;
-    public final ImageRenderer infoImage;
     public final float velocity;
     private final float hitWidth, spawnWidth, hitTime, spawnTime;
     private final ImageSequenceGroup hitSequence, spawnSequence;
     private final Supplier<ArrayList<ProjectileSpawnPoint>> getSpawnPoints;
     public boolean renderBehind = false;
 
-    public ProjectileType(String path, float projectileWidth, String infoImage, float velocity, float hitWidth, float spawnWidth, float hitTime, float spawnTime, ImageSequenceGroup hitSequence, ImageSequenceGroup spawnSequence, Supplier<ArrayList<ProjectileSpawnPoint>> getSpawnPoints) {
-        this.infoImage = ImageRenderer.renderImageCentered(new ResourceLocation(infoImage), true, true);
+    public ProjectileType(String path, float projectileWidth, float velocity, float hitWidth, float spawnWidth, float hitTime, float spawnTime, ImageSequenceGroup hitSequence, ImageSequenceGroup spawnSequence, Supplier<ArrayList<ProjectileSpawnPoint>> getSpawnPoints) {
         this.velocity = velocity;
         this.hitWidth = hitWidth;
         this.spawnWidth = spawnWidth;

@@ -22,10 +22,12 @@ public abstract class TutorialManager {
     public static final HashSet<TutorialElement> disabledElements = new HashSet<>(), permanentlyEnabledElements = new HashSet<>();
     public static final HashSet<Action> allowedActions = new HashSet<>();
     public static final HashSet<Point> selectableTiles = new HashSet<>();
-    public static final HashMap<Action, HashSet<Point>> actionTiles = new HashMap<>();
+    public static final HashMap<Object, HashSet<Point>> actionTiles = new HashMap<>();
     public static final HashMap<String, AbstractRenderElement> renderElements = new HashMap<>();
     public static final TutorialSequence sequence = new TutorialSequence();
     public static final ArrayDeque<Supplier<BotActionData>> forcedBotActions = new ArrayDeque<>();
+
+    public static boolean tileInfoEnabled = true;
 
     public static void startTutorial(TutorialLevel level) {
         TutorialManager.level = level;
@@ -36,10 +38,11 @@ public abstract class TutorialManager {
         clearActionTiles();
         renderElements.clear();
         isTutorial = true;
+        tileInfoEnabled = true;
     }
 
     public static void clearActionTiles() {
-        Action.forEach(a -> {
+        Action.forEachTutorialTileGroup(a -> {
             actionTiles.put(a, new HashSet<>());
         });
     }
@@ -108,7 +111,7 @@ public abstract class TutorialManager {
         return isTutorial() && (isDisabled(TutorialElement.TILE_SELECTION) || !(selectableTiles.contains(pos) || selectableTiles.isEmpty()));
     }
 
-    public static boolean actionTileNotSelectable(Point pos, Action action) {
+    public static boolean actionTileNotSelectable(Point pos, Object action) {
         return isTutorial() && (isDisabled(TutorialElement.ACTION_TILE_SELECTION) || !(actionTiles.get(action).contains(pos) || actionTiles.get(action).isEmpty()));
     }
 }

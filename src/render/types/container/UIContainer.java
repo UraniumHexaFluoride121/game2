@@ -16,11 +16,6 @@ public class UIContainer extends AbstractRenderElement implements RegisteredButt
     protected ButtonRegister buttonRegister, internal = new ButtonRegister();
     protected GameRenderer renderer = new GameRenderer(new AffineTransform(), null);
 
-    public UIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, BiConsumer<GameRenderer, ButtonRegister> createRenderer) {
-        this(register, buttonRegister, order, buttonOrder, x, y);
-        addRenderables(createRenderer);
-    }
-
     public UIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y) {
         super(register, order);
         this.x = x;

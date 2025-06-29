@@ -6,6 +6,7 @@ import foundation.input.InputType;
 import foundation.math.ObjPos;
 import level.energy.EnergyManager;
 import level.tile.Tile;
+import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventAnim;
 import render.*;
@@ -13,21 +14,16 @@ import render.level.FiringRenderer;
 import render.level.GameEndScreen;
 import render.level.LocalNextPlayerScreen;
 import render.level.PauseMenu;
-import render.level.info.StructureInfoScreen;
-import render.level.info.UITileInfo;
-import render.level.info.UIUnitInfo;
-import render.level.info.UnitInfoScreen;
+import render.level.info.*;
 import render.level.map.LevelMapUI;
 import render.level.tile.RenderElement;
-import render.level.ui.UIDamage;
-import render.level.ui.UIEndTurn;
-import render.level.ui.UITurnBox;
+import render.level.ui.*;
 import render.types.input.button.LevelUIButton;
 import render.types.input.button.LevelUIShapeButton;
 import render.types.input.button.UIButton;
 import render.types.input.button.UIShapeButton;
+import render.types.text.AbstractUITooltip;
 import render.types.text.UITextNotification;
-import render.types.text.UITooltip;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
@@ -51,11 +47,15 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
     public UITextNotification onNextTurn, onTeamEliminated;
     public UITurnBox turnBox;
     public UIDamage damageUI;
+    public UIDamageModifiers damageModifiers;
+    public UIMovementModifiers movementModifiers;
     public UIEndTurn endTurn;
     public UITileInfo tileInfo;
     public UIButton exitActionButton;
     public UnitInfoScreen unitInfoScreen;
     public StructureInfoScreen structureInfoScreen;
+    public DamageModifierInfo damageModifierInfo;
+    public MovementModifierInfo movementModifierInfo;
     public EnergyManager energyManager;
     public UIShapeButton pauseMenuButton, mapButton;
     public PauseMenu pauseMenu;
@@ -111,6 +111,10 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
         //Damage UI
         damageUI = new UIDamage(mainRenderer, RenderOrder.DAMAGE_UI);
+        damageModifiers = new UIDamageModifiers(levelUIRenderer, level.buttonRegister, level);
+        damageModifiers.setZOrder(-5);
+        movementModifiers = new UIMovementModifiers(levelUIRenderer, level.buttonRegister, level);
+        movementModifiers.setZOrder(-5);
 
         new RenderElement(mainRenderer, RenderOrder.ENERGY_COST_INDICATOR, g -> {
             level.unitSet.forEach(u -> u.renderEnergyCostIndicator(g));
@@ -134,7 +138,12 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         level.buttonRegister.register(turnBox);
 
         exitActionButton = new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
-                0.5f, Renderable.top() - 4.5f, 7, 1.5f, 0.9f, false, level, () -> level.tileSelector.deselectAction())
+                0.5f, Renderable.top() - 4.5f, 7, 1.5f, 0.9f, false, level, () -> level.tileSelector.deselectAction()) {
+            @Override
+            public boolean isEnabled() {
+                return super.isEnabled() && TutorialManager.isEnabled(TutorialElement.ACTION_DESELECT);
+            }
+        }
                 .setText("Exit Action").setBold().setColourTheme(UIColourTheme.DEEP_RED).setEnabled(false);
 
         firingRenderer = new FiringRenderer(firingAnimRenderer, RenderOrder.BACKGROUND, level);
@@ -144,7 +153,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
                     mapUI.update();
-                }).tooltip(t -> t.add(-1, UITooltip.dark(), "Open map"));
+                }).tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Open map"));
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
 
@@ -154,10 +163,12 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         nextPlayerScreen = new LocalNextPlayerScreen(levelUIRenderer, level.buttonRegister, level);
         nextPlayerScreen.setEnabled(false);
 
-        unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, level);
+        unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, level);
         unitInfoScreen.setEnabled(false);
-        structureInfoScreen = new StructureInfoScreen(levelUIRenderer, level.buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, level);
+        structureInfoScreen = new StructureInfoScreen(levelUIRenderer, level.buttonRegister, level);
         structureInfoScreen.setEnabled(false);
+        damageModifierInfo = new DamageModifierInfo(levelUIRenderer, level.buttonRegister, level);
+        movementModifierInfo = new MovementModifierInfo(levelUIRenderer, level.buttonRegister, level);
 
         energyManager = new EnergyManager(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2 - 5, Renderable.top() - 3.5f, level);
 

@@ -10,12 +10,12 @@ import level.PlayerTeam;
 import render.*;
 import render.UIColourTheme;
 import render.types.box.UIBox;
+import render.types.text.AbstractUITooltip;
 import render.types.text.UITextDisplayBox;
 import render.types.text.UITextLabel;
 import render.types.input.button.UIButton;
 import render.types.input.UIEnumSelector;
 import render.types.input.button.UIShapeButton;
-import render.types.text.UITooltip;
 import unit.UnitTeam;
 
 import java.awt.geom.AffineTransform;
@@ -161,7 +161,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             plus.delete();
         if (boxes.size() != MAX_PLAYERS && !MainPanel.titleScreen.customMap)
             plus = new UIShapeButton(register, internal, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 5, boxes.size() * BOX_SIZE + (BOX_SIZE - 3) / 2f, 7, 3, false, this::addBox)
-                    .setShape(UIShapeButton::plus).tooltip(t -> t.add(-1, UITooltip.light(), "Add player"));
+                    .setShape(UIShapeButton::plus).tooltip(t -> t.add(-1, AbstractUITooltip.light(), "Add player"));
     }
 
     public void deletePlayer(int index) {
@@ -252,7 +252,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
             mainBox = new UIBox(13, BOX_SIZE - .5f, 0, UIBox.BoxShape.RECTANGLE);
             mainBox.translate(0, -2);
             playerTeamSelector = new UIEnumSelector<>(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 4, 0.7f, 1.3f, 2, PlayerTeam.class, PlayerTeam.values()[index])
-                    .setOnChanged(parentContainer::verifyTeams).tooltip(t -> t.add(9, UITooltip.light(), "Players on the same team are allies, share map vision and win together."));
+                    .setOnChanged(parentContainer::verifyTeams).tooltip(t -> t.add(9, AbstractUITooltip.light(), "Players on the same team are allies, share map vision and win together."));
             editShips = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 0.7f, 5, 1.3f, 0.7f, true)
                     .setBold().noDeselect().setBoxCorner(0.35f).setText("Edit Units").setOnClick(() -> {
                         parentContainer.boxes.forEach(b -> {
@@ -264,14 +264,14 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                         MainPanel.titleScreen.playerShipSettings.updateTeam();
                         editShips.setColourTheme(parentContainer.locked ? GRAYED_OUT : GREEN_SELECTED);
                     })
-                    .setColourTheme(GREEN_SELECTED).toggleMode().tooltip(t -> t.add(8, UITooltip.light(), "Modify the starting units for this player"));
+                    .setColourTheme(GREEN_SELECTED).toggleMode().tooltip(t -> t.add(8, AbstractUITooltip.light(), "Modify the starting units for this player"));
             enableBot = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 2.3f, 5, 1f, 0.7f, false);
             enableBot.setBold().noDeselect().setBoxCorner(0.35f).setText("Bot (off)").setOnClick(() -> {
                         isBot = !isBot;
                         enableBot.setColourTheme(isBot ? GREEN : RED);
                         enableBot.setText(isBot ? "Bot (on)" : "Bot (off)");
                     })
-                    .setColourTheme(RED).tooltip(t -> t.add(9, UITooltip.light(), "If enabled, this player will be controlled by a bot. The host cannot be a bot."));
+                    .setColourTheme(RED).tooltip(t -> t.add(9, AbstractUITooltip.light(), "If enabled, this player will be controlled by a bot. The host cannot be a bot."));
             playerTeamLabel = new UITextLabel(5, 0.7f, false)
                     .updateTextCenter("Player Team").setTextCenterBold();
             deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.75f, BOX_SIZE - 1.5f, 1, 1, false, () -> {

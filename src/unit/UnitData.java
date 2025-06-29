@@ -23,7 +23,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
     public transient UnitType type;
     public final String typeName;
     public final UnitTeam team;
-    public float hitPoints, shieldHP;
+    public float hitPoints, shieldHP, lowestHP;
     public final int captureProgress;
     public transient HashSet<Action> performedActions = new HashSet<>();
     public final HashSet<String> performedActionNames = new HashSet<>();
@@ -37,12 +37,12 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         team = unit.team;
         hitPoints = unit.firingTempHP;
         shieldHP = unit.shieldFiringTempHP;
+        lowestHP = unit.lowestHP;
         captureProgress = unit.getCaptureProgress();
         performedActions.addAll(unit.getPerformedActions());
         performedActions.forEach(a -> performedActionNames.add(a.getInternalName()));
-        WeaponInstance ammoWeapon = unit.getAmmoWeapon();
-        if (ammoWeapon != null)
-            weaponAmmo = ammoWeapon.ammo;
+        if (unit.stats.consumesAmmo())
+            weaponAmmo = unit.ammo;
         stealthMode = unit.stealthMode;
         mining = unit.mining;
     }
@@ -54,6 +54,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         team = PacketReceiver.readEnum(UnitTeam.class, reader);
         hitPoints = reader.readFloat();
         shieldHP = reader.readFloat();
+        lowestHP = reader.readFloat();
         captureProgress = reader.readInt();
         PacketReceiver.readCollection(performedActions, () -> Action.getByName(reader.readUTF()), reader);
         weaponAmmo = reader.readInt();
@@ -69,6 +70,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         PacketWriter.writeEnum(team, w);
         w.writeFloat(hitPoints);
         w.writeFloat(shieldHP);
+        w.writeFloat(lowestHP);
         w.writeInt(captureProgress);
         PacketWriter.writeCollection(performedActions, v -> w.writeUTF(v.toString()), w);
         w.writeInt(weaponAmmo);

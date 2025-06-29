@@ -13,6 +13,7 @@ import unit.action.Action;
 import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
+import unit.stats.Modifier;
 import unit.weapon.WeaponTemplate;
 
 import java.awt.image.BufferedImage;
@@ -48,7 +49,11 @@ public abstract class UnitType implements NamedEnum {
     public float repair = 0;
     public final float firingAnimUnitWidth;
 
+    public int ammoCapacity = 0;
+    public final int minRange, maxRange;
+    public final float damage;
     public final ArrayList<WeaponTemplate> weapons = new ArrayList<>();
+    public final ArrayList<Modifier> modifiers = new ArrayList<>();
     private final Consumer<ArrayList<WeaponTemplate>> weaponGenerator;
 
     public final TreeMap<UnitCharacteristic, UnitCharacteristicValue> unitCharacteristics = new TreeMap<>();
@@ -66,7 +71,7 @@ public abstract class UnitType implements NamedEnum {
             FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY, SUPPLY, CRUISER, BATTLECRUISER, MINER
     };
 
-    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
         this.name = name;
         this.displayName = displayName;
         this.description = description;
@@ -76,12 +81,16 @@ public abstract class UnitType implements NamedEnum {
         this.actions = actions;
         this.firingAnimFrames = firingAnimFrames;
         this.firingAnimUnitWidth = firingAnimUnitWidth;
+        this.minRange = minRange;
+        this.maxRange = maxRange;
+        this.damage = damage;
         this.weaponGenerator = weaponGenerator;
         this.infoAttributes = infoAttributes;
         this.firingPositions = firingPositions;
         shipClass = getShipClass();
         actionCostSetter.accept(actionCost, perTurnActionCost);
         unitCharacteristicSetter.accept(unitCharacteristics);
+        addModifiers(modifiers);
     }
 
     private void init() {
@@ -156,8 +165,8 @@ public abstract class UnitType implements NamedEnum {
         return Optional.empty();
     }
 
-    public abstract float damageReduction(TileType type);
-    public abstract float moveCost(TileType type);
+    public abstract void addModifiers(ArrayList<Modifier> list);
+
     public abstract float viewRange(TileType type);
     protected abstract ShipClass getShipClass();
 
@@ -170,7 +179,6 @@ public abstract class UnitType implements NamedEnum {
     }
 
     public abstract float movementCostMultiplier();
-    public abstract float movementFixedCost();
 
     public UnitType noCapture() {
         canCapture = false;
@@ -184,6 +192,11 @@ public abstract class UnitType implements NamedEnum {
 
     public UnitType modify(Consumer<UnitType> action) {
         action.accept(this);
+        return this;
+    }
+
+    public UnitType setAmmoCapacity(int ammoCapacity) {
+        this.ammoCapacity = ammoCapacity;
         return this;
     }
 

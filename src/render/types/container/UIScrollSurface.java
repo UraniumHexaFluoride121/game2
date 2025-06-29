@@ -1,9 +1,8 @@
 package render.types.container;
 
 import foundation.input.*;
-import foundation.math.HitBox;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import render.*;
 
 import java.awt.*;
@@ -15,10 +14,11 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
     public final float x, y, width, height;
     private final Rectangle2D clip;
     private ButtonOrder buttonOrder;
-    private float scrollAmount = 0, scrollMax = 0, scrollSpeed = 0.75f;
+    protected float scrollAmount = 0, scrollMax = 0, scrollSpeed = 0.75f;
     protected ButtonRegister buttonRegister, internal = new ButtonRegister();
     protected GameRenderer renderer = new GameRenderer(new AffineTransform(), null);
-    private final boolean inverted;
+    protected final boolean inverted;
+    protected boolean scrollBarButtonEnabled = true;
 
     public UIScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, BiConsumer<GameRenderer, ButtonRegister> elementsRenderer) {
         this(register, buttonRegister, order, buttonOrder, x, y, width, height, true, elementsRenderer);
@@ -66,10 +66,19 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
         return this;
     }
 
+    public UIScrollSurface setScrollBarButtonEnabled(boolean scrollBarButtonEnabled) {
+        this.scrollBarButtonEnabled = scrollBarButtonEnabled;
+        return this;
+    }
+
     public UIScrollSurface setScrollMax(float scrollMax) {
         this.scrollMax = Math.max(0, scrollMax);
         scrollAmount = Math.clamp(scrollAmount, 0, this.scrollMax);
         return this;
+    }
+
+    public float getScrollMax() {
+        return scrollMax;
     }
 
     public UIScrollSurface setScrollAmount(float amount) {
@@ -93,7 +102,7 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
         totalSize = height - margin * 2;
         barSize = height / (scrollMax + height) * totalSize;
         BasicStroke stroke = Renderable.roundedStroke(width * SCALING);
-        scrollBarBox = StaticHitBox.createFromOriginAndSize(x + this.width + offset - width / 2, y + margin, width, height - margin * 2);
+        scrollBarBox = HitBox.createFromOriginAndSize(x + this.width + offset - width / 2, y + margin, width, height - margin * 2);
         renderable = renderable.andThen(g -> {
             if (scrollMax == 0)
                 return;
@@ -142,14 +151,16 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
                 scrollAmount = Math.clamp(scrollAmount + scrollSpeed * s.scrollAmount, 0, scrollMax);
             blocking = true;
         }
-        if (scrollBarBox != null && !blocked && !blocking && type == InputType.MOUSE_LEFT && scrollBarBox.isPositionInside(pos)) {
-            prevPos = pos;
-        }
-        if (prevPos != null && type == InputType.MOUSE_OVER) {
-            if (scrollMax == 0)
-                return;
-            setScrollAmount(scrollAmount - (pos.y - prevPos.y) / (totalSize - barSize) * scrollMax);
-            prevPos = pos;
+        if (scrollBarButtonEnabled) {
+            if (scrollBarBox != null && !blocked && !blocking && type == InputType.MOUSE_LEFT && scrollBarBox.isPositionInside(pos)) {
+                prevPos = pos;
+            }
+            if (prevPos != null && type == InputType.MOUSE_OVER) {
+                if (scrollMax == 0)
+                    return;
+                setScrollAmount(scrollAmount - (pos.y - prevPos.y) / (totalSize - barSize) * scrollMax);
+                prevPos = pos;
+            }
         }
     }
 

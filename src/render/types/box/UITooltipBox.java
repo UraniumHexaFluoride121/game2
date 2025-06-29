@@ -2,7 +2,7 @@ package render.types.box;
 
 import foundation.input.*;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import render.AbstractRenderElement;
 import render.OrderedRenderable;
 import render.RenderOrder;
@@ -10,7 +10,7 @@ import render.RenderRegister;
 import render.types.text.TooltipManager;
 
 public class UITooltipBox extends AbstractRenderElement implements TooltipHolder, RegisteredButtonInputReceiver {
-    private final StaticHitBox hitBox;
+    private final HitBox hitBox;
     private final ButtonOrder buttonOrder;
     private ButtonRegister buttonRegister;
     private ButtonClickHandler clickHandler;
@@ -21,7 +21,7 @@ public class UITooltipBox extends AbstractRenderElement implements TooltipHolder
         this.buttonOrder = buttonOrder;
         this.buttonRegister = buttonRegister;
         buttonRegister.register(this);
-        hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
+        hitBox = HitBox.createFromOriginAndSize(x, y, width, height);
         clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false);
         tooltip = new TooltipManager(this);
         renderable = tooltip;

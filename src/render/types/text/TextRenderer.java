@@ -1,7 +1,8 @@
 package render.types.text;
 
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import render.GameRenderer;
+import render.HorizontalAlign;
 import render.Renderable;
 
 import java.awt.*;
@@ -10,14 +11,13 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 public class TextRenderer implements Renderable {
-    protected StaticHitBox bounds, boxBounds;
-    private Shape textShape;
-    private TextLayout layout;
+    protected HitBox bounds, boxBounds;
     private final ArrayList<TextRenderElement> elements = new ArrayList<>();
+    private float widthNonScaled = 0;
     protected String text;
     protected float textSize;
     private boolean isBold = false, isItalic = false;
-    protected TextAlign textAlign = TextAlign.CENTER;
+    protected HorizontalAlign textAlign = HorizontalAlign.CENTER;
     private Color main, renderBoxColour;
     private float renderBoxBorder = -1, renderBoxRounding;
     private TextStyle initialStyle = new TextStyle(), finalStyle = null;
@@ -71,7 +71,7 @@ public class TextRenderer implements Renderable {
         return this;
     }
 
-    public TextRenderer setTextAlign(TextAlign textAlign) {
+    public TextRenderer setTextAlign(HorizontalAlign textAlign) {
         this.textAlign = textAlign;
         update();
         return this;
@@ -89,9 +89,9 @@ public class TextRenderer implements Renderable {
             return;
         g.scale(textSize, -textSize);
 
-        if (textAlign == TextAlign.CENTER)
+        if (textAlign == HorizontalAlign.CENTER)
             g.translate(-getTextWidth() / 2 / textSize, 0);
-        if (textAlign == TextAlign.RIGHT)
+        if (textAlign == HorizontalAlign.RIGHT)
             g.translate(-getTextWidth() / textSize, 0);
 
         if (renderBoxBorder != -1) {
@@ -101,8 +101,8 @@ public class TextRenderer implements Renderable {
         GameRenderer.renderTransformed(g, () -> {
             for (TextRenderElement element : elements) {
                 applyStyle(element.style, g);
-                g.fill(element.textShape);
-                g.translate(getTextWidthNonScaled(element.layout), 0);
+                element.renderable.render(g);
+                g.translate(element.width, 0);
             }
         });
         g.scale(1 / textSize, -1 / textSize);
@@ -124,11 +124,7 @@ public class TextRenderer implements Renderable {
     }
 
     public float getTextWidth() {
-        return getTextWidthNonScaled(layout) * textSize;
-    }
-
-    public float getTextWidthNonScaled(TextLayout layout) {
-        return layout.getAdvance();
+        return widthNonScaled * textSize;
     }
 
     protected Font font;
@@ -141,34 +137,49 @@ public class TextRenderer implements Renderable {
         String current = text;
         StringBuilder full = new StringBuilder();
         TextStyle style = initialStyle;
+        finalStyle = style;
         while (true) {
-            int start = current.indexOf('[');
-            int end = current.indexOf(']');
-            if (start < end && start != -1) {
-                if (!elements.isEmpty() || start != 0) {
-                    String s = current.substring(0, start);
-                    if (!s.isEmpty()) {
-                        elements.add(new TextRenderElement(new TextLayout(s, font, g.getFontRenderContext()), style));
-                        full.append(s);
-                    }
+            if (separatePosition(current, '[', ']') < separatePosition(current, '{', '}')) {
+                String[] styleSeparation = separate(current, '[', ']');
+                if (!styleSeparation[0].isEmpty()) {
+                    elements.add(new TextRenderElement(new TextLayout(styleSeparation[0], font, g.getFontRenderContext()), style));
+                    full.append(styleSeparation[0]);
                 }
-                style = style.modify(current.substring(start + 1, end));
-                finalStyle = style;
-                if (current.length() - 1 == end) {
+                if (styleSeparation[1] != null) {
+                    style = style.modify(styleSeparation[1]);
+                    finalStyle = style;
+                    if (styleSeparation[2] == null)
+                        break;
+                    current = styleSeparation[2];
+                } else {
                     break;
                 }
-                current = current.substring(end + 1);
             } else {
-                elements.add(new TextRenderElement(new TextLayout(current, font, g.getFontRenderContext()), style));
-                full.append(current);
-                finalStyle = elements.getLast().style;
-                break;
+                String[] renderableSeparation = separate(current, '{', '}');
+                if (!renderableSeparation[0].isEmpty()) {
+                    elements.add(new TextRenderElement(new TextLayout(renderableSeparation[0], font, g.getFontRenderContext()), style));
+                    full.append(renderableSeparation[0]);
+                }
+                if (renderableSeparation[1] != null) {
+                    elements.add(TextRenderable.get(renderableSeparation[1], style));
+                    if (renderableSeparation[2] == null)
+                        break;
+                    current = renderableSeparation[2];
+                } else {
+                    break;
+                }
             }
         }
-        layout = new TextLayout(full.toString(), font, g.getFontRenderContext());
-        textShape = layout.getOutline(null);
+        widthNonScaled = 0;
+        for (TextRenderElement e : elements) {
+            widthNonScaled += e.width;
+        }
+        if (full.isEmpty())
+            return;
+        TextLayout layout = new TextLayout(full.toString(), font, g.getFontRenderContext());
+        Shape textShape = layout.getOutline(null);
         Rectangle2D b = textShape.getBounds2D();
-        bounds = StaticHitBox.createFromOriginAndSize((float) b.getX(), (float) b.getY(), (float) b.getWidth(), (float) b.getHeight());
+        bounds = HitBox.createFromOriginAndSize((float) b.getX(), (float) b.getY(), (float) b.getWidth(), (float) b.getHeight());
         if (renderBoxBorder != -1) {
             boxBounds = bounds.copy().expand(renderBoxBorder * 20);
         }
@@ -180,15 +191,24 @@ public class TextRenderer implements Renderable {
         return text;
     }
 
-    public static class TextRenderElement {
-        public final TextLayout layout;
-        public final TextStyle style;
-        public final Shape textShape;
-
-        public TextRenderElement(TextLayout layout, TextStyle style) {
-            this.layout = layout;
-            this.style = style;
-            textShape = layout.getOutline(null);
+    private static String[] separate(String s, char startChar, char endChar) {
+        int start = s.indexOf(startChar);
+        int end = s.indexOf(endChar);
+        if (start < end && start != -1) {
+            return new String[]{
+                    start == 0 ? "" : s.substring(0, start),
+                    s.substring(start + 1, end),
+                    s.length() - 1 == end ? null : s.substring(end + 1)
+            };
         }
+        return new String[]{
+                s, null, null
+        };
+    }
+
+    private static int separatePosition(String s, char startChar, char endChar) {
+        int start = s.indexOf(startChar);
+        int end = s.indexOf(endChar);
+        return (start < end && start != -1) ? start : Integer.MAX_VALUE;
     }
 }

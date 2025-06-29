@@ -2,24 +2,31 @@ package render.types.text;
 
 import foundation.Deletable;
 import foundation.input.TooltipHolder;
+import render.HorizontalAlign;
 import render.Renderable;
 import render.types.box.UIBox;
 
 import java.awt.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class TooltipManager implements Renderable, Deletable {
     private TooltipHolder button;
-    private UITooltip tooltip;
+    private AbstractUITooltip tooltip;
 
     public TooltipManager(TooltipHolder button) {
         this.button = button;
     }
 
     public TooltipManager add(float width, Consumer<UIBox> boxModifier, String text) {
-        tooltip = new UITooltip(width == -1 ? 100 : width, 0.6f, TextAlign.LEFT, boxModifier, button)
+        tooltip = new UIMouseTooltip(width == -1 ? 100 : width, 0.6f, HorizontalAlign.LEFT, boxModifier, button)
                 .setText(text);
+        return this;
+    }
+
+    public TooltipManager add(Function<TooltipHolder, AbstractUITooltip> tooltip) {
+        this.tooltip = tooltip.apply(button);
         return this;
     }
 
@@ -31,6 +38,10 @@ public class TooltipManager implements Renderable, Deletable {
     public TooltipManager showIf(BooleanSupplier predicate) {
         tooltip.setPredicate(predicate);
         return this;
+    }
+
+    public void forceShowTooltip() {
+        tooltip.forceShow();
     }
 
     @Override

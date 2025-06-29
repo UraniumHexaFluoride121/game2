@@ -52,6 +52,11 @@ public class LerpAnimation implements ReversableAnimationTimer {
         endTime = startTime + time;
     }
 
+    public void loopTimer() {
+        startTime += time;
+        endTime += time;
+    }
+
     @Override
     public void setReversed(boolean reversed) {
         if (this.reversed != reversed) {

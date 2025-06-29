@@ -40,16 +40,13 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
     private final HashMap<UnitCharacteristic, BarDisplay> overviewBars = new HashMap<>();
     private AttributeData[] attributes;
     private AttributeRenderer attributeRenderer;
-    private UIScrollSurface attributesScrollSurface, actionScrollSurface, weaponsScrollSurface;
+    private UIScrollSurface attributesScrollSurface, actionScrollSurface;
     private UITabSwitcher tabSwitcher;
-    private final HashMap<DamageType, BarDisplay> weaponDetailBars = new HashMap<>();
-    private final MultiLineTextBox weaponTypeText = new MultiLineTextBox(30, 24, 16, .7f, TextAlign.LEFT),
-            unitDescription = new MultiLineTextBox(0.5f, 0, 28, 0.8f, TextAlign.LEFT).setTextColour(UITextLabel.TEXT_COLOUR_DARK);
-    private final UITextLabel weaponTypeLabel = new UITextLabel(17, 1, true).updateTextLeft("Weapon type info:").setTextLeftBold();
+    private final MultiLineTextBox unitDescription = new MultiLineTextBox(0.5f, 0, 28, 0.8f, HorizontalAlign.LEFT).setTextColour(UITextLabel.TEXT_COLOUR_DARK);
     private UIElementScrollSurface<BarDisplay> characteristicDisplay;
 
-    public UnitInfoScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
-        super(register, buttonRegister, order, buttonOrder, 0, 0, level);
+    public UnitInfoScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
+        super(register, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, 0, level);
         width = Renderable.right() - sideMargin * 2;
         height = Renderable.top() - 5;
         nameText = new UITextLabel(27, 2.5f, false).setTextLeftBold();
@@ -87,25 +84,6 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                                 .translate(2, height - 3));
                         actionScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 1, 0, width - 2, height - 5, false, (r3, b3) -> {
                         }).addScrollBar(0.5f, 0.4f, 0).setScrollSpeed(0.4f);
-                    }).addTab(4, "Weapons", (r2, b2) -> {
-                        new RenderElement(r2, RenderOrder.INFO_SCREEN, new UITextLabel(27, 2.5f, false).setTextLeftBold().updateTextLeft("Weapons")
-                                .translate(2, height - 3), weaponTypeText,
-                                new UITextLabel(26, 1, false).updateTextLeft("Select a weapon to see details").setTextLeftBold().translate(1, height - 11.5f),
-                                new UITextLabel(17, 1, true).updateTextLeft("About weapons:").setTextLeftBold().translate(29, 8),
-                                new UITextLabel(17, 1, true).updateTextLeft("Weapon effectiveness:").setTextLeftBold().translate(29, 18),
-                                weaponTypeLabel.translate(29, 25),
-                                new MultiLineTextBox(30, 7, 16, .7f, TextAlign.LEFT)
-                                        .updateText("When firing at an enemy unit, the weapon that can do the most damage to the shield and / or hull " +
-                                                "will automatically be selected. Each weapon type has its strengths and weaknesses, so having multiple weapons " +
-                                                "allows a ship to be effective against a broader selection of enemies. Some weapons also require ammunition. Once " +
-                                                "you run out of ammunition for that weapon, it can no longer be fired until the unit is resupplied.")
-                        );
-                        weaponsScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 1, 0, width - 22, height - 12, false, (r3, b3) -> {
-                        }).addScrollBar(0.5f, 0.4f, 0);
-                        for (int i = 0; i < DamageType.values().length; i++) {
-                            DamageType type = DamageType.values()[i];
-                            weaponDetailBars.put(type, new BarDisplay(r2, b2, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 30, 10f + 1.5f * i, 10, type.getName()));
-                        }
                     });
         });
     }
@@ -117,12 +95,6 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
 
     public void enable(Unit unit) {
         unitDescription.updateText(unit.type.description);
-        weaponDetailBars.forEach((t, b) -> {
-            b.bar.setFill(0);
-        });
-        weaponTypeText.updateText("Select weapon to see info")
-                .setTextColour(UITextLabel.TEXT_COLOUR_DARK);
-        weaponTypeLabel.updateTextLeft("Weapon type info:");
         tabSwitcher.selectTab(0);
         unitImage = new UIImageBox(14, 14, ImageRenderer.renderImageCentered(unit.type.getImage(unit.team, UnitPose.INFO), true))
                 .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)
@@ -156,17 +128,6 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
             }
         });
         actionScrollSurface.setScrollMax((actionElements.size() - 1) * 6 - attributesScrollSurface.height);
-        weaponElements.forEach(WeaponElement::delete);
-        weaponElements.clear();
-        weaponsScrollSurface.addRenderables((r, b) -> {
-            for (int i = 0; i < unit.type.weapons.size(); i++) {
-                weaponElements.add(new WeaponElement(r, b, i + 1, unit.type.weapons.get(i), this));
-            }
-        });
-        weaponsScrollSurface.setScrollMax((weaponElements.size()) * 6 - weaponsScrollSurface.height);
-        weaponDetailBars.forEach((t, d) -> {
-            d.bar.setFill(0);
-        });
         setEnabled(true);
     }
 
@@ -180,75 +141,19 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
         super.delete();
         attributesScrollSurface = null;
         actionScrollSurface = null;
-        weaponsScrollSurface = null;
-        weaponDetailBars.clear();
         overviewBars.clear();
         actionElements.clear();
         tabSwitcher = null;
         characteristicDisplay = null;
     }
 
-    private final ArrayList<WeaponElement> weaponElements = new ArrayList<>();
-
-    private static class WeaponElement extends UIContainer {
-        private final UITextLabel name = new UITextLabel(12, 1, false).setTextCenterBold();
-        public UIButton button;
-
-        private WeaponElement(GameRenderer renderer, ButtonRegister buttonRegister, int index, WeaponTemplate weapon, UnitInfoScreen infoScreen) {
-            super(renderer, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, -index * 6 + .5f);
-            name.updateTextCenter(switch (index) {
-                case 1 -> "Primary weapon";
-                case 2 -> "Secondary weapon";
-                case 3 -> "Tertiary weapon";
-                default -> "Weapon " + index;
-            });
-            addRenderables((r, b) -> {
-                button = new UIButton(r, b, RenderOrder.INFO_SCREEN_BACKGROUND, ButtonOrder.INFO_SCREEN, 1, 0, 24, 5, 0, true, () -> {
-                    infoScreen.weaponDetailBars.forEach((t, d) -> {
-                        d.bar.setFill(weapon.damageTypes.get(t).fill, 1, 0.6f);
-                    });
-                    infoScreen.weaponTypeText.updateText(weapon.weaponType.infoText)
-                            .setTextColour(UITextLabel.TEXT_COLOUR);
-                    infoScreen.weaponTypeLabel.updateTextLeft("Weapon type info: " + weapon.weaponType.getName());
-                }).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER);
-                new RenderElement(r, RenderOrder.INFO_SCREEN, new UIBox(4, 4).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(1.5f, .5f),
-                        ((Renderable) g -> {
-                            GameRenderer.renderOffset(5 / 2f, 5 / 2f, g, () -> {
-                                weapon.projectileType.infoImage.render(g, 4);
-                            });
-                            GameRenderer.renderOffset((24 - 12) / 2f, 3.8f, g, () -> {
-                                name.render(g);
-                            });
-                        }).translate(1, 0),
-                        new TextRenderer("Weapon Type:", .7f, UITextLabel.TEXT_COLOUR_DARK)
-                                .setTextAlign(TextAlign.LEFT).setBold(true).translate(7, 2.9f),
-                        new TextRenderer(weapon.weaponType.getName(), .7f, UITextLabel.TEXT_COLOUR_DARK)
-                                .setTextAlign(TextAlign.RIGHT).setBold(true).translate(19, 2.9f),
-                        new TextRenderer("Firing Range:", .7f, UITextLabel.TEXT_COLOUR_DARK)
-                                .setTextAlign(TextAlign.LEFT).setBold(true).translate(7, 1.8f),
-                        new TextRenderer(weapon.rangeText, .7f, UITextLabel.TEXT_COLOUR_DARK)
-                                .setTextAlign(TextAlign.RIGHT).setBold(true).translate(19, 1.8f),
-                        new TextRenderer("Ammo Capacity:", .7f, UITextLabel.TEXT_COLOUR_DARK)
-                                .setTextAlign(TextAlign.LEFT).setBold(true).translate(7, .7f),
-                        new TextRenderer(weapon.requiresAmmo ? String.valueOf(weapon.ammoCapacity) : "Infinite", .7f, UITextLabel.TEXT_COLOUR_DARK)
-                                .setTextAlign(TextAlign.RIGHT).setBold(true).translate(19, .7f)
-                );
-            });
-        }
-
-        @Override
-        public void delete() {
-            super.delete();
-            button = null;
-        }
-    }
-
     private final ArrayList<ActionOverviewElement> actionElements = new ArrayList<>();
 
     private static class ActionOverviewElement extends UIContainer {
         private final UITextLabel name = new UITextLabel(12, 1, false).setTextCenterBold();
-        private final MultiLineTextBox infoText = new MultiLineTextBox(5, 3, 35, 0.65f, TextAlign.LEFT)
+        private final MultiLineTextBox infoText = new MultiLineTextBox(5, 3, 35, 0.65f, HorizontalAlign.LEFT)
                 .setTextColour(UITextLabel.TEXT_COLOUR_DARK);
+        private EnergyDisplay energyDisplay;
 
         private ActionOverviewElement(GameRenderer renderer, ButtonRegister buttonRegister, int index, Action action, Unit unit) {
             super(renderer, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, -index * 6 + .5f);
@@ -256,6 +161,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
             infoText.updateText(action.infoText);
             addRenderables((r, b) -> {
                 String actionCostText = unit.getActionCostText(action);
+                energyDisplay = new EnergyDisplay(3, true).setText(actionCostText + TextRenderable.ENERGY.display);
                 new RenderElement(r, RenderOrder.INFO_SCREEN,
                         new UIBox(44, 5).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(1, 0),
                         ((Renderable) g -> {
@@ -268,9 +174,15 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                                 name.render(g);
                             });
                             infoText.render(g);
-                        }).translate(1, 0), new EnergyDisplay(actionCostText.length() > 4 ? 2.8f : 2f).setText(actionCostText)
+                        }).translate(1, 0), energyDisplay
                         .translate(2 + 3 / 2f, 0.4f));
             });
+        }
+
+        @Override
+        public void delete() {
+            super.delete();
+            energyDisplay.delete();
         }
     }
 

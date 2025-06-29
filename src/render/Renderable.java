@@ -77,7 +77,7 @@ public interface Renderable {
     }
 
     static BasicStroke sharpCornerStroke(float width) {
-        return new BasicStroke(width, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 1);
+        return new BasicStroke(width, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 100);
     }
 
     static Renderable renderImage(ResourceLocation resource, boolean centerImage, boolean flip, float blockWidth, boolean cacheImage) {
@@ -202,7 +202,23 @@ public interface Renderable {
         return area;
     }
 
+    static Area add(Shape a, Shape b) {
+        Area area = new Area(a);
+        area.add(new Area(b));
+        return area;
+    }
+
+    static Area subtract(Shape a, Shape b) {
+        Area area = new Area(a);
+        area.subtract(new Area(b));
+        return area;
+    }
+
     static Shape outlineShape(Shape shape, float width) {
         return roundedStroke(width).createStrokedShape(shape);
+    }
+
+    static Shape outlineShapeSharp(Shape shape, float width) {
+        return sharpCornerStroke(width).createStrokedShape(shape);
     }
 }

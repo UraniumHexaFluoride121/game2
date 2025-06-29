@@ -10,7 +10,7 @@ import level.tile.TileType;
 import render.GameRenderer;
 import render.Renderable;
 import render.types.text.TextRenderer;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.UIColourTheme;
 import render.types.box.UIBox;
 import unit.Unit;
@@ -35,9 +35,9 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     private final EnergyCostDisplay energyCostDisplay = new EnergyCostDisplay(false), energyCostPerTurnDisplay = new EnergyCostDisplay(true);
     private Supplier<Boolean> isVisible;
 
-    private final UIBox actionUnusableBox = new UIBox(4f, 1).setCorner(.25f).setColourTheme(UIColourTheme.DARK_GRAY);
+    private final UIBox actionUnusableBox = new UIBox(4f, 1).setCorner(.5f).setColourTheme(UIColourTheme.DARK_GRAY);
     private final TextRenderer actionUnusableText = new TextRenderer("Unavailable", .6f, TEXT_COLOUR)
-            .setBold(true).setTextAlign(TextAlign.CENTER);
+            .setBold(true).setTextAlign(HorizontalAlign.CENTER);
 
     private Unit unit;
 
@@ -122,7 +122,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
 
     public void updateActions(Unit unit) {
         if (actionMap.containsKey(FIRE)) {
-            actionMap.get(FIRE).type = !unit.tilesInFiringRange(unit.getLevel().currentVisibility, new UnitData(unit), true).isEmpty() &&
+            actionMap.get(FIRE).type = !unit.stats.tilesInFiringRange(unit.getLevel().currentVisibility, new UnitData(unit), true).isEmpty() &&
                     !unit.stealthMode ? ActionIconType.ENABLED : unit.hasPerformedAction(FIRE) ? ActionIconType.DISABLED : ActionIconType.UNUSABLE;
         }
         if (actionMap.containsKey(MOVE)) {
@@ -141,7 +141,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
             actionMap.get(RESUPPLY).type = unit.stats.getResupplyTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(SHIELD_REGEN)) {
-            actionMap.get(SHIELD_REGEN).type = unit.shieldHP < unit.type.shieldHP ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
+            actionMap.get(SHIELD_REGEN).type = unit.shieldHP < unit.stats.maxShieldHP() ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
         }
         if (unit.canCapture()) {
             addActionEnabled(CAPTURE, unit);
@@ -234,5 +234,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
         unit = null;
         actionMap.forEach((a, d) -> d.clickHandler.delete());
         actionMap.clear();
+        energyCostDisplay.delete();
+        energyCostPerTurnDisplay.delete();
     }
 }

@@ -6,9 +6,10 @@ import render.Renderable;
 import render.UIColourTheme;
 
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 
 public class UIBox implements Renderable {
-    private static final BasicStroke STROKE = Renderable.sharpCornerStroke(0.17f * SCALING);
+    private static final BasicStroke STROKE = Renderable.sharpCornerStroke(0.12f * SCALING);
     protected Shape box;
     private ButtonClickHandler clickHandler = null;
     private UIColourTheme colourTheme = UIColourTheme.LIGHT_BLUE;
@@ -17,7 +18,7 @@ public class UIBox implements Renderable {
     private BoxShape shape;
 
     public UIBox(float width, float height) {
-        this(width, height, 0.5f, BoxShape.RECTANGLE_ALL_CORNERS_CUT);
+        this(width, height, 0.65f, BoxShape.RECTANGLE_ALL_CORNERS_ROUNDED);
     }
 
     public UIBox(float width, float height, float corner, BoxShape shape) {
@@ -120,6 +121,7 @@ public class UIBox implements Renderable {
     }
 
     public enum BoxShape {
+        RECTANGLE_ALL_CORNERS_ROUNDED((width, height, corner) -> new RoundRectangle2D.Float(0, 0, width * SCALING, height * SCALING, corner * SCALING, corner * SCALING)),
         RECTANGLE_ALL_CORNERS_CUT((width, height, corner) -> new Polygon(
                 new int[]{
                         0,

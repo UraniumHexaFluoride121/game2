@@ -12,13 +12,14 @@ import java.awt.geom.RoundRectangle2D;
 
 public class UIHitPointBar implements Renderable {
     private final BasicStroke stroke;
-    private final float border, width, height, spacing;
+    public float width;
+    public final float border, height, spacing;
     private int segments;
     private Color borderColour, background, bar;
     private float fill = 0, fillTo;
     private float rounding = 0;
     private PowAnimation fillAnimation = null;
-    private boolean barOnly = false, borderOnly = false;
+    public boolean barOnly = false, borderOnly = false;
 
     public UIHitPointBar(float border, float width, float height, float spacing, int segments, Color borderColour, Color background, Color bar) {
         this.border = border;
@@ -63,6 +64,11 @@ public class UIHitPointBar implements Renderable {
 
     public UIHitPointBar setBorderColour(Color borderColour) {
         this.borderColour = borderColour;
+        return this;
+    }
+
+    public UIHitPointBar setWidth(float width) {
+        this.width = width;
         return this;
     }
 
@@ -124,7 +130,7 @@ public class UIHitPointBar implements Renderable {
     public Shape getBarClip() {
         float segmentWidth = getSegmentWidth();
         float fill = getRenderFill();
-        RoundRectangle2D.Float rect = new RoundRectangle2D.Float(
+        return new RoundRectangle2D.Float(
                 border / 2 + spacing,
                 border / 2 + spacing - 0.01f,
                 (segmentWidth + spacing) * (int) fill + segmentWidth * (fill - (int) fill),
@@ -132,7 +138,6 @@ public class UIHitPointBar implements Renderable {
                 rounding - spacing - border / 2,
                 rounding - spacing - border / 2
         );
-        return rect;
     }
 
     @Override
@@ -156,24 +161,32 @@ public class UIHitPointBar implements Renderable {
             int lastSegment = (int) fill;
             float segmentWidth = getSegmentWidth();
             for (int i = 0; i < lastSegment; i++) {
-                g.fillRoundRect((int) ((border / 2 + spacing + (segmentWidth + spacing) * i) * SCALING), (int) ((border / 2 + spacing) * SCALING), (int) (segmentWidth * SCALING), (int) ((height - border - spacing * 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING));
+                g.fillRoundRect((int) ((border / 2 + spacing + (segmentWidth + spacing) * i) * SCALING), (int) ((border / 2 + spacing) * SCALING), (int) (segmentWidth * SCALING), (int) (getSegmentHeight() * SCALING), (int) ((rounding - spacing - border / 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING));
             }
             float lastSegmentFill = fill - lastSegment;
             if (lastSegmentFill > 0) {
-                g.fillRoundRect((int) ((border / 2 + spacing + (segmentWidth + spacing) * lastSegment) * SCALING), (int) ((border / 2 + spacing) * SCALING), (int) (segmentWidth * lastSegmentFill * SCALING), (int) ((height - border - spacing * 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING));
+                g.fillRoundRect((int) ((border / 2 + spacing + (segmentWidth + spacing) * lastSegment) * SCALING), (int) ((border / 2 + spacing) * SCALING), (int) (segmentWidth * lastSegmentFill * SCALING), (int) (getSegmentHeight() * SCALING), (int) ((rounding - spacing - border / 2) * SCALING), (int) ((rounding - spacing - border / 2) * SCALING));
             }
         });
     }
 
-    private float getRenderFill() {
+    public float getRenderFill() {
         return fillAnimation == null ? this.fill : MathUtil.lerp(this.fill, fillTo, fillAnimation.normalisedProgress());
     }
 
-    private float getTotalBarWidth() {
+    public float getTotalBarWidth() {
         return width - border - spacing * 2;
     }
 
-    private float getSegmentWidth() {
+    public float getSegmentHeight() {
+        return height - border - spacing * 2;
+    }
+
+    public float getSegmentWidth() {
         return (getTotalBarWidth() - (segments - 1) * spacing) / segments;
+    }
+
+    public int getSegments() {
+        return segments;
     }
 }

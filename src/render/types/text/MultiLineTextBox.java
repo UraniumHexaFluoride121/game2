@@ -2,6 +2,7 @@ package render.types.text;
 
 import foundation.Deletable;
 import render.GameRenderer;
+import render.HorizontalAlign;
 import render.Renderable;
 
 import java.awt.*;
@@ -9,16 +10,17 @@ import java.util.ArrayList;
 
 public class MultiLineTextBox implements Renderable, Deletable {
     private String s, newString;
-    private final float x, y, width;
+    private final float x, y;
+    private float width;
     public float textSize;
-    private final TextAlign textAlign;
+    private HorizontalAlign textAlign;
     private final ArrayList<TextRenderer> textRenderers = new ArrayList<>();
     private Color textColour = UITextLabel.TEXT_COLOUR;
     private boolean bold = true;
     private boolean forceUpdate = false;
     private Runnable updateCallback = null;
 
-    public MultiLineTextBox(float x, float y, float width, float textSize, TextAlign textAlign) {
+    public MultiLineTextBox(float x, float y, float width, float textSize, HorizontalAlign textAlign) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -85,6 +87,17 @@ public class MultiLineTextBox implements Renderable, Deletable {
         }
         if (updateCallback != null)
             updateCallback.run();
+    }
+
+    public MultiLineTextBox setWidth(float width) {
+        this.width = width;
+        forceUpdate = true;
+        return this;
+    }
+
+    public MultiLineTextBox setTextAlign(HorizontalAlign textAlign) {
+        this.textAlign = textAlign;
+        return this;
     }
 
     public MultiLineTextBox setOnUpdate(Runnable callback) {

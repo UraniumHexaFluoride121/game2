@@ -131,7 +131,7 @@ public class UIPlayerShipSettings extends UIContainer {
                     new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIImageBox(SIZE, SIZE, ImageRenderer.renderImageCentered(UnitType.ORDERED_UNIT_TYPES[i].getImage(team, UnitPose.INFO), false))
                             .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER))
                             .translate(0, i * (SIZE + .8f)).setZOrder(1);
-                    new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, i * (SIZE + .8f), (r2, b2) -> {
+                    new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, i * (SIZE + .8f)).addRenderables((r2, b2) -> {
                         UINumberSelector selector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 4.5f + SIZE / 2, 1.25f, 1.5f, 3, 0, 10, 0);
                         selectors.put(UnitType.ORDERED_UNIT_TYPES[finalI], selector);
                         selector.scale(1, -1).translate(0, (SIZE + .8f));

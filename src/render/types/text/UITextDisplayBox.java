@@ -17,7 +17,7 @@ public class UITextDisplayBox extends AbstractRenderElement {
         this.width = width;
         box = new UIBox(width, height);
         text = new TextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
-                .setTextAlign(TextAlign.CENTER);
+                .setTextAlign(HorizontalAlign.CENTER);
         renderable = g -> {
             if (!isEnabled())
                 return;

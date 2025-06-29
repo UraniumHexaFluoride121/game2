@@ -6,7 +6,7 @@ import level.Level;
 import level.tile.Tile;
 import level.tutorial.sequence.BoxSize;
 import render.types.container.UIContainer;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.types.tutorial.LevelTutorialContinueTextBox;
 import render.types.tutorial.TutorialContinueTextBox;
 
@@ -16,15 +16,15 @@ public class ContinueTextBox implements TutorialSequenceElement {
     private UIContainer textBox;
     private Supplier<UIContainer> textBoxSupplier;
 
-    public static ContinueTextBox onMap(Level l, BoxSize size, float x, float y, TextAlign textAlign, String text) {
+    public static ContinueTextBox onMap(Level l, BoxSize size, float x, float y, HorizontalAlign textAlign, String text) {
         return new ContinueTextBox(l, x, y, size, textAlign, text, true);
     }
 
-    public static ContinueTextBox onUI(Level l, BoxSize size, float x, float y, TextAlign textAlign, String text) {
+    public static ContinueTextBox onUI(Level l, BoxSize size, float x, float y, HorizontalAlign textAlign, String text) {
         return new ContinueTextBox(l, x, y, size, textAlign, text, false);
     }
 
-    private ContinueTextBox(Level l, float x, float y, BoxSize boxSize, TextAlign textAlign, String text, boolean map) {
+    private ContinueTextBox(Level l, float x, float y, BoxSize boxSize, HorizontalAlign textAlign, String text, boolean map) {
         ObjPos pos = map ? Tile.getFractionalRenderPos(x, y) : new ObjPos(x, y);
         if (map)
             textBoxSupplier = () -> new TutorialContinueTextBox(l, pos.x, pos.y, boxSize.width, textAlign, text, TutorialSequenceElement::next);

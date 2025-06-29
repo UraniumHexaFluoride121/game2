@@ -2,6 +2,7 @@ package unit.info;
 
 import render.level.info.UnitInfoScreen;
 import unit.ShipClass;
+import unit.stats.ModifierCategory;
 
 public record AttributeData(UnitInfoScreen.AttributeType type, String text, int order) {
     private static int orderCounter = 0;
@@ -18,7 +19,7 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
             HAS_SHIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
             "Has a powerful shield for defence", orderCounter++),
             HIGH_MOVEMENT_SPEED = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
-                    "High movement speed", orderCounter++),
+                    "High " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase(), orderCounter++),
             QUICK_ASTEROID_FIELD = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
                     "Can move through asteroid fields", orderCounter++),
             HIGH_VIEW_RANGE = new AttributeData(UnitInfoScreen.AttributeType.POSITIVE,
@@ -57,8 +58,8 @@ public record AttributeData(UnitInfoScreen.AttributeType type, String text, int 
                     "Limited view range", orderCounter++),
             NO_WEAPON = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Has no weapons for defence", orderCounter++),
-            MAIN_GUN_LIMITED_AMMO = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
-                    "Primary weapon has limited ammo", orderCounter++),
+            LIMITED_AMMO = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
+                    "Weapons have limited ammo", orderCounter++),
             INEFFECTIVE_AGAINST_ALL = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,
                     "Low firepower", orderCounter++),
             INEFFECTIVE_AGAINST_SHIELDS = new AttributeData(UnitInfoScreen.AttributeType.NEGATIVE,

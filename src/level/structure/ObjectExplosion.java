@@ -4,6 +4,7 @@ import foundation.math.ObjPos;
 import render.GameRenderer;
 import render.Renderable;
 import render.anim.ImageSequenceAnim;
+import render.anim.LerpAnimation;
 import render.texture.ImageSequenceGroup;
 
 import java.awt.*;
@@ -15,10 +16,12 @@ public class ObjectExplosion implements Renderable {
     private final ObjPos center;
     private final ImageSequenceAnim anim1, anim2, anim3;
     private final ImageSequenceAnim[] anims;
+    private final LerpAnimation fullAnim;
 
 
     public ObjectExplosion(ObjPos center, float time) {
         this.center = center;
+        fullAnim = new LerpAnimation(time * 2.6f);
         ArrayList<ImageSequenceAnim> animList = new ArrayList<>();
         anim1 = new ImageSequenceAnim(ImageSequenceGroup.EXPLOSION.getRandomSequence(), TILE_SIZE, time);
         animList.add(anim1);
@@ -34,6 +37,10 @@ public class ObjectExplosion implements Renderable {
 
     public boolean finished() {
         return anim3.finished();
+    }
+
+    public LerpAnimation timer() {
+        return fullAnim;
     }
 
     @Override

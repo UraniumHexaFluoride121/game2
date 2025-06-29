@@ -2,7 +2,7 @@ package render.types.input;
 
 import foundation.input.*;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import render.*;
 import render.types.box.UIBox;
 import render.types.input.button.UIShapeButton;
@@ -20,7 +20,7 @@ public abstract class AbstractValueSelector<T> extends AbstractRenderElement imp
     protected int index;
     protected UIColourTheme theme = UIColourTheme.GREEN_SELECTED, displayTheme = UIColourTheme.GREEN_SELECTED;
     protected Runnable onChanged = null;
-    protected final StaticHitBox hitBox;
+    protected final HitBox hitBox;
     protected ButtonClickHandler tooltipClickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false);
     protected final TooltipManager tooltip = new TooltipManager(this);
 
@@ -30,16 +30,18 @@ public abstract class AbstractValueSelector<T> extends AbstractRenderElement imp
         this.buttonOrder = buttonOrder;
         this.height = height;
         this.displayWidth = displayWidth;
-        hitBox = StaticHitBox.createFromOriginAndSize(x, y, 2 * height + .5f * 2 + displayWidth, height);
+        hitBox = HitBox.createFromOriginAndSize(x, y, 2 * height + .5f * 2 + displayWidth, height);
         left = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x, y, height, height, false)
                 .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleLeft)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_LEFT_CORNERS_CUT)
+                .setBoxCorner(0.5f)
                 .setOnClick(this::decrement);
         right = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x + height + .5f * 2 + displayWidth, y, height, height, false)
                 .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleRight)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_RIGHT_CORNERS_CUT)
+                .setBoxCorner(0.5f)
                 .setOnClick(this::increment);
         displayBox = new UITextDisplayBox(null, RenderOrder.NONE, x + height + .5f, y, displayWidth, height, height * 0.8f)
                 .setBold().setBoxShape(UIBox.BoxShape.RECTANGLE).setColourTheme(displayTheme);

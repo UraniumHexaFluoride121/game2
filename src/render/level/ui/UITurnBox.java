@@ -4,18 +4,18 @@ import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import level.Level;
 import render.*;
-import render.types.text.TextRenderer;
-import render.types.text.TextAlign;
 import render.types.box.UIBox;
+import render.HorizontalAlign;
+import render.types.text.TextRenderer;
 import render.types.text.UITextLabel;
 
 public class UITurnBox extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private final TextRenderer text = new TextRenderer(null, 1.5f, UITextLabel.TEXT_COLOUR)
-            .setTextAlign(TextAlign.CENTER).setBold(true);
-    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(13.5f, Renderable.top() - 2.5f, 10, 2);
+            .setTextAlign(HorizontalAlign.CENTER).setBold(true);
+    private final HitBox hitBox = HitBox.createFromOriginAndSize(13.5f, Renderable.top() - 2.5f, 10, 2);
     private Level level;
     private final UIBox box = new UIBox(10, 2);
 
@@ -23,11 +23,12 @@ public class UITurnBox extends AbstractRenderElement implements RegisteredButton
         super(register, order);
         this.level = level;
         renderable = g -> {
-            GameRenderer.renderOffset(13.5f, Renderable.top() - 2.5f, g, () -> {
-                box.render(g);
-                g.translate(10 / 2f, 0.5);
-                text.render(g);
-            });
+            if (isEnabled())
+                GameRenderer.renderOffset(13.5f, Renderable.top() - 2.5f, g, () -> {
+                    box.render(g);
+                    g.translate(10 / 2f, 0.5);
+                    text.render(g);
+                });
         };
         setNewTurn();
     }

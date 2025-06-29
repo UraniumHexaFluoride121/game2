@@ -6,11 +6,10 @@ import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import level.AbstractLevel;
 import render.types.text.TextRenderer;
 import render.types.text.MultiLineTextBox;
-import render.types.text.TextAlign;
 import render.types.box.UIBox;
 import render.types.text.UITextLabel;
 
@@ -18,16 +17,16 @@ import java.awt.*;
 
 public class UIConfirm extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private static final float width = 12, height = 5;
-    private final MultiLineTextBox text = new MultiLineTextBox(0, 0, width - 2, 1.5f, TextAlign.CENTER);
+    private final MultiLineTextBox text = new MultiLineTextBox(0, 0, width - 2, 1.5f, HorizontalAlign.CENTER);
     private final TextRenderer
             confirmText = new TextRenderer("Confirm", 0.85f, UITextLabel.TEXT_COLOUR)
-                    .setTextAlign(TextAlign.CENTER).setBold(true),
+                    .setTextAlign(HorizontalAlign.CENTER).setBold(true),
             cancelText = new TextRenderer("Cancel", 0.85f, UITextLabel.TEXT_COLOUR)
-                    .setTextAlign(TextAlign.CENTER).setBold(true);
-    private final StaticHitBox
-            confirmBox = StaticHitBox.createFromOriginAndSize(Renderable.right() / 2 + width / 2f - 1.5f - width / 3, Renderable.top() / 2 - height / 2f + 0.5f,
+                    .setTextAlign(HorizontalAlign.CENTER).setBold(true);
+    private final HitBox
+            confirmBox = HitBox.createFromOriginAndSize(Renderable.right() / 2 + width / 2f - 1.5f - width / 3, Renderable.top() / 2 - height / 2f + 0.5f,
             width / 3, 1.5f),
-            cancelBox = StaticHitBox.createFromOriginAndSize(Renderable.right() / 2 - width / 2f + 1.5f, Renderable.top() / 2 - height / 2f + 0.5f,
+            cancelBox = HitBox.createFromOriginAndSize(Renderable.right() / 2 - width / 2f + 1.5f, Renderable.top() / 2 - height / 2f + 0.5f,
                     width / 3, 1.5f);
     private final ButtonClickHandler
             confirmButtonHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, null),

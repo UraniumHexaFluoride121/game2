@@ -23,7 +23,7 @@ import render.texture.BackgroundTexture;
 import render.texture.ImageSequenceGroup;
 import render.texture.ResourceLocation;
 import render.types.UIHitPointBar;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.types.text.TextRenderer;
 import render.types.text.UITextLabel;
 import save.GameSave;
@@ -73,7 +73,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     private static final Renderable LOAD_SCREEN_IMAGE = Renderable.renderImage(new ResourceLocation("load_screen.png"), false, true, 60, true);
     private static final GameRenderer loadRenderer = new GameRenderer(MainPanel.windowTransform, null);
     private static final TextRenderer loadText = new TextRenderer("Initializing...", 1f, UITextLabel.TEXT_COLOUR_DARK)
-            .setTextAlign(TextAlign.CENTER).setBold(true);
+            .setTextAlign(HorizontalAlign.CENTER).setBold(true);
     private static final UIHitPointBar loadBar = new UIHitPointBar(0.1f, 16, 1, 0.15f, 1, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);
     private static boolean loadBarEnabled = false;
 
@@ -92,7 +92,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
                 });
         fadeScreen.setReversed(true);
         fadeScreen.finish();
-        Level.EXECUTOR.submit(() -> {
+        new Thread(() -> {
             loadText.updateText("Loading game saves...");
             levelSaves.loadSavesExternal();
             mapSaves.loadSavesExternal();
@@ -115,7 +115,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
             loadText.updateText("Loading complete!");
             fadeScreen.setReversed(false);
             loaded = true;
-        });
+        }).start();
     }
 
     public static Level getActiveLevel() {

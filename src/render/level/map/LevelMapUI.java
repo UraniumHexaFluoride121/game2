@@ -5,7 +5,7 @@ import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import level.AbstractLevel;
 import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
@@ -22,7 +22,7 @@ import static level.tile.Tile.*;
 public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
     private final float height, width, boxHeight, boxWidth;
     private static final Color BACKGROUND_FILL = new Color(0, 0, 0, 100), CAMERA_BOX = new Color(184, 196, 214);
-    private final StaticHitBox clickBox;
+    private final HitBox clickBox;
     public MapUI mapUI;
     private boolean mouseDown = false;
 
@@ -32,14 +32,14 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
         height = level.tileBound.y / TILE_SIZE;
         boxWidth = width + 2;
         boxHeight = height + 2;
-        clickBox = new StaticHitBox(boxHeight / 2, -boxHeight / 2, -boxWidth / 2, boxWidth / 2);
+        clickBox = new HitBox(boxHeight / 2, -boxHeight / 2, -boxWidth / 2, boxWidth / 2);
         addRenderables((r, b) -> {
             UIBox box = new UIBox(boxWidth, boxHeight);
             new RenderElement(r, RenderOrder.MAP, g -> {
                 g.setColor(BACKGROUND_FILL);
                 int right = (int) (Renderable.right() + 1), top = (int) (Renderable.top() + 1);
                 g.fillRect(-right / 2, -top / 2, right + 1, top + 1);
-            }, box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER)
+            }, box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK)
                     .translate(-boxWidth / 2, -boxHeight / 2)
             ).setZOrder(-3);
             mapUI = new MapUI(r, RenderOrder.MAP, level, 1, 0.1f, 0.1f);

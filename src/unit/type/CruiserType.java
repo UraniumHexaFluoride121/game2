@@ -9,6 +9,8 @@ import unit.action.Action;
 import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
+import unit.stats.Modifier;
+import unit.stats.modifiers.MovementModifier;
 import unit.weapon.*;
 
 import java.util.ArrayList;
@@ -16,27 +18,23 @@ import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static unit.info.AttributeData.*;
+import static unit.stats.modifiers.WeaponDamageModifier.*;
+import static unit.stats.modifiers.WeaponDamageModifier.STRENGTH_1;
+import static unit.stats.modifiers.WeaponDamageModifier.STRENGTH_2;
 
 public class CruiserType extends UnitType {
     public static final CruiserType CRUISER = new CruiserType("cruiser", "Cruiser", 14, 4f, 3f, new Action[]{
             Action.FIRE, Action.MOVE
-    }, 1, 25, list -> {
-        WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAILGUN, WeaponType.RAILGUN);
-        float s = 3.0f;
-        w.addData("fighter", new AttackData(1.3f, s));
-        w.addData("bomber", new AttackData(1.2f, s));
-        w.addData("scout", new AttackData(1.0f, s));
-        w.addData("corvette", new AttackData(4.6f, s));
-        w.addData("defender", new AttackData(4.3f, s));
-        w.addData("artillery", new AttackData(5.0f, s));
-        w.addData("supply", new AttackData(4.4f, s));
-        w.addData("cruiser", new AttackData(6.8f, s));
-        w.addData("battlecruiser", new AttackData(7.0f, s));
-        w.addData("miner", new AttackData(7.3f, s));
+    }, 1, 25, 1, 1, 4, list -> {
+        WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAILGUN);
+        w
+                .classModifier(ShipClass.FIGHTER, WEAKNESS_1)
+                .classModifier(ShipClass.CORVETTE, STRENGTH_1)
+                .classModifier(ShipClass.CRUISER, STRENGTH_2)
+                .classModifier(ShipClass.CAPITAL_SHIP, NORMAL_STRENGTH);
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
@@ -51,36 +49,24 @@ public class CruiserType extends UnitType {
             ANTI_CORVETTE, ANTI_CRUISER,
             NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_FIGHTER
     }, FiringRenderer.TWO_UNITS, "The base variant of the cruiser class. Comes with strong armour and a powerful armour-piercing railgun. This railgun performs " +
-            "well against well-armoured units, especially other cruiser-class units."),
+            "well against armoured units, especially other cruiser-class units."),
 
     BATTLECRUISER = new CruiserType("battlecruiser", "Battlecruiser", 12, 4.3f, 3f, new Action[]{
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
-    }, 1, 25, list -> {
-        WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BATTLECRUISER_CANNON, WeaponType.CANNON);
-        float s1 = 2.5f;
-        w1.addData("fighter", new AttackData(1.9f, s1));
-        w1.addData("bomber", new AttackData(1.8f, s1));
-        w1.addData("scout", new AttackData(2.0f, s1));
-        w1.addData("corvette", new AttackData(6.1f, s1));
-        w1.addData("defender", new AttackData(6.2f, s1));
-        w1.addData("artillery", new AttackData(6.6f, s1));
-        w1.addData("supply", new AttackData(6.0f, s1));
-        w1.addData("cruiser", new AttackData(2.9f, s1));
-        w1.addData("battlecruiser", new AttackData(3.1f, s1));
-        w1.addData("miner", new AttackData(3.2f, s1));
+    }, 1, 25, 1, 1, 4, list -> {
+        WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BATTLECRUISER_CANNON);
+        w1
+                .classModifier(ShipClass.FIGHTER, NORMAL_STRENGTH)
+                .classModifier(ShipClass.CORVETTE, STRENGTH_2)
+                .classModifier(ShipClass.CRUISER, NORMAL_STRENGTH)
+                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_2);
         list.add(w1);
-        WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BATTLECRUISER_PLASMA, WeaponType.PLASMA);
-        float s2 = 4.7f;
-        w2.addData("fighter", new AttackData(4.3f, s2));
-        w2.addData("bomber", new AttackData(4.0f, s2));
-        w2.addData("scout", new AttackData(4.5f, s2));
-        w2.addData("corvette", new AttackData(2.3f, s2));
-        w2.addData("defender", new AttackData(2.1f, s2));
-        w2.addData("artillery", new AttackData(2.4f, s2));
-        w2.addData("supply", new AttackData(2.0f, s2));
-        w2.addData("cruiser", new AttackData(1.0f, s2));
-        w2.addData("battlecruiser", new AttackData(1.1f, s2));
-        w2.addData("miner", new AttackData(1.2f, s2));
+        WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BATTLECRUISER_PLASMA);
+        w2
+                .classModifier(ShipClass.FIGHTER, STRENGTH_2)
+                .classModifier(ShipClass.CORVETTE, NORMAL_STRENGTH)
+                .classModifier(ShipClass.CRUISER, WEAKNESS_2)
+                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_3);
         list.add(w2);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
@@ -95,13 +81,13 @@ public class CruiserType extends UnitType {
     }, new AttributeData[]{
             ANTI_CORVETTE, ANTI_FIGHTER, HAS_SHIELD,
             NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_LARGE
-    }, FiringRenderer.TWO_UNITS_BACK, "This heavily armed cruiser comes equipped with two weapons systems: a main cannon and a set of plasma turrets. " +
-            "This makes it effective for destroying both fighter-class and corvette-class units. It also features a shield system to improve its defensive capabilities.")
+    }, FiringRenderer.TWO_UNITS_BACK, "This heavily armed cruiser comes equipped with multiple weapons systems that makes " +
+            "it effective for destroying both fighter-class and corvette-class units. It also features a shield system which improves its defensive capabilities.")
             .modify(u -> u.addShield(2, 0.8f, 33)),
 
     MINER = new CruiserType("miner", "Mining Unit", 6, 4.5f, 2.8f, new Action[]{
             Action.MOVE, Action.MINE
-    }, 1, 32, list -> {
+    }, 1, 32, 1, 1, 0, list -> {
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.LOW);
         map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.MODERATE_GOOD);
@@ -112,52 +98,28 @@ public class CruiserType extends UnitType {
     }, new AttributeData[]{
             MINING, QUICK_ASTEROID_FIELD,
             NO_WEAPON, LOW_HP
-    }, FiringRenderer.ONE_UNIT, "While it doesn't have any weapons, this unit plays a crucial role in successful fleet operations. " +
+    }, FiringRenderer.ONE_UNIT, "While it doesn't have any weapons, this unit plays a crucial role in any successful fleet operations. " +
             "When placed on an asteroid field, using the Mine action will begin extracting " + EnergyManager.displayName + " over several turns, increasing income, until " +
             "the asteroid field is depleted. Lacks the level of armour plating seen on other cruisers, which has the side effect of reducing " + EnergyManager.displayName + " cost when moving.") {
-        @Override
-        public float damageReduction(TileType type) {
-            return type == TileType.ASTEROIDS ? 0.86f : super.damageReduction(type);
-        }
-
-        @Override
-        public float moveCost(TileType type) {
-            return type == TileType.ASTEROIDS ? 1.2f : super.moveCost(type);
-        }
-
-        @Override
-        public float movementFixedCost() {
-            return 0;
-        }
-
         @Override
         public float movementCostMultiplier() {
             return 1;
         }
+
+        @Override
+        public void addModifiers(ArrayList<Modifier> list) {
+            super.addModifiers(list);
+            list.set(list.indexOf(MovementModifier.NO_ASTEROID_FIELDS), MovementModifier.MINING_ASTEROID_FIELDS);
+        }
     };
 
-    CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
+    CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, minRange, maxRange, damage, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
     }
 
     @Override
-    public float damageReduction(TileType type) {
-        return switch (type) {
-            case EMPTY -> 1f;
-            case NEBULA -> 0.88f;
-            case DENSE_NEBULA -> 0.82f;
-            case ASTEROIDS -> 0.72f;
-        };
-    }
-
-    @Override
-    public float moveCost(TileType type) {
-        return switch (type) {
-            case EMPTY -> 1f;
-            case NEBULA -> 1.3f;
-            case DENSE_NEBULA -> 1.5f;
-            case ASTEROIDS -> 100f;
-        };
+    public void addModifiers(ArrayList<Modifier> list) {
+        list.add(MovementModifier.NO_ASTEROID_FIELDS);
     }
 
     @Override
@@ -178,11 +140,6 @@ public class CruiserType extends UnitType {
     @Override
     public float movementCostMultiplier() {
         return 2;
-    }
-
-    @Override
-    public float movementFixedCost() {
-        return 1;
     }
 
     @Override

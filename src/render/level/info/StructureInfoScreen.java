@@ -19,24 +19,24 @@ import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
 import render.types.container.UIElementScrollSurface;
 import render.types.input.button.UIButton;
+import render.types.text.AbstractUITooltip;
 import render.types.text.MultiLineTextBox;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.types.text.UITextLabel;
-import render.types.text.UITooltip;
 
 public class StructureInfoScreen extends LevelUIContainer<Level> {
     private static final float WIDTH = 35, HEIGHT = 22;
     private final UITextLabel nameText;
     private UIImageBox imageBox;
     private UIElementScrollSurface<UIContainer> attributes;
-    private MultiLineTextBox description = new MultiLineTextBox(12, HEIGHT - 4.5f, WIDTH - 13, 0.9f, TextAlign.LEFT).setTextColour(UITextLabel.TEXT_COLOUR_DARK);
+    private final MultiLineTextBox description = new MultiLineTextBox(12, HEIGHT - 4.5f, WIDTH - 13, 0.9f, HorizontalAlign.LEFT).setTextColour(UITextLabel.TEXT_COLOUR_DARK);
 
-    public StructureInfoScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
-        super(register, buttonRegister, order, buttonOrder, Renderable.right() / 2 - WIDTH / 2, Renderable.top() / 2 - HEIGHT / 2, level);
+    public StructureInfoScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
+        super(register, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, Renderable.right() / 2 - WIDTH / 2, Renderable.top() / 2 - HEIGHT / 2, level);
         nameText = new UITextLabel(WIDTH - 10 - 4, 2.5f, false).setTextLeftBold();
         addRenderables((r, b) -> {
             new UIFullScreenColour(r, RenderOrder.INFO_SCREEN_BACKGROUND, UnitInfoScreen.FULL_SCREEN_MENU_BACKGROUND_COLOUR)
-                    .setZOrder(-1).translate(-(Renderable.right() / 2 - WIDTH / 2), -(Renderable.top() / 2 - HEIGHT / 2));
+                    .setZOrder(-10).translate(-(Renderable.right() / 2 - WIDTH / 2), -(Renderable.top() / 2 - HEIGHT / 2));
             imageBox = new UIImageBox(10, 10, null);
             new UIButton(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN,
                     3.5f - (Renderable.right() / 2 - WIDTH / 2), Renderable.top() - 2.5f - (Renderable.top() / 2 - HEIGHT / 2), 9, 2, 1.4f, false, this::disable)
@@ -46,11 +46,10 @@ public class StructureInfoScreen extends LevelUIContainer<Level> {
                     imageBox.setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(1, HEIGHT - 1 - 10),
                     nameText.translate(10 + 2, HEIGHT - 3),
                     description
-            );
+            ).setZOrder(-1);
             new OnButtonInput(b, ButtonOrder.INFO_SCREEN, t -> t == InputType.ESCAPE, this::disable);
             attributes = new UIElementScrollSurface<>(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, 1, 15, HEIGHT - 12, false, count -> count * 1.5f + 0.5f);
             attributes.setScrollSpeed(0.25f);
-
         });
     }
 
@@ -68,7 +67,7 @@ public class StructureInfoScreen extends LevelUIContainer<Level> {
         attributes.clear();
         addAttribute("Turns to capture:", s.canBeCaptured ? String.valueOf(s.type.captureSteps) : "N/A", "The number of turns it takes to capture this structure");
         addAttribute("Can resupply:", s.type.resupply ? "Yes" : "No", "Whether or not this structure can resupply allied units");
-        addAttribute("Unit repair:", s.type.unitRegen == 0 ? "None" : MathUtil.floatToString(s.type.unitRegen, 1), "The amount of repairs that this structure can perform on allied units");
+        addAttribute("Unit repair:", s.type.unitRegen == 0 ? "None" : MathUtil.floatToString(s.type.unitRegen, 1), "The amount of HP that this structure can repair for allied units");
         addAttribute("Income:", s.type.energyIncome == 0 ? "None" : String.valueOf(s.type.energyIncome), "The amount of " + EnergyManager.displayName + " income that this structure provides");
         level.levelRenderer.endTurn.setEnabled(false);
         setEnabled(true);
@@ -82,7 +81,7 @@ public class StructureInfoScreen extends LevelUIContainer<Level> {
                                 .setTextLeftBold().updateTextLeft(name)
                                 .setTextRightBold().updateTextRight(value));
                         new UITooltipBox(r2, b2, ButtonOrder.INFO_SCREEN, 0, 0, 10, 1)
-                                .tooltip(t -> t.add(12, UITooltip.dark(), tooltip));
+                                .tooltip(t -> t.add(12, AbstractUITooltip.dark(), tooltip));
                     });
         });
     }

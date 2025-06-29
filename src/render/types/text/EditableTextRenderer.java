@@ -5,6 +5,7 @@ import foundation.input.ButtonInputReceiver;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import render.GameRenderer;
+import render.HorizontalAlign;
 import render.anim.SineAnimation;
 
 import java.awt.*;
@@ -98,7 +99,7 @@ public class EditableTextRenderer extends TextRenderer implements ButtonInputRec
     }
 
     public void addChar(char c) {
-        if (s.length() < maxLength && c != '[' && c != ']') {
+        if (s.length() < maxLength) {
             s.insert(caretPosition, c);
             caretPosition++;
             updateText(s.toString());
@@ -142,9 +143,9 @@ public class EditableTextRenderer extends TextRenderer implements ButtonInputRec
                 anim.startTimer();
                 caretUpdateToPos = pos.x;
                 if (bounds != null) {
-                    if (textAlign == TextAlign.CENTER)
+                    if (textAlign == HorizontalAlign.CENTER)
                         caretUpdateToPos += bounds.middleX() * textSize;
-                    else if (textAlign == TextAlign.RIGHT)
+                    else if (textAlign == HorizontalAlign.RIGHT)
                         caretUpdateToPos += bounds.getRight() * textSize;
                 }
             }

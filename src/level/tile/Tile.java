@@ -135,10 +135,8 @@ public class Tile implements Writable {
             captureBar.render(g);
             g.translate(TILE_SIZE * 0.32f, -TILE_SIZE * 0.06f);
             g.setColor(ICON_COLOUR);
-            g.setStroke(ICON_STROKE);
             GameRenderer.renderScaled(TILE_SIZE / 4, g, () -> {
                 g.fill(ActionShapes.FLAG);
-                g.draw(ActionShapes.FLAG);
             });
         });
     }

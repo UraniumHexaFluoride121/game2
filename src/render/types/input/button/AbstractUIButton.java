@@ -2,7 +2,7 @@ package render.types.input.button;
 
 import foundation.input.*;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import render.*;
 import render.types.box.UIBox;
 import render.types.text.TooltipManager;
@@ -11,7 +11,7 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
     public final float x, y, height, width;
     protected final ButtonClickHandler clickHandler;
     protected final UIBox box;
-    protected final StaticHitBox hitBox;
+    protected final HitBox hitBox;
     protected final ButtonOrder buttonOrder;
     protected ButtonRegister buttonRegister;
     protected TooltipManager tooltip = new TooltipManager(this);
@@ -31,7 +31,7 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
         }
         clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, staySelected, onClick);
         box = new UIBox(width, height).setClickHandler(clickHandler);
-        hitBox = StaticHitBox.createFromOriginAndSize(x, y, width, height);
+        hitBox = HitBox.createFromOriginAndSize(x, y, width, height);
     }
 
     @Override

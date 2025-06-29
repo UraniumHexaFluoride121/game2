@@ -11,31 +11,31 @@ import level.tutorial.sequence.event.EventConsumer;
 import level.tutorial.sequence.event.TutorialEvent;
 import render.RenderOrder;
 import render.UIColourTheme;
-import render.types.text.TextAlign;
-import render.types.text.UIMLTextBoxRenderElement;
+import render.HorizontalAlign;
+import render.types.box.UIDisplayBoxRenderElement;
 
 import java.util.function.Supplier;
 
 public class SequenceTextBox implements TutorialSequenceElement, EventConsumer, SequenceHolder {
-    private UIMLTextBoxRenderElement textBox;
-    private Supplier<UIMLTextBoxRenderElement> textBoxSupplier;
+    private UIDisplayBoxRenderElement textBox;
+    private Supplier<UIDisplayBoxRenderElement> textBoxSupplier;
     private final TutorialSequence tutorialSequence = new TutorialSequence();
 
-    public static SequenceTextBox onMap(Level l, BoxSize size, float x, float y, TextAlign textAlign, String text, TutorialSequenceElement... sequence) {
+    public static SequenceTextBox onMap(Level l, BoxSize size, float x, float y, HorizontalAlign textAlign, String text, TutorialSequenceElement... sequence) {
         return new SequenceTextBox(l, x, y, size, textAlign, text, true, sequence);
     }
 
-    public static SequenceTextBox onUI(Level l, BoxSize size, float x, float y, TextAlign textAlign, String text, TutorialSequenceElement... sequence) {
+    public static SequenceTextBox onUI(Level l, BoxSize size, float x, float y, HorizontalAlign textAlign, String text, TutorialSequenceElement... sequence) {
         return new SequenceTextBox(l, x, y, size, textAlign, text, false, sequence);
     }
 
-    private SequenceTextBox(Level l, float x, float y, BoxSize boxSize, TextAlign textAlign, String text, boolean map, TutorialSequenceElement... sequence) {
+    private SequenceTextBox(Level l, float x, float y, BoxSize boxSize, HorizontalAlign textAlign, String text, boolean map, TutorialSequenceElement... sequence) {
         tutorialSequence.setSequence(sequence);
         ObjPos pos = map ? Tile.getFractionalRenderPos(x, y) : new ObjPos(x, y);
-        textBoxSupplier = () -> new UIMLTextBoxRenderElement(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
-                pos.x, pos.y, boxSize.width, -1, 0.7f, textAlign, box ->
-                box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER), true)
-                .setText(text).setBoxAlign(TextAlign.CENTER);
+        textBoxSupplier = () -> new UIDisplayBoxRenderElement(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
+                pos.x, pos.y, boxSize.width, -1, box ->
+                box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK), true)
+                .addText(0.7f, textAlign, text).setHorizontalAlign(HorizontalAlign.CENTER);
     }
 
     @Override

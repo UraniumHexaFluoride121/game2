@@ -5,13 +5,13 @@ import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
-import foundation.math.StaticHitBox;
+import foundation.math.HitBox;
 import level.Level;
 import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
 import render.*;
 import render.types.text.TextRenderer;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.UIColourTheme;
 import render.types.box.UIBox;
 import render.types.text.UITextLabel;
@@ -20,8 +20,8 @@ import java.awt.*;
 
 public class UIEndTurn extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private final TextRenderer text = new TextRenderer("End Turn", 1.4f, UITextLabel.TEXT_COLOUR)
-            .setTextAlign(TextAlign.CENTER).setBold(true);
-    private final StaticHitBox hitBox = StaticHitBox.createFromOriginAndSize(3.5f, Renderable.top() - 2.5f, 9, 2);
+            .setTextAlign(HorizontalAlign.CENTER).setBold(true);
+    private final HitBox hitBox = HitBox.createFromOriginAndSize(3.5f, Renderable.top() - 2.5f, 9, 2);
     private Level level;
     private final ButtonClickHandler clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, this::onClick);
     private final UIBox box = new UIBox(9, 2).setClickHandler(clickHandler);
@@ -57,6 +57,8 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
     }
 
     private void onClick() {
+        if (!isEnabled())
+            return;
         level.levelRenderer.confirm.makeVisible("End Turn?", level::preEndTurn, level.levelRenderer.confirm::makeInvisible);
     }
 

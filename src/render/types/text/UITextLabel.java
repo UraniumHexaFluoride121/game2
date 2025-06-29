@@ -1,6 +1,7 @@
 package render.types.text;
 
 import render.GameRenderer;
+import render.HorizontalAlign;
 import render.Renderable;
 import render.UIColourTheme;
 
@@ -8,8 +9,6 @@ import java.awt.*;
 
 public class UITextLabel implements Renderable {
     public static final Color TEXT_COLOUR = new Color(181, 204, 216);
-    public static final Color GREEN_TEXT_COLOUR = new Color(105, 214, 87);
-    public static final Color RED_TEXT_COLOUR = new Color(214, 83, 83);
     public static final Color TEXT_COLOUR_DARK = new Color(153, 188, 200);
     public static final float DEFAULT_LINE_WIDTH = 0.17f;
 
@@ -36,9 +35,9 @@ public class UITextLabel implements Renderable {
         this.hasLines = hasLines;
         line = line(lineWidth, height * 1.1f, height * 0.1f, (float) Math.toRadians(60));
         label = line(width, height, (float) Math.toRadians(60));
-        textRight = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.RIGHT);
-        textLeft = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.LEFT);
-        textCenter = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(TextAlign.CENTER);
+        textRight = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(HorizontalAlign.RIGHT);
+        textLeft = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(HorizontalAlign.LEFT);
+        textCenter = new TextRenderer(null, height * textSizeFactor, TEXT_COLOUR).setTextAlign(HorizontalAlign.CENTER);
     }
 
     @Override

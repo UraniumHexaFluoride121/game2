@@ -117,9 +117,10 @@ public class ModifyElements extends TutorialAction {
         }, TutorialElement.TILE_SELECTION);
     }
 
-    public static SubSequence moveUnit(Level l, boolean camera, int fromX, int fromY, int toX, int toY) {
+    public static SubSequence moveUnit(Level l, boolean camera, boolean restrictSelection, int fromX, int fromY, int toX, int toY) {
         return SubSequence.sequence(
-                AllowedTiles.only(fromX, fromY),
+                restrictSelection ? AllowedTiles.only(fromX, fromY) : AllowedTiles.all(),
+                restrictSelection ? AllowedActionTiles.all(Action.MOVE_FROM) : AllowedActionTiles.only(Action.MOVE_FROM, fromX, fromY),
                 AllowedActionTiles.only(Action.MOVE, toX, toY),
                 AllowedActions.only(Action.MOVE),
                 TutorialHighlight.tile(l, GREEN_HIGHLIGHT, toX, toY),
@@ -127,9 +128,10 @@ public class ModifyElements extends TutorialAction {
         );
     }
 
-    public static SubSequence moveUnit(Level l, boolean camera, Point[] from, Point[] to) {
+    public static SubSequence moveUnit(Level l, boolean camera, boolean restrictSelection, Point[] from, Point[] to) {
         return SubSequence.sequence(
-                AllowedTiles.only(from),
+                restrictSelection ? AllowedTiles.only(from) : AllowedTiles.all(),
+                restrictSelection ? AllowedActionTiles.all(Action.MOVE_FROM) : AllowedActionTiles.only(Action.MOVE_FROM, from),
                 AllowedActionTiles.only(Action.MOVE, to),
                 AllowedActions.only(Action.MOVE),
                 TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, to),

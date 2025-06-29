@@ -10,7 +10,7 @@ import render.RenderOrder;
 import render.RenderRegister;
 import render.types.input.button.UIButton;
 import render.types.text.EditableTextRenderer;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.types.box.UIBox;
 import render.types.text.UITextLabel;
 
@@ -28,7 +28,7 @@ public class UITextInputBox extends UIButton {
     public UITextInputBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, int maxLength, Predicate<InputType> allowedChars) {
         super(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, null,
                 new EditableTextRenderer(null, textSize, UITextLabel.TEXT_COLOUR, maxLength == -1 ? 100 : maxLength)
-                        .setTextAlign(TextAlign.CENTER));
+                        .setTextAlign(HorizontalAlign.CENTER));
         editableText = (EditableTextRenderer) text;
         if (maxLength == -1)
             editableText.setMaxTextWidth(width - 1);

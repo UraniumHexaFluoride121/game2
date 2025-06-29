@@ -11,6 +11,7 @@ import render.RenderRegister;
 import render.Renderable;
 import render.anim.LerpAnimation;
 import render.level.tile.RenderElement;
+import render.level.ui.UIScoreBox;
 import render.texture.ResourceLocation;
 import render.types.container.LevelUIContainer;
 import render.types.input.button.UIButton;
@@ -49,6 +50,7 @@ public class GameEndScreen extends LevelUIContainer<Level> {
                     new UITextLabel(12, 1.5f, false).setTextCenterBold()
                             .updateTextCenter("Team " + surviving.getName() + " wins").translate(3, Renderable.top() - 6)
             );
+            new UIScoreBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, Renderable.right() - 26, Renderable.top() - 16, surviving, level);
             int i = 0;
             for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
                 if (level.initialPlayerTeams.containsKey(team) && level.initialPlayerTeams.get(team) == surviving) {

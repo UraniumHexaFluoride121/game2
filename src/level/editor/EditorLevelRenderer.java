@@ -61,7 +61,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
     private UISaveMenu<MapSave> saveMenu;
     private UIEnumSelector<NeutralUnitTeam> teamSelector;
     private LevelUIContainer<LevelEditor> invalidContainer;
-    private final MultiLineTextBox invalidText = new MultiLineTextBox(1, 2.15f, 8, 0.7f, TextAlign.LEFT);
+    private final MultiLineTextBox invalidText = new MultiLineTextBox(1, 2.15f, 8, 0.7f, HorizontalAlign.LEFT);
     public LevelMapUI mapUI;
     public UIConfirm confirm;
 
@@ -112,7 +112,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                     Renderable hexagonRenderer = new HexagonRenderer(4, false, 0.2f, new Color(117, 117, 117, 200)).translate(9.5f, 4.5f / 2 - 4 / 2f * Tile.SIN_60_DEG);
                                     new RenderElement(r4, RenderOrder.LEVEL_UI, hexagonRenderer,
                                             new UITextLabel(6, 0.7f, false).setTextCenterBold()
-                                                    .updateTextCenter(type.displayName + " tile").translate(0.5f, 3.3f)).setZOrder(2);
+                                                    .updateTextCenter(type.getName() + " tile").translate(0.5f, 3.3f)).setZOrder(2);
                                 })).addScrollBar(0.7f, 0.3f, -0.4f);
                     }).addTab(3, "Units", (r2, b2) -> {
                         new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
@@ -275,7 +275,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
                     mapUI.update();
-                }).tooltip(t -> t.add(-1, UITooltip.dark(), "Open map"));
+                }).tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Open map"));
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
 
@@ -283,16 +283,16 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                 Renderable.right() / 2 - 4, Renderable.top() - 10.5f, level);
         generateContainer.addRenderables((r, b) -> {
             new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK, 0, 0, 8, 7, box ->
-                    box.setColourTheme(UIColourTheme.LIGHT_BLUE_OPAQUE_CENTER)).setZOrder(-2);
+                    box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK)).setZOrder(-2);
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     new UITextLabel(6, 0.8f, false).setTextCenterBold()
                             .updateTextCenter("Enter seed:").translate(0.9f, 6),
                     new TextRenderer("Removes all units", 0.6f, TEXT_COLOUR)
-                            .setItalic(true).setTextAlign(TextAlign.CENTER).translate(4, 1f)
+                            .setItalic(true).setTextAlign(HorizontalAlign.CENTER).translate(4, 1f)
             ).setZOrder(-1);
             UITextInputBox seedBox = new UITextInputBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                     0.5f, 4, 7, 1.5f, 0.8f, true, 15, InputType::isDigit);
-            seedBox.setBold().setColourTheme(UIColourTheme.GREEN_SELECTED).tooltip(t -> t.add(12, UITooltip.dark(),
+            seedBox.setBold().setColourTheme(UIColourTheme.GREEN_SELECTED).tooltip(t -> t.add(12, AbstractUITooltip.dark(),
                     "Enter number as seed to generate map from, or leave blank for random seed. Seeds are not guaranteed to generate the same maps as other seed entry boxes."));
             new UIButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 1.5f, 2.2f, 5, 1.2f, 1f, false)
                     .setText("Generate").setBold().setOnClick(() -> {
@@ -308,7 +308,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                     generateContainer.setEnabled(true);
                 }).setOnDeselect(() -> {
                     generateContainer.setEnabled(false);
-                }).tooltip(t -> t.add(-1, UITooltip.dark(), "Generate map from seed"));
+                }).tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Generate map from seed"));
     }
 
     public void setSaveName(String name) {

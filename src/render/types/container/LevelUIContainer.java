@@ -15,11 +15,6 @@ import java.util.function.BiConsumer;
 public class LevelUIContainer<T extends AbstractLevel<?, ?>> extends UIContainer {
     public T level;
 
-    public LevelUIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, BiConsumer<GameRenderer, ButtonRegister> createRenderer, T level) {
-        super(register, buttonRegister, order, buttonOrder, x, y, createRenderer);
-        this.level = level;
-    }
-
     public LevelUIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, T level) {
         super(register, buttonRegister, order, buttonOrder, x, y);
         this.level = level;

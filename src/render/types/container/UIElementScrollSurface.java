@@ -11,12 +11,18 @@ import java.util.function.Function;
 
 public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIScrollSurface {
     private final ArrayList<T> elements = new ArrayList<>();
-    private final Function<Integer, Float> scrollMaxFunction;
+    private final Function<Integer, Float> elementCountScroll;
+    private Function<T, Float> perElementScroll = e -> 0f;
 
-    public UIElementScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean inverted, Function<Integer, Float> scrollMaxFunction) {
+    public UIElementScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean inverted, Function<Integer, Float> elementCountScroll) {
         super(register, buttonRegister, order, buttonOrder, x, y, width, height, inverted, (r, b) -> {
         });
-        this.scrollMaxFunction = scrollMaxFunction;
+        this.elementCountScroll = elementCountScroll;
+    }
+
+    public UIElementScrollSurface<T> setPerElementScroll(Function<T, Float> perElementScroll) {
+        this.perElementScroll = perElementScroll;
+        return this;
     }
 
     public void addElement(IndexedElementFunction<T> function) {
@@ -38,13 +44,6 @@ public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIS
     public void forEach(BiConsumer<T, Integer> action) {
         for (int i = 0; i < elements.size(); i++) {
             action.accept(elements.get(i), i);
-        }
-    }
-
-    public void replaceAllElements(int count, IndexedElementFunction<T> function) {
-        clear();
-        for (int i = 0; i < count; i++) {
-            addElement(function);
         }
     }
 
@@ -75,8 +74,8 @@ public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIS
         return elements.getLast();
     }
 
-    private void updateScrollMax() {
-        setScrollMax(scrollMaxFunction.apply(elements.size()) - height);
+    public void updateScrollMax() {
+        setScrollMax(elementCountScroll.apply(elements.size()) + elements.stream().map(e -> perElementScroll.apply(e)).reduce(0f, Float::sum) - height);
     }
 
     public void modifyAndResize(int size, IndexedElementFunction<T> add, BiConsumer<T, Integer> modify) {

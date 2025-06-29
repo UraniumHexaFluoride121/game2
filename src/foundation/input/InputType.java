@@ -11,7 +11,7 @@ public class InputType {
     public static final InputType
             NONE = new InputType(), TAB_ON_SWITCH_TO = new InputType(), PASTE_TEXT = new InputType(),
 
-    MOUSE_RIGHT = new InputType(), MOUSE_LEFT = new InputType(), MOUSE_OVER = new InputType(),
+    MOUSE_RIGHT = new InputType(), MOUSE_LEFT = new InputType(), MOUSE_MIDDLE = new InputType(), MOUSE_OVER = new InputType(),
             ESCAPE = new InputType(), BACKSPACE = new InputType(), ENTER = new InputType(),
             LEFT_ARROW = new InputType(), RIGHT_ARROW = new InputType();
 
@@ -79,6 +79,7 @@ public class InputType {
         if (e instanceof MouseEvent m) {
             return switch (m.getButton()) {
                 case MouseEvent.BUTTON1 -> MOUSE_LEFT;
+                case MouseEvent.BUTTON2 -> MOUSE_MIDDLE;
                 case MouseEvent.BUTTON3 -> MOUSE_RIGHT;
                 default -> NONE;
             };

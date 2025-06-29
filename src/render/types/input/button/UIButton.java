@@ -5,7 +5,7 @@ import foundation.input.ButtonRegister;
 import render.*;
 import render.types.box.UIBox;
 import render.types.text.TextRenderer;
-import render.types.text.TextAlign;
+import render.HorizontalAlign;
 import render.types.text.TooltipManager;
 import render.types.text.UITextLabel;
 
@@ -22,7 +22,7 @@ public class UIButton extends AbstractUIButton {
     public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick) {
         this(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, onClick,
                 new TextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
-                        .setTextAlign(TextAlign.CENTER));
+                        .setTextAlign(HorizontalAlign.CENTER));
     }
 
     protected UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick, TextRenderer text) {

@@ -16,12 +16,20 @@ public abstract class MathUtil {
     }
 
     public static float map(float fromMin, float fromMax, float toMin, float toMax, float v, boolean clamp) {
-        float lerped = lerp(toMin, toMax, normalise(fromMin, fromMax, v));
-        return clamp ? Math.clamp(toMin, toMax, lerped) : lerped;
+        float lerp = lerp(toMin, toMax, normalise(fromMin, fromMax, v));
+        return clamp ? Math.clamp(toMin, toMax, lerp) : lerp;
     }
 
-    public static int clampInt(int min, int max, int value) {
-        return Math.min(max, Math.max(min, value));
+    public static <T> T compare(float value, float target, T lt, T eq, T gt) {
+        return compare(value, target, 0.001f, lt, eq, gt);
+    }
+
+    public static <T> T compare(float value, float target, float epsilon, T lt, T eq, T gt) {
+        if (value < target - epsilon)
+            return lt;
+        if (value > target + epsilon)
+            return gt;
+        return eq;
     }
 
     public static float linearTo(float from, float to, float v, float deltaTime) {
@@ -118,7 +126,11 @@ public abstract class MathUtil {
     }
 
     public static String floatToString(float v, int decimals) {
-        char[] chars = String.valueOf(v).toCharArray();
+        int r = 1;
+        for (int i = 0; i < decimals; i++) {
+            r *= 10;
+        }
+        char[] chars = String.valueOf(Math.round(v * r) / (float) r).toCharArray();
         StringBuilder s = new StringBuilder();
         boolean isDecimal = false;
         for (int i = 0; ; i++) {

@@ -1,6 +1,7 @@
 package render.level.tile;
 
 import foundation.Deletable;
+import foundation.MainPanel;
 import level.AbstractLevel;
 import level.tile.TileSet;
 import render.anim.LerpAnimation;
@@ -25,7 +26,6 @@ public class TileFlash implements ITileHighlight, Deletable {
         timer = new LerpAnimation(1f);
         c = color;
         border = new HexagonBorder(tiles, getBorderColor());
-        level.levelRenderer.registerTimerBlock(timer, this::delete);
         level.levelRenderer.registerTileHighlight(this, true);
     }
 
@@ -33,6 +33,8 @@ public class TileFlash implements ITileHighlight, Deletable {
     public void renderHighlight(Graphics2D g) {
         HexagonRenderer hexagonRenderer = HIGHLIGHT_RENDERER.setColor(getHighlightColor());
         tiles.forEach(t -> level.getTile(t).renderTile(g, hexagonRenderer));
+        if (timer.finished())
+            MainPanel.addTask(this::delete);
     }
 
     @Override
@@ -46,11 +48,15 @@ public class TileFlash implements ITileHighlight, Deletable {
     }
 
     private Color getHighlightColor() {
-        return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (timer.triangleProgress() * transparency * HIGHLIGHT_TRANSPARENCY * 255));
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (getTransparency() * HIGHLIGHT_TRANSPARENCY));
     }
 
     private Color getBorderColor() {
-        return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (timer.triangleProgress() * transparency * 255));
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) getTransparency());
+    }
+
+    private float getTransparency() {
+        return (float) (Math.pow(timer.triangleProgress(), 0.8f) * transparency * 255);
     }
 
     @Override
