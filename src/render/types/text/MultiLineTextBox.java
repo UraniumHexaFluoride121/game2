@@ -16,7 +16,7 @@ public class MultiLineTextBox implements Renderable, Deletable {
     private HorizontalAlign textAlign;
     private final ArrayList<TextRenderer> textRenderers = new ArrayList<>();
     private Color textColour = UITextLabel.TEXT_COLOUR;
-    private boolean bold = true;
+    private boolean bold = true, italic = false;
     private boolean forceUpdate = false;
     private Runnable updateCallback = null;
 
@@ -58,7 +58,7 @@ public class MultiLineTextBox implements Renderable, Deletable {
                 builder.append(s, prevSpace, nextSpace);
             }
             TextRenderer text = new TextRenderer(builder.toString(), textSize, textColour)
-                    .setBold(bold).setTextAlign(textAlign);
+                    .setBold(bold).setItalic(italic).setTextAlign(textAlign);
             text.setInitialStyle(prevStyle);
             text.updateText(g);
 
@@ -91,6 +91,12 @@ public class MultiLineTextBox implements Renderable, Deletable {
 
     public MultiLineTextBox setWidth(float width) {
         this.width = width;
+        forceUpdate = true;
+        return this;
+    }
+
+    public MultiLineTextBox setItalic(boolean italic) {
+        this.italic = italic;
         forceUpdate = true;
         return this;
     }

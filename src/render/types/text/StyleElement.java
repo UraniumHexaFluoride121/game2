@@ -13,10 +13,10 @@ public enum StyleElement {
 
     MODIFIER_RESUPPLY(TextStyle::setColour, new Color(161, 101, 37)),
     MODIFIER_VIEW_RANGE(TextStyle::setColour, new Color(45, 218, 152)),
-    MODIFIER_FIRING_RANGE(TextStyle::setColour, new Color(218, 45, 149)),
+    MODIFIER_FIRING_RANGE(TextStyle::setColour, new Color(228, 108, 67)),
     MODIFIER_DAMAGE(TextStyle::setColour, new Color(218, 45, 45)),
     MODIFIER_AMMO_CAPACITY(TextStyle::setColour, new Color(218, 45, 45)),
-    MODIFIER_INCOMING_DAMAGE(TextStyle::setColour, new Color(218, 91, 45)),
+    MODIFIER_INCOMING_DAMAGE(TextStyle::setColour, new Color(213, 99, 99)),
     MODIFIER_SHIELD_DAMAGE(TextStyle::setColour, new Color(45, 218, 204)),
     MODIFIER_INCOMING_SHIELD_DAMAGE(TextStyle::setColour, new Color(45, 218, 204)),
     MODIFIER_MOVEMENT_SPEED(TextStyle::setColour, new Color(63, 131, 236)),
@@ -31,6 +31,7 @@ public enum StyleElement {
     DENSE_NEBULA_TILE(TextStyle::setColour, new Color(120, 49, 186)),
     ASTEROID_TILE(TextStyle::setColour, new Color(145, 145, 145)),
 
+    BOX_GRAY(TextStyle::setColour, new Color(191, 191, 191)),
     BLUE(TextStyle::setColour, new Color(46, 151, 220)),
     GREEN(TextStyle::setColour, new Color(57, 218, 59)),
     DARK_GREEN(TextStyle::setColour, new Color(40, 113, 42)),
@@ -40,12 +41,12 @@ public enum StyleElement {
     RED(TextStyle::setColour, new Color(216, 70, 70));
 
     public final BiFunction<StyleElement, TextStyle, TextStyle> modifier;
-    public final Color color;
+    public final Color colour;
     public final String display;
 
-    StyleElement(BiFunction<StyleElement, TextStyle, TextStyle> modifier, Color color) {
+    StyleElement(BiFunction<StyleElement, TextStyle, TextStyle> modifier, Color colour) {
         this.modifier = modifier;
-        this.color = color;
+        this.colour = colour;
         display = "[" + name() + "]";
     }
 }

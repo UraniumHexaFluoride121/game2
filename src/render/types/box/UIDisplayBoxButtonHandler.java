@@ -37,27 +37,29 @@ public class UIDisplayBoxButtonHandler extends AbstractRenderElement implements 
     }
 
     public ButtonClickHandler add(boolean staySelected, int index, int columnIndex) {
-        DisplayBoxElement e = new DisplayBoxElement(displayBox, staySelected, index, columnIndex, InputType.MOUSE_LEFT);
+        DisplayBoxElement e = new DisplayBoxElement(displayBox, staySelected, index, columnIndex, InputType.MOUSE_LEFT, true);
         elements.add(e);
         return e.getClickHandler();
     }
 
     public ButtonClickHandler add(boolean staySelected) {
-        DisplayBoxElement e = new DisplayBoxElement(displayBox, staySelected, -1, 0, InputType.MOUSE_LEFT);
+        DisplayBoxElement e = new DisplayBoxElement(displayBox, staySelected, -1, 0, InputType.MOUSE_LEFT, true);
         elements.add(e);
         return e.getClickHandler();
     }
 
-    public TooltipManager addTooltip(int index, int columnIndex) {
-        DisplayBoxElement e = new DisplayBoxElement(displayBox, false, index, columnIndex, InputType.MOUSE_LEFT);
-        e.getClickHandler().setOnClick(e.getManager()::forceShowTooltip);
+    public TooltipManager addTooltip(int index, int columnIndex, boolean button) {
+        DisplayBoxElement e = new DisplayBoxElement(displayBox, false, index, columnIndex, InputType.MOUSE_LEFT, button);
+        if (button)
+            e.getClickHandler().setOnClick(e.getManager()::forceShowTooltip);
         elements.add(e);
         return e.getManager();
     }
 
-    public TooltipManager addTooltip() {
-        DisplayBoxElement e = new DisplayBoxElement(displayBox, false, -1, 0, InputType.MOUSE_LEFT);
-        e.getClickHandler().setOnClick(e.getManager()::forceShowTooltip);
+    public TooltipManager addTooltip(boolean button) {
+        DisplayBoxElement e = new DisplayBoxElement(displayBox, false, -1, 0, InputType.MOUSE_LEFT, button);
+        if (button)
+            e.getClickHandler().setOnClick(e.getManager()::forceShowTooltip);
         elements.add(e);
         return e.getManager();
     }
@@ -172,14 +174,16 @@ public class UIDisplayBoxButtonHandler extends AbstractRenderElement implements 
         public TooltipManager tooltipManager = new TooltipManager(this);
         public int index, columnIndex;
 
-        private DisplayBoxElement(UIDisplayBox displayBox, boolean staySelected, int index, int columnIndex, InputType inputType) {
+        private DisplayBoxElement(UIDisplayBox displayBox, boolean staySelected, int index, int columnIndex, InputType inputType, boolean bindClickHandler) {
             this.index = index;
             this.columnIndex = columnIndex;
             clickHandler = new ButtonClickHandler(inputType, staySelected);
-            if (index == -1) {
-                displayBox.setClickHandler(clickHandler);
-            } else {
-                displayBox.setClickHandler(clickHandler, index, columnIndex);
+            if (bindClickHandler) {
+                if (index == -1) {
+                    displayBox.setClickHandler(clickHandler);
+                } else {
+                    displayBox.setClickHandler(clickHandler, index, columnIndex);
+                }
             }
             update(displayBox);
         }

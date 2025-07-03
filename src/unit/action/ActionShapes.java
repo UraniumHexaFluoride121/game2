@@ -5,6 +5,7 @@ import render.types.text.TextRenderable;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 
 public abstract class ActionShapes {
@@ -12,6 +13,7 @@ public abstract class ActionShapes {
     public static final Shape FLAG;
     public static final Shape SHIELD, SHIELD_REGEN;
     public static final Path2D.Float SHIP = new Path2D.Float();
+    public static final Shape EYE;
     public static final Shape SUPPLY;
     public static Path2D.Float ENERGY;
     public static final Shape REPAIR;
@@ -110,6 +112,21 @@ public abstract class ActionShapes {
     }
 
     static {
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(0, 0.5f);
+        path.curveTo(0.21f, 0.83f, 0.79f, 0.83f, 1, 0.5f);
+        path.curveTo(0.79f, 0.17f, 0.21f, 0.17f, 0, 0.5f);
+        path.closePath();
+        path.setWindingRule(Path2D.WIND_EVEN_ODD);
+        path.append(new Ellipse2D.Float(0.3f, 0.3f, 0.4f, 0.4f), false);
+        AffineTransform t = new AffineTransform();
+        t.translate(.5, .5);
+        t.scale(0.65f, 0.65f);
+        t.translate(-.5, -.5);
+        EYE = t.createTransformedShape(path);
+    }
+
+    static {
         AffineTransform t = new AffineTransform();
         t.translate(0.5f, 0.5f);
         t.scale(0.9f, 0.9f);
@@ -146,10 +163,6 @@ public abstract class ActionShapes {
         path.moveTo(.27f, .27f);
         path.lineTo(.73f, .73f);
         Shape line = Renderable.outlineShape(path, 0.06f);
-        AffineTransform t = new AffineTransform();
-        t.scale(1.2, 1.2);
-        t.translate(-.075, -.075);
-        Shape ship = t.createTransformedShape(SHIP);
-        STEALTH = Renderable.add(Renderable.subtract(Renderable.add(ship, Renderable.outlineShape(ship, 0.02f)), Renderable.outlineShape(path, 0.11f)), line);
+        STEALTH = Renderable.add(Renderable.subtract(Renderable.add(EYE, Renderable.outlineShape(EYE, 0.02f)), Renderable.outlineShape(path, 0.11f)), line);
     }
 }

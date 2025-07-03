@@ -19,7 +19,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     public final float x, y;
     public float originalWidth, width, height, widthMargin;
     protected UIBox box;
-    protected boolean renderBox = true;
+    protected boolean renderBox = true, enabled = true;
     protected HorizontalAlign horizontalAlign = HorizontalAlign.LEFT;
     protected ArrayList<ArrayList<BoxElement>> elements = new ArrayList<>();
     protected ArrayList<Float> columnHeights = new ArrayList<>();
@@ -62,6 +62,15 @@ public class UIDisplayBox implements Renderable, Deletable {
     public UIDisplayBox setRenderBox(boolean renderBox) {
         this.renderBox = renderBox;
         return this;
+    }
+
+    public UIDisplayBox setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        return this;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public UIDisplayBox addOnUpdate(Runnable onUpdate) {
@@ -137,6 +146,10 @@ public class UIDisplayBox implements Renderable, Deletable {
         return ((HPBarBoxElement) elements.get(columnIndex).get(index)).bar;
     }
 
+    public UIDisplayBox getDisplayBox(int index, int columnIndex) {
+        return ((DisplayBoxElement) elements.get(columnIndex).get(index)).box;
+    }
+
     public UIDisplayBox setElementEnabled(boolean enabled, int index, int columnIndex) {
         BoxElement e = elements.get(columnIndex).get(index);
         if (e.isEnabled() != enabled) {
@@ -204,6 +217,8 @@ public class UIDisplayBox implements Renderable, Deletable {
     @Override
     public void render(Graphics2D g) {
         attemptUpdate(g);
+        if (!enabled)
+            return;
         GameRenderer.renderOffset(x, y, g, () -> {
             switch (horizontalAlign) {
                 case CENTER -> g.translate(-width / 2, 0);

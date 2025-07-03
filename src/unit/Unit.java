@@ -37,6 +37,7 @@ import unit.bot.VisibilityData;
 import unit.stats.Modifier;
 import unit.stats.ModifierCategory;
 import unit.stats.StatManager;
+import unit.stats.modifiers.WeaponDamageModifier;
 import unit.type.UnitType;
 import unit.weapon.FiringData;
 import unit.weapon.WeaponInstance;
@@ -282,9 +283,9 @@ public class Unit implements Deletable, Tickable {
                 MainPanel.client.sendUnitCaptureRequest(this);
                 return;
             }
-            incrementCapture();
+            captureAction();
             if (level.networkState == NetworkState.SERVER)
-                level.server.sendUnitCapturePacket(this);
+                level.server.sendUnitCapturePacket(this, true);
             TutorialManager.acceptEvent(new EventActionPerform(level, CAPTURE));
             return;
         } else if (action == SHIELD_REGEN) {
@@ -545,13 +546,21 @@ public class Unit implements Deletable, Tickable {
         }
     }
 
-    public void incrementCapture() {
+    public void captureAction() {
+        if (isCapturing()) {
+            stopCapture();
+            addPerformedAction(CAPTURE);
+        } else
+            incrementCapture(true);
+    }
+
+    public void incrementCapture(boolean action) {
         int newCaptureProgress = captureProgress;
         if (newCaptureProgress == -1)
             newCaptureProgress = 1;
         else
             newCaptureProgress++;
-        capture(newCaptureProgress, true);
+        capture(newCaptureProgress, action);
     }
 
     public void decrementCapture() {
@@ -560,6 +569,10 @@ public class Unit implements Deletable, Tickable {
             return;
         newCaptureProgress--;
         capture(newCaptureProgress, false);
+    }
+
+    public boolean isCapturing() {
+        return captureProgress != -1;
     }
 
     public void setCaptureProgress(int captureProgress) {
@@ -663,8 +676,13 @@ public class Unit implements Deletable, Tickable {
     }
 
     public Color getWeaponEffectivenessAgainst(Unit other) {
-        FiringData firingData = getCurrentFiringData(other);
-        return Modifier.getDamageColour(firingData.getBestWeaponAgainst(false) == null ? 0 : firingData.getDamageMultiplier());
+        float damage = -1;
+        ArrayList<Modifier> m = new ArrayList<>();
+        for (WeaponInstance weapon : weapons) {
+            m = weapon.template.getModifiers(other.type);
+            damage = Math.max(damage, Modifier.multiplicativeEffect(ModifierCategory.DAMAGE, m));
+        }
+        return WeaponDamageModifier.getDamageModifierColour(m.toArray(new Modifier[0]));
     }
 
     public WeaponInstance.FireAnimState getFireAnimState(WeaponInstance currentlyFiring) {
@@ -921,10 +939,6 @@ public class Unit implements Deletable, Tickable {
         level.levelRenderer.unitTileBorderRenderer = new HexagonBorder(selectableTiles, border);
     }
 
-    public boolean removeActionEnergyCost(Action a) {
-        return a == STEALTH && stealthMode || a == MINE && mining;
-    }
-
     public Tile renderTile() {
         return selector().tileAtPos(getRenderPos().copy().addY(0.5f * SIN_60_DEG * TILE_SIZE));
     }
@@ -962,5 +976,10 @@ public class Unit implements Deletable, Tickable {
             return stats.moveEnergyCost(stats.moveCost(TileType.EMPTY)) + " - " + stats.moveEnergyCost(stats.maxMovement());
         }
         return String.valueOf(stats.getActionCost(a).orElse(0));
+    }
+
+    public String getPerTurnActionCostText(Action a) {
+        int v = stats.getPerTurnActionCost(a).orElse(0);
+        return String.valueOf(v < 0 ? "+" + v : v);
     }
 }

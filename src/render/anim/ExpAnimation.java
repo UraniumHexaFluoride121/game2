@@ -38,8 +38,8 @@ public class ExpAnimation implements ReversableAnimationTimer {
                 startTime = System.currentTimeMillis() - (long) ((-Math.log(progress) / decayConstant) * 1000f);
             } else
                 startTime = System.currentTimeMillis() - (long) ((-Math.log(1 - progress) / decayConstant) * 1000f);
+            this.reversed = reversed;
         }
-        this.reversed = reversed;
     }
 
     @Override

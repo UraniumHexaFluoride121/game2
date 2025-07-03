@@ -39,12 +39,12 @@ public abstract class AbstractUITooltip extends UIDisplayBox {
         boolean render = true;
         long time = System.currentTimeMillis();
         if (firstHover == -1) {
-            if (button.getClickHandler().mouseHover)
+            if (isHover())
                 firstHover = time;
             else {
                 render = false;
             }
-        } else if (!button.getClickHandler().mouseHover) {
+        } else if (!isHover()) {
             firstHover = -1;
             render = false;
         }
@@ -62,6 +62,10 @@ public abstract class AbstractUITooltip extends UIDisplayBox {
         }
         prevRender = render;
         return render;
+    }
+
+    private boolean isHover() {
+        return button.getClickHandler().mouseHover && isEnabled();
     }
 
     public AbstractUITooltip setOnStartRender(Runnable onStartRender) {

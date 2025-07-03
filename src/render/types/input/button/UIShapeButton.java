@@ -4,8 +4,7 @@ import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.*;
 import render.types.box.UIBox;
-import render.types.text.TooltipManager;
-import render.types.text.UITextLabel;
+import render.types.text.*;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -55,6 +54,25 @@ public class UIShapeButton extends AbstractUIButton {
                         g.draw(renderShape);
                     });
                 }
+            });
+            tooltip.render(g);
+        };
+        return this;
+    }
+
+    public UIShapeButton textRenderable(TextRenderable textRenderable, float size) {
+        TextRenderElement renderElement = textRenderable.renderable.apply(new TextStyle().setColour(UITextLabel.TEXT_COLOUR));
+        float scale = Math.min(width / renderElement.width, height / 20) * size;
+        float x = width / 2 - renderElement.width * scale / 2;
+        float y = height / 2 - 15 * scale / 2;
+        renderable = g -> {
+            if (!isEnabled())
+                return;
+            GameRenderer.renderOffset(this.x, this.y, g, () -> {
+                box.render(g);
+                g.translate(x, y);
+                g.scale(scale, -scale);
+                renderElement.renderable.render(g);
             });
             tooltip.render(g);
         };

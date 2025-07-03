@@ -16,19 +16,19 @@ import static level.tile.TileTypeCharacteristic.*;
 
 public enum TileType implements ColouredName {
     EMPTY("Empty", StyleElement.EMPTY_TILE, HIGH, NONE, HIGH,
-            TileSingleModifier.EMPTY, 1,
+            TileSingleModifier.EMPTY, 1, 1f,
             null,
             new AsyncImageSequence("background/firing/empty/", 5, 1, 1, false), null),
     NEBULA("Nebula", StyleElement.NEBULA_TILE, LOW, LOW, MEDIOCRE,
-            TileSingleModifier.NEBULA, 1.6f,
+            TileSingleModifier.NEBULA, 1.6f, 1.7f,
             () -> new CachedImageSequence("tiles/nebula/", 20, 1, 1, true),
             new AsyncImageSequence("background/firing/nebula/", 10, 1, 1, false), null),
     DENSE_NEBULA("Dense Nebula", StyleElement.DENSE_NEBULA_TILE, NONE, MEDIOCRE, LOW,
-            TileSingleModifier.DENSE_NEBULA, 2f,
+            TileSingleModifier.DENSE_NEBULA, 2f, 100f,
             () -> new CachedImageSequence("tiles/denseNebula/", 10, 1, 1, true),
             new AsyncImageSequence("background/firing/denseNebula/left/", 10, 1, 1, false), new AsyncImageSequence("background/firing/denseNebula/right/", 10, 1, 1, false)),
     ASTEROIDS("Asteroid Field", StyleElement.ASTEROID_TILE, MEDIOCRE, HIGH, VERY_LOW,
-            TileSingleModifier.ASTEROID_FIELD, 4.5f,
+            TileSingleModifier.ASTEROID_FIELD, 4.5f, 1.5f,
             () -> new CachedImageSequence("tiles/asteroids/asteroids", 7, true),
             new AsyncImageSequence("background/firing/asteroids/bg_firing_asteroids_left", 5, false), new AsyncImageSequence("background/firing/asteroids/bg_firing_asteroids_right", 5, false));
 
@@ -36,12 +36,12 @@ public enum TileType implements ColouredName {
     private final StyleElement textColour;
     public final TileTypeCharacteristic visibility, defence, movement;
     public final Modifier damageModifier;
-    public final float moveCost;
+    public final float moveCost, concealment;
     public final Supplier<ImageSequence> tileTexturesSupplier;
     public ImageSequence tileTextures;
     public final ImageSequence firingTexturesLeft, firingTexturesRight;
 
-    TileType(String displayName, StyleElement textColour, TileTypeCharacteristic visibility, TileTypeCharacteristic defence, TileTypeCharacteristic movement, Function<TileType, ? extends Modifier> damageModifier, float moveCost, Supplier<ImageSequence> tileTexturesSupplier, ImageSequence firingTexturesLeft, ImageSequence firingTexturesRight) {
+    TileType(String displayName, StyleElement textColour, TileTypeCharacteristic visibility, TileTypeCharacteristic defence, TileTypeCharacteristic movement, Function<TileType, ? extends Modifier> damageModifier, float moveCost, float concealment, Supplier<ImageSequence> tileTexturesSupplier, ImageSequence firingTexturesLeft, ImageSequence firingTexturesRight) {
         this.displayName = displayName;
         this.textColour = textColour;
         this.visibility = visibility;
@@ -49,6 +49,7 @@ public enum TileType implements ColouredName {
         this.movement = movement;
         this.damageModifier = damageModifier.apply(this);
         this.moveCost = moveCost;
+        this.concealment = concealment;
         this.tileTexturesSupplier = tileTexturesSupplier;
         this.firingTexturesLeft = firingTexturesLeft;
         if (firingTexturesRight == null)

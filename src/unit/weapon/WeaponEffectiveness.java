@@ -70,4 +70,12 @@ public enum WeaponEffectiveness {
             case WEAK -> BOX_RED;
         };
     }
+
+    public StyleElement textColourGray() {
+        return switch (this) {
+            case STRONG -> StyleElement.GREEN;
+            case NORMAL -> StyleElement.BOX_GRAY;
+            case WEAK -> StyleElement.RED;
+        };
+    }
 }

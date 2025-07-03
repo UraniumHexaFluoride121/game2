@@ -62,15 +62,13 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
                 if (d.type == ActionIconType.ENABLED) {
                     Optional<Integer> perTurnActionCost = unit.stats.getPerTurnActionCost(a);
                     perTurnActionCost.ifPresent(perTurnCost -> {
-                        energyCostPerTurnDisplay.setCost(unit.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
+                        energyCostPerTurnDisplay.setCost(unit.stats.removeActionEnergyCost(a) ? perTurnCost : -perTurnCost, unit.getLevel());
                         energyCostPerTurnDisplay.renderToEnergyManager(unit.getLevel());
                         GameRenderer.renderOffset(0, -4.5f, g, () -> {
                             energyCostPerTurnDisplay.render(g);
                         });
                     });
                     unit.stats.getActionCost(a).ifPresent(cost -> {
-                        if (unit.removeActionEnergyCost(a))
-                            return;
                         energyCostDisplay.setCost(-cost, unit.getLevel());
                         energyCostDisplay.renderToEnergyManager(unit.getLevel());
                         GameRenderer.renderOffset(0, perTurnActionCost.isPresent() ? -5.8f : -4.5f, g, () -> {
@@ -123,7 +121,7 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     public void updateActions(Unit unit) {
         if (actionMap.containsKey(FIRE)) {
             actionMap.get(FIRE).type = !unit.stats.tilesInFiringRange(unit.getLevel().currentVisibility, new UnitData(unit), true).isEmpty() &&
-                    !unit.stealthMode ? ActionIconType.ENABLED : unit.hasPerformedAction(FIRE) ? ActionIconType.DISABLED : ActionIconType.UNUSABLE;
+                    !unit.stealthMode && (unit.ammo > 0 || !unit.stats.consumesAmmo()) ? ActionIconType.ENABLED : unit.hasPerformedAction(FIRE) ? ActionIconType.DISABLED : ActionIconType.UNUSABLE;
         }
         if (actionMap.containsKey(MOVE)) {
             actionMap.get(MOVE).type = ActionIconType.ENABLED;

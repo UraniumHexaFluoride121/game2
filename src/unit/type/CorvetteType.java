@@ -2,7 +2,6 @@ package unit.type;
 
 import foundation.math.ObjPos;
 import level.energy.EnergyManager;
-import level.tile.TileType;
 import render.level.FiringRenderer;
 import unit.ShipClass;
 import unit.action.Action;
@@ -27,7 +26,7 @@ import static unit.stats.modifiers.WeaponDamageModifier.WEAKNESS_2;
 import static unit.stats.modifiers.WeaponDamageModifier.WEAKNESS_3;
 
 public class CorvetteType extends UnitType {
-    public static final CorvetteType CORVETTE = new CorvetteType("corvette", "Corvette", 10, 5f, 3.5f, new Action[]{
+    public static final CorvetteType FRIGATE = new CorvetteType("frigate", "Frigate", 10, 5f, 3.5f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 17, 1, 1, 3.5f, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CORVETTE_CANNON);
@@ -71,7 +70,6 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.SHIELD, UnitCharacteristicValue.MODERATE_GOOD);
         map.put(UnitCharacteristic.SHIELD_REGEN, UnitCharacteristicValue.MODERATE_GOOD);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 6);
         map.put(Action.FIRE, 12);
         map.put(Action.SHIELD_REGEN, 10);
     }, new AttributeData[]{
@@ -100,7 +98,6 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.GOOD);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 8);
         map.put(Action.FIRE, 12);
     }, new AttributeData[]{
             ANTI_CAPITAL_SHIP, RANGED_WEAPON,
@@ -120,7 +117,6 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.REPAIR, UnitCharacteristicValue.MODERATE);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 6);
         map.put(Action.REPAIR, 12);
         map.put(Action.RESUPPLY, 8);
     }, new AttributeData[]{
@@ -160,16 +156,6 @@ public class CorvetteType extends UnitType {
     @Override
     public float movementCostMultiplier() {
         return 2;
-    }
-
-    @Override
-    public float viewRange(TileType type) {
-        return switch (type) {
-            case EMPTY -> 1f;
-            case NEBULA -> 1.7f;
-            case DENSE_NEBULA -> 100f;
-            case ASTEROIDS -> 1.5f;
-        };
     }
 
     @Override

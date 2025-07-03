@@ -19,7 +19,7 @@ public class TextStyle {
     }
 
     public static TextStyle setColour(StyleElement modifier, TextStyle style) {
-        return style.setColour(modifier.color);
+        return style.setColour(modifier.colour);
     }
 
     public TextStyle copy() {

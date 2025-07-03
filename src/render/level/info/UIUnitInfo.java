@@ -80,25 +80,27 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         bar.setColour(theme);
                         hp.modifyBox(uiBox -> uiBox.setColourTheme(theme));
                     });
-            shield = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.LIGHT_BLUE_SHIELD_BACKGROUND), false)
+            shield = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.SHIELD_BACKGROUND), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Shield")
                     .addSpace(0.2f, 0)
-                    .addBar(new UIHitPointBar(0f, 1, 0.5f, 0.15f, 1, Modifier.LIGHT_BLUE_SHIELD_BACKGROUND).barOnly(), HorizontalAlign.CENTER, 0, true)
+                    .addBar(new UIHitPointBar(0f, 1, 0.5f, 0.15f, 1, Modifier.SHIELD_BACKGROUND).barOnly(), HorizontalAlign.CENTER, 0, true)
                     .addSpace(0.1f, 0)
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null)
                     .setColumnVerticalAlign(1, VerticalAlign.TOP);
-            movement = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.BLUE_MOVEMENT_BACKGROUND), false)
+            movement = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.MOVEMENT_BACKGROUND), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Engines")
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
-            weapons = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.RED_DAMAGE_BACKGROUND), false)
+            weapons = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.DAMAGE_BACKGROUND), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Weapons")
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null)
                     .addSpace(0.15f, 1)
-                    .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
-            ammo = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.RED_DAMAGE_BACKGROUND), false)
+                    .addText(0.7f, HorizontalAlign.RIGHT, 1, null)
+                    .addSpace(0.15f, 1)
+                    .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
+            ammo = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.DAMAGE_BACKGROUND), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Ammunition")
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
@@ -106,16 +108,19 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Repair")
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
-            resupply = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.BROWN_RESUPPLY_BACKGROUND), false)
+            resupply = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.RESUPPLY_BACKGROUND), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Resupply");
             stealth = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.YELLOW_BACKGROUND), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Stealth");
-            mining = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.PURPLE_MINING_BACKGROUND), false)
+            mining = new UIDisplayBox(0, 0, 10, -1, uiBox -> uiBox.setColourTheme(Modifier.MINING_BACKGROUND), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Mining")
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
+            systems.box.addText(0.6f, HorizontalAlign.CENTER, "Hover for more info").getText().setItalic(true);
+            systems.box.addSpace(0.3f, 0);
+
             systems.box.addBox(hp, HorizontalAlign.CENTER, 0);
             systems.box.setColumnVerticalAlign(0, VerticalAlign.TOP);
 
@@ -144,8 +149,8 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
             systems.box.addBox(mining, HorizontalAlign.CENTER, 0);
 
             UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, systems.box);
-            buttonHandler.addTooltip(0, 0).add(button -> {
-                UIStaticTooltip tooltip = new UIStaticTooltip(12, 2f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
+            buttonHandler.addTooltip(2, 0, true).add(button -> {
+                UIStaticTooltip tooltip = new UIStaticTooltip(12, 1.8f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox hpStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, "Unit Class:")
                         .addSpace(0.3f, 0)
@@ -166,7 +171,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addSpace(0.6f, 0)
                         .addText(1, HorizontalAlign.LEFT, ModifierCategory.VIEW_RANGE.getName())
                         .addSpace(0.3f, 0)
-                        .addText(0.6f, HorizontalAlign.LEFT, "The unit's " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + " determines how far the unit can reveal tiles hidden by fog of war.")
+                        .addText(0.6f, HorizontalAlign.LEFT, "The unit's " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + " determines how far the unit can reveal tiles hidden by fog of war. Tiles directly adjacent to allied units are always revealed.")
                         .addSpace(0.3f, 0)
                         .addBox(viewRangeStats, HorizontalAlign.CENTER, 0);
                 tooltip.setOnStartRender(() -> {
@@ -188,17 +193,21 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                 });
                 return tooltip;
             });
-            buttonHandler.addTooltip(2, 0).add(button -> {
+            buttonHandler.addTooltip(4, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 0.5f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox shieldStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.SHIELD_HP.getName() + ":")
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
                 UIDisplayBox shieldRegenStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.SHIELD_REGEN.getName() + ":")
+                        .addSpace(0.3f, 0)
+                        .addText(0.6f, HorizontalAlign.LEFT, EnergyManager.displayName + " Cost:")
+                        .addText(0.6f, HorizontalAlign.RIGHT, 1, null)
+                        .addSpace(0.3f, 1)
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
                 tooltip.addText(1, HorizontalAlign.LEFT, "Shield").setColumnVerticalAlign(0, VerticalAlign.TOP)
                         .addSpace(0.3f, 0)
-                        .addBar(new UIHitPointBar(0.1f, 1, 1f, 0.2f, 1, Modifier.LIGHT_BLUE_SHIELD_BACKGROUND).setRounding(0.6f), HorizontalAlign.CENTER, 0, true)
+                        .addBar(new UIHitPointBar(0.1f, 1, 1f, 0.2f, 1, Modifier.SHIELD_BACKGROUND).setRounding(0.6f), HorizontalAlign.CENTER, 0, true)
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This unit has a shield that protects the hull from taking damage. Any damage received will first drain the shield HP before impacting the hull.")
                         .addSpace(0.3f, 0)
@@ -220,12 +229,13 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         tooltip.setElementEnabled(shieldRegen, i, 0);
                     }
                     if (shieldRegen) {
-                        shieldRegenStats.setText(0, 1, MathUtil.floatToString(unit.stats.shieldRegen(), 1) + TextRenderable.SHIELD_REGEN_ICON.display);
+                        shieldRegenStats.setText(0, 1, MathUtil.floatToString(unit.stats.shieldRegen(), 1) + TextRenderable.SHIELD_REGEN_ICON.display)
+                                .setText(2, 1, unit.getActionCostText(Action.SHIELD_REGEN) + TextRenderable.ENERGY_ICON.display);
                     }
                 });
                 return tooltip;
             });
-            buttonHandler.addTooltip(4, 0).add(button -> {
+            buttonHandler.addTooltip(6, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 1.5f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox moveStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, "Max " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName() + ":")
@@ -238,17 +248,17 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT,
                                 "A unit can only move to tiles where the total " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " of the tiles along its path is lower than the unit's max " +
-                                ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + ".\n\nDifferent tile types have different " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + ".")
+                                        ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + ".\n\nDifferent tile types have different " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + ".")
                         .addSpace(0.3f, 0)
                         .addBox(moveStats, HorizontalAlign.CENTER, 0);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
-                    moveStats.setText(0, 1, MathUtil.floatToString(unit.stats.maxMovement(), 1) + TextRenderable.MOVE_ICON.display);
-                    moveStats.setText(2, 1, MathUtil.floatToString(unit.stats.movementCostMultiplier(), 1) + "x" + TextRenderable.ENERGY.display);
+                    moveStats.setText(0, 1, MathUtil.floatToString(unit.stats.maxMovement(), 1) + TextRenderable.MOVE_ICON.display)
+                            .setText(2, 1, MathUtil.floatToString(unit.stats.movementCostMultiplier(), 1) + "x" + TextRenderable.ENERGY_ICON.display);
                 });
                 return tooltip;
             });
-            buttonHandler.addTooltip(6, 0).add(button -> {
+            buttonHandler.addTooltip(8, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 0.5f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox weaponEffectiveness = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ShipClass.FIGHTER.icon.display + ShipClass.FIGHTER.getName() + "s:")
@@ -266,9 +276,13 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addSpace(0.3f, 1)
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
                 UIDisplayBox weaponStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
-                        .addText(0.6f, HorizontalAlign.LEFT, "Base " + ModifierCategory.DAMAGE.getName() +":")
+                        .addText(0.6f, HorizontalAlign.LEFT, "Base " + ModifierCategory.DAMAGE.getName() + ":")
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.FIRING_RANGE.getName() + ":")
+                        .addSpace(0.3f, 0)
+                        .addText(0.6f, HorizontalAlign.LEFT, EnergyManager.displayName + " Cost:")
+                        .addText(0.6f, HorizontalAlign.RIGHT, 1, null)
+                        .addSpace(0.3f, 1)
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null)
                         .addSpace(0.3f, 1)
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
@@ -300,11 +314,12 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                                 .updateText(e.name);
                     }
                     weaponStats.setText(0, 1, MathUtil.floatToString(unit.stats.baseDamage(), 1) + TextRenderable.DAMAGE_ICON.display)
-                            .setText(2, 1, unit.stats.getRangeText());
+                            .setText(2, 1, unit.stats.getRangeText())
+                            .setText(4, 1, unit.getActionCostText(Action.FIRE) + TextRenderable.ENERGY_ICON.display);
                 });
                 return tooltip;
             });
-            buttonHandler.addTooltip(8, 0).add(button -> {
+            buttonHandler.addTooltip(10, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 3.5f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox ammoStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.AMMO_CAPACITY.getName() + ":")
@@ -323,10 +338,14 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                 });
                 return tooltip;
             });
-            buttonHandler.addTooltip(10, 0).add(button -> {
+            buttonHandler.addTooltip(12, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 2f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox repairStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.REPAIR.getName() + ":")
+                        .addSpace(0.3f, 0)
+                        .addText(0.6f, HorizontalAlign.LEFT, EnergyManager.displayName + " Cost:")
+                        .addText(0.6f, HorizontalAlign.RIGHT, 1, null)
+                        .addSpace(0.3f, 1)
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
                 tooltip.addText(1, HorizontalAlign.LEFT, "Repair").setColumnVerticalAlign(0, VerticalAlign.TOP)
                         .addSpace(0.3f, 0)
@@ -339,30 +358,65 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                     Unit unit = getUnit(level);
                     if (!unit.type.canPerformAction(Action.REPAIR))
                         return;
-                    repairStats.setText(0, 1, MathUtil.floatToString(unit.stats.repair(), 1) + TextRenderable.REPAIR_ICON.display);
+                    repairStats.setText(0, 1, MathUtil.floatToString(unit.stats.repair(), 1) + TextRenderable.REPAIR_ICON.display)
+                            .setText(2, 1, unit.getActionCostText(Action.REPAIR) + TextRenderable.ENERGY_ICON.display);
                 });
                 return tooltip;
             });
-            buttonHandler.addTooltip(12, 0).add(button -> {
+            buttonHandler.addTooltip(14, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 2f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
+                UIDisplayBox resupplyStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
+                        .addText(0.6f, HorizontalAlign.LEFT, EnergyManager.displayName + " Cost:")
+                        .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
                 tooltip.addText(1, HorizontalAlign.LEFT, "Resupply").setColumnVerticalAlign(0, VerticalAlign.TOP)
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT,
                                 "This unit has the " + Action.RESUPPLY.colouredIconName(StyleElement.NO_COLOUR, false) + " action, " +
-                                        "which allows it to fully replenish the ammunition of allied units that are adjacent to this unit.");
+                                        "which allows it to fully replenish the ammunition of allied units that are adjacent to this unit.")
+                        .addSpace(0.3f, 0)
+                        .addBox(resupplyStats, HorizontalAlign.CENTER, 0);
+                tooltip.setOnStartRender(() -> {
+                    Unit unit = getUnit(level);
+                    if (!unit.type.canPerformAction(Action.RESUPPLY))
+                        return;
+                    resupplyStats.setText(0, 1, unit.getActionCostText(Action.RESUPPLY) + TextRenderable.ENERGY_ICON.display);
+                });
                 return tooltip;
             });
-            buttonHandler.addTooltip(14, 0).add(button -> {
-                UIStaticTooltip tooltip = new UIStaticTooltip(12, 2f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
+            buttonHandler.addTooltip(16, 0, true).add(button -> {
+                UIStaticTooltip tooltip = new UIStaticTooltip(12, 0.5f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
+                UIDisplayBox stealthStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
+                        .addText(0.6f, HorizontalAlign.LEFT, "Activation Cost:")
+                        .addSpace(0.3f, 0)
+                        .addText(0.6f, HorizontalAlign.LEFT, "Cost While Active:")
+                        .addText(0.6f, HorizontalAlign.RIGHT, 1, null)
+                        .addSpace(0.3f, 1)
+                        .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
                 tooltip.addText(1, HorizontalAlign.LEFT, "Stealth").setColumnVerticalAlign(0, VerticalAlign.TOP)
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT,
                                 "This unit has the " + Action.STEALTH.colouredIconName(StyleElement.NO_COLOUR, false) + " action, " +
-                                        "which allows it hide from enemy units. When in stealth mode, it is only visible to directly adjacent enemy units, but loses the ability to fire its weapons.\n\n" +
-                                        "Units with this action do not have access to the " + Action.CAPTURE.colouredIconName(StyleElement.NO_COLOUR, false) + " action.");
+                                        "which allows it to hide from enemy units. When in stealth mode, it is only visible to directly adjacent enemy units, but loses the ability to fire its weapons.\n\n" +
+                                        "Units with this action do not have access to the " + Action.CAPTURE.colouredIconName(StyleElement.NO_COLOUR, false) + " action.")
+                        .addSpace(0.6f, 0)
+                        .addText(0.8f, HorizontalAlign.LEFT, EnergyManager.displayName + " Costs:")
+                        .addSpace(0.3f, 0)
+                        .addText(0.6f, HorizontalAlign.LEFT, "The " + Action.STEALTH.colouredIconName(StyleElement.NO_COLOUR, false) + " action has two " + EnergyManager.displayName +
+                                " costs. The first is a one-time cost for activating stealth mode, and the other is a per-turn cost which reduces income while stealth mode is active. Exiting stealth mode has no cost.")
+                        .addSpace(0.3f, 0)
+                        .addBox(stealthStats, HorizontalAlign.CENTER, 0);
+                tooltip.setOnStartRender(() -> {
+                    Unit unit = getUnit(level);
+                    if (!unit.type.canPerformAction(Action.STEALTH))
+                        return;
+                    stealthStats
+                            .setText(0, 1, unit.getActionCostText(Action.STEALTH) + TextRenderable.ENERGY_ICON.display)
+                            .setText(2, 1, unit.getPerTurnActionCostText(Action.STEALTH) + TextRenderable.ENERGY_ICON.display + " / Turn");
+                });
+
                 return tooltip;
             });
-            buttonHandler.addTooltip(16, 0).add(button -> {
+            buttonHandler.addTooltip(18, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 2f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox miningStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.MINING_INCOME.getName() + ":")
@@ -379,7 +433,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                     Unit unit = getUnit(level);
                     if (!unit.type.canPerformAction(Action.MINE))
                         return;
-                    miningStats.setText(0, 1, "+" + -unit.stats.getPerTurnActionCost(Action.MINE).get() + TextRenderable.ENERGY_ICON.display + " / Turn");
+                    miningStats.setText(0, 1, unit.getPerTurnActionCostText(Action.MINE) + TextRenderable.ENERGY_ICON.display + " / Turn");
                 });
                 return tooltip;
             });
@@ -401,8 +455,8 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             hp.setText(0, 1, MathUtil.floatToString(unit.hitPoints, 1) + " / " + MathUtil.floatToString(unit.stats.maxHP(), 1) + TextRenderable.HP_ICON.display);
 
                             boolean hasShield = unit.stats.maxShieldHP() != 0;
-                            systems.box.setElementEnabled(hasShield, 1, 0);
-                            systems.box.setElementEnabled(hasShield, 2, 0);
+                            systems.box.setElementEnabled(hasShield, 3, 0);
+                            systems.box.setElementEnabled(hasShield, 4, 0);
                             if (hasShield) {
                                 shield.getBar(2, 0).setSegments((int) unit.stats.maxShieldHP()).setFill(unit.shieldHP);
                                 shield.setText(0, 1, MathUtil.floatToString(unit.shieldHP, 1) + " / " + MathUtil.floatToString(unit.stats.maxShieldHP(), 1) + TextRenderable.SHIELD_ICON.display);
@@ -411,15 +465,21 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             movement.setText(0, 1, MathUtil.floatToString(unit.stats.maxMovement(), 1) + TextRenderable.MOVE_ICON.display);
 
                             boolean hasWeapons = !unit.weapons.isEmpty(), consumesAmmo = unit.stats.consumesAmmo();
-                            systems.box.setElementEnabled(hasWeapons, 5, 0);
-                            systems.box.setElementEnabled(hasWeapons, 6, 0);
-                            systems.box.setElementEnabled(consumesAmmo, 7, 0);
-                            systems.box.setElementEnabled(consumesAmmo, 8, 0);
+                            systems.box.setElementEnabled(hasWeapons, 7, 0);
+                            systems.box.setElementEnabled(hasWeapons, 8, 0);
+                            systems.box.setElementEnabled(consumesAmmo, 9, 0);
+                            systems.box.setElementEnabled(consumesAmmo, 10, 0);
                             if (hasWeapons) {
                                 weapons.setText(0, 1, MathUtil.floatToString(unit.stats.baseDamage(), 1) + TextRenderable.DAMAGE_ICON.display);
                                 boolean nonStandardRange = unit.stats.hasNonStandardRange();
                                 weapons.setElementEnabled(nonStandardRange, 1, 1);
                                 weapons.setElementEnabled(nonStandardRange, 2, 1);
+                                StringBuilder s = new StringBuilder();
+                                for (ShipClass value : ShipClass.values()) {
+                                    WeaponEffectiveness e = WeaponEffectiveness.againstClass(unit, value);
+                                    s.append(e.textColourGray().display).append(value.icon.display);
+                                }
+                                weapons.setText(4, 1, s.toString());
                                 if (nonStandardRange)
                                     weapons.setText(2, 1, unit.stats.getRangeText());
                                 if (consumesAmmo) {
@@ -428,23 +488,23 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             }
 
                             boolean hasRepair = unit.type.canPerformAction(Action.REPAIR);
-                            systems.box.setElementEnabled(hasRepair, 9, 0);
-                            systems.box.setElementEnabled(hasRepair, 10, 0);
+                            systems.box.setElementEnabled(hasRepair, 11, 0);
+                            systems.box.setElementEnabled(hasRepair, 12, 0);
                             if (hasRepair) {
                                 repair.setText(0, 1, MathUtil.floatToString(unit.stats.repair(), 1) + TextRenderable.REPAIR_ICON.display);
                             }
 
                             boolean hasResupply = unit.type.canPerformAction(Action.RESUPPLY);
-                            systems.box.setElementEnabled(hasResupply, 11, 0);
-                            systems.box.setElementEnabled(hasResupply, 12, 0);
+                            systems.box.setElementEnabled(hasResupply, 13, 0);
+                            systems.box.setElementEnabled(hasResupply, 14, 0);
 
                             boolean hasStealth = unit.type.canPerformAction(Action.STEALTH);
-                            systems.box.setElementEnabled(hasStealth, 13, 0);
-                            systems.box.setElementEnabled(hasStealth, 14, 0);
+                            systems.box.setElementEnabled(hasStealth, 15, 0);
+                            systems.box.setElementEnabled(hasStealth, 16, 0);
 
                             boolean hasMining = unit.type.canPerformAction(Action.MINE);
-                            systems.box.setElementEnabled(hasMining, 15, 0);
-                            systems.box.setElementEnabled(hasMining, 16, 0);
+                            systems.box.setElementEnabled(hasMining, 17, 0);
+                            systems.box.setElementEnabled(hasMining, 18, 0);
                             if (hasMining) {
                                 mining.setText(0, 1, "+" + -unit.stats.getPerTurnActionCost(Action.MINE).get() + TextRenderable.ENERGY_ICON.display + " / Turn");
                             }
@@ -467,7 +527,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                     return TutorialManager.isEnabled(TutorialElement.VIEW_FIRING_RANGE_DESELECT);
                 }
             }
-                    .setShape(UIShapeButton::target).drawShape(0.12f).setColourTheme(UIColourTheme.RED).setBoxCorner(0.3f).setOnClick(() -> {
+                    .textRenderable(TextRenderable.RANGE_ICON, 1).setColourTheme(Modifier.createBackgroundTheme(StyleElement.MODIFIER_FIRING_RANGE).backgroundModifier(c -> UIColourTheme.applyAlpha(c, 1.5f))).setBoxCorner(0.3f).setOnClick(() -> {
                         Unit unit = getUnit(level);
                         if (unit == null || level.getActiveTeam() != level.getThisTeam())
                             return;
@@ -484,7 +544,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         level.levelRenderer.registerTileHighlight(highlight, true);
                         TutorialManager.acceptEvent(new EventUISelect(level, UIElement.VIEW_FIRING_RANGE));
                     }).setOnDeselect(this::closeFiringRangeView).toggleMode()
-                    .tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Click to view unit firing range"));
+                    .tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Click to view unit " + ModifierCategory.FIRING_RANGE.getName().toLowerCase()));
             viewEffectiveness = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 5.5f, HEIGHT - 1.5f, 1.5f, 1.5f, true) {
                 @Override
                 public boolean selectEnabled() {
@@ -496,7 +556,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                     return TutorialManager.isEnabled(TutorialElement.VIEW_EFFECTIVENESS_DESELECT);
                 }
             }
-                    .setShape(box -> UIShapeButton.targetRotated(box, 45)).drawShape(0.12f).setColourTheme(UIColourTheme.ORANGE).setBoxCorner(0.3f).setOnClick(() -> {
+                    .setShape(UIShapeButton::target).drawShape(0.12f).setColourTheme(Modifier.DAMAGE_BACKGROUND.backgroundModifier(c -> UIColourTheme.applyAlpha(c, 1.5f))).setBoxCorner(0.3f).setOnClick(() -> {
                         Unit unit = getUnit(level);
                         if (unit == null || level.getActiveTeam() != level.getThisTeam())
                             return;
@@ -511,9 +571,10 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         });
                         effectivenessHighlight = highlight;
                         level.levelRenderer.registerTileHighlight(highlight, true);
+                        level.levelRenderer.weaponEffectivenessInfo.setEnabled(true);
                         TutorialManager.acceptEvent(new EventUISelect(level, UIElement.VIEW_EFFECTIVENESS));
                     }).setOnDeselect(this::closeEffectivenessView).toggleMode()
-                    .tooltip(t -> t.add(12, AbstractUITooltip.dark(), "Click to view this unit's weapon effectiveness against enemies. Colour ranges between yellow for low damage and red for high damage. Blue colour means no damage."));
+                    .tooltip(t -> t.add(12, AbstractUITooltip.dark(), "Click to view this unit's weapon effectiveness against enemies. The colour depends on which weapon effectiveness modifier would be applied when attacking.\n\nPress middle mouse while weapon effectiveness view is active to view colour coding."));
             new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type.isCharInput, type -> {
                 switch (type.c) {
                     case 'c' -> {
@@ -551,6 +612,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
     public void closeEffectivenessView() {
         if (effectivenessHighlight != null && viewEffectiveness.deselectEnabled()) {
             effectivenessHighlight.close();
+            level.levelRenderer.weaponEffectivenessInfo.setEnabled(false);
             TutorialManager.acceptEvent(new EventUIDeselect(level, UIElement.VIEW_EFFECTIVENESS));
         }
     }

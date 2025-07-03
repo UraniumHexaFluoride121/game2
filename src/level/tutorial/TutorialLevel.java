@@ -111,7 +111,7 @@ public enum TutorialLevel implements NamedEnum {
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
                             "There is a number in the bottom right corner of each unit. This number shows the [GREEN]remaining HP[NO_COLOUR] of the unit, rounded up."),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "Fighter units start with " + ((int) (FighterType.FIGHTER.hitPoints)) + " HP, and, as you can see, [BLUE]both the attacking unit and " +
+                            "Fighter units start with " + ((int) (FighterType.INTERCEPTOR.hitPoints)) + " HP, and, as you can see, [BLUE]both the attacking unit and " +
                                     "the enemy unit[NO_COLOUR] have taken some damage.\n\nNotice that the enemy unit took more damage than the attacking one."),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
                             "This is because after you attack a unit, the now weakened enemy will [BLUE]counterattack[NO_COLOUR] with whatever strength it has left.\n\n" +

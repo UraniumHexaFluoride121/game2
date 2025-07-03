@@ -4,8 +4,9 @@ import render.GameRenderer;
 import render.HorizontalAlign;
 import render.RenderOrder;
 import render.UIColourTheme;
-import render.types.box.UIDisplayBoxRenderElement;
 import render.types.box.UIDisplayBox;
+import render.types.box.UIDisplayBoxRenderElement;
+import render.types.text.StyleElement;
 
 import java.awt.*;
 import java.util.Collection;
@@ -15,21 +16,15 @@ import java.util.function.BiConsumer;
 public interface Modifier extends Comparable<Modifier> {
     UIColourTheme RED_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_RED);
     UIColourTheme BLUE_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_LIGHT_BLUE);
-    UIColourTheme LIGHT_BLUE_SHIELD_BACKGROUND = createBackgroundTheme(new UIColourTheme(
-            new Color(68, 220, 220), new Color(58, 193, 182, 144)
+    UIColourTheme SHIELD_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_SHIELD_HP);
+    UIColourTheme DAMAGE_BACKGROUND = createBackgroundTheme(new UIColourTheme(
+            new Color(213, 99, 99), new Color(193, 90, 90)
     ));
-    UIColourTheme RED_DAMAGE_BACKGROUND = createBackgroundTheme(new UIColourTheme(
-            new Color(213, 99, 99), new Color(193, 90, 90, 144)
-    ));
-    UIColourTheme BLUE_MOVEMENT_BACKGROUND = createBackgroundTheme(new UIColourTheme(
-            new Color(58, 119, 213), new Color(44, 85, 143)
-    ));
-    UIColourTheme BROWN_RESUPPLY_BACKGROUND = createBackgroundTheme(new UIColourTheme(
-            new Color(161, 101, 37), new Color(108, 68, 31)
-    ));
-    UIColourTheme PURPLE_MINING_BACKGROUND = createBackgroundTheme(new UIColourTheme(
-            new Color(134, 49, 213), new Color(83, 37, 128)
-    ));
+    UIColourTheme INCOMING_DAMAGE_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_INCOMING_DAMAGE);
+    UIColourTheme MOVEMENT_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_MOVEMENT_SPEED);
+    UIColourTheme RESUPPLY_BACKGROUND = createBackgroundTheme(StyleElement.RESUPPLY);
+    UIColourTheme MINING_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_MINING);
+    UIColourTheme VIEW_RANGE_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_VIEW_RANGE);
     UIColourTheme YELLOW_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_YELLOW);
     UIColourTheme GREEN_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_GREEN);
 
@@ -91,31 +86,15 @@ public interface Modifier extends Comparable<Modifier> {
         return (effect >= 1 ? "+" : "") + Math.round((effect - 1) * 100) + "%";
     }
 
-    static UIColourTheme createBackgroundTheme(UIColourTheme theme) {
-        return theme.backgroundModifier(c -> UIColourTheme.applyAlpha(c, 0.3f));
+    static UIColourTheme createBackgroundTheme(Color colour) {
+        return createBackgroundTheme(new UIColourTheme(colour, UIColourTheme.darken(colour, 0.87f)));
     }
 
-    static Color getDamageColour(float value) {
-        if (value == 0)
-            return new Color(92, 187, 228);
-        if (value <= 0.3f)
-            return new Color(210, 228, 92);
-        if (value <= 0.45f)
-            return new Color(228, 226, 92);
-        if (value <= 0.6f)
-            return new Color(228, 205, 92);
-        if (value <= 0.75f)
-            return new Color(228, 189, 92);
-        if (value <= 0.9f)
-            return new Color(228, 165, 92);
-        if (value <= 1.1f)
-            return new Color(228, 144, 92);
-        if (value <= 1.3f)
-            return new Color(221, 113, 80);
-        if (value <= 1.5f)
-            return new Color(234, 102, 79);
-        if (value <= 1.7f)
-            return new Color(230, 75, 75);
-        return new Color(223, 54, 54);
+    static UIColourTheme createBackgroundTheme(StyleElement styleElement) {
+        return createBackgroundTheme(styleElement.colour);
+    }
+
+    static UIColourTheme createBackgroundTheme(UIColourTheme theme) {
+        return theme.backgroundModifier(c -> UIColourTheme.applyAlpha(c, 0.3f));
     }
 }

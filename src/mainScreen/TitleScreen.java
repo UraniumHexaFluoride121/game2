@@ -94,6 +94,9 @@ public class TitleScreen implements Renderable, InputReceiver {
         new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, () -> System.exit(0))
                 .setText("Quit").setColourTheme(UIColourTheme.DEEP_RED).setBold()
                 .tooltip(t -> t.add(6, AbstractUITooltip.light(), "Exit to desktop"));
+        UIConfirm uiConfirmQuit = new UIConfirm(renderer, RenderOrder.CONFIRM_UI, null).setTextSize(1).modifyBox(box -> box.setColourTheme(LIGHT_BLUE_FULLY_OPAQUE_CENTER)).setTextConfirm("Back").setTextCancel("Quit");
+        buttonRegister.register(uiConfirmQuit);
+        new OnButtonInput(buttonRegister, ButtonOrder.MAIN_BUTTONS_BACK, type -> type == InputType.ESCAPE, () -> uiConfirmQuit.makeVisible("Are you sure you want to quit?", uiConfirmQuit::makeInvisible, () -> System.exit(0)));
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BACKGROUND, titleScreenImage);
         new RenderElement(renderer, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIBox(10 + MAIN_BUTTON_SPACING * 2, MAIN_BUTTON_B0X_HEIGHT).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).translate(Renderable.right() - 15 - MAIN_BUTTON_SPACING, MAIN_BUTTON_Y_OFFSET));
         tutorialButton = new UIButton(renderer, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
@@ -237,13 +240,14 @@ public class TitleScreen implements Renderable, InputReceiver {
                 });
             }).setText("Connect").setBold();
             joinButton = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                    Renderable.right() - 32.5f, 5.2f, 9f, 1.5f, 0.8f, false, () -> {
+                    Renderable.right() - 32.5f, 3.5f, 9f, 1.5f, 0.8f, false, () -> {
                 MainPanel.client.sendJoinRequest(selectedTeam);
             }).setText("Join").setBold().setEnabled(false);
             colourSelectorBox = new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND,
-                    new UIBox(16, 6.8f).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)
-                            .translate(Renderable.right() - 36, 4.2f)
-            );
+                    new UIBox(16, 7.8f).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER),
+                    new TextRenderer("Select a team colour:", 0.8f, UITextLabel.TEXT_COLOUR).setBold(true).setTextAlign(HorizontalAlign.LEFT)
+                            .translate(0.4f, 6.8f)
+            ).translate(Renderable.right() - 36, 2.7f);
             colourSelectorBox.setEnabled(false);
             new OnButtonInput(b, ButtonOrder.MAIN_BUTTONS, t -> t == InputType.ENTER, () -> {
                 if (joinButton.isEnabled())
@@ -586,9 +590,9 @@ public class TitleScreen implements Renderable, InputReceiver {
 
     public void updateMultiplayerConnectButtons() {
         if (multiplayerTabs.lastTabSelected()) {
-            startLocalGame.setText("Start game locally").tooltip(t -> t.setText("Start the game with local play. Players take turns playing on the host device."))
+            startLocalGame.setText("Start game locally").tooltip(TooltipManager::show).tooltip(t -> t.setText("Start the game with local play. Players take turns playing on the host device."))
                     .setColourTheme(LIGHT_BLUE).setTextSize(0.7f);
-            startLanGame.setText("Start game on LAN").tooltip(t -> t.setText("Start the game with online play. " +
+            startLanGame.setText("Start game on LAN").tooltip(TooltipManager::show).tooltip(t -> t.setText("Start the game with online play. " +
                     "All other players must join from separate devices using this device's local IP address. " +
                     "Only players connected to the same network can join.")).setTextSize(0.7f);
         } else {
@@ -604,7 +608,7 @@ public class TitleScreen implements Renderable, InputReceiver {
             int finalI = i;
             connectContainer.addRenderables((r, b) -> {
                 colourSelectorButtons[finalI] = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS,
-                        Renderable.right() - 35 + (width + spacing) * (finalI % 4), 8.875f - 1.7f * (finalI / 4), width, 1.3f, 0.6f, true, () -> {
+                        Renderable.right() - 35 + (width + spacing) * (finalI % 4), 7.5f - 1.7f * (finalI / 4), width, 1.3f, 0.6f, true, () -> {
                     deselectOtherColourSelectors(colourSelectorButtons[finalI]);
                     selectedTeam = UnitTeam.ORDERED_TEAMS[finalI];
                     updateColourSelectorVisibility();

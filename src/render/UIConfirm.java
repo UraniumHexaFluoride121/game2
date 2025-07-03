@@ -14,6 +14,7 @@ import render.types.box.UIBox;
 import render.types.text.UITextLabel;
 
 import java.awt.*;
+import java.util.function.Consumer;
 
 public class UIConfirm extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private static final float width = 12, height = 5;
@@ -87,6 +88,11 @@ public class UIConfirm extends AbstractRenderElement implements RegisteredButton
         return this;
     }
 
+    public UIConfirm modifyBox(Consumer<UIBox> action) {
+        action.accept(box);
+        return this;
+    }
+
     public void makeInvisible() {
         visible = false;
         confirmButtonHandler.setOnClick(null);
@@ -110,19 +116,21 @@ public class UIConfirm extends AbstractRenderElement implements RegisteredButton
 
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (blocked)
+        if (blocked || !visible)
             return;
         if (type == InputType.ESCAPE) {
             makeInvisible();
             return;
         }
-        ObjPos block = level.levelRenderer.transformCameraPosToBlock(pos);
+        ObjPos block = level == null ? pos : level.levelRenderer.transformCameraPosToBlock(pos);
         confirmButtonHandler.buttonPressed(pos, confirmBox.isPositionInside(block), false, type);
         cancelButtonHandler.buttonPressed(pos, cancelBox.isPositionInside(block), false, type);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
+        if (!visible)
+            return;
         confirmButtonHandler.buttonReleased(pos, inside, blocked, type);
         cancelButtonHandler.buttonReleased(pos, inside, blocked, type);
     }

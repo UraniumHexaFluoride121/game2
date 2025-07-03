@@ -130,6 +130,8 @@ public class Client implements Deletable {
             case JOIN_REQUEST_ACCEPTED -> {
                 HashMap<UnitTeam, PlayerTeam> playerTeams = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> PacketReceiver.readEnum(PlayerTeam.class, reader), reader);
                 HashMap<UnitTeam, PlayerTeam> initialPlayerTeams = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> PacketReceiver.readEnum(PlayerTeam.class, reader), reader);
+                HashMap<UnitTeam, Float> destroyedUnitsDamage = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readFloat, reader);
+                HashMap<UnitTeam, Integer> destroyedUnitsByTeam = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
                 long seed = reader.readLong();
                 float botDifficulty = reader.readFloat();
                 int width = reader.readInt(), height = reader.readInt();
@@ -154,6 +156,8 @@ public class Client implements Deletable {
                     MainPanel.startNewLevel(() -> {
                         Level l = new Level(playerTeams, seed, width, height, bots, gameplaySettings, NetworkState.CLIENT, botDifficulty);
                         l.initialPlayerTeams = initialPlayerTeams;
+                        l.destroyedUnitsDamage = destroyedUnitsDamage;
+                        l.destroyedUnitsByTeam = destroyedUnitsByTeam;
                         l.clientSetThisTeam(team);
                         HashMap<UnitTeam, Point> basePositions = new HashMap<>();
                         for (int x = 0; x < width; x++) {
@@ -245,6 +249,7 @@ public class Client implements Deletable {
             }
             case SERVER_CAPTURE_UNIT -> {
                 Point pos = PacketReceiver.readPoint(reader);
+                boolean action = reader.readBoolean();
                 int progress = reader.readInt();
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
@@ -253,7 +258,7 @@ public class Client implements Deletable {
                         requestLevelData();
                         return;
                     }
-                    u.capture(progress, true);
+                    u.capture(progress, action);
                 });
             }
             case SERVER_STRUCTURE_UPDATE -> {
@@ -363,7 +368,8 @@ public class Client implements Deletable {
                 throw new RuntimeException(e);
             }
         }
-        MainPanel.clientDisconnect();
+        if (MainPanel.getActiveLevel() != null)
+            MainPanel.clientDisconnect();
     }
 
     public void sendJoinRequest(UnitTeam team) {

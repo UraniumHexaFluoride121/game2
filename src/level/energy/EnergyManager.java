@@ -57,11 +57,11 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         }
         availableText = new TextRenderer(null, .7f, UITextLabel.TEXT_COLOUR)
                 .setBold(true).setTextAlign(HorizontalAlign.LEFT);
-        incomeText = new TextRenderer(null, .7f, StyleElement.ENERGY_COST_GREEN.color)
+        incomeText = new TextRenderer(null, .7f, StyleElement.ENERGY_COST_GREEN.colour)
                 .setBold(true).setTextAlign(HorizontalAlign.LEFT);
-        availableChangeText = new TextRenderer(null, .7f, StyleElement.ENERGY_COST_GREEN.color)
+        availableChangeText = new TextRenderer(null, .7f, StyleElement.ENERGY_COST_GREEN.colour)
                 .setBold(true).setTextAlign(HorizontalAlign.RIGHT);
-        incomeChangeText = new TextRenderer(null, .7f, StyleElement.ENERGY_COST_GREEN.color)
+        incomeChangeText = new TextRenderer(null, .7f, StyleElement.ENERGY_COST_GREEN.colour)
                 .setBold(true).setTextAlign(HorizontalAlign.RIGHT);
         Renderable availableChangeTranslated = availableChangeText.translate(8.4f, 1.75f);
         Renderable incomeChangeTranslated = incomeChangeText.translate(8.4f, .15f);
@@ -275,8 +275,6 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     }
 
     public boolean canAfford(Unit unit, Action action, boolean consume) {
-        if (unit.removeActionEnergyCost(action))
-            return true;
         Optional<Integer> actionCost = unit.stats.getActionCost(action);
         return actionCost.map(cost -> canAfford(unit.team, cost, consume)).orElse(true);
     }
@@ -307,11 +305,11 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     }
 
     public static Color numberColour(int amount) {
-        return amount == 0 ? TEXT_COLOUR : (amount < 0 ? StyleElement.ENERGY_COST_RED : StyleElement.ENERGY_COST_GREEN).color;
+        return amount == 0 ? TEXT_COLOUR : (amount < 0 ? StyleElement.ENERGY_COST_RED : StyleElement.ENERGY_COST_GREEN).colour;
     }
 
     public static Color numberColour(float amount) {
-        return amount == 0 ? TEXT_COLOUR : (amount < 0 ? StyleElement.ENERGY_COST_RED : StyleElement.ENERGY_COST_GREEN).color;
+        return amount == 0 ? TEXT_COLOUR : (amount < 0 ? StyleElement.ENERGY_COST_RED : StyleElement.ENERGY_COST_GREEN).colour;
     }
 
     @Override

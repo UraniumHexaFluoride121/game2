@@ -2,7 +2,6 @@ package unit.type;
 
 import foundation.math.ObjPos;
 import level.energy.EnergyManager;
-import level.tile.TileType;
 import render.level.FiringRenderer;
 import unit.ShipClass;
 import unit.action.Action;
@@ -26,7 +25,7 @@ import static unit.stats.modifiers.WeaponDamageModifier.STRENGTH_1;
 import static unit.stats.modifiers.WeaponDamageModifier.STRENGTH_2;
 
 public class CruiserType extends UnitType {
-    public static final CruiserType CRUISER = new CruiserType("cruiser", "Cruiser", 14, 4f, 3f, new Action[]{
+    public static final CruiserType BATTLECRUISER = new CruiserType("battlecruiser", "Battlecruiser", 14, 4f, 3f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 25, 1, 1, 4, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAILGUN);
@@ -43,15 +42,14 @@ public class CruiserType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 10);
         map.put(Action.FIRE, 10);
     }, new AttributeData[]{
             ANTI_CORVETTE, ANTI_CRUISER,
             NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_FIGHTER
-    }, FiringRenderer.TWO_UNITS, "The base variant of the cruiser class. Comes with strong armour and a powerful armour-piercing railgun. This railgun performs " +
+    }, FiringRenderer.TWO_UNITS, "The base variant of the cruiser-class. Comes with strong armour and a powerful armour-piercing railgun. This railgun performs " +
             "well against armoured units, especially other cruiser-class units."),
 
-    BATTLECRUISER = new CruiserType("battlecruiser", "Battlecruiser", 12, 4.3f, 3f, new Action[]{
+    LIGHT_CRUISER = new CruiserType("light_cruiser", "Light Cruiser", 12, 4.3f, 3f, new Action[]{
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
     }, 1, 25, 1, 1, 4, list -> {
         WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BATTLECRUISER_CANNON);
@@ -75,7 +73,6 @@ public class CruiserType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 10);
         map.put(Action.FIRE, 10);
         map.put(Action.SHIELD_REGEN, 12);
     }, new AttributeData[]{
@@ -93,7 +90,6 @@ public class CruiserType extends UnitType {
         map.put(UnitCharacteristic.SPEED, UnitCharacteristicValue.MODERATE_GOOD);
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 8);
         perTurnMap.put(Action.MINE, -12);
     }, new AttributeData[]{
             MINING, QUICK_ASTEROID_FIELD,
@@ -120,16 +116,6 @@ public class CruiserType extends UnitType {
     @Override
     public void addModifiers(ArrayList<Modifier> list) {
         list.add(MovementModifier.NO_ASTEROID_FIELDS);
-    }
-
-    @Override
-    public float viewRange(TileType type) {
-        return switch (type) {
-            case EMPTY -> 1f;
-            case NEBULA -> 1.7f;
-            case DENSE_NEBULA -> 100f;
-            case ASTEROIDS -> 1.5f;
-        };
     }
 
     @Override

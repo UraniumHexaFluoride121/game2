@@ -32,6 +32,10 @@ public abstract class MathUtil {
         return eq;
     }
 
+    public static boolean equal(float value, float target, float epsilon) {
+        return value > target - epsilon && value < target + epsilon;
+    }
+
     public static float linearTo(float from, float to, float v, float deltaTime) {
         float newValue = from + deltaTime * v * Math.signum(to - from);
         if (Math.signum(from - to) != Math.signum(newValue - to))

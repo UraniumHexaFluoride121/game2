@@ -142,9 +142,10 @@ public class Server implements Deletable {
         })));
     }
 
-    public void sendUnitCapturePacket(Unit unit) {
+    public void sendUnitCapturePacket(Unit unit, boolean action) {
         clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_CAPTURE_UNIT, w -> {
             PacketWriter.writePoint(unit.pos, w);
+            w.writeBoolean(action);
             w.writeInt(unit.getCaptureProgress());
         })));
     }
@@ -311,6 +312,8 @@ public class Server implements Deletable {
                             queuePacket(new PacketWriter(PacketType.JOIN_REQUEST_ACCEPTED, w -> {
                                 PacketWriter.writeMap(server.level.playerTeam, k -> PacketWriter.writeEnum(k, w), v -> PacketWriter.writeEnum(v, w), w);
                                 PacketWriter.writeMap(server.level.initialPlayerTeams, k -> PacketWriter.writeEnum(k, w), v -> PacketWriter.writeEnum(v, w), w);
+                                PacketWriter.writeMap(server.level.destroyedUnitsDamage, k -> PacketWriter.writeEnum(k, w), w::writeFloat, w);
+                                PacketWriter.writeMap(server.level.destroyedUnitsByTeam, k -> PacketWriter.writeEnum(k, w), w::writeInt, w);
                                 w.writeLong(server.level.seed);
                                 w.writeFloat(server.level.botDifficulty);
                                 w.writeInt(server.level.tilesX);
@@ -400,8 +403,8 @@ public class Server implements Deletable {
                             queueUnitUpdatePacket();
                             return;
                         }
-                        u.incrementCapture();
-                        server.sendUnitCapturePacket(u);
+                        u.captureAction();
+                        server.sendUnitCapturePacket(u, true);
                     });
                 }
                 case CLIENT_REQUEST_SHIELD_REGEN -> {

@@ -49,11 +49,11 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
     public UIDamage damageUI;
     public UIDamageModifiers damageModifiers;
     public UIMovementModifiers movementModifiers;
+    public UIWeaponEffectivenessInfo weaponEffectivenessInfo;
     public UIEndTurn endTurn;
     public UITileInfo tileInfo;
     public UIButton exitActionButton;
     public UnitInfoScreen unitInfoScreen;
-    public StructureInfoScreen structureInfoScreen;
     public DamageModifierInfo damageModifierInfo;
     public MovementModifierInfo movementModifierInfo;
     public EnergyManager energyManager;
@@ -115,6 +115,8 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         damageModifiers.setZOrder(-5);
         movementModifiers = new UIMovementModifiers(levelUIRenderer, level.buttonRegister, level);
         movementModifiers.setZOrder(-5);
+        weaponEffectivenessInfo = new UIWeaponEffectivenessInfo(levelUIRenderer, level.buttonRegister, level);
+        weaponEffectivenessInfo.setZOrder(-5).setEnabled(false);
 
         new RenderElement(mainRenderer, RenderOrder.ENERGY_COST_INDICATOR, g -> {
             level.unitSet.forEach(u -> u.renderEnergyCostIndicator(g));
@@ -165,8 +167,6 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
         unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, level);
         unitInfoScreen.setEnabled(false);
-        structureInfoScreen = new StructureInfoScreen(levelUIRenderer, level.buttonRegister, level);
-        structureInfoScreen.setEnabled(false);
         damageModifierInfo = new DamageModifierInfo(levelUIRenderer, level.buttonRegister, level);
         movementModifierInfo = new MovementModifierInfo(levelUIRenderer, level.buttonRegister, level);
 

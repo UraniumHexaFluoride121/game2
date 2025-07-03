@@ -1,7 +1,6 @@
 package unit.type;
 
 import foundation.math.ObjPos;
-import level.tile.TileType;
 import render.level.FiringRenderer;
 import unit.ShipClass;
 import unit.action.Action;
@@ -26,7 +25,7 @@ import static unit.stats.modifiers.WeaponDamageModifier.*;
 
 public class FighterType extends UnitType {
     public static final FighterType
-            FIGHTER = new FighterType("fighter", "Fighter", 8, 7f, 3.8f, new Action[]{
+            INTERCEPTOR = new FighterType("interceptor", "Interceptor", 8, 7f, 3.8f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 15, 1, 1, 3, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA);
@@ -43,7 +42,6 @@ public class FighterType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD_HIGH);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 4);
         map.put(Action.FIRE, 7);
     }, new AttributeData[]{
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_FIGHTER, ANTI_SHIELD,
@@ -70,15 +68,14 @@ public class FighterType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.MODERATE);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 4);
         map.put(Action.FIRE, 8);
     }, new AttributeData[]{
             HIGH_MOVEMENT_SPEED, QUICK_ASTEROID_FIELD, ANTI_CAPITAL_SHIP_MISSILES,
             CARRIER_LOADING,
             LIMITED_AMMO
-    }, FiringRenderer.THREE_UNITS, "This special variant of the Fighter unit comes equipped with missiles that deal high damage against cruiser-class units and capital ships. " +
-            "It only has an ammo capacity of one, making resupply an especially important consideration when using this unit. Compared to the regular Fighter, " +
-            "it has less view distance and is more vulnerable than the regular Fighter.")
+    }, FiringRenderer.THREE_UNITS, "This special variant of the " + INTERCEPTOR.getName() + " unit comes equipped with missiles that deal high damage against cruiser-class units and capital ships. " +
+            "It only has an ammo capacity of one, making resupply an especially important consideration when using this unit. Compared to the regular " + INTERCEPTOR.getName() + ", " +
+            "it has less view distance and is more vulnerable than the regular " + INTERCEPTOR.getName() + ".")
             .modify(u -> u.setAmmoCapacity(1)), //Change unit description if ammo capacity is changed
 
     SCOUT = new FighterType("scout", "Scout", 5, 8f, 5f, new Action[]{
@@ -117,16 +114,6 @@ public class FighterType extends UnitType {
     @Override
     public void addModifiers(ArrayList<Modifier> list) {
         list.add(MovementModifier.FAST_ASTEROID_FIELDS);
-    }
-
-    @Override
-    public float viewRange(TileType type) {
-        return switch (type) {
-            case EMPTY -> 1f;
-            case NEBULA -> 1.7f;
-            case DENSE_NEBULA -> 100f;
-            case ASTEROIDS -> 1.5f;
-        };
     }
 
     @Override

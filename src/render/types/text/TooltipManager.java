@@ -60,6 +60,10 @@ public class TooltipManager implements Renderable, Deletable {
     }
 
     public static void hide(TooltipManager t) {
-        t.setText(null);
+        t.tooltip.setEnabled(false);
+    }
+
+    public static void show(TooltipManager t) {
+        t.tooltip.setEnabled(true);
     }
 }

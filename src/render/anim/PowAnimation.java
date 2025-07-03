@@ -45,11 +45,17 @@ public class PowAnimation implements ReversableAnimationTimer {
                 startTime = t;
                 endTime = t + time;
             } else {
-                startTime = -endTime + 2 * t;
+                float progress = reversed ? normalisedProgress() : 1 - normalisedProgress();
+                startTime = t - (long) ((Math.pow(1 - progress, 1 / exponent)) * time);
                 endTime = startTime + time;
             }
+            this.reversed = reversed;
         }
-        this.reversed = reversed;
+    }
+
+    public void finish() {
+        endTime = System.currentTimeMillis();
+        startTime = endTime - time;
     }
 
     @Override

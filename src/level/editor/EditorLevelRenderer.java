@@ -18,6 +18,7 @@ import render.level.tile.RenderElement;
 import render.save.UISaveMenu;
 import render.texture.ImageRenderer;
 import render.types.box.UIBox;
+import render.types.box.UIDisplayBox;
 import render.types.box.UIShapeDisplayBox;
 import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
@@ -61,7 +62,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
     private UISaveMenu<MapSave> saveMenu;
     private UIEnumSelector<NeutralUnitTeam> teamSelector;
     private LevelUIContainer<LevelEditor> invalidContainer;
-    private final MultiLineTextBox invalidText = new MultiLineTextBox(1, 2.15f, 8, 0.7f, HorizontalAlign.LEFT);
+    private UIDisplayBox invalidText;
     public LevelMapUI mapUI;
     public UIConfirm confirm;
 
@@ -262,8 +263,9 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
         invalidContainer = new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
                 0, 0, level);
         invalidContainer.addRenderables((r, b) -> {
+            invalidText = new UIDisplayBox(0.5f, 0.5f, 10, 3, uiBox -> uiBox.setColourTheme(UIColourTheme.DEEP_RED), false)
+                    .addText(0.8f, HorizontalAlign.LEFT, null);
             new RenderElement(r, RenderOrder.LEVEL_UI,
-                    new UIBox(10, 3).setColourTheme(UIColourTheme.DEEP_RED).translate(.5f, .5f),
                     new UITextLabel(10, 1, true).setTextLeftBold().updateTextLeft("Invalid map layout")
                             .setLabelColour(UIColourTheme.DEEP_RED).translate(0.2f, 4),
                     invalidText
@@ -316,7 +318,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
     }
 
     public void setInvalid(String message) {
-        invalidText.updateText(message);
+        invalidText.setText(message);
         invalidContainer.setEnabled(true);
     }
 

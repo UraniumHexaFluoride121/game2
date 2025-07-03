@@ -5,6 +5,8 @@ import render.types.text.StyleElement;
 import unit.stats.Modifier;
 import unit.stats.SingleModifier;
 
+import java.awt.*;
+
 import static unit.stats.ModifierCategory.*;
 
 public abstract class WeaponDamageModifier {
@@ -56,4 +58,14 @@ public abstract class WeaponDamageModifier {
             DAMAGE.displayEffectName(),
             DAMAGE.displayEffectValue(1.6f, Modifier::percentMultiplicative),
             DAMAGE, UIColourTheme.DEEP_GREEN, Modifier.GREEN_BACKGROUND);
+
+    public static Color getDamageModifierColour(Modifier... modifiers) {
+        if (modifiers != null)
+            for (Modifier m : modifiers) {
+                if (m == NORMAL_STRENGTH) return new Color(92, 187, 228);
+                if (m == STRENGTH_1 || m == STRENGTH_2 || m == STRENGTH_3) return new Color(130, 200, 77);
+                if (m == WEAKNESS_1 || m == WEAKNESS_2 || m == WEAKNESS_3) return new Color(197, 74, 74);
+            }
+        return new Color(135, 135, 135);
+    }
 }

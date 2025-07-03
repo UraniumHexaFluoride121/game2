@@ -3,7 +3,6 @@ package unit.type;
 import foundation.MainPanel;
 import foundation.NamedEnum;
 import foundation.math.ObjPos;
-import level.tile.TileType;
 import render.Renderable;
 import render.texture.*;
 import unit.ShipClass;
@@ -68,7 +67,7 @@ public abstract class UnitType implements NamedEnum {
     public ImageRenderer shieldRenderer = null;
 
     public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
-            FIGHTER, BOMBER, SCOUT, CORVETTE, DEFENDER, ARTILLERY, SUPPLY, CRUISER, BATTLECRUISER, MINER
+            INTERCEPTOR, BOMBER, SCOUT, FRIGATE, DEFENDER, ARTILLERY, SUPPLY, BATTLECRUISER, LIGHT_CRUISER, MINER
     };
 
     UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
@@ -167,7 +166,6 @@ public abstract class UnitType implements NamedEnum {
 
     public abstract void addModifiers(ArrayList<Modifier> list);
 
-    public abstract float viewRange(TileType type);
     protected abstract ShipClass getShipClass();
 
     public float getBobbingAmount() {

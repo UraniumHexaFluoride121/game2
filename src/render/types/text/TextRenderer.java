@@ -45,16 +45,22 @@ public class TextRenderer implements Renderable {
     }
 
     public TextRenderer setBold(boolean isBold) {
-        this.isBold = isBold;
-        isItalic = false;
-        update();
+        if (this.isBold != isBold) {
+            this.isBold = isBold;
+            if (isBold)
+                isItalic = false;
+            update();
+        }
         return this;
     }
 
     public TextRenderer setItalic(boolean isItalic) {
-        this.isItalic = isItalic;
-        isBold = false;
-        update();
+        if (this.isItalic != isItalic) {
+            this.isItalic = isItalic;
+            if (isItalic)
+                isBold = false;
+            update();
+        }
         return this;
     }
 

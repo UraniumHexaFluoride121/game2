@@ -16,6 +16,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import static unit.action.Action.*;
+import static unit.action.Action.CAPTURE;
+import static unit.action.Action.MINE;
+
 public class StatManager implements Deletable {
     public Unit u;
 
@@ -58,7 +62,7 @@ public class StatManager implements Deletable {
     }
 
     public float viewRange(TileType tile) {
-        return u.type.viewRange(tile);
+        return tile.concealment;
     }
 
     public float maxViewRange() {
@@ -142,11 +146,16 @@ public class StatManager implements Deletable {
     }
 
     public Optional<Integer> getActionCost(Action action) {
-        return u.type.getActionCost(action);
+        return removeActionEnergyCost(action) ? Optional.empty() : u.type.getActionCost(action);
     }
 
     public Optional<Integer> getPerTurnActionCost(Action action) {
         return u.type.getPerTurnActionCost(action);
+    }
+
+    //Used for toggle actions. If true, one-time action costs are removed, and per-turn action costs are reversed
+    public boolean removeActionEnergyCost(Action a) {
+        return a == STEALTH && u.stealthMode || a == MINE && u.mining || a == CAPTURE && u.isCapturing();
     }
 
     @Override

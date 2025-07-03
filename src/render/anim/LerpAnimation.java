@@ -68,8 +68,8 @@ public class LerpAnimation implements ReversableAnimationTimer {
                 startTime = -endTime + 2 * t;
                 endTime = startTime + time;
             }
+            this.reversed = reversed;
         }
-        this.reversed = reversed;
     }
 
     public LerpAnimation finish() {

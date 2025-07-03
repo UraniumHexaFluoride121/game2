@@ -145,6 +145,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         } else
             unit.delete();
         updateFoW();
+        updateSelectedUnit();
     }
 
     public void forceAddUnit(Unit unit) {
@@ -164,16 +165,19 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     private void removeUnits() {
-        qRemoveUnit.forEach(unit -> {
-            unitSet.remove(unit);
-            Unit unitAtPos = unitGrid[unit.pos.x][unit.pos.y];
-            if (unitAtPos == unit)
-                unitGrid[unit.pos.x][unit.pos.y] = null;
-            if (selectedUnit == unit)
-                selectedUnit = null;
-            unit.delete();
-        });
-        qRemoveUnit.clear();
+        if (!qRemoveUnit.isEmpty()) {
+            qRemoveUnit.forEach(unit -> {
+                unitSet.remove(unit);
+                Unit unitAtPos = unitGrid[unit.pos.x][unit.pos.y];
+                if (unitAtPos == unit)
+                    unitGrid[unit.pos.x][unit.pos.y] = null;
+                if (selectedUnit == unit)
+                    selectedUnit = null;
+                unit.delete();
+            });
+            qRemoveUnit.clear();
+            updateSelectedUnit();
+        }
         HashSet<UnitTeam> removeTeams = new HashSet<>();
         for (UnitTeam team : playerTeam.keySet()) {
             boolean hasUnit = false;
@@ -207,6 +211,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             tileSelector.select(getTile(newPos));
         updateFoW();
         unit.updateActionUI();
+        updateSelectedUnit();
     }
 
     public Unit getUnit(Point pos) {
@@ -323,7 +328,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
                 return;
             Unit u = getUnit(t.pos);
             Structure s = t.structure;
-            if (u == null || u.team != getActiveTeam() || s.team != u.team)
+            if (u == null || u.team != getActiveTeam() || !samePlayerTeam(s.team, u.team))
                 return;
             if (s.type.resupply)
                 u.resupply();
@@ -337,18 +342,25 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             if (u == null)
                 return;
             boolean unitUpdate = false;
-            if (u.mining && u.team == getActiveTeam()) {
-                t.miningBarFill--;
-                if (t.miningBarFill == 0) {
-                    t.setTileType(TileType.EMPTY, this);
-                    u.setMining(false);
-                    unitUpdate = true;
+            if (u.team == getActiveTeam()) {
+                if (u.isCapturing()) {
+                    u.incrementCapture(false);
+                    if (networkState == NetworkState.SERVER)
+                        server.sendUnitCapturePacket(u, false);
                 }
-                if (t == tileSelector.getSelectedTile()) {
-                    levelRenderer.tileInfo.setTile(t);
+                if (u.mining) {
+                    t.miningBarFill--;
+                    if (t.miningBarFill == 0) {
+                        t.setTileType(TileType.EMPTY, this);
+                        u.setMining(false);
+                        unitUpdate = true;
+                    }
+                    if (t == tileSelector.getSelectedTile()) {
+                        levelRenderer.tileInfo.setTile(t);
+                    }
+                    if (networkState == NetworkState.SERVER)
+                        server.sendTileTypePacket(t);
                 }
-                if (networkState == NetworkState.SERVER)
-                    server.sendTileTypePacket(t);
             }
             updateSelectedUnit();
             if (unitUpdate && networkState == NetworkState.SERVER)
