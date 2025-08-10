@@ -1,6 +1,5 @@
 package render.level.info;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import level.Level;
 import render.*;
@@ -24,7 +23,7 @@ public class MovementModifierInfo extends InfoScreen {
         super(register, buttonRegister, 24, 24, level, false);
         box(b -> b.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK));
         addRenderables((r, b) -> {
-            scrollSurface = new UIElementScrollSurface<UIDisplayBoxRenderElement>(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN,
+            scrollSurface = new UIElementScrollSurface<UIDisplayBoxRenderElement>(r, b, RenderOrder.INFO_SCREEN,
                     0, 0, 24, 16.5f, false, count -> (count + 1) * 0.5f)
                     .setPerElementScroll(e -> e.box.height);
             scrollSurface.addScrollBar(0.4f, 0.3f, -0.4f);

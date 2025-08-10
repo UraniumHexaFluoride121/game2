@@ -1,6 +1,5 @@
 package render.types.input;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.OrderedRenderable;
 import render.RenderOrder;
@@ -13,8 +12,8 @@ import java.util.function.Consumer;
 public class UINumberSelector extends AbstractValueSelector<Integer> {
     public final int min, max;
 
-    public UINumberSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth, int min, int max, int initialValue) {
-        super(register, buttonRegister, order, buttonOrder, x, y, height, displayWidth);
+    public UINumberSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float height, float displayWidth, int min, int max, int initialValue) {
+        super(register, buttonRegister, order, x, y, height, displayWidth);
         this.min = min;
         this.max = max;
         init(indexOf(initialValue));

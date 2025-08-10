@@ -15,14 +15,12 @@ import java.util.ArrayList;
 
 public class UIDisplayBoxButtonHandler extends AbstractRenderElement implements RegisteredButtonInputReceiver, Deletable {
     private ButtonRegister buttonRegister;
-    private final ButtonOrder buttonOrder;
     private UIDisplayBox displayBox;
     private final ArrayList<DisplayBoxElement> elements = new ArrayList<>();
 
-    public UIDisplayBoxButtonHandler(RenderRegister<OrderedRenderable> renderer, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, UIDisplayBox displayBox) {
+    public UIDisplayBoxButtonHandler(RenderRegister<OrderedRenderable> renderer, ButtonRegister buttonRegister, RenderOrder order, UIDisplayBox displayBox) {
         super(renderer, order);
         this.buttonRegister = buttonRegister;
-        this.buttonOrder = buttonOrder;
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
@@ -120,11 +118,6 @@ public class UIDisplayBoxButtonHandler extends AbstractRenderElement implements 
     @Override
     public boolean blocking(InputType type) {
         return blocking;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override

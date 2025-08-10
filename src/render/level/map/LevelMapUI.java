@@ -1,6 +1,5 @@
 package render.level.map;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
@@ -27,7 +26,7 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
     private boolean mouseDown = false;
 
     public LevelMapUI(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, AbstractLevel<?, ?> level) {
-        super(register, buttonRegister, RenderOrder.MAP, ButtonOrder.MAP, Renderable.right() / 2, Renderable.top() / 2, level);
+        super(register, buttonRegister, RenderOrder.MAP, Renderable.right() / 2, Renderable.top() / 2, level);
         width = level.tileBound.x / TILE_SIZE;
         height = level.tileBound.y / TILE_SIZE;
         boxWidth = width + 2;
@@ -63,7 +62,7 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
                 });
                 g.setClip(clip);
             }).setZOrder(-1);
-            new UIButton(r, b, RenderOrder.MAP, ButtonOrder.MAP, -3, -boxHeight / 2 - 2, 6, 1.5f, 1.2f, false, () -> {
+            new UIButton(r, b, RenderOrder.MAP, -3, -boxHeight / 2 - 2, 6, 1.5f, 1.2f, false, () -> {
                 setEnabled(false);
             }).setBold().setText("Close").setColourTheme(UIColourTheme.DEEP_RED);
             b.register(new RegisteredButtonInputReceiver() {
@@ -78,8 +77,8 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
                 }
 
                 @Override
-                public ButtonOrder getButtonOrder() {
-                    return ButtonOrder.MAIN_BUTTONS;
+                public RenderOrder getButtonOrderTemp() {
+                    return RenderOrder.MAP;
                 }
 
                 @Override

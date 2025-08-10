@@ -53,7 +53,7 @@ public class FighterType extends UnitType {
 
     BOMBER = new FighterType("bomber", "Bomber", 7, 6f, 3f, new Action[]{
             Action.FIRE, Action.MOVE
-    }, 3, 15, 1, 1, 4, list -> {
+    }, 3, 15, 1, 1, 5.5f, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.BOMBER_MISSILE).runAnim();
         w
                 .classModifier(ShipClass.FIGHTER, WEAKNESS_2)

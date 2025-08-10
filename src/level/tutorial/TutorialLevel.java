@@ -9,8 +9,12 @@ import level.tutorial.sequence.BoxSize;
 import level.tutorial.sequence.action.*;
 import level.tutorial.sequence.event.*;
 import render.Renderable;
+import render.VerticalAlign;
 import render.level.info.UITileInfo;
 import render.HorizontalAlign;
+import render.types.box.display.TutorialMapElement;
+import render.types.text.StyleElement;
+import render.types.tutorial.TutorialScreen;
 import unit.UnitTeam;
 import unit.action.Action;
 import unit.bot.BotActionData;
@@ -25,7 +29,7 @@ import static level.tutorial.TutorialElement.*;
 import static level.tutorial.TutorialManager.*;
 
 public enum TutorialLevel implements NamedEnum {
-    FIRING("Introduction", "tutorial-firing",
+    INTRODUCTION("Introduction", "tutorial-intro",
             "Learn the basics of controlling units.",
             new TutorialLevelData(
                     new GameplaySettings(false, true)
@@ -43,8 +47,19 @@ public enum TutorialLevel implements NamedEnum {
                     }),
                     ModifyElements.disableAll(l),
                     CameraMove.toTile(l, 3, 4),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 3, 4, HorizontalAlign.CENTER,
-                            "Welcome to the first tutorial. This is a turn-based strategy game, and your goal is to eliminate all enemy units."),
+                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
+                        box.addText(1.2f, HorizontalAlign.LEFT, "Moving Units");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "Each unit can be moved once per turn by using the " + Action.MOVE.colouredName(StyleElement.NO_COLOUR, true) + " action.");
+                        box.getTextElement(2, 0).dynamicWidth(true);
+                        box.addSpace(0.3f, 0);
+                        box.addTutorialMap(HorizontalAlign.CENTER, 20, 10, TutorialMapElement.TILE_SIZE_LARGE, 0, map -> {
+                            map.addTile(0, 0).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-1, 0);
+                            map.addTile(1, 0);
+                            map.addTile(0, 1);
+                        });
+                    }),
 
                     CameraMove.toTile(l, 1, 4),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 1, 4),

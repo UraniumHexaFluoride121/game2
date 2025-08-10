@@ -59,6 +59,7 @@ public class TilePath implements Renderable {
         if (!tiles.contains(end) || end.equals(origin)) {
             this.end = null;
             path.clear();
+            validate(stats);
             return;
         }
         if (MainPanel.controlHeld) {
@@ -91,6 +92,10 @@ public class TilePath implements Renderable {
 
     public boolean isRangeValid() {
         return rangeValid;
+    }
+
+    public boolean isValid() {
+        return costValid && rangeValid;
     }
 
     public static int getEnergyCost(ArrayList<Point> path, StatManager stats, Level level) {
@@ -134,7 +139,7 @@ public class TilePath implements Renderable {
     public void render(Graphics2D g) {
         if (end == null)
             return;
-        boolean valid = costValid && rangeValid;
+        boolean valid = isValid();
         g.translate(0, Tile.TILE_SIZE / 2 * Tile.SIN_60_DEG);
         g.scale(1d / SCALING, 1d / SCALING);
         renderPath(LINE_STROKE, valid ? MOVE_PATH_COLOUR : MOVE_PATH_INVALID_COLOUR, END_DOT_RADIUS, g);
@@ -207,7 +212,7 @@ public class TilePath implements Renderable {
                 break;
             anim.addTile(t);
         }
-        anim.setTimer(new PowAnimation(anim.length() * 0.25f, 0.8f));
+        anim.setTimer(new PowAnimation((float) Math.pow(anim.length() * 0.25f, 0.7f) - 0.1f, 0.9f));
         return anim;
     }
 }

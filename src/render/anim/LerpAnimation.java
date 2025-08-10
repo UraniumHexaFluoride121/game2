@@ -27,8 +27,9 @@ public class LerpAnimation implements ReversableAnimationTimer {
         reversed = reader.readBoolean();
     }
 
-    public float getTime() {
-        return time / 1000f;
+    @Override
+    public float timeElapsed() {
+        return (System.currentTimeMillis() - startTime) / 1000f;
     }
 
     public void renderOverlay(Graphics2D g) {
@@ -55,6 +56,12 @@ public class LerpAnimation implements ReversableAnimationTimer {
     public void loopTimer() {
         startTime += time;
         endTime += time;
+    }
+
+    public void advanceTimer(float time) {
+        long t = (long) (time * 1000);
+        startTime -= t;
+        endTime -= t;
     }
 
     @Override

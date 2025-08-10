@@ -2,21 +2,23 @@ package foundation.input;
 
 import foundation.Deletable;
 import foundation.math.ObjPos;
+import render.RenderOrder;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class OnButtonInput implements RegisteredButtonInputReceiver, Deletable {
     private ButtonRegister register;
-    private final ButtonOrder order;
+    private final RenderOrder order;
+    private int zOrder = 0;
     private Predicate<InputType> typePredicate;
     private Consumer<InputType> onClick;
 
-    public OnButtonInput(ButtonRegister register, ButtonOrder order, Predicate<InputType> typePredicate, Runnable onClick) {
+    public OnButtonInput(ButtonRegister register, RenderOrder order, Predicate<InputType> typePredicate, Runnable onClick) {
         this(register, order, typePredicate, type -> onClick.run());
     }
 
-    public OnButtonInput(ButtonRegister register, ButtonOrder order, Predicate<InputType> typePredicate, Consumer<InputType> onClick) {
+    public OnButtonInput(ButtonRegister register, RenderOrder order, Predicate<InputType> typePredicate, Consumer<InputType> onClick) {
         this.register = register;
         this.onClick = onClick;
         if (register != null)
@@ -36,8 +38,18 @@ public class OnButtonInput implements RegisteredButtonInputReceiver, Deletable {
     }
 
     @Override
-    public ButtonOrder getButtonOrder() {
+    public RenderOrder getButtonOrderTemp() {
         return order;
+    }
+
+    public OnButtonInput setZOrder(int zOrder) {
+        this.zOrder = zOrder;
+        return this;
+    }
+
+    @Override
+    public int getZOrder() {
+        return zOrder;
     }
 
     private boolean blocking = false;

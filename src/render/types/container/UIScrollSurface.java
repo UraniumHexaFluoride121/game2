@@ -13,25 +13,23 @@ import java.util.function.BiConsumer;
 public class UIScrollSurface extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     public final float x, y, width, height;
     private final Rectangle2D clip;
-    private ButtonOrder buttonOrder;
     protected float scrollAmount = 0, scrollMax = 0, scrollSpeed = 0.75f;
     protected ButtonRegister buttonRegister, internal = new ButtonRegister();
     protected GameRenderer renderer = new GameRenderer(new AffineTransform(), null);
     protected final boolean inverted;
     protected boolean scrollBarButtonEnabled = true;
 
-    public UIScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, BiConsumer<GameRenderer, ButtonRegister> elementsRenderer) {
-        this(register, buttonRegister, order, buttonOrder, x, y, width, height, true, elementsRenderer);
+    public UIScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, BiConsumer<GameRenderer, ButtonRegister> elementsRenderer) {
+        this(register, buttonRegister, order, x, y, width, height, true, elementsRenderer);
     }
 
-    public UIScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean inverted, BiConsumer<GameRenderer, ButtonRegister> elementsRenderer) {
+    public UIScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, boolean inverted, BiConsumer<GameRenderer, ButtonRegister> elementsRenderer) {
         super(register, order);
         this.buttonRegister = buttonRegister;
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.buttonOrder = buttonOrder;
         this.inverted = inverted;
         if (buttonRegister != null)
             buttonRegister.register(this);
@@ -129,11 +127,6 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
     @Override
     public boolean blocking(InputType type) {
         return blocking;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override

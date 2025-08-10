@@ -21,21 +21,19 @@ public class UITabSwitcher extends UIContainer {
     public final float x, y, height, width;
     private final UIBox box;
     private ButtonRegister buttonRegister;
-    private final ButtonOrder buttonOrder;
 
     public int selectedTab = 0;
 
     private final ArrayList<Tab> tabs = new ArrayList<>();
     private Runnable onNewTabSelected = null;
 
-    public UITabSwitcher(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height) {
-        super(register, buttonRegister, order, buttonOrder, x, y);
+    public UITabSwitcher(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height) {
+        super(register, buttonRegister, order, x, y);
         this.x = x;
         this.y = y;
         this.height = height;
         this.width = width;
         this.buttonRegister = buttonRegister;
-        this.buttonOrder = buttonOrder;
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
@@ -112,11 +110,6 @@ public class UITabSwitcher extends UIContainer {
     @Override
     public boolean blocking(InputType type) {
         return blocking;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override
@@ -212,8 +205,8 @@ public class UITabSwitcher extends UIContainer {
         }
 
         @Override
-        public ButtonOrder getButtonOrder() {
-            return parent.buttonOrder;
+        public RenderOrder getButtonOrderTemp() {
+            return parent.order;
         }
 
         @Override

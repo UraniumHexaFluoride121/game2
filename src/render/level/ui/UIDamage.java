@@ -29,7 +29,7 @@ public class UIDamage extends AbstractRenderElement {
     }
 
     public void show(Unit thisUnit, Unit targetUnit) {
-        offset = Tile.getRenderPos(targetUnit.pos);
+        offset = Tile.getRenderPos(targetUnit.data.pos);
         label.updateTextRight(MathUtil.floatToString(thisUnit.getCurrentFiringData(targetUnit).getDamageAgainst(), 1));
     }
 }

@@ -17,6 +17,7 @@ import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
 import render.UIColourTheme;
+import render.anim.AnimationTimer;
 import render.anim.LerpAnimation;
 import render.level.tile.RenderElement;
 import render.texture.BackgroundTexture;
@@ -38,6 +39,7 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -45,7 +47,7 @@ import java.util.function.Supplier;
 
 public class MainPanel extends JFrame implements KeyListener, MouseListener, MouseWheelListener, RegisteredTickable {
     //TODO: Set to true when not testing
-    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = true;
+    public static final boolean CREATE_SERVER_AND_CLIENT_CONNECTIONS = false;
 
     public static final BotTileDataType BOT_DEBUG_RENDER = null;
     public static final boolean BOT_DEBUG_RENDER_UNIT = true;
@@ -245,9 +247,14 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
 
     private static final Vector<Runnable> tasksQ = new Vector<>(), noAnimBlockTasksQ = new Vector<>();
     private static final Vector<Runnable> tasks = new Vector<>(), noAnimBlockTasks = new Vector<>();
+    private static final Vector<TimedTaskEntry> timedTasksQ = new Vector<>(), timedTasks = new Vector<>();
 
     public static void addTask(Runnable task) {
         tasksQ.add(task);
+    }
+
+    public static void addTimedTask(AnimationTimer timer, Runnable task) {
+        timedTasksQ.add(new TimedTaskEntry(timer, task));
     }
 
     public static void addTaskAfterAnimBlock(Runnable task) {
@@ -337,6 +344,18 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
             return true;
         });
 
+        timedTasksQ.removeIf(r -> {
+            timedTasks.add(r);
+            return true;
+        });
+        timedTasks.removeIf(r -> {
+            if (r.timer.finished()) {
+                r.task.run();
+                return true;
+            }
+            return false;
+        });
+
         noAnimBlockTasksQ.removeIf(r -> {
             noAnimBlockTasks.add(r);
             return true;
@@ -361,5 +380,8 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     @Override
     public void delete() {
         removeTickable();
+    }
+
+    private record TimedTaskEntry(AnimationTimer timer, Runnable task) {
     }
 }

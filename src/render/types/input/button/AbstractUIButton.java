@@ -12,19 +12,17 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
     protected final ButtonClickHandler clickHandler;
     protected final UIBox box;
     protected final HitBox hitBox;
-    protected final ButtonOrder buttonOrder;
     protected ButtonRegister buttonRegister;
     protected TooltipManager tooltip = new TooltipManager(this);
 
     protected boolean clickEnabled = true;
 
-    public AbstractUIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float width, boolean staySelected, Runnable onClick) {
+    public AbstractUIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float height, float width, boolean staySelected, Runnable onClick) {
         super(register, order);
         this.x = x;
         this.y = y;
         this.height = height;
         this.width = width;
-        this.buttonOrder = buttonOrder;
         this.buttonRegister = buttonRegister;
         if (buttonRegister != null) {
             buttonRegister.register(this);
@@ -131,11 +129,6 @@ public abstract class AbstractUIButton extends AbstractRenderElement implements 
     @Override
     public boolean blocking(InputType type) {
         return type.isMouseInput();
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override

@@ -203,8 +203,8 @@ public abstract class UnitType implements NamedEnum {
     }
 
     public boolean canPerformAction(Action a) {
-        if (a == Action.CAPTURE && !canCapture)
-            return false;
+        if (a == Action.CAPTURE)
+            return canCapture;
         for (Action action : actions) {
             if (a == action)
                 return true;
@@ -215,5 +215,9 @@ public abstract class UnitType implements NamedEnum {
     @Override
     public String getName() {
         return displayName;
+    }
+
+    public String getPluralName() {
+        return getName().replace(" Unit", "") + " Units";
     }
 }

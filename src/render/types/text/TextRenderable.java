@@ -256,7 +256,7 @@ public enum TextRenderable {
         return Renderable.add(Renderable.subtract(t.createTransformedShape(a), Renderable.outlineShape(b2, outline)), b2);
     }
 
-    private static Path2D.Float arrowShape(float x1, float y1, float x2, float y2, float headLength, float degrees) {
+    public static Path2D.Float arrowShape(float x1, float y1, float x2, float y2, float headLength, float degrees) {
         Path2D.Float path = new Path2D.Float();
         ObjPos tip = new ObjPos(x2, y2);
         ObjPos vector = new ObjPos(x1, y1).subtract(tip).setLength(headLength);

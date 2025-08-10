@@ -1,13 +1,11 @@
 package render.types.input;
 
 import foundation.NamedEnum;
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
 import render.UIColourTheme;
-import render.types.input.button.UIShapeButton;
 import render.types.text.TooltipManager;
 
 import java.util.function.Consumer;
@@ -15,12 +13,12 @@ import java.util.function.Consumer;
 public class UIEnumSelector<T extends NamedEnum> extends AbstractValueSelector<T> {
     private final T[] items;
 
-    public UIEnumSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth, Class<T> enumClass, T initialValue) {
-        this(register, buttonRegister, order, buttonOrder, x, y, height, displayWidth, enumClass.getEnumConstants(), ((Enum<?>) initialValue).ordinal());
+    public UIEnumSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float height, float displayWidth, Class<T> enumClass, T initialValue) {
+        this(register, buttonRegister, order, x, y, height, displayWidth, enumClass.getEnumConstants(), ((Enum<?>) initialValue).ordinal());
     }
 
-    public UIEnumSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth, T[] items, int initialIndex) {
-        super(register, buttonRegister, order, buttonOrder, x, y, height, displayWidth);
+    public UIEnumSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float height, float displayWidth, T[] items, int initialIndex) {
+        super(register, buttonRegister, order, x, y, height, displayWidth);
         this.items = items;
         init(initialIndex);
     }

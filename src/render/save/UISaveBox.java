@@ -1,6 +1,5 @@
 package render.save;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.OrderedRenderable;
 import render.RenderOrder;
@@ -25,15 +24,15 @@ public class UISaveBox<T extends LoadedFromSave> extends UIContainer {
     private boolean clickEnabled = false;
     private Consumer<Boolean> onClickOrUpdate = null;
 
-    public UISaveBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float elementHeight, SaveManager<T> saveManager) {
-        super(register, buttonRegister, order, buttonOrder, x, y);
+    public UISaveBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, float elementHeight, SaveManager<T> saveManager) {
+        super(register, buttonRegister, order, x, y);
         this.height = height;
         this.width = width;
         this.elementHeight = elementHeight;
         this.saveManager = saveManager;
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.LEVEL_UI, new UIBox(width, height).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).centerOnly()).setZOrder(-1);
-            scrollSurface = new UIElementScrollSurface<>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+            scrollSurface = new UIElementScrollSurface<>(r, b, RenderOrder.LEVEL_UI,
                     0, 0, width, height, false, count -> count * (elementHeight + 0.5f) + 0.5f);
             scrollSurface.setScrollSpeed(0.2f);
             new RenderElement(r, RenderOrder.LEVEL_UI, new UIBox(width, height).setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).borderOnly()).setZOrder(1);
@@ -76,7 +75,7 @@ public class UISaveBox<T extends LoadedFromSave> extends UIContainer {
         AtomicBoolean hasSelected = new AtomicBoolean(false);
         scrollSurface.clear();
         saveManager.forEachSave((name, save) -> {
-            scrollSurface.addElement((r, b, i) -> new UISaveElement<>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+            scrollSurface.addElement((r, b, i) -> new UISaveElement<>(r, b, RenderOrder.LEVEL_UI,
                     .5f, -(elementHeight + 0.5f) * (i + 1), width - 1, elementHeight, name, saveManager)
                     .setOnRemoved(() -> updateSaves(false)));
             if (name.equals(selectedName)) {

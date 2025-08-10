@@ -1,6 +1,5 @@
 package render.types.container;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.*;
 
@@ -14,8 +13,8 @@ public class UIElementScrollSurface<T extends AbstractRenderElement> extends UIS
     private final Function<Integer, Float> elementCountScroll;
     private Function<T, Float> perElementScroll = e -> 0f;
 
-    public UIElementScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean inverted, Function<Integer, Float> elementCountScroll) {
-        super(register, buttonRegister, order, buttonOrder, x, y, width, height, inverted, (r, b) -> {
+    public UIElementScrollSurface(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, boolean inverted, Function<Integer, Float> elementCountScroll) {
+        super(register, buttonRegister, order, x, y, width, height, inverted, (r, b) -> {
         });
         this.elementCountScroll = elementCountScroll;
     }

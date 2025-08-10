@@ -51,10 +51,10 @@ public class UIHitPointBar implements Renderable {
         this.height = height;
         this.spacing = spacing;
         stroke = Renderable.sharpCornerStroke(border * SCALING);
-        this.segments = (int) unit.type.hitPoints;
-        borderColour = unit.team.uiColour.borderColour;
-        background = unit.team.uiColour.backgroundColourSelected;
-        bar = unit.team.uiColour.borderColour;
+        this.segments = (int) unit.data.type.hitPoints;
+        borderColour = unit.data.team.uiColour.borderColour;
+        background = unit.data.team.uiColour.backgroundColourSelected;
+        bar = unit.data.team.uiColour.borderColour;
     }
 
     public UIHitPointBar setBarColour(Color bar) {

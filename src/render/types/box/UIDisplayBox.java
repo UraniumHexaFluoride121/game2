@@ -3,12 +3,14 @@ package render.types.box;
 import foundation.Deletable;
 import foundation.input.ButtonClickHandler;
 import foundation.math.HitBox;
+import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import render.GameRenderer;
 import render.HorizontalAlign;
 import render.Renderable;
 import render.VerticalAlign;
 import render.types.UIHitPointBar;
+import render.types.box.display.*;
 import render.types.text.MultiLineTextBox;
 
 import java.awt.*;
@@ -16,19 +18,16 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public class UIDisplayBox implements Renderable, Deletable {
-    public final float x, y;
+    public float x, y;
     public float originalWidth, width, height, widthMargin;
     protected UIBox box;
     protected boolean renderBox = true, enabled = true;
     protected HorizontalAlign horizontalAlign = HorizontalAlign.LEFT;
-    protected ArrayList<ArrayList<BoxElement>> elements = new ArrayList<>();
-    protected ArrayList<Float> columnHeights = new ArrayList<>();
-    protected ArrayList<VerticalAlign> columnVerticalAlign = new ArrayList<>();
+    protected ArrayList<Column> columns = new ArrayList<>();
     protected final boolean dynamicHeight;
 
     private Runnable updateSize;
-    private Runnable onUpdate = () -> {
-    };
+    private final ArrayList<Runnable> onUpdate = new ArrayList<>();
 
     public UIDisplayBox(float x, float y, float width, float height, Consumer<UIBox> boxModifier, boolean dynamicWidth) {
         this.x = x;
@@ -42,15 +41,25 @@ public class UIDisplayBox implements Renderable, Deletable {
         dynamicHeight = height == -1;
         if (dynamicWidth)
             updateSize = () -> {
-                setHeightToTextSize();
-                setWidthToTextSize();
-                onUpdate.run();
+                setWidthToSize();
+                setHeightToSize();
+                onUpdate.forEach(Runnable::run);
             };
         else
             updateSize = () -> {
-                setHeightToTextSize();
-                onUpdate.run();
+                setHeightToSize();
+                onUpdate.forEach(Runnable::run);
             };
+    }
+
+    public UIDisplayBox setX(float x) {
+        this.x = x;
+        return this;
+    }
+
+    public UIDisplayBox setY(float y) {
+        this.y = y;
+        return this;
     }
 
     public UIDisplayBox setWidthMargin(float widthMargin) {
@@ -74,11 +83,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public UIDisplayBox addOnUpdate(Runnable onUpdate) {
-        Runnable prev = this.onUpdate;
-        this.onUpdate = () -> {
-            prev.run();
-            onUpdate.run();
-        };
+        this.onUpdate.add(onUpdate);
         return this;
     }
 
@@ -88,13 +93,13 @@ public class UIDisplayBox implements Renderable, Deletable {
 
     public UIDisplayBox addText(float textSize, HorizontalAlign align, int columnIndex, String s) {
         updateColumnCount(columnIndex);
-        elements.get(columnIndex).add(new TextBoxElement(originalWidth - widthMargin * 2, textSize, align, s, updateSize));
+        elements(columnIndex).add(new TextBoxElement(widthMargin, originalWidth - widthMargin * 2, textSize, align, s, updateSize, false));
         return this;
     }
 
     public UIDisplayBox addBox(UIDisplayBox box, HorizontalAlign align, int columnIndex) {
         updateColumnCount(columnIndex);
-        elements.get(columnIndex).add(new DisplayBoxElement(box, align, updateSize));
+        elements(columnIndex).add(new DisplayBoxElement(widthMargin, box, align, updateSize));
         return this;
     }
 
@@ -102,22 +107,115 @@ public class UIDisplayBox implements Renderable, Deletable {
         updateColumnCount(columnIndex);
         if (maxWidth)
             bar.setWidth(bar.barOnly ? originalWidth - widthMargin * 2 + bar.spacing * 2 : originalWidth - widthMargin * 2);
-        elements.get(columnIndex).add(new HPBarBoxElement(bar, align));
+        elements(columnIndex).add(new HPBarBoxElement(widthMargin, bar, align));
         return this;
     }
 
     public UIDisplayBox addSpace(float height, int columnIndex) {
         updateColumnCount(columnIndex);
-        elements.get(columnIndex).add(new BoxElementSpace(height));
+        elements(columnIndex).add(new BoxElementSpace(height));
         updateSize.run();
         return this;
     }
 
+    public UIDisplayBox addTutorialMap(HorizontalAlign align, float width, float height, float tileSize, int columnIndex, Consumer<TutorialMapElement> action) {
+        updateColumnCount(columnIndex);
+        TutorialMapElement e = new TutorialMapElement(widthMargin, align, width, height, tileSize);
+        elements(columnIndex).add(e);
+        action.accept(e);
+        updateSize.run();
+        return this;
+    }
+
+    public UIDisplayBox setColumnTopMarginToElement(int columnIndex, int otherColumn, int element, VerticalAlign otherAlign) {
+        addOnUpdate(() -> {
+            float newMargin = height - getColumnYOffset(otherColumn) + element(otherColumn, element).height() * otherAlign.ordinal() / 2;
+            for (int i = 0; i < element; i++) {
+                newMargin += element(otherColumn, i).height();
+            }
+            Column column = columns.get(columnIndex);
+            if (!MathUtil.equal(newMargin, column.topMargin, 0.01f)) {
+                column.topMargin = newMargin;
+                updateSize.run();
+            }
+        });
+        updateSize.run();
+        return this;
+    }
+
+    public UIDisplayBox setColumnBottomMarginToElement(int columnIndex, int otherColumn, int element, VerticalAlign otherAlign) {
+        addOnUpdate(() -> {
+            float newMargin = getColumnYOffset(otherColumn) + element(otherColumn, element).height() * (1 - otherAlign.ordinal() / 2f);
+            for (int i = 0; i <= element; i++) {
+                newMargin -= element(otherColumn, i).height();
+            }
+            Column column = columns.get(columnIndex);
+            if (!MathUtil.equal(newMargin, column.bottomMargin, 0.01f)) {
+                column.bottomMargin = newMargin;
+                updateSize.run();
+            }
+        });
+        updateSize.run();
+        return this;
+    }
+
+    public UIDisplayBox setColumnTopMargin(float margin, int columnIndex) {
+        columns.get(columnIndex).topMargin = margin + widthMargin;
+        return this;
+    }
+
+    public UIDisplayBox setColumnBottomMargin(float margin, int columnIndex) {
+        columns.get(columnIndex).bottomMargin = margin + widthMargin;
+        return this;
+    }
+
+    public UIDisplayBox setElementLeftMarginToElement(int columnIndex, int element, int otherColumn, int otherElement, HorizontalAlign otherElementAlign) {
+        addOnUpdate(() -> {
+            BoxElement e = element(columnIndex, element);
+            BoxElement eOther = element(otherColumn, otherElement);
+            float newMargin = getElementXOffset(eOther) + eOther.width() * (otherElementAlign.ordinal() - eOther.align().ordinal()) / 2;
+            if (!MathUtil.equal(newMargin, e.leftMargin, 0.01f)) {
+                e.leftMargin = newMargin;
+                updateElementWidth(e);
+                updateSize.run();
+            }
+        });
+        updateSize.run();
+        return this;
+    }
+
+    public UIDisplayBox setElementRightMarginToElement(int columnIndex, int element, int otherColumn, int otherElement, HorizontalAlign otherElementAlign) {
+        addOnUpdate(() -> {
+            BoxElement e = element(columnIndex, element);
+            BoxElement eOther = element(otherColumn, otherElement);
+            float newMargin = width - (getElementXOffset(eOther) + eOther.width() * (otherElementAlign.ordinal() - eOther.align().ordinal()) / 2);
+            if (!MathUtil.equal(newMargin, e.rightMargin, 0.01f)) {
+                e.rightMargin = newMargin;
+                updateElementWidth(e);
+                updateSize.run();
+            }
+        });
+        updateSize.run();
+        return this;
+    }
+
+    public UIDisplayBox setElementLeftMargin(float margin, int columnIndex, int i) {
+        BoxElement e = element(columnIndex, i);
+        e.leftMargin = margin + widthMargin;
+        updateElementWidth(e);
+        return this;
+    }
+
+    public UIDisplayBox setElementRightMargin(float margin, int columnIndex, int i) {
+        BoxElement e = element(columnIndex, i);
+        e.rightMargin = margin + widthMargin;
+        updateElementWidth(e);
+        return this;
+    }
+
     private void updateColumnCount(int lastIndex) {
-        while (elements.size() <= lastIndex) {
-            elements.add(new ArrayList<>());
-            columnVerticalAlign.add(VerticalAlign.CENTER);
-            columnHeights.add(0f);
+        while (columns.size() <= lastIndex) {
+            columns.add(new Column(widthMargin));
         }
     }
 
@@ -126,7 +224,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public UIDisplayBox setText(int index, int columnIndex, String s) {
-        ((TextBoxElement) elements.get(columnIndex).get(index)).text.updateText(s);
+        ((TextBoxElement) element(columnIndex, index)).text.updateText(s);
         return this;
     }
 
@@ -135,23 +233,27 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public MultiLineTextBox getText(int index, int columnIndex) {
-        return ((TextBoxElement) elements.get(columnIndex).get(index)).text;
+        return ((TextBoxElement) element(columnIndex, index)).text;
     }
 
     public TextBoxElement getTextElement(int index, int columnIndex) {
-        return (TextBoxElement) elements.get(columnIndex).get(index);
+        return (TextBoxElement) element(columnIndex, index);
     }
 
     public UIHitPointBar getBar(int index, int columnIndex) {
-        return ((HPBarBoxElement) elements.get(columnIndex).get(index)).bar;
+        return ((HPBarBoxElement) element(columnIndex, index)).bar;
     }
 
     public UIDisplayBox getDisplayBox(int index, int columnIndex) {
-        return ((DisplayBoxElement) elements.get(columnIndex).get(index)).box;
+        return ((DisplayBoxElement) element(columnIndex, index)).box;
+    }
+
+    public TutorialMapElement getTutorialMap(int index, int columnIndex) {
+        return ((TutorialMapElement) element(columnIndex, index));
     }
 
     public UIDisplayBox setElementEnabled(boolean enabled, int index, int columnIndex) {
-        BoxElement e = elements.get(columnIndex).get(index);
+        BoxElement e = element(columnIndex, index);
         if (e.isEnabled() != enabled) {
             e.setIsEnabled(enabled);
             updateSize.run();
@@ -165,7 +267,8 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public UIDisplayBox setColumnVerticalAlign(int index, VerticalAlign align) {
-        columnVerticalAlign.set(index, align);
+        columns.get(index).align = align;
+        updateSize.run();
         return this;
     }
 
@@ -179,7 +282,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public void attemptUpdate(Graphics2D g) {
-        elements.forEach(column -> column.forEach(e -> e.attemptUpdate(g)));
+        columns.forEach(column -> column.elements.forEach(e -> e.attemptUpdate(g)));
     }
 
     public HitBox getHitBox() {
@@ -187,7 +290,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public HitBox getElementRenderBox(int index, int columnIndex) {
-        BoxElement e = elements.get(columnIndex).get(index);
+        BoxElement e = element(columnIndex, index);
         if (!e.isEnabled())
             return null;
         ObjPos origin = new ObjPos(x, y);
@@ -195,23 +298,32 @@ public class UIDisplayBox implements Renderable, Deletable {
             case CENTER -> origin.add(-width / 2, 0);
             case RIGHT -> origin.add(-width, 0);
         }
-        origin.add(0, switch (columnVerticalAlign.get(columnIndex)) {
-            case TOP -> height - widthMargin;
-            case CENTER -> (height + columnHeights.get(columnIndex)) / 2 - widthMargin;
-            case BOTTOM -> columnHeights.get(columnIndex) - widthMargin;
-        });
+        origin.add(0, getColumnYOffset(columnIndex));
         for (int i = 0; i < index; i++) {
-            BoxElement other = elements.get(columnIndex).get(i);
+            BoxElement other = element(columnIndex, i);
             if (other.isEnabled()) {
                 origin.add(0, -other.height());
             }
         }
-        origin.add(switch (e.align()) {
-            case LEFT -> widthMargin;
-            case CENTER -> width / 2;
-            case RIGHT -> width - widthMargin;
-        }, 0);
+        origin.add(getElementXOffset(e), 0);
         return e.renderBox().translate(origin);
+    }
+
+    private float getElementXOffset(BoxElement e) {
+        return switch (e.align()) {
+            case LEFT -> e.leftMargin;
+            case CENTER -> (width + e.leftMargin - e.rightMargin) / 2;
+            case RIGHT -> width - e.rightMargin;
+        };
+    }
+
+    private float getColumnYOffset(int columnIndex) {
+        Column column = columns.get(columnIndex);
+        return switch (column.align) {
+            case TOP -> height - column.topMargin;
+            case CENTER -> (height - column.topMargin + column.height + column.bottomMargin) / 2;
+            case BOTTOM -> column.height + column.bottomMargin;
+        };
     }
 
     @Override
@@ -226,24 +338,16 @@ public class UIDisplayBox implements Renderable, Deletable {
             }
             if (renderBox)
                 box.render(g);
-            for (int i = 0; i < elements.size(); i++) {
-                ArrayList<BoxElement> column = elements.get(i);
+            for (int i = 0; i < columns.size(); i++) {
+                Column column = columns.get(i);
                 int finalI = i;
                 GameRenderer.renderTransformed(g, () -> {
-                    g.translate(0, switch (columnVerticalAlign.get(finalI)) {
-                        case TOP -> height - widthMargin;
-                        case CENTER -> (height + columnHeights.get(finalI)) / 2 - widthMargin;
-                        case BOTTOM -> columnHeights.get(finalI) - widthMargin;
-                    });
-                    column.forEach(e -> {
+                    g.translate(0, getColumnYOffset(finalI));
+                    column.elements.forEach(e -> {
                         if (!e.isEnabled())
                             return;
                         GameRenderer.renderTransformed(g, () -> {
-                            g.translate(switch (e.align()) {
-                                case LEFT -> widthMargin;
-                                case CENTER -> width / 2;
-                                case RIGHT -> width - widthMargin;
-                            }, 0);
+                            g.translate(getElementXOffset(e), 0);
                             e.render(g);
                         });
                         g.translate(0, -e.height());
@@ -253,16 +357,18 @@ public class UIDisplayBox implements Renderable, Deletable {
         });
     }
 
-    private void setHeightToTextSize() {
-        columnHeights = new ArrayList<>(elements.stream().map(column -> column.stream().filter(BoxElement::isEnabled).map(BoxElement::height).reduce(0f, Float::sum) + widthMargin * 2).toList());
+    private void setHeightToSize() {
+        for (Column column : columns) {
+            column.height = column.elements.stream().filter(BoxElement::isEnabled).map(BoxElement::height).reduce(0f, Float::sum);
+        }
         if (dynamicHeight) {
-            height = columnHeights.stream().reduce(0f, Float::max);
+            height = columns.stream().map(column -> column.height + column.topMargin + column.bottomMargin).reduce(0f, Float::max);
             box.setHeight(height);
         }
     }
 
-    private void setWidthToTextSize() {
-        width = elements.stream().map(column -> column.stream().filter(BoxElement::isEnabled).map(BoxElement::width).reduce(0f, Float::max) + widthMargin * 2).reduce(0f, Float::max);
+    private void setWidthToSize() {
+        width = columns.stream().map(column -> column.elements.stream().filter(BoxElement::isEnabled).map(BoxElement::width).reduce(0f, Float::max) + widthMargin * 2).reduce(0f, Float::max);
         box.setWidth(width);
     }
 
@@ -271,301 +377,38 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public void setClickHandler(ButtonClickHandler clickHandler, int index, int columnIndex) {
-        elements.get(columnIndex).get(index).setClickHandler(clickHandler);
+        element(columnIndex, index).setClickHandler(clickHandler);
+    }
+
+    private ArrayList<BoxElement> elements(int columnIndex) {
+        return columns.get(columnIndex).elements;
+    }
+
+    private BoxElement element(int columnIndex, int i) {
+        return elements(columnIndex).get(i);
+    }
+
+    private void updateElementWidth(BoxElement e) {
+        e.setWidth(width - e.leftMargin - e.rightMargin);
     }
 
     @Override
     public void delete() {
-        elements.forEach(column -> column.forEach(BoxElement::delete));
-        onUpdate = null;
+        columns.forEach(column -> column.elements.forEach(BoxElement::delete));
+        columns.clear();
+        onUpdate.clear();
         updateSize = null;
         box.setClickHandler(null);
     }
 
-    public interface BoxElement extends Deletable {
-        float width();
+    protected static class Column {
+        public VerticalAlign align = VerticalAlign.CENTER;
+        public float height = 0, topMargin, bottomMargin;
+        public ArrayList<BoxElement> elements = new ArrayList<>();
 
-        float height();
-
-        HorizontalAlign align();
-
-        void render(Graphics2D g);
-
-        void attemptUpdate(Graphics2D g);
-
-        boolean isEnabled();
-
-        void setIsEnabled(boolean enabled);
-
-        HitBox renderBox();
-
-        void setClickHandler(ButtonClickHandler clickHandler);
-    }
-
-    public static final class BoxElementSpace implements BoxElement {
-        private final float height;
-        public boolean enabled = true;
-
-        public BoxElementSpace(float height) {
-            this.height = height;
-        }
-
-        @Override
-        public float width() {
-            return 0;
-        }
-
-        @Override
-        public float height() {
-            return height;
-        }
-
-        @Override
-        public HorizontalAlign align() {
-            return HorizontalAlign.LEFT;
-        }
-
-        @Override
-        public void render(Graphics2D g) {
-
-        }
-
-        @Override
-        public void attemptUpdate(Graphics2D g) {
-
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        @Override
-        public void setIsEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        @Override
-        public HitBox renderBox() {
-            return null;
-        }
-
-        @Override
-        public void setClickHandler(ButtonClickHandler clickHandler) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void delete() {
-
-        }
-    }
-
-    public static class TextBoxElement implements BoxElement {
-        public final MultiLineTextBox text;
-        public HorizontalAlign align;
-        public boolean enabled = true;
-
-        protected TextBoxElement(float width, float textSize, HorizontalAlign align, String s, Runnable onUpdate) {
-            this.align = align;
-            text = new MultiLineTextBox(0, 0, width, textSize, align).updateText(s).setOnUpdate(onUpdate);
-        }
-
-        public TextBoxElement setAlign(HorizontalAlign align) {
-            this.align = align;
-            text.setTextAlign(align);
-            return this;
-        }
-
-        @Override
-        public float width() {
-            return text.getTextWidth();
-        }
-
-        @Override
-        public float height() {
-            return (text.rows() - 0.15f) * text.textSize;
-        }
-
-        @Override
-        public HorizontalAlign align() {
-            return align;
-        }
-
-        @Override
-        public void render(Graphics2D g) {
-            g.translate(0, -text.textSize * 0.75f);
-            text.render(g);
-        }
-
-        @Override
-        public void attemptUpdate(Graphics2D g) {
-            text.attemptUpdate(g);
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        @Override
-        public void setIsEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        @Override
-        public HitBox renderBox() {
-            return HitBox.createFromOriginAndSize(0, 0, width(), height());
-        }
-
-        @Override
-        public void setClickHandler(ButtonClickHandler clickHandler) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void delete() {
-            text.delete();
-        }
-    }
-
-    public static class DisplayBoxElement implements BoxElement {
-        public final UIDisplayBox box;
-        public final HorizontalAlign align;
-        public boolean enabled = true;
-
-        protected DisplayBoxElement(UIDisplayBox box, HorizontalAlign align, Runnable onUpdate) {
-            this.box = box;
-            this.align = align;
-            box.addOnUpdate(onUpdate);
-        }
-
-        @Override
-        public float width() {
-            return box.width;
-        }
-
-        @Override
-        public float height() {
-            return box.height;
-        }
-
-        @Override
-        public HorizontalAlign align() {
-            return align;
-        }
-
-        @Override
-        public void render(Graphics2D g) {
-            GameRenderer.renderOffset(switch (align) {
-                case LEFT -> 0;
-                case CENTER -> -width() / 2;
-                case RIGHT -> -width();
-            }, -height(), g, () -> box.render(g));
-        }
-
-        @Override
-        public void attemptUpdate(Graphics2D g) {
-            box.attemptUpdate(g);
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        @Override
-        public void setIsEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        @Override
-        public HitBox renderBox() {
-            return HitBox.createFromOriginAndSize(switch (align) {
-                case LEFT -> 0;
-                case CENTER -> -width() / 2;
-                case RIGHT -> -width();
-            }, -height(), width(), height());
-        }
-
-        @Override
-        public void setClickHandler(ButtonClickHandler clickHandler) {
-            box.setClickHandler(clickHandler);
-        }
-
-        @Override
-        public void delete() {
-            box.delete();
-        }
-    }
-
-    public static class HPBarBoxElement implements BoxElement {
-        private final UIHitPointBar bar;
-        private final HorizontalAlign align;
-        public boolean enabled = true;
-
-        protected HPBarBoxElement(UIHitPointBar bar, HorizontalAlign align) {
-            this.bar = bar;
-            this.align = align;
-        }
-
-        @Override
-        public float width() {
-            return bar.barOnly ? bar.getTotalBarWidth() : bar.width;
-        }
-
-        @Override
-        public float height() {
-            return bar.barOnly ? bar.getSegmentHeight() : bar.height;
-        }
-
-        @Override
-        public HorizontalAlign align() {
-            return align;
-        }
-
-        @Override
-        public void render(Graphics2D g) {
-            GameRenderer.renderOffset(switch (align) {
-                case LEFT -> 0;
-                case CENTER -> -width() / 2;
-                case RIGHT -> -width();
-            } - (bar.barOnly ? bar.spacing : 0), bar.barOnly ? -bar.height + bar.spacing : -bar.height, g, () -> bar.render(g));
-        }
-
-        @Override
-        public void attemptUpdate(Graphics2D g) {
-
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        @Override
-        public void setIsEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        @Override
-        public HitBox renderBox() {
-            return HitBox.createFromOriginAndSize(switch (align) {
-                case LEFT -> 0;
-                case CENTER -> -width() / 2;
-                case RIGHT -> -width();
-            } - (bar.barOnly ? bar.spacing : 0), bar.barOnly ? -bar.height + bar.spacing : -bar.height,
-                    width(), height());
-        }
-
-        @Override
-        public void setClickHandler(ButtonClickHandler clickHandler) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void delete() {
-
+        public Column(float initialMargin) {
+            topMargin = initialMargin;
+            bottomMargin = initialMargin;
         }
     }
 }

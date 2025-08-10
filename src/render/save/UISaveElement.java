@@ -1,7 +1,6 @@
 package render.save;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.OrderedRenderable;
 import render.RenderOrder;
@@ -22,16 +21,16 @@ public class UISaveElement<T extends LoadedFromSave> extends UIContainer {
     private Runnable onRemoved = null;
     public UIButton button;
 
-    public UISaveElement(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, String saveName, SaveManager<T> saveManager) {
-        super(register, buttonRegister, order, buttonOrder, x, y);
+    public UISaveElement(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, String saveName, SaveManager<T> saveManager) {
+        super(register, buttonRegister, order, x, y);
         this.width = width;
         this.height = height;
         this.saveName = saveName;
         this.saveManager = saveManager;
         addRenderables((r, b) -> {
-            button = new UIButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, 0, 0, width - height - 0.5f, height, 0.8f, true)
+            button = new UIButton(r, b, RenderOrder.PAUSE_MENU, 0, 0, width - height - 0.5f, height, 0.8f, true)
                     .setText(saveName).setColourTheme(UIColourTheme.GREEN_SELECTED).noDeselect().setBold().setBoxCorner(0.3f).setClickEnabled(false);
-            new UIShapeButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, width - height, 0, height, height, false)
+            new UIShapeButton(r, b, RenderOrder.PAUSE_MENU, width - height, 0, height, height, false)
                     .setColourTheme(UIColourTheme.DEEP_RED).setShape(UIShapeButton::smallX).setBoxCorner(0.3f).setOnClick(() -> {
                         saveManager.removeSave(saveName);
                         if (onRemoved != null)

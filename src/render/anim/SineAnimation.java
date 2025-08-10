@@ -33,7 +33,12 @@ public class SineAnimation implements AnimationTimer {
 
     @Override
     public float normalisedProgress() {
-        return (float) Math.sin((System.currentTimeMillis() - startTime) / 1000f * Math.PI * 2 / period + initialAngle);
+        return (float) Math.sin(timeElapsed() * Math.PI * 2 / period + initialAngle);
+    }
+
+    @Override
+    public float timeElapsed() {
+        return (System.currentTimeMillis() - startTime) / 1000f;
     }
 
     @Override

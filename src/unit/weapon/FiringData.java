@@ -2,12 +2,10 @@ package unit.weapon;
 
 import level.Level;
 import level.tile.TileType;
-import render.UIColourTheme;
-import unit.Unit;
 import unit.UnitData;
+import unit.Unit;
 import unit.stats.Modifier;
 import unit.stats.ModifierCategory;
-import unit.stats.SingleModifier;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -21,8 +19,8 @@ public final class FiringData {
         this.thisUnit = thisUnit;
         this.otherUnit = otherUnit;
         this.level = level;
-        thisData = new UnitData(thisUnit);
-        otherData = new UnitData(otherUnit);
+        thisData = thisUnit.data.copy();
+        otherData = otherUnit.data.copy();
     }
 
     private FiringData(Unit thisUnit, Unit otherUnit, UnitData thisData, UnitData otherData, Level level) {
@@ -53,8 +51,8 @@ public final class FiringData {
     }
 
     public ArrayList<DamageModifier> damageModifiers(WeaponInstance weapon) {
-        ArrayList<DamageModifier> modifiers = new ArrayList<>(weapon.template.getModifiers(otherUnit.type).stream().map(m -> new DamageModifier(m, true)).toList());
-        TileType tile = level.getTile(otherUnit.pos).type;
+        ArrayList<DamageModifier> modifiers = new ArrayList<>(weapon.template.getModifiers(otherUnit.data.type).stream().map(m -> new DamageModifier(m, true)).toList());
+        TileType tile = level.getTile(otherUnit.data.pos).type;
         modifiers.add(new DamageModifier(tile.damageModifier, false));
         return modifiers;
     }
@@ -64,14 +62,14 @@ public final class FiringData {
     }
 
     public void updateTempHP() {
-        thisUnit.firingTempHP = thisData.hitPoints;
-        thisUnit.shieldFiringTempHP = thisData.shieldHP;
-        otherUnit.firingTempHP = otherData.hitPoints;
-        otherUnit.shieldFiringTempHP = otherData.shieldHP;
-        if (thisData.weaponAmmo != -1)
-            thisUnit.ammo = thisData.weaponAmmo;
-        if (otherData.weaponAmmo != -1)
-            otherUnit.ammo = otherData.weaponAmmo;
+        thisUnit.data.hitPoints = thisData.hitPoints;
+        thisUnit.data.shieldHP = thisData.shieldHP;
+        otherUnit.data.hitPoints = otherData.hitPoints;
+        otherUnit.data.shieldHP = otherData.shieldHP;
+        if (thisData.ammo != -1)
+            thisUnit.data.ammo = thisData.ammo;
+        if (otherData.ammo != -1)
+            otherUnit.data.ammo = otherData.ammo;
     }
 
     public FiringData setThisPos(Point pos) {
@@ -85,9 +83,9 @@ public final class FiringData {
     }
 
     public WeaponInstance getBestWeaponAgainst(boolean fireWeapon) {
-        if (!thisUnit.stats.tilesInFiringRange(thisData).contains(otherUnit.pos))
+        if (!thisUnit.stats.tilesInFiringRange(thisData).contains(otherUnit.data.pos))
             return null;
-        if (thisUnit.stats.consumesAmmo() && thisUnit.ammo == 0)
+        if (thisUnit.stats.consumesAmmo() && thisUnit.data.ammo == 0)
             return null;
         WeaponInstance bestWeapon = null;
         float damage = 0;
@@ -105,7 +103,7 @@ public final class FiringData {
     }
 
     public float getDamageAgainst() {
-        if (thisUnit.stats.consumesAmmo() && thisUnit.ammo == 0)
+        if (thisUnit.stats.consumesAmmo() && thisUnit.data.ammo == 0)
             return 0;
         float damage = 0;
         for (WeaponInstance weapon : thisUnit.weapons) {

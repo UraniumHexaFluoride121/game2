@@ -120,7 +120,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
 
     @Override
     public void forEachUnitMapData(UnitMapDataConsumer action) {
-        unitSet.forEach(u -> action.accept(u.getRenderPos(), u.team, u.renderVisible()));
+        unitSet.forEach(u -> action.accept(u.getRenderPos(), u.data.team, u.renderVisible()));
     }
 
     @Override
@@ -139,9 +139,9 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public void addUnit(Unit unit) {
-        if (unitGrid[unit.pos.x][unit.pos.y] == null) {
+        if (unitGrid[unit.data.pos.x][unit.data.pos.y] == null) {
             unitSet.add(unit);
-            unitGrid[unit.pos.x][unit.pos.y] = unit;
+            unitGrid[unit.data.pos.x][unit.data.pos.y] = unit;
         } else
             unit.delete();
         updateFoW();
@@ -149,10 +149,10 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public void forceAddUnit(Unit unit) {
-        Unit prevUnit = unitGrid[unit.pos.x][unit.pos.y];
+        Unit prevUnit = unitGrid[unit.data.pos.x][unit.data.pos.y];
         unitSet.add(unit);
-        unitGrid[unit.pos.x][unit.pos.y] = unit;
-        levelRenderer.lastCameraPos.putIfAbsent(unit.team, Tile.getCenteredRenderPos(unit.pos));
+        unitGrid[unit.data.pos.x][unit.data.pos.y] = unit;
+        levelRenderer.lastCameraPos.putIfAbsent(unit.data.team, Tile.getCenteredRenderPos(unit.data.pos));
         if (prevUnit != null)
             qRemoveUnit(prevUnit);
         updateFoW();
@@ -168,9 +168,9 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         if (!qRemoveUnit.isEmpty()) {
             qRemoveUnit.forEach(unit -> {
                 unitSet.remove(unit);
-                Unit unitAtPos = unitGrid[unit.pos.x][unit.pos.y];
+                Unit unitAtPos = unitGrid[unit.data.pos.x][unit.data.pos.y];
                 if (unitAtPos == unit)
-                    unitGrid[unit.pos.x][unit.pos.y] = null;
+                    unitGrid[unit.data.pos.x][unit.data.pos.y] = null;
                 if (selectedUnit == unit)
                     selectedUnit = null;
                 unit.delete();
@@ -182,7 +182,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         for (UnitTeam team : playerTeam.keySet()) {
             boolean hasUnit = false;
             for (Unit unit : unitSet) {
-                if (unit.team == team) {
+                if (unit.data.team == team) {
                     hasUnit = true;
                     break;
                 }
@@ -203,7 +203,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     public void moveUnit(Unit unit, Point newPos, boolean selectNewTile) {
         if (!canUnitBeMoved(newPos))
             throw new RuntimeException("Unit could not be moved to tile " + newPos);
-        unitGrid[unit.pos.x][unit.pos.y] = null;
+        unitGrid[unit.data.pos.x][unit.data.pos.y] = null;
         unitGrid[newPos.x][newPos.y] = unit;
         unit.stopCapture();
         unit.updateLocation(newPos);
@@ -328,7 +328,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
                 return;
             Unit u = getUnit(t.pos);
             Structure s = t.structure;
-            if (u == null || u.team != getActiveTeam() || !samePlayerTeam(s.team, u.team))
+            if (u == null || u.data.team != getActiveTeam() || !samePlayerTeam(s.team, u.data.team))
                 return;
             if (s.type.resupply)
                 u.resupply();
@@ -342,13 +342,13 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             if (u == null)
                 return;
             boolean unitUpdate = false;
-            if (u.team == getActiveTeam()) {
+            if (u.data.team == getActiveTeam()) {
                 if (u.isCapturing()) {
                     u.incrementCapture(false);
                     if (networkState == NetworkState.SERVER)
                         server.sendUnitCapturePacket(u, false);
                 }
-                if (u.mining) {
+                if (u.data.mining) {
                     t.miningBarFill--;
                     if (t.miningBarFill == 0) {
                         t.setTileType(TileType.EMPTY, this);
@@ -379,7 +379,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public boolean samePlayerTeam(Unit a, Unit b) {
-        return Objects.equals(initialPlayerTeams.get(a.team), initialPlayerTeams.get(b.team));
+        return Objects.equals(initialPlayerTeams.get(a.data.team), initialPlayerTeams.get(b.data.team));
     }
 
     public boolean samePlayerTeam(UnitTeam a, UnitTeam b) {
@@ -435,7 +435,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         basePositions.remove(team);
         playerTeam.remove(team);
         unitSet.forEach(u -> {
-            if (u.team == team) {
+            if (u.data.team == team) {
                 u.onDestroyed(null);
             }
         });
@@ -481,7 +481,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     public void updateFoW() {
         if (!isThisPlayerAlive()) {
             tileSelector.tileSet.forEach(t -> t.isFoW = false);
-            unitSet.forEach(u -> u.visibleInStealthMode = true);
+            unitSet.forEach(u -> u.data.visibleInStealthMode = true);
             levelRenderer.fowTileBorder = null;
             TileSet points = new TileSet(tilesX, tilesY);
             for (Tile t : tileSelector.tileSet) {
@@ -495,14 +495,14 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             t.isFoW = !currentVisibility.visibleTiles().contains(t.pos);
         });
         levelRenderer.fowTileBorder = new HexagonBorder(currentVisibility.visibleTiles(), FOW_TILE_BORDER_COLOUR);
-        unitSet.forEach(u -> u.visibleInStealthMode = currentVisibility.stealthVisibleUnit().contains(u));
+        unitSet.forEach(u -> u.data.visibleInStealthMode = currentVisibility.stealthVisibleUnit().contains(u));
     }
 
     public VisibilityData getVisibilityData(UnitTeam team) {
         TileSet visible = new TileSet(tilesX, tilesY);
         HashSet<Unit> stealthVisible = new HashSet<>();
         unitSet.forEach(u -> {
-            if (samePlayerTeam(u.team, team)) {
+            if (samePlayerTeam(u.data.team, team)) {
                 visible.addAll(u.getVisibleTiles());
                 stealthVisible.add(u);
             } else {
@@ -512,7 +512,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
                     if (!tileSelector.validCoordinate(point))
                         continue;
                     Unit other = getUnit(point);
-                    if (other != null && samePlayerTeam(other.team, team)) {
+                    if (other != null && samePlayerTeam(other.data.team, team)) {
                         stealthVisible.add(u);
                         break;
                     }
@@ -548,11 +548,11 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public float getTotalRemainingHP(UnitTeam team) {
-        return unitSet.stream().filter(u -> u.team == team).map(u -> u.lowestHP).reduce(Float::sum).get();
+        return unitSet.stream().filter(u -> u.data.team == team).map(u -> u.data.lowestHP).reduce(Float::sum).get();
     }
 
     public float getTotalMaxHP(UnitTeam team) {
-        return destroyedUnitsDamage.get(team) + unitSet.stream().filter(u -> u.team == team).map(u -> u.stats.maxHP()).reduce(Float::sum).get();
+        return destroyedUnitsDamage.get(team) + unitSet.stream().filter(u -> u.data.team == team).map(u -> u.stats.maxHP()).reduce(Float::sum).get();
     }
 
     public float getTurnScore(UnitTeam team) {

@@ -32,7 +32,7 @@ public enum WeaponEffectiveness {
     }
 
     public static WeaponEffectiveness againstType(FiringData data) {
-        return fromMultiplier(Modifier.multiplicativeEffect(ModifierCategory.DAMAGE, data.getBestWeaponAgainst(false).template.getModifiers(data.otherUnit.type)));
+        return fromMultiplier(Modifier.multiplicativeEffect(ModifierCategory.DAMAGE, data.getBestWeaponAgainst(false).template.getModifiers(data.otherUnit.data.type)));
     }
 
     public static WeaponEffectiveness againstClass(Unit attacking, ShipClass shipClass) {

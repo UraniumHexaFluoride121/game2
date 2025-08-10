@@ -84,7 +84,7 @@ public class FiringRenderer extends AbstractRenderElement {
                         for (UnitRenderer unit : rightUnitRenderer) {
                             unit.onHit();
                         }
-                        shieldHitPointBarRight.setFill(rightUnit.shieldFiringTempHP, rightShieldBarTime, 0.6f);
+                        shieldHitPointBarRight.setFill(rightUnit.data.shieldHP, rightShieldBarTime, 0.6f);
                         rightHit = true;
                         break;
                     }
@@ -92,7 +92,7 @@ public class FiringRenderer extends AbstractRenderElement {
             }
             if (rightHit && !rightShieldStarted && shieldHitPointBarRight.finished()) {
                 rightShieldStarted = true;
-                hitPointBarRight.setFill(rightUnit.firingTempHP, 1 - rightShieldBarTime, 0.6f);
+                hitPointBarRight.setFill(rightUnit.data.hitPoints, 1 - rightShieldBarTime, 0.6f);
             }
             if (!leftHit) {
                 for (Projectile projectile : rightProjectiles) {
@@ -100,7 +100,7 @@ public class FiringRenderer extends AbstractRenderElement {
                         for (UnitRenderer unit : leftUnitRenderer) {
                             unit.onHit();
                         }
-                        shieldHitPointBarLeft.setFill(leftUnit.shieldFiringTempHP, leftShieldBarTime, 0.6f);
+                        shieldHitPointBarLeft.setFill(leftUnit.data.shieldHP, leftShieldBarTime, 0.6f);
                         leftHit = true;
                         break;
                     }
@@ -108,7 +108,7 @@ public class FiringRenderer extends AbstractRenderElement {
             }
             if (leftHit && !leftShieldStarted && shieldHitPointBarLeft.finished()) {
                 leftShieldStarted = true;
-                hitPointBarLeft.setFill(leftUnit.firingTempHP, 1 - leftShieldBarTime, 0.6f);
+                hitPointBarLeft.setFill(leftUnit.data.hitPoints, 1 - leftShieldBarTime, 0.6f);
             }
             for (UnitRenderer unitRenderer : leftUnitRenderer) {
                 unitRenderer.renderShield = !shieldHitPointBarLeft.empty();
@@ -246,7 +246,7 @@ public class FiringRenderer extends AbstractRenderElement {
                     shieldHitPointBarRight.render(g);
                     g.clip(Renderable.inverseShape(shieldHitPointBarRight.getBarClip()));
                 } else {
-                    hitPointBarBorderRight.setColour(rightUnit.team.uiColour);
+                    hitPointBarBorderRight.setColour(rightUnit.data.team.uiColour);
                     hitPointBarBorderRight.render(g);
                 }
                 hitPointBarRight.render(g);
@@ -257,7 +257,7 @@ public class FiringRenderer extends AbstractRenderElement {
                     shieldHitPointBarLeft.render(g);
                     g.clip(Renderable.inverseShape(shieldHitPointBarLeft.getBarClip()));
                 } else {
-                    hitPointBarBorderLeft.setColour(leftUnit.team.uiColour);
+                    hitPointBarBorderLeft.setColour(leftUnit.data.team.uiColour);
                     hitPointBarBorderLeft.render(g);
                 }
                 hitPointBarLeft.render(g);
@@ -272,36 +272,36 @@ public class FiringRenderer extends AbstractRenderElement {
         attackingUnit = attacking;
         defendingUnit = defending;
         boolean aIsLeft;
-        if (attacking.pos.x > defending.pos.x) {
+        if (attacking.data.pos.x > defending.data.pos.x) {
             aIsLeft = false;
-        } else if (attacking.pos.x < defending.pos.x) {
+        } else if (attacking.data.pos.x < defending.data.pos.x) {
             aIsLeft = true;
         } else
-            aIsLeft = attacking.pos.y <= defending.pos.y;
+            aIsLeft = attacking.data.pos.y <= defending.data.pos.y;
         leftUnit = aIsLeft ? attacking : defending;
         rightUnit = aIsLeft ? defending : attacking;
         leftWeapon = aIsLeft ? weaponA : weaponB;
         rightWeapon = aIsLeft ? weaponB : weaponA;
-        leftShieldBarTime = (leftUnit.shieldHP - leftUnit.shieldFiringTempHP) / (leftUnit.hitPoints - leftUnit.firingTempHP + leftUnit.shieldHP - leftUnit.shieldFiringTempHP);
-        rightShieldBarTime = (rightUnit.shieldHP - rightUnit.shieldFiringTempHP) / (rightUnit.hitPoints - rightUnit.firingTempHP + rightUnit.shieldHP - rightUnit.shieldFiringTempHP);
-        ObjPos[] leftPositions = leftUnit.type.firingPositions.get();
-        ObjPos[] rightPositions = rightUnit.type.firingPositions.get();
-        int leftUnitCount = (int) Math.ceil((leftUnit.hitPoints / leftUnit.type.hitPoints) * leftPositions.length);
-        int rightUnitCount = (int) Math.ceil((rightUnit.hitPoints / rightUnit.type.hitPoints) * rightPositions.length);
-        int leftUnitCountRemaining = (int) Math.ceil((leftUnit.firingTempHP / leftUnit.type.hitPoints) * leftPositions.length);
-        int rightUnitCountRemaining = (int) Math.ceil((rightUnit.firingTempHP / rightUnit.type.hitPoints) * rightPositions.length);
+        leftShieldBarTime = (leftUnit.data.shieldRenderHP - leftUnit.data.shieldHP) / (leftUnit.data.renderHP - leftUnit.data.hitPoints + leftUnit.data.shieldRenderHP - leftUnit.data.shieldHP);
+        rightShieldBarTime = (rightUnit.data.shieldRenderHP - rightUnit.data.shieldHP) / (rightUnit.data.renderHP - rightUnit.data.hitPoints + rightUnit.data.shieldRenderHP - rightUnit.data.shieldHP);
+        ObjPos[] leftPositions = leftUnit.data.type.firingPositions.get();
+        ObjPos[] rightPositions = rightUnit.data.type.firingPositions.get();
+        int leftUnitCount = (int) Math.ceil((leftUnit.data.renderHP / leftUnit.data.type.hitPoints) * leftPositions.length);
+        int rightUnitCount = (int) Math.ceil((rightUnit.data.renderHP / rightUnit.data.type.hitPoints) * rightPositions.length);
+        int leftUnitCountRemaining = (int) Math.ceil((leftUnit.data.hitPoints / leftUnit.data.type.hitPoints) * leftPositions.length);
+        int rightUnitCountRemaining = (int) Math.ceil((rightUnit.data.hitPoints / rightUnit.data.type.hitPoints) * rightPositions.length);
         leftUnitRenderer = new UnitRenderer[leftUnitCount];
         rightUnitRenderer = new UnitRenderer[rightUnitCount];
         for (int i = 0; i < leftUnitCount; i++) {
-            ImageCounter image = new CachedImageCounter(leftUnit.type.firingSequenceLeft.get(leftUnit.team));
-            leftUnitRenderer[i] = new UnitRenderer(image, leftWeapon, leftUnit.getFireAnimState(leftWeapon), leftProjectiles, i >= leftUnitCountRemaining, leftUnit == attackingUnit, leftPositions[i].x, leftPositions[i].y, leftUnit.type);
+            ImageCounter image = new CachedImageCounter(leftUnit.data.type.firingSequenceLeft.get(leftUnit.data.team));
+            leftUnitRenderer[i] = new UnitRenderer(image, leftWeapon, leftUnit.getFireAnimState(leftWeapon), leftProjectiles, i >= leftUnitCountRemaining, leftUnit == attackingUnit, leftPositions[i].x, leftPositions[i].y, leftUnit.data.type);
         }
         for (int i = 0; i < rightUnitCount; i++) {
-            ImageCounter image = new CachedImageCounter(rightUnit.type.firingSequenceRight.get(rightUnit.team));
-            rightUnitRenderer[i] = new UnitRenderer(image, rightWeapon, rightUnit.getFireAnimState(rightWeapon), rightProjectiles, i >= rightUnitCountRemaining, rightUnit == attackingUnit, rightPositions[i].x, rightPositions[i].y, rightUnit.type);
+            ImageCounter image = new CachedImageCounter(rightUnit.data.type.firingSequenceRight.get(rightUnit.data.team));
+            rightUnitRenderer[i] = new UnitRenderer(image, rightWeapon, rightUnit.getFireAnimState(rightWeapon), rightProjectiles, i >= rightUnitCountRemaining, rightUnit == attackingUnit, rightPositions[i].x, rightPositions[i].y, rightUnit.data.type);
         }
-        leftImage = level.getTile(leftUnit.pos).type.firingTexturesLeft.getRandomImage();
-        rightImage = level.getTile(rightUnit.pos).type.firingTexturesRight.getRandomImage();
+        leftImage = level.getTile(leftUnit.data.pos).type.firingTexturesLeft.getRandomImage();
+        rightImage = level.getTile(rightUnit.data.pos).type.firingTexturesRight.getRandomImage();
         shootTimerAttacking.startTimer();
         firingLeft = false;
         shootTimerAttacked.startTimer();
@@ -315,12 +315,12 @@ public class FiringRenderer extends AbstractRenderElement {
         rightProjectiles.clear();
         overlayTimer.setReversed(false);
         overlayTimer.startTimer();
-        hitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints).barOnly();
-        hitPointBarBorderLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.hitPoints).borderOnly();
-        shieldHitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) leftUnit.stats.maxShieldHP(), UIColourTheme.LIGHT_BLUE).barOnly().setFill(leftUnit.shieldHP);
-        hitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints).barOnly();
-        hitPointBarBorderRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.hitPoints).borderOnly();
-        shieldHitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) rightUnit.stats.maxShieldHP(), UIColourTheme.LIGHT_BLUE).barOnly().setFill(rightUnit.shieldHP);
+        hitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.data.renderHP).barOnly();
+        hitPointBarBorderLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, leftUnit).setFill(leftUnit.data.renderHP).borderOnly();
+        shieldHitPointBarLeft = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) leftUnit.stats.maxShieldHP(), UIColourTheme.LIGHT_BLUE).barOnly().setFill(leftUnit.data.shieldRenderHP);
+        hitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.data.renderHP).barOnly();
+        hitPointBarBorderRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, rightUnit).setFill(rightUnit.data.renderHP).borderOnly();
+        shieldHitPointBarRight = new UIHitPointBar(0.2f, 20, 1.5f, 0.2f, (int) rightUnit.stats.maxShieldHP(), UIColourTheme.LIGHT_BLUE).barOnly().setFill(rightUnit.data.shieldRenderHP);
         preRender();
     }
 

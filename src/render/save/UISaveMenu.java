@@ -1,6 +1,5 @@
 package render.save;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.OnButtonInput;
@@ -20,7 +19,6 @@ import save.SaveManager;
 
 import java.awt.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class UISaveMenu<T extends LoadedFromSave> extends UIContainer {
     private UISaveBox<T> saveBox;
@@ -29,22 +27,22 @@ public class UISaveMenu<T extends LoadedFromSave> extends UIContainer {
     private final SaveManager<T> saveManager;
     private Runnable onSave = null;
 
-    public UISaveMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, SaveManager<T> saveManager, Function<String, T> saveSupplier) {
-        super(register, buttonRegister, order, buttonOrder, 0, 0);
+    public UISaveMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, SaveManager<T> saveManager, Function<String, T> saveSupplier) {
+        super(register, buttonRegister, order, 0, 0);
         this.saveManager = saveManager;
         addRenderables((r, b) -> {
             new UIFullScreenColour(r, RenderOrder.PAUSE_MENU_BACKGROUND, new Color(0, 0, 0, 200));
-            new OnButtonInput(b, ButtonOrder.PAUSE_MENU, t -> t == InputType.ESCAPE, () -> setEnabled(false));
-            saveBox = new UISaveBox<>(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
+            new OnButtonInput(b, RenderOrder.PAUSE_MENU, t -> t == InputType.ESCAPE, () -> setEnabled(false));
+            saveBox = new UISaveBox<>(r, b, RenderOrder.PAUSE_MENU,
                     Renderable.right() / 2 - 6, Renderable.top() / 2 - 12, 12, 14, 1.5f, saveManager);
             new RenderElement(r, RenderOrder.PAUSE_MENU,
                     new UITextLabel(10f, 1.3f, false).setTextCenterBold().updateTextCenter("Saved files").translate(Renderable.right() / 2 - 5.25f, Renderable.top() / 2 + 2.5f),
                     new UITextLabel(10f, 1f, false).setTextCenterBold().updateTextCenter("Enter save name:").translate(Renderable.right() / 2 - 5, Renderable.top() / 2 + 9.5f)
             );
-            saveFileNameBox = new UITextInputBox(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
+            saveFileNameBox = new UITextInputBox(r, b, RenderOrder.PAUSE_MENU,
                     Renderable.right() / 2 - 6, Renderable.top() / 2 + 7, 12, 2, 1, true, -1, InputType::isFileNameChar);
             saveFileNameBox.setOnChanged(this::updateSaveButton).setBold().setColourTheme(UIColourTheme.GREEN_SELECTED);
-            saveButton = new UIButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 - 4, Renderable.top() / 2 + 5.5f, 8, 1.2f, 1, false)
+            saveButton = new UIButton(r, b, RenderOrder.PAUSE_MENU, Renderable.right() / 2 - 4, Renderable.top() / 2 + 5.5f, 8, 1.2f, 1, false)
                     .setText("Save").setBold().setColourTheme(UIColourTheme.GRAYED_OUT).setClickEnabled(false).setOnClick(() -> {
                         String name = saveFileNameBox.getText();
                         saveBox.addSave(saveSupplier.apply(name), name);
@@ -52,7 +50,7 @@ public class UISaveMenu<T extends LoadedFromSave> extends UIContainer {
                         if (onSave != null)
                             onSave.run();
                     });
-            new UIButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 - 4, Renderable.top() / 2 - 15f, 8, 2, 1.4f, false, () -> setEnabled(false))
+            new UIButton(r, b, RenderOrder.PAUSE_MENU, Renderable.right() / 2 - 4, Renderable.top() / 2 - 15f, 8, 2, 1.4f, false, () -> setEnabled(false))
                     .setText("Continue").setBold();
         });
     }

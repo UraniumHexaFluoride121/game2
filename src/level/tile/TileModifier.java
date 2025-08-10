@@ -39,8 +39,18 @@ public class TileModifier {
         return this;
     }
 
+    public TileModifier remove(Point point) {
+        set.remove(point);
+        return this;
+    }
+
     public TileModifier add(TileSet other) {
         set.addAll(other);
+        return this;
+    }
+
+    public TileModifier add(Point point) {
+        set.add(point);
         return this;
     }
 
@@ -95,18 +105,18 @@ public class TileModifier {
     }
 
     public static Predicate<Unit> hasAlliedUnit(UnitTeam thisTeam, Level level) {
-        return u -> u != null && level.samePlayerTeam(u.team, thisTeam);
+        return u -> u != null && level.samePlayerTeam(u.data.team, thisTeam);
     }
 
     public static Predicate<Unit> withoutVisibleEnemies(UnitTeam thisTeam, Level level) {
-        return u -> u == null || level.samePlayerTeam(u.team, thisTeam) || !u.renderVisible();
+        return u -> u == null || level.samePlayerTeam(u.data.team, thisTeam) || !u.renderVisible();
     }
 
     public static Predicate<Unit> withVisibleEnemies(UnitTeam thisTeam, Level level) {
-        return u -> u != null && !level.samePlayerTeam(u.team, thisTeam) && u.renderVisible();
+        return u -> u != null && !level.samePlayerTeam(u.data.team, thisTeam) && u.renderVisible();
     }
 
     public static Predicate<Unit> withoutVisibleEnemies(UnitTeam thisTeam, Level level, VisibilityData v) {
-        return u -> u == null || level.samePlayerTeam(u.team, thisTeam) || !u.visible(v);
+        return u -> u == null || level.samePlayerTeam(u.data.team, thisTeam) || !u.visible(v);
     }
 }

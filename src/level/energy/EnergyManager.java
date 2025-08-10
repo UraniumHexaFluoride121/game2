@@ -1,6 +1,5 @@
 package level.energy;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.math.MathUtil;
 import level.Level;
@@ -48,8 +47,8 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     private final TextRenderer maxCapacityText = new TextRenderer(null, 0.7f, TEXT_COLOUR_DARK),
             noCostsText = new TextRenderer(null, 0.6f, TEXT_COLOUR_DARK);
 
-    public EnergyManager(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Level level) {
-        super(register, buttonRegister, order, buttonOrder, x, y, level);
+    public EnergyManager(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, Level level) {
+        super(register, buttonRegister, order, x, y, level);
         for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
             availableMap.putIfAbsent(team, 0);
             incomeMap.put(team, 0);
@@ -66,7 +65,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         Renderable availableChangeTranslated = availableChangeText.translate(8.4f, 1.75f);
         Renderable incomeChangeTranslated = incomeChangeText.translate(8.4f, .15f);
         addRenderables((r, b) -> {
-            new UIButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, -.6f, 10, 3.6f, 0, true)
+            new UIButton(r, b, RenderOrder.LEVEL_UI, 0, -.6f, 10, 3.6f, 0, true)
                     .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).setOnClick(() -> {
                         incomeBox.setEnabled(true);
                     }).setOnDeselect(() -> {
@@ -107,7 +106,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                             ENERGY_IMAGE.render(g, 1.3f);
                         });
                     });
-            incomeBox = new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, -14.5f).addRenderables((r2, b2) -> {
+            incomeBox = new UIContainer(r, b, RenderOrder.LEVEL_UI, 0, -14.5f).addRenderables((r2, b2) -> {
                 new RenderElement(r2, RenderOrder.LEVEL_UI,
                         new UIBox(10, 13).setColourTheme(UIColourTheme.LIGHT_BLUE_FULLY_OPAQUE_CENTER),
                         new UITextLabel(8, 1, false).setTextCenterBold().updateTextCenter(displayName).translate(.7f, 11.5f),
@@ -116,9 +115,9 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                         noCostsText.setItalic(true).setTextAlign(HorizontalAlign.CENTER).translate(5, 4.7f),
                         maxCapacityText.setBold(true).setTextAlign(HorizontalAlign.LEFT).translate(0.5f, 0.6f)
                 ).setZOrder(-1);
-                incomeLineItemsScroll = new UIScrollSurface(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, 6.5f, 10, 4, false, (r3, b3) -> {
+                incomeLineItemsScroll = new UIScrollSurface(r2, b2, RenderOrder.LEVEL_UI, 0, 6.5f, 10, 4, false, (r3, b3) -> {
                 }).addScrollBar(0.25f, 0.2f, -0.2f).setScrollSpeed(0.2f);
-                costLineItemsScroll = new UIScrollSurface(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0, 1.5f, 10, 4, false, (r3, b3) -> {
+                costLineItemsScroll = new UIScrollSurface(r2, b2, RenderOrder.LEVEL_UI, 0, 1.5f, 10, 4, false, (r3, b3) -> {
                 }).addScrollBar(0.25f, 0.2f, -0.2f).setScrollSpeed(0.2f);
             }).setEnabled(false);
         });
@@ -154,7 +153,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         int added = incomeMap.get(team) + costsMap.get(team);
         if (availableMap.get(team) + added < 0) {
             level.unitSet.forEach(u -> {
-                if (u.team == team && u.stealthMode) {
+                if (u.data.team == team && u.data.stealthMode) {
                     u.setStealthMode(false);
                     if (level.networkState == NetworkState.SERVER) {
                         level.server.sendUnitStealthPacket(u);
@@ -200,19 +199,19 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
             }
         });
         level.unitSet.forEach(u -> {
-            if (u.stealthMode)
+            if (u.data.stealthMode)
                 u.stats.getPerTurnActionCost(Action.STEALTH).ifPresent(cost -> {
-                    costsMap.compute(u.team, (team, i) -> {
+                    costsMap.compute(u.data.team, (team, i) -> {
                         if (team == thisTeam)
-                            LineItemData.addToList(u.type.getName() + " (" + Action.STEALTH.getName() + ")", -cost, expenseList);
+                            LineItemData.addToList(u.data.type.getName() + " (" + Action.STEALTH.getName() + ")", -cost, expenseList);
                         return i - cost;
                     });
                 });
-            if (u.mining)
+            if (u.data.mining)
                 u.stats.getPerTurnActionCost(Action.MINE).ifPresent(cost -> {
-                    incomeMap.compute(u.team, (team, i) -> {
+                    incomeMap.compute(u.data.team, (team, i) -> {
                         if (team == thisTeam)
-                            LineItemData.addToList(u.type.getName() + " (" + Action.MINE.getName() + ")", -cost, incomeList);
+                            LineItemData.addToList(u.data.type.getName() + " (" + Action.MINE.getName() + ")", -cost, incomeList);
                         return i - cost;
                     });
                 });
@@ -229,7 +228,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
             if (s.income == 0)
                 return;
             incomeLineItemsScroll.addRenderables((r, b) -> {
-                incomeLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
+                incomeLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
                     new RenderElement(r2, RenderOrder.LEVEL_UI,
                             new UIBox(9, 1f).setColourTheme(UIColourTheme.DARK_GRAY).setCorner(0.5f),
                             new TextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
@@ -247,7 +246,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
             if (s.income == 0)
                 return;
             costLineItemsScroll.addRenderables((r, b) -> {
-                costLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
+                costLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
                     new RenderElement(r2, RenderOrder.LEVEL_UI,
                             new UIBox(9, 1f).setColourTheme(UIColourTheme.DARK_GRAY).setCorner(0.5f),
                             new TextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
@@ -276,7 +275,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
 
     public boolean canAfford(Unit unit, Action action, boolean consume) {
         Optional<Integer> actionCost = unit.stats.getActionCost(action);
-        return actionCost.map(cost -> canAfford(unit.team, cost, consume)).orElse(true);
+        return actionCost.map(cost -> canAfford(unit.data.team, cost, consume)).orElse(true);
     }
 
     @Override

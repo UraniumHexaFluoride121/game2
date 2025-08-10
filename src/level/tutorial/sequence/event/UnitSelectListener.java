@@ -10,11 +10,11 @@ public class UnitSelectListener implements TutorialEventListener {
     private final Predicate<Unit> unitPredicate;
 
     public static UnitSelectListener ofTeam(UnitTeam team) {
-        return new UnitSelectListener(u -> u.team == team);
+        return new UnitSelectListener(u -> u.data.team == team);
     }
 
     public static UnitSelectListener ofType(UnitType type) {
-        return new UnitSelectListener(u -> u.type == type);
+        return new UnitSelectListener(u -> u.data.type == type);
     }
 
     private UnitSelectListener(Predicate<Unit> unitPredicate) {

@@ -1,7 +1,6 @@
 package mainScreen;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
@@ -48,8 +47,8 @@ public class UIPlayerShipSettings extends UIContainer {
     public static HashMap<UnitType, Integer> clipboardPreset = null;
     public UnitTeam currentTeam = null;
 
-    public UIPlayerShipSettings(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder) {
-        super(register, buttonRegister, order, buttonOrder, 1, 1);
+    public UIPlayerShipSettings(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order) {
+        super(register, buttonRegister, order, 1, 1);
         addRenderables((r, b) -> {
             for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
                 TeamSettings teamSettings = new TeamSettings(r, b, team);
@@ -122,7 +121,7 @@ public class UIPlayerShipSettings extends UIContainer {
         public final HashMap<UnitType, UINumberSelector> selectors = new HashMap<>();
 
         public TeamSettings(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, UnitTeam team) {
-            super(register, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, 0);
+            super(register, buttonRegister, RenderOrder.TITLE_SCREEN_BUTTONS, 0, 0);
             addRenderables((r, b) -> {
                 for (int i = 0; i < UnitType.ORDERED_UNIT_TYPES.length; i++) {
                     int finalI = i;
@@ -131,13 +130,13 @@ public class UIPlayerShipSettings extends UIContainer {
                     new RenderElement(r, RenderOrder.TITLE_SCREEN_BUTTON_BACKGROUND, new UIImageBox(SIZE, SIZE, ImageRenderer.renderImageCentered(UnitType.ORDERED_UNIT_TYPES[i].getImage(team, UnitPose.INFO), false))
                             .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER))
                             .translate(0, i * (SIZE + .8f)).setZOrder(1);
-                    new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 0, i * (SIZE + .8f)).addRenderables((r2, b2) -> {
-                        UINumberSelector selector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 4.5f + SIZE / 2, 1.25f, 1.5f, 3, 0, 10, 0);
+                    new UIContainer(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, 0, i * (SIZE + .8f)).addRenderables((r2, b2) -> {
+                        UINumberSelector selector = new UINumberSelector(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, 4.5f + SIZE / 2, 1.25f, 1.5f, 3, 0, 10, 0);
                         selectors.put(UnitType.ORDERED_UNIT_TYPES[finalI], selector);
                         selector.scale(1, -1).translate(0, (SIZE + .8f));
                         selector.setOnChanged(() -> MainPanel.titleScreen.playerBoxes.verifyTeams());
                         new RenderElement(r2, RenderOrder.TITLE_SCREEN_BUTTONS, new UITextLabel(9, 1.f, false, 0, 0.85f)
-                                .updateTextCenter(UnitType.ORDERED_UNIT_TYPES[finalI].getName() + " Units").setTextCenterBold())
+                                .updateTextCenter(UnitType.ORDERED_UNIT_TYPES[finalI].getPluralName()).setTextCenterBold())
                                 .scale(1, -1).translate(3.2f + SIZE / 2, 1.2f);
                     });
                 }

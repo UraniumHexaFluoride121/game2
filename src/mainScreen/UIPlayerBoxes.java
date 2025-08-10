@@ -1,7 +1,6 @@
 package mainScreen;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
@@ -28,7 +27,6 @@ import static render.UIColourTheme.*;
 public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     private static final int MAX_PLAYERS = UnitTeam.ORDERED_TEAMS.length;
     private static final float BOX_SIZE = 5.5f;
-    private ButtonOrder buttonOrder;
     private ButtonRegister buttonRegister, internal = new ButtonRegister();
     private GameRenderer renderer = new GameRenderer(new AffineTransform(), null);
     private final float x, y;
@@ -38,9 +36,8 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
     private UIShapeButton plus;
     private boolean locked = false;
 
-    public UIPlayerBoxes(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y) {
+    public UIPlayerBoxes(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y) {
         super(register, order);
-        this.buttonOrder = buttonOrder;
         this.buttonRegister = buttonRegister;
         this.x = x;
         this.y = y;
@@ -160,7 +157,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         if (plus != null)
             plus.delete();
         if (boxes.size() != MAX_PLAYERS && !MainPanel.titleScreen.customMap)
-            plus = new UIShapeButton(register, internal, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, 5, boxes.size() * BOX_SIZE + (BOX_SIZE - 3) / 2f, 7, 3, false, this::addBox)
+            plus = new UIShapeButton(register, internal, RenderOrder.TITLE_SCREEN_BUTTONS, 5, boxes.size() * BOX_SIZE + (BOX_SIZE - 3) / 2f, 7, 3, false, this::addBox)
                     .setShape(UIShapeButton::plus).tooltip(t -> t.add(-1, AbstractUITooltip.light(), "Add player"));
     }
 
@@ -194,11 +191,6 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
     @Override
     public boolean blocking(InputType type) {
         return blocking;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override
@@ -251,9 +243,9 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                     .setBold();
             mainBox = new UIBox(13, BOX_SIZE - .5f, 0, UIBox.BoxShape.RECTANGLE);
             mainBox.translate(0, -2);
-            playerTeamSelector = new UIEnumSelector<>(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 4, 0.7f, 1.3f, 2, PlayerTeam.class, PlayerTeam.values()[index])
+            playerTeamSelector = new UIEnumSelector<>(null, internal, RenderOrder.NONE, 4, 0.7f, 1.3f, 2, PlayerTeam.class, PlayerTeam.values()[index])
                     .setOnChanged(parentContainer::verifyTeams).tooltip(t -> t.add(9, AbstractUITooltip.light(), "Players on the same team are allies, share map vision and win together."));
-            editShips = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 0.7f, 5, 1.3f, 0.7f, true)
+            editShips = new UIButton(null, internal, RenderOrder.NONE, 10.5f, 0.7f, 5, 1.3f, 0.7f, true)
                     .setBold().noDeselect().setBoxCorner(0.35f).setText("Edit Units").setOnClick(() -> {
                         parentContainer.boxes.forEach(b -> {
                             if (b != this)
@@ -265,7 +257,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                         editShips.setColourTheme(parentContainer.locked ? GRAYED_OUT : GREEN_SELECTED);
                     })
                     .setColourTheme(GREEN_SELECTED).toggleMode().tooltip(t -> t.add(8, AbstractUITooltip.light(), "Modify the starting units for this player"));
-            enableBot = new UIButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 10.5f, 2.3f, 5, 1f, 0.7f, false);
+            enableBot = new UIButton(null, internal, RenderOrder.NONE, 10.5f, 2.3f, 5, 1f, 0.7f, false);
             enableBot.setBold().noDeselect().setBoxCorner(0.35f).setText("Bot (off)").setOnClick(() -> {
                         isBot = !isBot;
                         enableBot.setColourTheme(isBot ? GREEN : RED);
@@ -274,7 +266,7 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
                     .setColourTheme(RED).tooltip(t -> t.add(9, AbstractUITooltip.light(), "If enabled, this player will be controlled by a bot. The host cannot be a bot."));
             playerTeamLabel = new UITextLabel(5, 0.7f, false)
                     .updateTextCenter("Player Team").setTextCenterBold();
-            deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, 14.75f, BOX_SIZE - 1.5f, 1, 1, false, () -> {
+            deleteButton = new UIShapeButton(null, internal, RenderOrder.NONE, 14.75f, BOX_SIZE - 1.5f, 1, 1, false, () -> {
                 parentContainer.deletePlayer(getIndex());
             }).setShape(UIShapeButton::x).setBoxCorner(0.2f).setColourTheme(DEEP_RED);
             parent = buttonRegister;
@@ -352,11 +344,6 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         @Override
         public boolean blocking(InputType type) {
             return blocking;
-        }
-
-        @Override
-        public ButtonOrder getButtonOrder() {
-            return ButtonOrder.MAIN_BUTTONS;
         }
 
         @Override

@@ -10,8 +10,8 @@ import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileData;
 import render.anim.AnimTilePath;
-import unit.Unit;
 import unit.UnitData;
+import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
 import unit.type.UnitType;
@@ -41,7 +41,7 @@ public class Client implements Deletable {
     private final Vector<PacketWriter> packetQueue = new Vector<>();
     public int clientID = -1, playerCount = 0;
 
-    public boolean failed = false, connected = false;
+    public boolean failed = false, connected = false, levelCreated = false;
 
     public Client(String s) {
         int port;
@@ -86,6 +86,8 @@ public class Client implements Deletable {
             case LEVEL_TURN_UPDATE -> {
                 int turn = reader.readInt();
                 UnitTeam activeTeam = PacketReceiver.readEnum(UnitTeam.class, reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTask(() -> {
                     if (MainPanel.getActiveLevel() != null)
                         MainPanel.getActiveLevel().setTurn(activeTeam, turn, true);
@@ -94,17 +96,19 @@ public class Client implements Deletable {
             case UNIT_UPDATE -> {
                 HashSet<UnitData> data = new HashSet<>();
                 PacketReceiver.readCollection(data, () -> new UnitData(reader), reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     HashSet<Unit> unitsUnaccountedFor = new HashSet<>(l.unitSet);
                     for (UnitData d : data) {
                         Unit u = null;
                         for (Unit unit : unitsUnaccountedFor) {
-                            if (unit.pos.equals(d.pos)) {
+                            if (unit.data.pos.equals(d.pos)) {
                                 u = unit;
                             }
                         }
-                        if (u != null && u.team == d.team && u.type == d.type) {
+                        if (u != null && u.data.team == d.team && u.data.type == d.type) {
                             unitsUnaccountedFor.remove(u);
                         } else {
                             u = new Unit(d.type, d.team, d.pos, l);
@@ -178,6 +182,7 @@ public class Client implements Deletable {
                         l.setBasePositions(basePositions);
                         return l;
                     }, l -> {
+                        levelCreated = true;
                         requestLevelData();
                     });
                 });
@@ -185,6 +190,8 @@ public class Client implements Deletable {
             case TILE_TYPE_UPDATE -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 TileData data = Tile.read(reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTask(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Tile t = l.getTile(pos);
@@ -205,9 +212,11 @@ public class Client implements Deletable {
                 Point unitPos = PacketReceiver.readPoint(reader);
                 UnitType type = UnitType.read(reader);
                 UnitTeam team = PacketReceiver.readEnum(UnitTeam.class, reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Unit unit = MainPanel.getActiveLevel().getUnit(unitPos);
-                    if (unit == null || unit.type != type || unit.team != team || unit.hasPerformedAction(Action.MOVE)) {
+                    if (unit == null || unit.data.type != type || unit.data.team != team || unit.data.hasPerformedAction(Action.MOVE)) {
                         requestLevelData();
                         return;
                     }
@@ -216,23 +225,29 @@ public class Client implements Deletable {
             }
             case SERVER_SHOOT_UNIT -> {
                 UnitData from = new UnitData(reader), to = new UnitData(reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
                     fromUnit.attack(toUnit);
-                    fromUnit.addPerformedAction(Action.FIRE);
+                    fromUnit.data.addPerformedAction(Action.FIRE);
                 });
             }
             case SERVER_MINE -> {
                 UnitData data = new UnitData(reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Unit unit = data.getUnit(l, true);
-                    unit.performMiningAction(unit.mining);
+                    unit.performMiningAction(unit.data.mining);
                 });
             }
             case SERVER_REPAIR -> {
                 UnitData from = new UnitData(reader), to = new UnitData(reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
@@ -241,6 +256,8 @@ public class Client implements Deletable {
             }
             case SERVER_RESUPPLY -> {
                 UnitData from = new UnitData(reader), to = new UnitData(reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Unit fromUnit = from.getUnit(l, true), toUnit = to.getUnit(l, true);
@@ -251,6 +268,8 @@ public class Client implements Deletable {
                 Point pos = PacketReceiver.readPoint(reader);
                 boolean action = reader.readBoolean();
                 int progress = reader.readInt();
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Unit u = l.getUnit(pos);
@@ -270,6 +289,8 @@ public class Client implements Deletable {
                     structure = new Structure(reader);
                 else
                     structure = null;
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Tile tile = l.getTile(pos);
@@ -301,6 +322,8 @@ public class Client implements Deletable {
             case SERVER_DESTROY_STRUCTURE -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 boolean cameraTo = reader.readBoolean();
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Tile tile = l.getTile(pos);
@@ -316,6 +339,8 @@ public class Client implements Deletable {
             case SERVER_SHIELD_REGEN -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 float shieldHP = reader.readFloat();
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Unit u = l.getUnit(pos);
@@ -329,6 +354,8 @@ public class Client implements Deletable {
             case SERVER_STEALTH_UNIT -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 boolean stealth = reader.readBoolean();
+                if (!levelCreated)
+                    return;
                 MainPanel.addTaskAfterAnimBlock(() -> {
                     Level l = MainPanel.getActiveLevel();
                     Unit u = l.getUnit(pos);
@@ -336,13 +363,15 @@ public class Client implements Deletable {
                         requestLevelData();
                         return;
                     }
-                    u.addPerformedAction(Action.STEALTH);
+                    u.data.addPerformedAction(Action.STEALTH);
                     u.setStealthMode(stealth);
                 });
             }
             case ENERGY_UPDATE -> {
                 HashMap<UnitTeam, Integer> availableMap = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
                 HashMap<UnitTeam, Integer> incomeMap = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTask(() -> {
                     Level l = MainPanel.getActiveLevel();
                     l.levelRenderer.energyManager.updateFromRead(availableMap, incomeMap);
@@ -350,6 +379,8 @@ public class Client implements Deletable {
             }
             case BOT_SELECT_TILE -> {
                 Point pos = PacketReceiver.readPoint(reader);
+                if (!levelCreated)
+                    return;
                 MainPanel.addTask(() -> {
                     Level l = MainPanel.getActiveLevel();
                     l.botHandlerMap.get(l.getActiveTeam()).selectTileClient(pos);
@@ -395,54 +426,54 @@ public class Client implements Deletable {
             if (illegalTile != null) {
                 PacketWriter.writePoint(illegalTile, w);
             }
-            PacketWriter.writePoint(unit.pos, w);
-            unit.type.write(w);
-            PacketWriter.writeEnum(unit.team, w);
+            PacketWriter.writePoint(unit.data.pos, w);
+            unit.data.type.write(w);
+            PacketWriter.writeEnum(unit.data.team, w);
         }));
     }
 
     public void sendUnitShootRequest(Unit from, Unit to) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_SHOOT_UNIT, w -> {
-            PacketWriter.writePoint(from.pos, w);
-            PacketWriter.writePoint(to.pos, w);
+            PacketWriter.writePoint(from.data.pos, w);
+            PacketWriter.writePoint(to.data.pos, w);
         }));
     }
 
     public void sendUnitMineRequest(Unit unit) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_MINE, w -> {
-            PacketWriter.writePoint(unit.pos, w);
+            PacketWriter.writePoint(unit.data.pos, w);
         }));
     }
 
     public void sendUnitRepairRequest(Unit from, Unit to) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_REPAIR, w -> {
-            PacketWriter.writePoint(from.pos, w);
-            PacketWriter.writePoint(to.pos, w);
+            PacketWriter.writePoint(from.data.pos, w);
+            PacketWriter.writePoint(to.data.pos, w);
         }));
     }
 
     public void sendUnitResupplyRequest(Unit from, Unit to) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_RESUPPLY, w -> {
-            PacketWriter.writePoint(from.pos, w);
-            PacketWriter.writePoint(to.pos, w);
+            PacketWriter.writePoint(from.data.pos, w);
+            PacketWriter.writePoint(to.data.pos, w);
         }));
     }
 
     public void sendUnitCaptureRequest(Unit unit) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_CAPTURE, w -> {
-            PacketWriter.writePoint(unit.pos, w);
+            PacketWriter.writePoint(unit.data.pos, w);
         }));
     }
 
     public void sendUnitShieldRegenRequest(Unit unit) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_SHIELD_REGEN, w -> {
-            PacketWriter.writePoint(unit.pos, w);
+            PacketWriter.writePoint(unit.data.pos, w);
         }));
     }
 
     public void sendUnitStealthRequest(Unit unit) {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_STEALTH, w -> {
-            PacketWriter.writePoint(unit.pos, w);
+            PacketWriter.writePoint(unit.data.pos, w);
         }));
     }
 

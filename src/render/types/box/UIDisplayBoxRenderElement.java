@@ -16,11 +16,6 @@ public class UIDisplayBoxRenderElement extends AbstractRenderElement {
         };
     }
 
-    public UIDisplayBoxRenderElement setHorizontalAlign(HorizontalAlign boxAlign) {
-        box.setHorizontalAlign(boxAlign);
-        return this;
-    }
-
     public UIDisplayBoxRenderElement addText(float textSize, HorizontalAlign align, String s) {
         box.addText(textSize, align, s);
         return this;

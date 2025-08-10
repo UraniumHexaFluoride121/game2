@@ -21,8 +21,6 @@ import unit.action.ActionIconType;
 import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
-import unit.weapon.DamageType;
-import unit.weapon.WeaponTemplate;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -46,22 +44,22 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
     private UIElementScrollSurface<BarDisplay> characteristicDisplay;
 
     public UnitInfoScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
-        super(register, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, 0, level);
+        super(register, buttonRegister, RenderOrder.INFO_SCREEN, 0, 0, level);
         width = Renderable.right() - sideMargin * 2;
         height = Renderable.top() - 5;
         nameText = new UITextLabel(27, 2.5f, false).setTextLeftBold();
         classText = new UITextLabel(12, 1.2f, false).setTextLeftBold()
                 .setLeftColour(UITextLabel.TEXT_COLOUR_DARK);
         addRenderables((r, b) -> {
-            new UIButton(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN,
+            new UIButton(r, b, RenderOrder.INFO_SCREEN,
                     3.5f, Renderable.top() - 2.5f, 9, 2, 1.4f, false, this::disable)
                     .setText("Back").setBold().setColourTheme(UIColourTheme.DEEP_RED);
-            new OnButtonInput(b, ButtonOrder.INFO_SCREEN, t -> t == InputType.ESCAPE, this::disable);
+            new OnButtonInput(b, RenderOrder.INFO_SCREEN_BACKGROUND, t -> t == InputType.ESCAPE, this::disable);
             new RenderElement(r, RenderOrder.INFO_SCREEN_BACKGROUND, g -> {
                 g.setColor(FULL_SCREEN_MENU_BACKGROUND_COLOUR);
                 g.fillRect(0, 0, (int) Math.ceil(Renderable.right()), (int) Math.ceil(Renderable.top()));
             });
-            tabSwitcher = new UITabSwitcher(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN,
+            tabSwitcher = new UITabSwitcher(r, b, RenderOrder.INFO_SCREEN,
                     sideMargin, 1, width, height)
                     .addTab(4.5f, "Overview", (r2, b2) -> {
                         new RenderElement(r2, RenderOrder.INFO_SCREEN, g -> {
@@ -75,14 +73,14 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
                             });
                         }, new UITextLabel(25, 1, false).setTextLeftBold().updateTextLeft("Feature overview").translate(2, 15.5f))
                                 .setZOrder(-1);
-                        attributesScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 1, 0, 27, 15, false, (r3, b3) -> {
+                        attributesScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.INFO_SCREEN, 1, 0, 27, 15, false, (r3, b3) -> {
                             attributeRenderer = new AttributeRenderer(r3);
                         }).addScrollBar(0.5f, 0.4f, 0).setScrollSpeed(0.3f);
-                        characteristicDisplay = new UIElementScrollSurface<>(r2, b2, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, width - 15.3f, 0, 15, 14, false, count -> 0f);
+                        characteristicDisplay = new UIElementScrollSurface<>(r2, b2, RenderOrder.INFO_SCREEN, width - 15.3f, 0, 15, 14, false, count -> 0f);
                     }).addTab(4, "Actions", (r2, b2) -> {
                         new RenderElement(r2, RenderOrder.INFO_SCREEN, new UITextLabel(27, 2.5f, false).setTextLeftBold().updateTextLeft("Action overview")
                                 .translate(2, height - 3));
-                        actionScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 1, 0, width - 2, height - 5, false, (r3, b3) -> {
+                        actionScrollSurface = new UIScrollSurface(r2, b2, RenderOrder.INFO_SCREEN, 1, 0, width - 2, height - 5, false, (r3, b3) -> {
                         }).addScrollBar(0.5f, 0.4f, 0).setScrollSpeed(0.4f);
                     });
         });
@@ -94,24 +92,24 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
     }
 
     public void enable(Unit unit) {
-        unitDescription.updateText(unit.type.description);
+        unitDescription.updateText(unit.data.type.description);
         tabSwitcher.selectTab(0);
-        unitImage = new UIImageBox(14, 14, ImageRenderer.renderImageCentered(unit.type.getImage(unit.team, UnitPose.INFO), true))
+        unitImage = new UIImageBox(14, 14, ImageRenderer.renderImageCentered(unit.data.type.getImage(unit.data.team, UnitPose.INFO), true))
                 .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER)
                 .translate(width - 1 - 14, height - 1 - 14);
-        nameText.updateTextLeft(unit.type.getName());
-        classText.updateTextLeft(unit.type.shipClass.getName() + " class");
-        List<Map.Entry<UnitCharacteristic, UnitCharacteristicValue>> characteristics = unit.type.unitCharacteristics.sequencedEntrySet().stream().toList();
+        nameText.updateTextLeft(unit.data.type.getName());
+        classText.updateTextLeft(unit.data.type.shipClass.getName() + " class");
+        List<Map.Entry<UnitCharacteristic, UnitCharacteristicValue>> characteristics = unit.data.type.unitCharacteristics.sequencedEntrySet().stream().toList();
         characteristicDisplay.modifyAndResize(characteristics.size(), (r, b, i) -> {
-            BarDisplay barDisplay = new BarDisplay(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, -(i + 1) * 1.7f, 8, characteristics.get(i).getKey().getName());
+            BarDisplay barDisplay = new BarDisplay(r, b, RenderOrder.INFO_SCREEN, 0, -(i + 1) * 1.7f, 8, characteristics.get(i).getKey().getName());
             barDisplay.bar.setFill(characteristics.get(i).getValue().fill);
             return barDisplay;
         }, (b, i) -> {
             b.bar.setFill(characteristics.get(i).getValue().fill);
             b.setText(characteristics.get(i).getKey().getName());
         });
-        overviewBars.forEach((c, b) -> b.bar.setFill(unit.type.unitCharacteristics.get(c).fill));
-        attributes = unit.type.infoAttributes;
+        overviewBars.forEach((c, b) -> b.bar.setFill(unit.data.type.unitCharacteristics.get(c).fill));
+        attributes = unit.data.type.infoAttributes;
         attributeRenderer.refreshRenderer();
         attributesScrollSurface.setScrollAmount(0);
         level.levelRenderer.endTurn.setEnabled(false);
@@ -119,9 +117,9 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
         actionElements.clear();
         actionScrollSurface.addRenderables((r, b) -> {
             ArrayList<Action> actions = new ArrayList<>();
-            if (unit.type.canCapture)
+            if (unit.data.type.canCapture)
                 actions.add(Action.CAPTURE);
-            actions.addAll(Arrays.asList(unit.type.actions));
+            actions.addAll(Arrays.asList(unit.data.type.actions));
             actions.sort(Comparator.comparingInt(a -> -a.getOrder()));
             for (int i = 0; i < actions.size(); i++) {
                 actionElements.add(new ActionOverviewElement(r, b, i + 1, actions.get(i), unit));
@@ -156,7 +154,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
         private EnergyDisplay energyDisplay;
 
         private ActionOverviewElement(GameRenderer renderer, ButtonRegister buttonRegister, int index, Action action, Unit unit) {
-            super(renderer, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, -index * 6 + .5f);
+            super(renderer, buttonRegister, RenderOrder.INFO_SCREEN, 0, -index * 6 + .5f);
             name.updateTextCenter(action.getName());
             infoText.updateText(action.infoText);
             addRenderables((r, b) -> {
@@ -200,7 +198,7 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
 
     private static class Attribute extends UIContainer {
         public Attribute(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, float x, float y, AttributeData data) {
-            super(register, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, x, y);
+            super(register, buttonRegister, RenderOrder.INFO_SCREEN, x, y);
             addRenderables((r, b) -> {
                 new UIShapeDisplayBox(r, RenderOrder.INFO_SCREEN, .5f, .5f, 2, 2)
                         .setColourTheme(data.type().colour).setShape(data.type().shapeFunction);
@@ -214,8 +212,8 @@ public class UnitInfoScreen extends LevelUIContainer<Level> {
         public UIHitPointBar bar;
         public UITextLabel textLabel;
 
-        public BarDisplay(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float spacing, String text) {
-            super(register, buttonRegister, order, buttonOrder, x, y);
+        public BarDisplay(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float spacing, String text) {
+            super(register, buttonRegister, order, x, y);
             textLabel = new UITextLabel(7, 1, false)
                     .setTextLeftBold().updateTextLeft(text);
             bar = new UIHitPointBar(0.2f, 6, 1, 0.15f, 5, UIColourTheme.LIGHT_BLUE).setRounding(0.5f);

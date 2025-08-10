@@ -26,9 +26,6 @@ public class GameRenderer implements RenderRegister<OrderedRenderable>, Deletabl
     public GameRenderer(AffineTransform transform, Supplier<AffineTransform> cameraTransform) {
         this.transform = transform;
         this.cameraTransform = cameraTransform;
-        for (RenderOrder order : RenderOrder.values()) {
-            renderables.put(order, new TreeMap<>());
-        }
     }
 
     @Override
@@ -47,6 +44,8 @@ public class GameRenderer implements RenderRegister<OrderedRenderable>, Deletabl
 
     private synchronized void processQueued() {
         qRegister.forEach(r -> {
+            if (!renderables.containsKey(r.getRenderOrder()))
+                renderables.put(r.getRenderOrder(), new TreeMap<>());
             TreeMap<Integer, HashSet<OrderedRenderable>> order = renderables.get(r.getRenderOrder());
             if (!order.containsKey(r.getZOrder()))
                 order.put(r.getZOrder(), new HashSet<>());

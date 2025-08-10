@@ -1,6 +1,5 @@
 package render.level;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import level.Level;
@@ -19,7 +18,7 @@ public class LocalNextPlayerScreen extends LevelUIContainer<Level> {
     private boolean bot;
 
     public LocalNextPlayerScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
-        super(register, buttonRegister, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, 0, 0, level);
+        super(register, buttonRegister, RenderOrder.INFO_SCREEN, 0, 0, level);
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.INFO_SCREEN_BACKGROUND, g -> {
                 g.setColor(new Color(0, 0, 0, timer.normalisedProgress()));
@@ -31,9 +30,9 @@ public class LocalNextPlayerScreen extends LevelUIContainer<Level> {
                     setEnabled(false);
                 }
             });
-            text = new UIButton(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, Renderable.right() / 2 - 16, Renderable.top() / 2 + 8, 32, 4, 2.4f, false)
+            text = new UIButton(r, b, RenderOrder.INFO_SCREEN, Renderable.right() / 2 - 16, Renderable.top() / 2 + 8, 32, 4, 2.4f, false)
                     .setClickEnabled(false).setBold();
-            continueButton = new UIButton(r, b, RenderOrder.INFO_SCREEN, ButtonOrder.INFO_SCREEN, Renderable.right() / 2 - 7, Renderable.top() / 2 - 10, 14, 4, 2.4f, false)
+            continueButton = new UIButton(r, b, RenderOrder.INFO_SCREEN, Renderable.right() / 2 - 7, Renderable.top() / 2 - 10, 14, 4, 2.4f, false)
                     .setText("Continue").setBold().setOnClick(this::disable);
         });
         timer.setReversed(true);

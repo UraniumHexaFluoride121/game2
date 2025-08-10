@@ -1,6 +1,5 @@
 package render.types.input.button;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.*;
 import render.types.box.UIBox;
@@ -15,18 +14,18 @@ public class UIButton extends AbstractUIButton {
     protected final TextRenderer text;
     public float textSize;
 
-    public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected) {
-        this(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, null);
+    public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, float textSize, boolean staySelected) {
+        this(register, buttonRegister, order, x, y, width, height, textSize, staySelected, null);
     }
 
-    public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick) {
-        this(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, onClick,
+    public UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick) {
+        this(register, buttonRegister, order, x, y, width, height, textSize, staySelected, onClick,
                 new TextRenderer(null, textSize, UITextLabel.TEXT_COLOUR)
                         .setTextAlign(HorizontalAlign.CENTER));
     }
 
-    protected UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick, TextRenderer text) {
-        super(register, buttonRegister, order, buttonOrder, x, y, height, width, staySelected, onClick);
+    protected UIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, float textSize, boolean staySelected, Runnable onClick, TextRenderer text) {
+        super(register, buttonRegister, order, x, y, height, width, staySelected, onClick);
         this.textSize = textSize;
         this.text = text;
         renderable = g -> {

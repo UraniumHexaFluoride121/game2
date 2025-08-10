@@ -1,7 +1,6 @@
 package level;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import level.energy.EnergyManager;
@@ -17,7 +16,9 @@ import render.level.PauseMenu;
 import render.level.info.*;
 import render.level.map.LevelMapUI;
 import render.level.tile.RenderElement;
-import render.level.ui.*;
+import render.level.ui.UIDamage;
+import render.level.ui.UIEndTurn;
+import render.level.ui.UITurnBox;
 import render.types.input.button.LevelUIButton;
 import render.types.input.button.LevelUIShapeButton;
 import render.types.input.button.UIButton;
@@ -122,9 +123,9 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
             level.unitSet.forEach(u -> u.renderEnergyCostIndicator(g));
         });
 
-        uiUnitInfo = new UIUnitInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, level);
+        uiUnitInfo = new UIUnitInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, level);
 
-        tileInfo = new UITileInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() - 15, .5f, level);
+        tileInfo = new UITileInfo(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, Renderable.right() - 15, .5f, level);
         tileInfo.setEnabled(false);
 
         endTurn = new UIEndTurn(levelUIRenderer, RenderOrder.LEVEL_UI, level);
@@ -139,7 +140,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         turnBox = new UITurnBox(levelUIRenderer, RenderOrder.LEVEL_UI, level);
         level.buttonRegister.register(turnBox);
 
-        exitActionButton = new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+        exitActionButton = new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 0.5f, Renderable.top() - 4.5f, 7, 1.5f, 0.9f, false, level, () -> level.tileSelector.deselectAction()) {
             @Override
             public boolean isEnabled() {
@@ -150,7 +151,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
         firingRenderer = new FiringRenderer(firingAnimRenderer, RenderOrder.BACKGROUND, level);
 
-        mapButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+        mapButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 36.5f, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
@@ -170,15 +171,39 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         damageModifierInfo = new DamageModifierInfo(levelUIRenderer, level.buttonRegister, level);
         movementModifierInfo = new MovementModifierInfo(levelUIRenderer, level.buttonRegister, level);
 
-        energyManager = new EnergyManager(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2 - 5, Renderable.top() - 3.5f, level);
+        energyManager = new EnergyManager(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, Renderable.right() / 2 - 5, Renderable.top() - 3.5f, level);
 
-        pauseMenuButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+        pauseMenuButton = new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 0.5f, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::threeLines).drawShape(0.15f).setOnClick(() -> {
                     pauseMenu.setEnabled(true);
                 });
-        pauseMenu = new PauseMenu(levelUIRenderer, level.buttonRegister, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, level);
+        pauseMenu = new PauseMenu(levelUIRenderer, level.buttonRegister, RenderOrder.PAUSE_MENU, level);
         pauseMenu.setEnabled(false);
+    }
+
+    @Override
+    protected void renderSelectedTileHighlight(Tile tile, Graphics2D g) {
+        if (level.hasActiveAction())
+            return;
+        super.renderSelectedTileHighlight(tile, g);
+    }
+
+    @Override
+    protected void renderMouseHoverTileHighlight(Tile tile, Graphics2D g) {
+        Action action = level.getActiveAction();
+        Color c = null;
+        if (action == Action.MOVE) {
+            c = level.selectedUnit.movePathValid() ? Unit.MOVE_TILE_BORDER_COLOUR : Unit.INVALID_MOVE_TILE_BORDER_COLOUR;
+        } else if (action == Action.RESUPPLY) {
+            c = Unit.RESUPPLY_TILE_FLASH;
+        } else if (action == Action.REPAIR) {
+            c = Unit.REPAIR_TILE_BORDER_COLOUR;
+        }
+        if (c != null)
+            tile.renderTile(g, c, Tile.SEGMENTED_BORDER_HIGHLIGHT_RENDERER);
+        else
+            super.renderMouseHoverTileHighlight(tile, g);
     }
 
     @Override
@@ -194,8 +219,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
     @Override
     public void acceptReleased(InputType type) {
-        if (!isFiring())
-            super.acceptReleased(type);
+        super.acceptReleased(type);
     }
 
     public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();

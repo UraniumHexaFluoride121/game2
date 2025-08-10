@@ -79,6 +79,11 @@ public class PowAnimation implements ReversableAnimationTimer {
     }
 
     @Override
+    public float timeElapsed() {
+        return (startTime - System.currentTimeMillis()) / 1000f;
+    }
+
+    @Override
     public void write(DataOutputStream w) throws IOException {
         PacketWriter.writeEnum(AnimationType.POW, w);
         w.writeLong(startTime);

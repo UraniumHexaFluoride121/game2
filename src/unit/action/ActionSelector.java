@@ -1,20 +1,15 @@
 package unit.action;
 
 import foundation.Deletable;
-import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
 import level.energy.EnergyCostDisplay;
 import level.tile.TileType;
-import render.GameRenderer;
-import render.Renderable;
+import render.*;
 import render.types.text.TextRenderer;
-import render.HorizontalAlign;
-import render.UIColourTheme;
 import render.types.box.UIBox;
 import unit.Unit;
-import unit.UnitData;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -120,8 +115,8 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
 
     public void updateActions(Unit unit) {
         if (actionMap.containsKey(FIRE)) {
-            actionMap.get(FIRE).type = !unit.stats.tilesInFiringRange(unit.getLevel().currentVisibility, new UnitData(unit), true).isEmpty() &&
-                    !unit.stealthMode && (unit.ammo > 0 || !unit.stats.consumesAmmo()) ? ActionIconType.ENABLED : unit.hasPerformedAction(FIRE) ? ActionIconType.DISABLED : ActionIconType.UNUSABLE;
+            actionMap.get(FIRE).type = !unit.stats.tilesInFiringRange(unit.getLevel().currentVisibility, unit.data, true).isEmpty() &&
+                    !unit.data.stealthMode && (unit.data.ammo > 0 || !unit.stats.consumesAmmo()) ? ActionIconType.ENABLED : unit.data.hasPerformedAction(FIRE) ? ActionIconType.DISABLED : ActionIconType.UNUSABLE;
         }
         if (actionMap.containsKey(MOVE)) {
             actionMap.get(MOVE).type = ActionIconType.ENABLED;
@@ -130,25 +125,25 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
             actionMap.get(STEALTH).type = ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(MINE)) {
-            actionMap.get(MINE).type = unit.getLevel().getTile(unit.pos).type == TileType.ASTEROIDS ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
+            actionMap.get(MINE).type = unit.getLevel().getTile(unit.data.pos).type == TileType.ASTEROIDS ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
         }
         if (actionMap.containsKey(REPAIR)) {
-            actionMap.get(REPAIR).type = unit.stats.getRepairTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
+            actionMap.get(REPAIR).type = unit.stats.getRepairTiles(unit.data.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(RESUPPLY)) {
-            actionMap.get(RESUPPLY).type = unit.stats.getResupplyTiles(unit.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
+            actionMap.get(RESUPPLY).type = unit.stats.getResupplyTiles(unit.data.pos).isEmpty() ? ActionIconType.UNUSABLE : ActionIconType.ENABLED;
         }
         if (actionMap.containsKey(SHIELD_REGEN)) {
-            actionMap.get(SHIELD_REGEN).type = unit.shieldHP < unit.stats.maxShieldHP() ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
+            actionMap.get(SHIELD_REGEN).type = unit.data.shieldRenderHP < unit.stats.maxShieldHP() ? ActionIconType.ENABLED : ActionIconType.UNUSABLE;
         }
         if (unit.canCapture()) {
             addActionEnabled(CAPTURE, unit);
-            actionMap.get(CAPTURE).type = !unit.hasPerformedAction(CAPTURE) ? ActionIconType.ENABLED : ActionIconType.DISABLED;
+            actionMap.get(CAPTURE).type = !unit.data.hasPerformedAction(CAPTURE) ? ActionIconType.ENABLED : ActionIconType.DISABLED;
         } else {
             removeAction(CAPTURE);
         }
         actionMap.forEach((a, d) -> {
-            if (unit.hasPerformedAction(a))
+            if (unit.data.hasPerformedAction(a))
                 d.type = ActionIconType.DISABLED;
         });
     }
@@ -183,8 +178,8 @@ public class ActionSelector implements Renderable, Deletable, RegisteredButtonIn
     }
 
     @Override
-    public ButtonOrder getButtonOrder() {
-        return ButtonOrder.ACTION_SELECTOR;
+    public RenderOrder getButtonOrderTemp() {
+        return RenderOrder.ACTION_SELECTOR;
     }
 
     private ObjPos actionOffset(int i) {

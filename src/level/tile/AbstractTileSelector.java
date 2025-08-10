@@ -1,15 +1,13 @@
 package level.tile;
 
 import foundation.Deletable;
-import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.HexagonalDirection;
-import foundation.math.MathUtil;
 import foundation.math.ObjPos;
-import foundation.math.RandomType;
 import level.AbstractLevel;
 import level.AbstractLevelRenderer;
+import render.RenderOrder;
 import render.Renderable;
 
 import java.awt.*;
@@ -172,8 +170,8 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
     }
 
     @Override
-    public ButtonOrder getButtonOrder() {
-        return ButtonOrder.HEXAGON;
+    public RenderOrder getButtonOrderTemp() {
+        return RenderOrder.TERRAIN;
     }
 
     @Override
@@ -248,7 +246,7 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
-        if (type == InputType.MOUSE_RIGHT) {
+        if (type == MOUSE_RIGHT) {
             level.levelRenderer.moveCameraEnd();
         }
     }

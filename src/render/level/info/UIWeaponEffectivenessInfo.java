@@ -1,6 +1,5 @@
 package render.level.info;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.OnButtonInput;
@@ -21,7 +20,7 @@ public class UIWeaponEffectivenessInfo extends LevelUIContainer<Level> {
     private PowAnimation anim = new PowAnimation(0.4f, 0.75f);
 
     public UIWeaponEffectivenessInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
-        super(register, buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2, 0.5f, level);
+        super(register, buttonRegister, RenderOrder.LEVEL_UI, Renderable.right() / 2, 0.5f, level);
         anim.finish();
         addRenderables((r, b) -> {
             displayBox = new UIDisplayBoxRenderElement(r, RenderOrder.LEVEL_UI, 0, 0, 20, -1, box -> box.setColourTheme(WeaponEffectiveness.BOX_GRAY), false);
@@ -37,7 +36,7 @@ public class UIWeaponEffectivenessInfo extends LevelUIContainer<Level> {
                     .addBox(new UIDisplayBox(0, 2, 20, -1, box -> box.setColourTheme(WeaponEffectiveness.BOX_GRAY), true)
                             .addText(0.6f, HorizontalAlign.CENTER, "Press middle mouse to show / hide colour coding"), HorizontalAlign.CENTER, 2)
                     .setColumnVerticalAlign(1, VerticalAlign.BOTTOM).setColumnVerticalAlign(2, VerticalAlign.TOP);
-            new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type == InputType.MOUSE_MIDDLE, () -> {
+            new OnButtonInput(b, RenderOrder.LEVEL_UI, type -> type == InputType.MOUSE_MIDDLE, () -> {
                 anim.setReversed(!anim.reversed());
             });
         });

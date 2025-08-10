@@ -43,7 +43,6 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.GOOD);
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
-        map.put(Action.CAPTURE, 6);
         map.put(Action.FIRE, 10);
     }, new AttributeData[]{
             ANTI_CORVETTE, BALANCED,
@@ -71,14 +70,14 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.SHIELD_REGEN, UnitCharacteristicValue.MODERATE_GOOD);
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 12);
-        map.put(Action.SHIELD_REGEN, 10);
+        map.put(Action.SHIELD_REGEN, 8);
     }, new AttributeData[]{
             ANTI_FIGHTER, ANTI_SHIELD, HAS_SHIELD,
             SLOW_ASTEROID_FIELD, CARRIER_LOADING,
             INEFFECTIVE_AGAINST_LARGE, LOW_VIEW_RANGE
     }, FiringRenderer.TWO_UNITS, "This unit is primarily designed to support larger units in destroying fighter-class enemies using high-power plasma guns. " +
             "Features an advanced shield system with decent durability, but has reduced view range and " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + ".")
-            .addShield(3, 1, 27),
+            .addShield(3, 1.5f, 27),
 
     ARTILLERY = new CorvetteType("artillery", "Artillery", 8, 4.5f, 3.5f, new Action[]{
             Action.FIRE, Action.MOVE

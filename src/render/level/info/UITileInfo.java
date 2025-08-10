@@ -1,6 +1,5 @@
 package render.level.info;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.math.MathUtil;
 import level.Level;
@@ -20,7 +19,6 @@ import render.types.box.UIDisplayBoxButtonHandler;
 import render.types.box.UIDisplayBoxRenderElement;
 import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
-import render.types.input.button.UIShapeButton;
 import render.types.text.TextRenderable;
 import render.types.text.UIStaticTooltip;
 import render.types.text.UITextLabel;
@@ -45,8 +43,8 @@ public class UITileInfo extends LevelUIContainer<Level> {
     private ImageRenderer tileImage, structureImage;
     private Point pos;
 
-    public UITileInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Level level) {
-        super(register, buttonRegister, order, buttonOrder, x, y, level);
+    public UITileInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, Level level) {
+        super(register, buttonRegister, order, x, y, level);
         addRenderables((r, b) -> {
             elements = new UIDisplayBoxRenderElement(r, RenderOrder.LEVEL_UI, 0, 0.5f, 14, HEIGHT - 9.5f, uiBox -> {
             }, false);
@@ -92,7 +90,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
             elements.box.addSpace(0.3f, 0);
             elements.box.addBox(mining, HorizontalAlign.CENTER, 0);
 
-            UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, elements.box);
+            UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r, b, RenderOrder.LEVEL_UI, elements.box);
             buttonHandler.addTooltip(0, 0, true).add(button -> {
                 float width = 17;
                 structureBox = new UIStaticTooltip(-width - 0.5f, 0, width, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
@@ -142,7 +140,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
                 displayBox.addText(0.9f, HorizontalAlign.LEFT, ModifierCategory.CONCEALMENT.getName())
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This value shows how much of a unit's " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + " is blocked by this tile. " +
-                                "Higher values make it harder to reveal through fog of war.\n\nTiles directly adjacent to allied units are always revealed, " +
+                                "Higher values make it harder to see through the fog of war.\n\nTiles directly adjacent to allied units are always revealed, " +
                                 "no matter how high the " + ModifierCategory.CONCEALMENT.getName().toLowerCase() + " value is.\n\n" +
                                 "A unit's " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + " can be found by hovering over the Hull tab in the unit info box.");
                 return displayBox;
@@ -174,7 +172,8 @@ public class UITileInfo extends LevelUIContainer<Level> {
                 return displayBox;
             });
 
-            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK, 0, 0, 14, 17, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX));
+            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, 0, 0, 14, 17, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX))
+                    .setZOrder(-10);
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     title.translate(-0.2f, HEIGHT + 0.5f),
                     fill.translate(7, HEIGHT - 8.5f),
@@ -232,7 +231,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
         this.structure.setText(0, 1, structure == null ? "None" : structure.type.getName());
         concealment.setText(0, 1, tile.type.concealment > 50 ? "Infinite" : MathUtil.floatToString(tile.type.concealment, 1) + ModifierCategory.CONCEALMENT.icon());
         movement.setText(0, 1, MathUtil.floatToString(tile.type.moveCost, 1) + ModifierCategory.MOVEMENT_COST_DISPLAY.icon());
-        incomingDamage.setText(0, 1, Modifier.percentMultiplicative(tile.type.damageModifier.effect(ModifierCategory.INCOMING_DAMAGE)) + ModifierCategory.MOVEMENT_COST_DISPLAY.icon());
+        incomingDamage.setText(0, 1, Modifier.percentMultiplicative(tile.type.damageModifier.effect(ModifierCategory.INCOMING_DAMAGE)) + ModifierCategory.INCOMING_DAMAGE.icon());
 
         if (miningPreviouslyDisabled && tile.miningBarSegments() != 0) {
             miningPreviouslyDisabled = false;

@@ -52,7 +52,7 @@ public class Structure implements Writable {
 
     public void explode() {
         if (destroyedExplosion == null)
-            destroyedExplosion = new ObjectExplosion(new ObjPos(), 0.3f);
+            destroyedExplosion = new ObjectExplosion(new ObjPos(), 0.8f);
     }
 
     public boolean exploding() {

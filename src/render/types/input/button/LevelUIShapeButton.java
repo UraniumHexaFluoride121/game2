@@ -1,15 +1,12 @@
 package render.types.input.button;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import level.AbstractLevel;
-import level.Level;
 import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
-import render.types.box.UIBox;
 import render.types.text.TooltipManager;
 
 import java.util.function.Consumer;
@@ -17,13 +14,13 @@ import java.util.function.Consumer;
 public class LevelUIShapeButton extends UIShapeButton {
     public AbstractLevel<?, ?> level;
 
-    public LevelUIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean staySelected, AbstractLevel<?, ?> level) {
-        super(register, buttonRegister, order, buttonOrder, x, y, width, height, staySelected);
+    public LevelUIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, boolean staySelected, AbstractLevel<?, ?> level) {
+        super(register, buttonRegister, order, x, y, width, height, staySelected);
         this.level = level;
     }
 
-    public LevelUIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean staySelected, Runnable onClick, AbstractLevel<?, ?> level) {
-        super(register, buttonRegister, order, buttonOrder, x, y, width, height, staySelected, onClick);
+    public LevelUIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, boolean staySelected, Runnable onClick, AbstractLevel<?, ?> level) {
+        super(register, buttonRegister, order, x, y, width, height, staySelected, onClick);
         this.level = level;
     }
 

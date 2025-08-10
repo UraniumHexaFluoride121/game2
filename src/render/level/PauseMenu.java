@@ -1,7 +1,6 @@
 package render.level;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.OnButtonInput;
@@ -29,10 +28,10 @@ public class PauseMenu extends LevelUIContainer<Level> {
     private boolean botPlaying = false;
     private UISaveBox<GameSave> saveBox;
 
-    public PauseMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
-        super(register, buttonRegister, order, buttonOrder, 0, 0, level);
+    public PauseMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, Level level) {
+        super(register, buttonRegister, order, 0, 0, level);
         addRenderables((r, b) -> {
-            new OnButtonInput(b, ButtonOrder.PAUSE_MENU, t -> t == InputType.ESCAPE, () -> setEnabled(false));
+            new OnButtonInput(b, RenderOrder.PAUSE_MENU, t -> t == InputType.ESCAPE, () -> setEnabled(false));
             new RenderElement(r, RenderOrder.PAUSE_MENU_BACKGROUND, g -> {
                 g.setColor(FULL_SCREEN_MENU_BACKGROUND_COLOUR);
                 g.fillRect(0, 0, (int) Math.ceil(Renderable.right()), (int) Math.ceil(Renderable.top()));
@@ -55,18 +54,18 @@ public class PauseMenu extends LevelUIContainer<Level> {
                     }).noDeselect().setOnDeselect(() -> {
                         saveContainer.setEnabled(false);
                     });
-            saveContainer = new UIContainer(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 + WIDTH / 2, Renderable.top() / 2 - 12);
+            saveContainer = new UIContainer(r, b, RenderOrder.PAUSE_MENU, Renderable.right() / 2 + WIDTH / 2, Renderable.top() / 2 - 12);
             saveContainer.addRenderables((r2, b2) -> {
-                saveBox = new UISaveBox<>(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
+                saveBox = new UISaveBox<>(r2, b2, RenderOrder.PAUSE_MENU,
                         2, 0, 15, 14, 1.5f, MainPanel.levelSaves);
                 new RenderElement(r2, RenderOrder.PAUSE_MENU_BACKGROUND,
                         new UITextLabel(10.5f, 1.3f, false).setTextCenterBold().updateTextCenter("Saved files").translate(4f, 14.6f),
                         new UITextLabel(10.5f, 1f, false).setTextCenterBold().updateTextCenter("Enter save name:").translate(4f, 21.6f)
                 );
-                saveFileNameBox = new UITextInputBox(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
+                saveFileNameBox = new UITextInputBox(r2, b2, RenderOrder.PAUSE_MENU,
                         2.5f, 19, 14, 2, 1, true, -1, InputType::isFileNameChar);
                 saveFileNameBox.setOnChanged(this::updateSaveButton).setBold().setColourTheme(UIColourTheme.GREEN_SELECTED);
-                saveButton = new UIButton(r2, b2, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, (15 - 8) / 2f + 2, 17.3f, 8, 1.2f, 1, false)
+                saveButton = new UIButton(r2, b2, RenderOrder.PAUSE_MENU, (15 - 8) / 2f + 2, 17.3f, 8, 1.2f, 1, false)
                         .setText("Save").setBold().setColourTheme(UIColourTheme.GRAYED_OUT).setClickEnabled(false).setOnClick(() -> {
                             String name = saveFileNameBox.getText();
                             MainPanel.levelSaves.addSave(new GameSave(level, name), name);
@@ -79,7 +78,7 @@ public class PauseMenu extends LevelUIContainer<Level> {
     }
 
     private UIButton newButton(GameRenderer r, ButtonRegister b, int i, float width, float xOffset, boolean staySelected) {
-        return new UIButton(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, Renderable.right() / 2 - WIDTH / 2 + xOffset, Renderable.top() / 2 + i * HEIGHT + Y_OFFSET, width, HEIGHT - 0.5f, 1f, staySelected)
+        return new UIButton(r, b, RenderOrder.PAUSE_MENU, Renderable.right() / 2 - WIDTH / 2 + xOffset, Renderable.top() / 2 + i * HEIGHT + Y_OFFSET, width, HEIGHT - 0.5f, 1f, staySelected)
                 .setBold().setBoxCorner(0.65f);
     }
 

@@ -4,18 +4,17 @@ import foundation.math.HexagonCorner;
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.math.RandomType;
-import level.Level;
 import level.AbstractLevel;
+import level.Level;
 import level.structure.Structure;
 import level.structure.StructureType;
 import network.PacketReceiver;
-import network.PacketWriter;
 import network.Writable;
 import render.GameRenderer;
+import render.UIColourTheme;
 import render.anim.LerpAnimation;
 import render.level.tile.HexagonRenderer;
 import render.texture.ImageRenderer;
-import render.UIColourTheme;
 import render.types.UIHitPointBar;
 import unit.Unit;
 import unit.UnitTeam;
@@ -35,7 +34,8 @@ public class Tile implements Writable {
     public static final Color
             BORDER_COLOUR = new Color(175, 249, 255),
             BLUE_HIGHLIGHT_COLOUR = new Color(87, 177, 225),
-            BLUE_TRANSPARENT_COLOUR = new Color(122, 151, 248, 142),
+            SELECTED_COLOUR = new Color(159, 159, 159),
+            MOUSE_OVER_COLOUR = new Color(172, 172, 172, 192),
             FOW_COLOUR_BACKGROUND = new Color(0, 0, 0, 153),
             FOW_COLOUR = new Color(0, 0, 0, 64),
             ILLEGAL_TILE_COLOUR = new Color(227, 90, 90);
@@ -44,8 +44,15 @@ public class Tile implements Writable {
 
     public static final HexagonRenderer
             BORDER_RENDERER = new HexagonRenderer(TILE_SIZE, false, STROKE_WIDTH, BORDER_COLOUR),
-            BORDER_HIGHLIGHT_RENDERER = new HexagonRenderer(TILE_SIZE, false, HIGHLIGHT_STROKE_WIDTH, BLUE_HIGHLIGHT_COLOUR),
+            SELECTED_BORDER_HIGHLIGHT_RENDERER = new HexagonRenderer(TILE_SIZE, false, HIGHLIGHT_STROKE_WIDTH, SELECTED_COLOUR),
+            SEGMENTED_BORDER_HIGHLIGHT_RENDERER = new HexagonRenderer(false, HIGHLIGHT_STROKE_WIDTH, MOUSE_OVER_COLOUR),
             HIGHLIGHT_RENDERER = new HexagonRenderer(TILE_SIZE, true, HIGHLIGHT_STROKE_WIDTH, BLUE_HIGHLIGHT_COLOUR);
+
+    static {
+        for (int i = 0; i < 6; i++) {
+            SEGMENTED_BORDER_HIGHLIGHT_RENDERER.addSegment(HexagonRenderer.hexagonSegment(TILE_SIZE, TILE_SIZE * 0.08f, false, i - 0.2f, i + 0.2f));
+        }
+    }
 
     public boolean isFoW = true;
 
@@ -205,12 +212,13 @@ public class Tile implements Writable {
     }
 
     public void setProgress(int progress) {
-        captureBar.setFill(progress, 1, 0.8f);
+        captureBar.setFill(progress, 0.5f, 0.8f);
     }
 
-    public void setProgress(int progress, Level level, Runnable onFillComplete) {
+    public void setProgress(int progress, Level level, boolean runOnComplete, Runnable onFillComplete) {
         setProgress(progress);
-        level.levelRenderer.registerTimerBlock(captureBar.getFillAnimation(), onFillComplete);
+        if (runOnComplete)
+            level.levelRenderer.registerTimerBlock(captureBar.getFillAnimation(), onFillComplete);
     }
 
     public int miningBarSegments() {

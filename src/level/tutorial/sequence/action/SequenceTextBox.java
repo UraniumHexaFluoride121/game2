@@ -32,10 +32,14 @@ public class SequenceTextBox implements TutorialSequenceElement, EventConsumer, 
     private SequenceTextBox(Level l, float x, float y, BoxSize boxSize, HorizontalAlign textAlign, String text, boolean map, TutorialSequenceElement... sequence) {
         tutorialSequence.setSequence(sequence);
         ObjPos pos = map ? Tile.getFractionalRenderPos(x, y) : new ObjPos(x, y);
-        textBoxSupplier = () -> new UIDisplayBoxRenderElement(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
-                pos.x, pos.y, boxSize.width, -1, box ->
-                box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK), true)
-                .addText(0.7f, textAlign, text).setHorizontalAlign(HorizontalAlign.CENTER);
+        textBoxSupplier = () -> {
+            UIDisplayBoxRenderElement element = new UIDisplayBoxRenderElement(map ? l.levelRenderer.mainRenderer : l.levelRenderer.levelUIRenderer, map ? RenderOrder.TUTORIAL_UI : RenderOrder.TUTORIAL_LEVEL_UI,
+                    pos.x, pos.y, boxSize.width, -1, box ->
+                    box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK), true)
+                    .addText(0.7f, textAlign, text);
+            element.box.setHorizontalAlign(HorizontalAlign.CENTER);
+            return element;
+        };
     }
 
     @Override

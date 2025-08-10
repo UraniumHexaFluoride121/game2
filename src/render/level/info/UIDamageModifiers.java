@@ -34,7 +34,7 @@ public class UIDamageModifiers extends LevelUIContainer<Level> {
     private final TextRenderer scroll = new TextRenderer("Scroll up / down to see all modifiers.", 0.55f, UITextLabel.TEXT_COLOUR_DARK).setTextAlign(HorizontalAlign.CENTER).setItalic(true);
 
     public UIDamageModifiers(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
-        super(register, buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2, 0, level);
+        super(register, buttonRegister, RenderOrder.LEVEL_UI, Renderable.right() / 2, 0, level);
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     new UIBox(12, 6)
@@ -48,7 +48,7 @@ public class UIDamageModifiers extends LevelUIContainer<Level> {
                             });
                     }
             ).setZOrder(-10);
-            scrollSurface = new UIElementScrollSurface<UIDisplayBoxRenderElement>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+            scrollSurface = new UIElementScrollSurface<UIDisplayBoxRenderElement>(r, b, RenderOrder.LEVEL_UI,
                     -6, 2 + 2.5f, 12, 6, false, count -> (count + 1) * 0.4f) {
                 @Override
                 public boolean posInside(ObjPos pos, InputType type) {
@@ -66,7 +66,7 @@ public class UIDamageModifiers extends LevelUIContainer<Level> {
                     .addText(0.6f, HorizontalAlign.LEFT, "Enemy:")
                     .addText(0.6f, HorizontalAlign.CENTER, 1, null)
                     .addText(0.6f, HorizontalAlign.RIGHT, 2, null);
-            new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type == InputType.MOUSE_MIDDLE, () -> {
+            new OnButtonInput(b, RenderOrder.LEVEL_UI, type -> type == InputType.MOUSE_MIDDLE, () -> {
                 level.levelRenderer.damageModifierInfo.enable();
             });
         });
@@ -137,7 +137,7 @@ public class UIDamageModifiers extends LevelUIContainer<Level> {
                         finalColour + Modifier.percentMultiplicative(multiplier) + " (Modifiers)   " + MODIFIER_GRAY.display + RIGHT_ARROW.display + "   " +
                         finalColour + MathUtil.floatToString(damage, 1) + DAMAGE_ICON.display);
         totalDamage.box.modifyBox(box -> box.setColourTheme(WeaponEffectiveness.fromMultiplier(multiplier, 0.2f).boxColour()));
-        enemyInfo.box.setText(0, 1, otherUnit.type.shipClass.icon.display + otherUnit.type.getName())
+        enemyInfo.box.setText(0, 1, otherUnit.data.type.shipClass.icon.display + otherUnit.data.type.getName())
                 .setText(0, 2, effectiveness.textColour + effectiveness.name);
         enemyInfo.box.modifyBox(box -> box.setColourTheme(effectiveness.boxColour()));
     }

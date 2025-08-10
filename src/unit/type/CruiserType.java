@@ -74,13 +74,13 @@ public class CruiserType extends UnitType {
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 10);
-        map.put(Action.SHIELD_REGEN, 12);
+        map.put(Action.SHIELD_REGEN, 6);
     }, new AttributeData[]{
             ANTI_CORVETTE, ANTI_FIGHTER, HAS_SHIELD,
             NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_LARGE
     }, FiringRenderer.TWO_UNITS_BACK, "This heavily armed cruiser comes equipped with multiple weapons systems that makes " +
             "it effective for destroying both fighter-class and corvette-class units. It also features a shield system which improves its defensive capabilities.")
-            .modify(u -> u.addShield(2, 0.8f, 33)),
+            .modify(u -> u.addShield(2, 1f, 33)),
 
     MINER = new CruiserType("miner", "Mining Unit", 6, 4.5f, 2.8f, new Action[]{
             Action.MOVE, Action.MINE

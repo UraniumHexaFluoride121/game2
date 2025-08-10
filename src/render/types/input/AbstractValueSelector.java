@@ -14,7 +14,6 @@ public abstract class AbstractValueSelector<T> extends AbstractRenderElement imp
     protected final ButtonRegister internal = new ButtonRegister();
     protected final UIShapeButton left, right;
     protected final UITextDisplayBox displayBox;
-    protected final ButtonOrder buttonOrder;
     protected final float height, displayWidth;
     protected T value;
     protected int index;
@@ -24,20 +23,19 @@ public abstract class AbstractValueSelector<T> extends AbstractRenderElement imp
     protected ButtonClickHandler tooltipClickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false);
     protected final TooltipManager tooltip = new TooltipManager(this);
 
-    public AbstractValueSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float height, float displayWidth) {
+    public AbstractValueSelector(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float height, float displayWidth) {
         super(register, order);
         this.buttonRegister = buttonRegister;
-        this.buttonOrder = buttonOrder;
         this.height = height;
         this.displayWidth = displayWidth;
         hitBox = HitBox.createFromOriginAndSize(x, y, 2 * height + .5f * 2 + displayWidth, height);
-        left = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x, y, height, height, false)
+        left = new UIShapeButton(null, internal, RenderOrder.NONE, x, y, height, height, false)
                 .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleLeft)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_LEFT_CORNERS_CUT)
                 .setBoxCorner(0.5f)
                 .setOnClick(this::decrement);
-        right = new UIShapeButton(null, internal, RenderOrder.NONE, ButtonOrder.MAIN_BUTTONS, x + height + .5f * 2 + displayWidth, y, height, height, false)
+        right = new UIShapeButton(null, internal, RenderOrder.NONE, x + height + .5f * 2 + displayWidth, y, height, height, false)
                 .setColourTheme(theme)
                 .setShape(UIShapeButton::triangleRight)
                 .setBoxShape(UIBox.BoxShape.RECTANGLE_RIGHT_CORNERS_CUT)
@@ -156,11 +154,6 @@ public abstract class AbstractValueSelector<T> extends AbstractRenderElement imp
     @Override
     public boolean blocking(InputType type) {
         return blocking;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override

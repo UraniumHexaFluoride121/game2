@@ -8,7 +8,6 @@ public enum RenderOrder {
     //In-game level
     BACKGROUND,
     TERRAIN,
-    TILE_BORDER,
     TILE_HIGHLIGHT,
     ACTION_BELOW_UNITS,
     TILE_UNITS,
@@ -28,6 +27,7 @@ public enum RenderOrder {
     MAP,
     INFO_SCREEN_BACKGROUND,
     INFO_SCREEN,
+    TUTORIAL_INFO_SCREEN,
     PAUSE_MENU_BACKGROUND,
     PAUSE_MENU,
     END_SCREEN,

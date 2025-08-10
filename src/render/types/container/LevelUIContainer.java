@@ -1,22 +1,18 @@
 package render.types.container;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
 import level.AbstractLevel;
-import render.GameRenderer;
 import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
 
-import java.util.function.BiConsumer;
-
 public class LevelUIContainer<T extends AbstractLevel<?, ?>> extends UIContainer {
     public T level;
 
-    public LevelUIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, T level) {
-        super(register, buttonRegister, order, buttonOrder, x, y);
+    public LevelUIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, T level) {
+        super(register, buttonRegister, order, x, y);
         this.level = level;
     }
 

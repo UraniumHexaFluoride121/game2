@@ -1,5 +1,7 @@
 package render;
 
+import foundation.math.MathUtil;
+
 import java.awt.*;
 import java.util.function.UnaryOperator;
 
@@ -156,5 +158,9 @@ public class UIColourTheme {
 
     public static Color darken(Color c, float brightness) {
         return new Color((int) (c.getRed() * brightness), (int) (c.getGreen() * brightness), (int) (c.getBlue() * brightness), c.getAlpha());
+    }
+
+    public static Color lerp(Color a, Color b, float t) {
+        return new Color((int) MathUtil.lerp(a.getRed(), b.getRed(), t), (int) MathUtil.lerp(a.getGreen(), b.getGreen(), t), (int) MathUtil.lerp(a.getBlue(), b.getBlue(), t), (int) MathUtil.lerp(a.getAlpha(), b.getAlpha(), t));
     }
 }

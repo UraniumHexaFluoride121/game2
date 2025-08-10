@@ -1,6 +1,5 @@
 package render.types.input.button;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import render.*;
 import render.types.box.UIBox;
@@ -18,12 +17,12 @@ import static level.tile.Tile.*;
 public class UIShapeButton extends AbstractUIButton {
     private Shape renderShape = null;
 
-    public UIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean staySelected) {
-        this(register, buttonRegister, order, buttonOrder, x, y, width, height, staySelected, null);
+    public UIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, boolean staySelected) {
+        this(register, buttonRegister, order, x, y, width, height, staySelected, null);
     }
 
-    public UIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, boolean staySelected, Runnable onClick) {
-        super(register, buttonRegister, order, buttonOrder, x, y, height, width, staySelected, onClick);
+    public UIShapeButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, boolean staySelected, Runnable onClick) {
+        super(register, buttonRegister, order, x, y, height, width, staySelected, onClick);
         renderable = g -> {
             if (!isEnabled())
                 return;

@@ -2,7 +2,6 @@ package render;
 
 import foundation.Main;
 import foundation.input.ButtonClickHandler;
-import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
@@ -107,11 +106,6 @@ public class UIConfirm extends AbstractRenderElement implements RegisteredButton
     @Override
     public boolean blocking(InputType type) {
         return true;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return ButtonOrder.CONFIRM_UI;
     }
 
     @Override

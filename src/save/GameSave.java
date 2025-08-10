@@ -9,10 +9,7 @@ import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileData;
 import level.tile.TileType;
-import unit.TileMapDisplayable;
-import unit.UnitData;
-import unit.UnitMapDataConsumer;
-import unit.UnitTeam;
+import unit.*;
 
 import java.awt.*;
 import java.io.*;
@@ -68,7 +65,7 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
         initialTeams = new HashMap<>(level.initialPlayerTeams);
         destroyedUnitsDamage = new HashMap<>(level.destroyedUnitsDamage);
         destroyedUnits = new HashMap<>(level.destroyedUnitsByTeam);
-        level.unitSet.forEach(u -> unitData.add(new UnitData(u)));
+        level.unitSet.forEach(u -> unitData.add(u.data.copy()));
         activeTeam = level.getActiveTeam();
         availableMap = new HashMap<>(level.levelRenderer.energyManager.availableMap);
         bots = level.bots;
@@ -120,7 +117,7 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
         }
         level.setBasePositions(basePositions);
         unitData.forEach(d -> {
-            d.getUnit(level, false);
+            d.copy().getUnit(level, false);
         });
         level.updateFoW();
         level.levelRenderer.energyManager.recalculateIncome();

@@ -35,7 +35,7 @@ public class WeaponInstance {
 
     public void fire(FiringData firingData) {
         if (firingData.thisUnit.stats.consumesAmmo())
-            firingData.thisData.weaponAmmo--;
+            firingData.thisData.ammo--;
         float damageLeft = firingData.thisUnit.stats.baseDamage();
         float shieldDamage = getShieldDamage(firingData, damageLeft);
         damageLeft = newDamageLeft(damageLeft, shieldDamage, firingData.otherData.shieldHP);

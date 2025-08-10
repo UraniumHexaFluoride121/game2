@@ -1,6 +1,5 @@
 package render.types.input;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.ButtonState;
 import foundation.input.InputType;
@@ -25,8 +24,8 @@ public class UITextInputBox extends UIButton {
     private final Predicate<InputType> allowedChars;
     private final EditableTextRenderer editableText;
 
-    public UITextInputBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, int maxLength, Predicate<InputType> allowedChars) {
-        super(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, null,
+    public UITextInputBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, float textSize, boolean staySelected, int maxLength, Predicate<InputType> allowedChars) {
+        super(register, buttonRegister, order, x, y, width, height, textSize, staySelected, null,
                 new EditableTextRenderer(null, textSize, UITextLabel.TEXT_COLOUR, maxLength == -1 ? 100 : maxLength)
                         .setTextAlign(HorizontalAlign.CENTER));
         editableText = (EditableTextRenderer) text;

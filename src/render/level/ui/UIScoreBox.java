@@ -1,6 +1,5 @@
 package render.level.ui;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import level.Level;
 import level.PlayerTeam;
@@ -16,8 +15,8 @@ import render.types.text.UITextLabel;
 import static render.types.text.TextRenderable.*;
 
 public class UIScoreBox extends UIContainer {
-    public UIScoreBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, PlayerTeam team, Level level) {
-        super(register, buttonRegister, order, buttonOrder, x, y);
+    public UIScoreBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, PlayerTeam team, Level level) {
+        super(register, buttonRegister, order, x, y);
         addRenderables((r, b) -> {
             int damageScore = (int) level.getPlayerTeamScore(level::getDamageScore, team, false);
             int turnScore = (int) level.getPlayerTeamScore(level::getTurnScore, team, false);

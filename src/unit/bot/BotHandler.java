@@ -16,10 +16,7 @@ import render.anim.AnimTilePath;
 import render.anim.PowAnimation;
 import render.level.FiringRenderer;
 import render.level.tile.TilePath;
-import unit.ShipClass;
-import unit.Unit;
-import unit.UnitData;
-import unit.UnitTeam;
+import unit.*;
 import unit.action.Action;
 import unit.weapon.FiringData;
 import unit.weapon.WeaponInstance;
@@ -64,7 +61,8 @@ public class BotHandler implements Deletable, Tickable {
             else
                 return executeMove(data);
         }
-        float m = Math.max(MathUtil.lerp(15, 0, level.unitSet.stream().filter(u -> u.team == team).count() / (level.levelRenderer.energyManager.incomeMap.get(team) / 12f)), 0);
+        long teamUnitCount = level.unitSet.stream().filter(u -> u.data.team == team).count();
+        float m = Math.max(MathUtil.lerp(15, 0, teamUnitCount / (level.levelRenderer.energyManager.incomeMap.get(team) / 12f)), 0);
         VisibilityData visibility = level.getVisibilityData(team);
         int energyAvailable = level.levelRenderer.energyManager.availableMap.get(team);
         AtomicReference<Action> action = new AtomicReference<>(), secondaryAction = new AtomicReference<>();
@@ -72,42 +70,51 @@ public class BotHandler implements Deletable, Tickable {
         AtomicReference<Unit> unit = new AtomicReference<>();
         AtomicReference<Float> value = new AtomicReference<>((float) Integer.MIN_VALUE);
         unitMoveData.forEach((u, d) -> {
-            if (u.hasPerformedAction(Action.MOVE) || !u.type.canPerformAction(Action.MOVE) || u.getCaptureProgress() > 0)
+            if (u.data.hasPerformedAction(Action.MOVE) || !u.data.type.canPerformAction(Action.MOVE) || u.getCaptureProgress() > 0)
                 return;
             HashMap<Point, Float> costMap = u.tilesInMoveRangeCostMap(visibility);
-            float current = d.get(u.pos);
+            float current = d.get(u.data.pos);
             costMap.forEach((p, cost) -> {
                 int energyCost = TilePath.getEnergyCost(u.stats, costMap, p);
                 Tile t = level.getTile(p);
                 if (!u.canUnitAppearToBeMoved(t, visibility) || energyCost > energyAvailable)
                     return;
 
-                float v = (d.get(p) - current) / (energyCost + 2 + costModifier(m, u)) * (float) Math.pow(u.hitPoints / u.type.hitPoints, 0.5f);
-                if (t.hasStructure() && t.structure.canBeCaptured && !u.type.canPerformAction(Action.CAPTURE))
-                    v -= 12;
+                float v = (d.get(p) - current) / (energyCost + 2 + costModifier(m, u)) * (float) Math.pow(u.data.hitPoints / u.stats.maxHP(), 0.5f);
+                if (t.hasStructure() && t.structure.canBeCaptured && !level.samePlayerTeam(t.structure.team, team)) {
+                    if (u.data.type.canPerformAction(Action.CAPTURE))
+                        v += 2;
+                    else
+                        v -= 12;
+                }
                 if (u.isCapturing())
-                    v -= 5;
-                if (u.mining)
+                    v -= 10;
+                if (u.data.mining)
                     v -= 15;
                 v *= reducedNoise();
                 if (v > value.get()) {
-                    unit.set(u);
-                    action.set(Action.MOVE);
-                    secondaryAction.set(null);
-                    target.set(p);
-                    value.set(v);
-                    unitDebugData = d;
+                    if (u.data.type.canPerformAction(Action.MINE) || u.data.type.canPerformAction(Action.STEALTH) || teamUnitCount <= 3 || !TileSet.tilesInRadius(p, 3, level)
+                            .m(level, tm -> tm.unitFilter(TileModifier.hasAlliedUnit(team, level)).remove(u.data.pos)).isEmpty()) {
+                        unit.set(u);
+                        action.set(Action.MOVE);
+                        secondaryAction.set(null);
+                        target.set(p);
+                        value.set(v);
+                        unitDebugData = d;
+                    }
                 }
-                UnitData data = new UnitData(u);
-                data.pos = p;
-                if (!u.hasPerformedAction(Action.FIRE) && u.type.canPerformAction(Action.FIRE) && !u.stealthMode
-                        && energyCost + u.stats.getActionCost(Action.FIRE).get() <= energyAvailable) {
+                if (!u.data.hasPerformedAction(Action.FIRE) && u.data.type.canPerformAction(Action.FIRE) && !u.data.stealthMode
+                        && energyCost + u.stats.getActionCost(Action.FIRE).orElse(0) <= energyAvailable) {
+                    UnitData data = u.data.copy();
+                    data.pos = p;
                     TileSet firingTiles = u.stats.tilesInFiringRange(visibility, data, true);
                     for (Point firingTile : firingTiles) {
                         Unit other = level.getUnit(firingTile);
                         FiringData firingData = u.getCurrentFiringData(other)
                                 .setThisPos(p);
                         WeaponInstance thisWeapon = firingData.getBestWeaponAgainst(true);
+                        if (thisWeapon == null)
+                            break;
                         float damageDealt = thisWeapon.getDamageAgainst(firingData);
                         FiringData reverse = FiringData.reverse(firingData);
                         WeaponInstance otherWeapon = reverse.getBestWeaponAgainst(true);
@@ -118,22 +125,25 @@ public class BotHandler implements Deletable, Tickable {
                         if (t.hasStructure() && level.samePlayerTeam(team, t.structure.team) && other.canCapture())
                             v += other.getCaptureProgress() > 0 ? 10 : 2;
                         if (v > value.get()) {
-                            unit.set(u);
-                            action.set(Action.MOVE);
-                            secondaryAction.set(Action.FIRE);
-                            target.set(p);
-                            secondaryTarget.set(firingTile);
-                            value.set(v);
-                            unitDebugData = d;
+                            if (u.stats.hasNonStandardRange() || teamUnitCount <= 3 || !TileSet.tilesInRadius(p, 3, level)
+                                    .m(level, tm -> tm.unitFilter(TileModifier.hasAlliedUnit(team, level)).remove(u.data.pos)).isEmpty()) {
+                                unit.set(u);
+                                action.set(Action.MOVE);
+                                secondaryAction.set(Action.FIRE);
+                                target.set(p);
+                                secondaryTarget.set(firingTile);
+                                value.set(v);
+                                unitDebugData = d;
+                            }
                         }
                     }
                 }
-                if (!u.hasPerformedAction(Action.REPAIR) && u.type.canPerformAction(Action.REPAIR)
-                        && energyCost + u.stats.getActionCost(Action.REPAIR).get() <= energyAvailable) {
+                if (!u.data.hasPerformedAction(Action.REPAIR) && u.data.type.canPerformAction(Action.REPAIR)
+                        && energyCost + u.stats.getActionCost(Action.REPAIR).orElse(0) <= energyAvailable) {
                     for (Point tile : u.stats.getRepairTiles(p)) {
                         Unit other = level.getUnit(tile);
-                        float repairAmount = Math.min(u.stats.repair(), other.type.hitPoints - other.hitPoints);
-                        v = noise() * (d.get(p) - current + repairAmount * 30 * (10 / other.type.hitPoints)) / (energyCost + 2 + costModifier(m, u) + u.stats.getActionCost(Action.REPAIR).orElse(0));
+                        float repairAmount = Math.min(u.stats.repair(), other.stats.maxHP() - other.data.hitPoints);
+                        v = noise() * (d.get(p) - current + repairAmount * 40 * (10 / other.stats.maxHP())) / (energyCost + 2 + costModifier(m, u) + u.stats.getActionCost(Action.REPAIR).orElse(0));
                         if (v > value.get()) {
                             unit.set(u);
                             action.set(Action.MOVE);
@@ -145,10 +155,10 @@ public class BotHandler implements Deletable, Tickable {
                         }
                     }
                 }
-                if (!u.hasPerformedAction(Action.RESUPPLY) && u.type.canPerformAction(Action.RESUPPLY)
-                        && energyCost + u.stats.getActionCost(Action.RESUPPLY).get() <= energyAvailable) {
+                if (!u.data.hasPerformedAction(Action.RESUPPLY) && u.data.type.canPerformAction(Action.RESUPPLY)
+                        && energyCost + u.stats.getActionCost(Action.RESUPPLY).orElse(0) <= energyAvailable) {
                     for (Point tile : u.stats.getResupplyTiles(p)) {
-                        v = noise() * (d.get(p) - current + (float) Math.pow(1 - u.ammo / (float) u.stats.ammoCapacity(), 1.3f) * 40) / (energyCost + 2 + costModifier(m, u) + u.stats.getActionCost(Action.RESUPPLY).orElse(0));
+                        v = noise() * (d.get(p) - current + (float) Math.pow(1 - u.data.ammo / (float) u.stats.ammoCapacity(), 1.3f) * 40) / (energyCost + 2 + costModifier(m, u) + u.stats.getActionCost(Action.RESUPPLY).orElse(0));
                         if (v > value.get()) {
                             unit.set(u);
                             action.set(Action.MOVE);
@@ -163,13 +173,15 @@ public class BotHandler implements Deletable, Tickable {
             });
         });
         thisTeamUnits.forEach(u -> {
-            if (u.hasPerformedAction(Action.FIRE) || !u.type.canPerformAction(Action.FIRE) || u.stats.getActionCost(Action.FIRE).orElse(Integer.MAX_VALUE) > energyAvailable || u.stealthMode)
+            if (u.data.hasPerformedAction(Action.FIRE) || !u.data.type.canPerformAction(Action.FIRE) || u.stats.getActionCost(Action.FIRE).orElse(Integer.MAX_VALUE) > energyAvailable || u.data.stealthMode)
                 return;
-            TileSet firingTiles = u.stats.tilesInFiringRange(visibility, new UnitData(u), true);
+            TileSet firingTiles = u.stats.tilesInFiringRange(visibility, u.data, true);
             for (Point firingTile : firingTiles) {
                 Unit other = level.getUnit(firingTile);
                 FiringData firingData = u.getCurrentFiringData(other);
                 WeaponInstance thisWeapon = firingData.getBestWeaponAgainst(true);
+                if (thisWeapon == null)
+                    break;
                 float damageDealt = thisWeapon.getDamageAgainst(firingData);
                 FiringData reverse = FiringData.reverse(firingData);
                 WeaponInstance otherWeapon = reverse.getBestWeaponAgainst(true);
@@ -181,7 +193,7 @@ public class BotHandler implements Deletable, Tickable {
                 if (t.hasStructure() && level.samePlayerTeam(team, t.structure.team) && other.canCapture())
                     v += other.getCaptureProgress() > 0 ? 10 : 2;
                 v *= noise();
-                if (v > value.get() && !u.hasPerformedAction(Action.FIRE)) {
+                if (v > value.get() && !u.data.hasPerformedAction(Action.FIRE)) {
                     unit.set(u);
                     action.set(Action.FIRE);
                     secondaryAction.set(null);
@@ -191,7 +203,7 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (u.type.canPerformAction(Action.MINE) && !u.mining && !u.hasPerformedAction(Action.MINE) && level.getTile(u.pos).type == TileType.ASTEROIDS) {
+            if (u.data.type.canPerformAction(Action.MINE) && !u.data.mining && !u.data.hasPerformedAction(Action.MINE) && level.getTile(u.data.pos).type == TileType.ASTEROIDS) {
                 float v = (reducedNoise() + 1) * 15;
                 if (v > value.get()) {
                     unit.set(u);
@@ -202,12 +214,12 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (!u.hasPerformedAction(Action.REPAIR) && u.type.canPerformAction(Action.REPAIR)
-                    && u.stats.getActionCost(Action.REPAIR).get() <= energyAvailable) {
-                for (Point tile : u.stats.getRepairTiles(u.pos)) {
+            if (!u.data.hasPerformedAction(Action.REPAIR) && u.data.type.canPerformAction(Action.REPAIR)
+                    && u.stats.getActionCost(Action.REPAIR).orElse(0) <= energyAvailable) {
+                for (Point tile : u.stats.getRepairTiles(u.data.pos)) {
                     Unit other = level.getUnit(tile);
-                    float repairAmount = Math.min(u.stats.repair(), other.type.hitPoints - other.hitPoints);
-                    float v = noise() * (repairAmount * 30 * (10 / other.type.hitPoints)) / (u.stats.getActionCost(Action.REPAIR).orElse(0) + costModifier(m, u));
+                    float repairAmount = Math.min(u.stats.repair(), other.stats.maxHP() - other.data.hitPoints);
+                    float v = noise() * (repairAmount * 40 * (10 / other.stats.maxHP())) / (u.stats.getActionCost(Action.REPAIR).orElse(0) + costModifier(m, u));
                     if (v > value.get()) {
                         unit.set(u);
                         action.set(Action.REPAIR);
@@ -219,10 +231,10 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (!u.hasPerformedAction(Action.RESUPPLY) && u.type.canPerformAction(Action.RESUPPLY)
-                    && u.stats.getActionCost(Action.RESUPPLY).get() <= energyAvailable) {
-                for (Point tile : u.stats.getResupplyTiles(u.pos)) {
-                    float v = noise() * ((float) Math.pow(1 - u.ammo / (float) u.stats.ammoCapacity(), 1.3f) * 40) / (u.stats.getActionCost(Action.RESUPPLY).orElse(0) + costModifier(m, u));
+            if (!u.data.hasPerformedAction(Action.RESUPPLY) && u.data.type.canPerformAction(Action.RESUPPLY)
+                    && u.stats.getActionCost(Action.RESUPPLY).orElse(0) <= energyAvailable) {
+                for (Point tile : u.stats.getResupplyTiles(u.data.pos)) {
+                    float v = noise() * ((float) Math.pow(1 - u.data.ammo / (float) u.stats.ammoCapacity(), 1.3f) * 40) / (u.stats.getActionCost(Action.RESUPPLY).orElse(0) + costModifier(m, u));
                     if (v > value.get()) {
                         unit.set(u);
                         action.set(Action.RESUPPLY);
@@ -234,12 +246,12 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (u.hasPerformedAction(Action.SHIELD_REGEN) || !u.type.canPerformAction(Action.SHIELD_REGEN))
+            if (u.data.hasPerformedAction(Action.SHIELD_REGEN) || !u.data.type.canPerformAction(Action.SHIELD_REGEN))
                 return;
-            int cost = u.stats.getActionCost(Action.SHIELD_REGEN).get();
+            int cost = u.stats.getActionCost(Action.SHIELD_REGEN).orElse(0);
             if (cost > energyAvailable)
                 return;
-            float regen = Math.min(u.stats.shieldRegen(), u.stats.maxShieldHP() - u.shieldHP);
+            float regen = Math.min(u.stats.shieldRegen(), u.stats.maxShieldHP() - u.data.shieldHP);
             float v = noise() * 15 * regen / (cost + costModifier(m, u));
             if (regen > 0 && v > value.get()) {
                 unit.set(u);
@@ -249,20 +261,20 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (u.isCapturing() || u.hasPerformedAction(Action.CAPTURE) || !u.type.canPerformAction(Action.CAPTURE) || u.stats.getActionCost(Action.CAPTURE).orElse(Integer.MAX_VALUE) > energyAvailable)
+            if (u.isCapturing() || u.data.hasPerformedAction(Action.CAPTURE) || !u.data.type.canPerformAction(Action.CAPTURE) || u.stats.getActionCost(Action.CAPTURE).orElse(0) > energyAvailable)
                 return;
-            Tile t = level.getTile(u.pos);
+            Tile t = level.getTile(u.data.pos);
             if (t.hasStructure() && t.structure.canBeCaptured && !level.samePlayerTeam(team, t.structure.team)) {
-                TileSet surrounding = TileSet.tilesInRadius(u.pos, 2, level);
+                TileSet surrounding = TileSet.tilesInRadius(u.data.pos, 2, level);
                 boolean hasUnit = false;
                 for (Point p : surrounding) {
                     Unit other = level.getUnit(p);
-                    if (other != null && !level.samePlayerTeam(u, other) && other.visible(visibility) && other.type.canPerformAction(Action.FIRE)) {
+                    if (other != null && !level.samePlayerTeam(u, other) && other.visible(visibility) && other.data.type.canPerformAction(Action.FIRE)) {
                         hasUnit = true;
                         break;
                     }
                 }
-                float v = noise() * 20;
+                float v = reducedNoise() * 30;
                 if (!hasUnit && v > value.get()) {
                     unit.set(u);
                     action.set(Action.CAPTURE);
@@ -272,16 +284,16 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         thisTeamUnits.forEach(u -> {
-            if (u.hasPerformedAction(Action.STEALTH) || !u.type.canPerformAction(Action.STEALTH) || u.stats.getActionCost(Action.STEALTH).orElse(Integer.MAX_VALUE) > energyAvailable)
+            if (u.data.hasPerformedAction(Action.STEALTH) || !u.data.type.canPerformAction(Action.STEALTH) || u.stats.getActionCost(Action.STEALTH).orElse(Integer.MAX_VALUE) > energyAvailable)
                 return;
             int enemyCount = 0;
-            for (Point p : TileSet.tilesInRadius(u.pos, 6, level)) {
+            for (Point p : TileSet.tilesInRadius(u.data.pos, 6, level)) {
                 Unit other = level.getUnit(p);
                 if (other != null && other.visible(visibility) && !level.samePlayerTeam(u, other))
                     enemyCount++;
             }
             float v;
-            if (u.stealthMode) {
+            if (u.data.stealthMode) {
                 v = noise() * 0.3f * (3 * enemyCount + 10 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5) * (float) Math.log(u.stats.getPerTurnActionCost(Action.STEALTH).orElse(1) + 1 + costModifier(m, u));
             } else
                 v = noise() * (28 - 4 * enemyCount - 5 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5 * u.stats.getPerTurnActionCost(Action.STEALTH).orElse(0) + 1 + costModifier(m, u));
@@ -302,7 +314,7 @@ public class BotHandler implements Deletable, Tickable {
             return false;
         VisibilityData visibility = level.getVisibilityData(team);
         if (d.action == Action.MOVE) {
-            TilePath path = new TilePath(d.unit.stats.tilesInMoveRange(visibility), d.unit.pos, level.tileSelector);
+            TilePath path = new TilePath(d.unit.stats.tilesInMoveRange(visibility), d.unit.data.pos, level.tileSelector);
             path.setShortestPath(d.target, d.unit.stats, level);
             AnimTilePath animPath = path.getAnimPath(p -> d.unit.isIllegalTile(p, visibility));
             selectUnitTile(d.unit);
@@ -319,7 +331,7 @@ public class BotHandler implements Deletable, Tickable {
                             if (level.networkState == NetworkState.SERVER) {
                                 level.server.sendUnitShootPacket(d.unit, other);
                             }
-                            d.unit.addPerformedAction(Action.FIRE);
+                            d.unit.data.addPerformedAction(Action.FIRE);
                             d.unit.attack(other);
                         });
                     }
@@ -338,9 +350,9 @@ public class BotHandler implements Deletable, Tickable {
                         });
                     }
                 });
-                level.levelRenderer.energyManager.canAfford(d.unit.team, animPath.getEnergyCost(d.unit, level), true);
+                level.levelRenderer.energyManager.canAfford(d.unit.data.team, animPath.getEnergyCost(d.unit, level), true);
                 if (level.networkState == NetworkState.SERVER) {
-                    level.server.sendUnitMovePacket(animPath, illegalTile, d.unit.pos, d.unit);
+                    level.server.sendUnitMovePacket(animPath, illegalTile, d.unit.data.pos, d.unit);
                 }
                 d.unit.startMove(animPath, illegalTile);
             });
@@ -356,7 +368,7 @@ public class BotHandler implements Deletable, Tickable {
                     level.server.sendUnitShootPacket(d.unit, other);
                 }
                 d.unit.attack(other);
-                d.unit.addPerformedAction(Action.FIRE);
+                d.unit.data.addPerformedAction(Action.FIRE);
             });
             return true;
         }
@@ -411,8 +423,8 @@ public class BotHandler implements Deletable, Tickable {
             selectUnitTile(u);
             anim.addTask(1, () -> {
                 level.levelRenderer.energyManager.canAfford(u, Action.STEALTH, true);
-                u.addPerformedAction(Action.STEALTH);
-                u.setStealthMode(!u.stealthMode);
+                u.data.addPerformedAction(Action.STEALTH);
+                u.setStealthMode(!u.data.stealthMode);
                 if (level.networkState == NetworkState.SERVER)
                     level.server.sendUnitStealthPacket(u);
                 selectUnitTile(u);
@@ -432,9 +444,9 @@ public class BotHandler implements Deletable, Tickable {
         }
         thisTeamUnits = new HashSet<>();
         level.unitSet.forEach(u -> {
-            if (u.team == team) {
+            if (u.data.team == team) {
                 thisTeamUnits.add(u);
-                data(ALLIED_UNITS).addValue(u.pos, 3, r -> expDecay(10, .5f, r));
+                data(ALLIED_UNITS).addValue(u.data.pos, 3, r -> expDecay(10, .5f, r));
             }
         });
         level.tileSelector.tileSet.forEach(t -> {
@@ -452,7 +464,7 @@ public class BotHandler implements Deletable, Tickable {
                         .addPointValue(pos, 5);
             } else {
                 Unit u = level.getUnit(pos);
-                if (u != null && !level.samePlayerTeam(team, u.team) && u.canCapture()) {
+                if (u != null && !level.samePlayerTeam(team, u.data.team) && u.canCapture()) {
                     data(ALLIED_UNITS_NEEDED).addValue(pos, 6, r -> 150 - 20f * r);
                 }
             }
@@ -460,7 +472,7 @@ public class BotHandler implements Deletable, Tickable {
         level.tileSelector.tileSet.forEach(t -> {
             if (!t.hasStructure())
                 return;
-            if (!level.samePlayerTeam(t.structure.team, team) && TileSet.tilesInRadius(t.pos, 2, level).m(level, m -> m.unitFilter(TileModifier.withVisibleEnemies(team, level).and(u -> u.type.canPerformAction(Action.FIRE)))).isEmpty()) {
+            if (!level.samePlayerTeam(t.structure.team, team) && TileSet.tilesInRadius(t.pos, 2, level).m(level, m -> m.unitFilter(TileModifier.withVisibleEnemies(team, level).and(u -> u.data.type.canPerformAction(Action.FIRE)))).isEmpty()) {
                 data(ENEMY_UNIT_POSITIONS)
                         .addValue(t.pos, 6, r -> (float) Math.pow(26f - 4 * r, 0.7f) * 0.75f);
                 data(ENEMY_UNIT_POSITIONS)
@@ -468,39 +480,39 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         level.unitSet.forEach(u -> {
-            if (!level.samePlayerTeam(team, u.team) && u.visible(visibility)) {
-                data(ENEMY_UNIT_POSITIONS).addValue(u.pos, 4, r -> 10 - r * 2f);
-                data(SCOUT_NEEDED).addValue(u.pos, 1, r -> -120f);
+            if (!level.samePlayerTeam(team, u.data.team) && u.visible(visibility)) {
+                data(ENEMY_UNIT_POSITIONS).addValue(u.data.pos, 4, r -> 10 - r * 2f);
+                data(SCOUT_NEEDED).addValue(u.data.pos, 1, r -> -120f);
                 for (ShipClass shipClass : ShipClass.values()) {
                     data(enemyDamageTypeFromClass(shipClass))
-                            .addValue(u.pos, 4, r -> (TutorialManager.isTutorial() ? 0f : 1) * (10 - r * 2f) * u.getDamageAgainstClass(shipClass));
+                            .addValue(u.data.pos, 4, r -> (TutorialManager.isTutorial() ? 0f : 1) * (10 - r * 2f) * u.getDamageAgainstClass(shipClass));
                 }
             } else {
-                data(SCOUT_NEEDED).addValue(u.pos, 1, r -> -30f);
+                data(SCOUT_NEEDED).addValue(u.data.pos, 1, r -> -30f);
             }
         });
 
         data(ALLIED_UNITS_NEEDED).add(data(ENEMY_UNIT_POSITIONS), 1);
         data(ALLIED_UNITS_NEEDED).add(data(ALLIED_UNITS), 0.2f);
         for (Unit unit : thisTeamUnits) {
-            if (unit.hasPerformedAction(Action.MOVE))
+            if (unit.data.hasPerformedAction(Action.MOVE))
                 continue;
             BotTileData d = new BotTileData(level);
 
-            if (unit.type.canPerformAction(Action.FIRE))
+            if (unit.data.type.canPerformAction(Action.FIRE))
                 d.add(data(ALLIED_UNITS_NEEDED), 1);
-            else if (unit.type.canPerformAction(Action.MINE)) {
+            else if (unit.data.type.canPerformAction(Action.MINE)) {
                 d.add(data(ASTEROID_FIELDS), 3f);
                 d.add(data(ENEMY_UNIT_POSITIONS), -0.1f);
-                d.add(data(enemyDamageTypeFromClass(unit.type.shipClass)), -1f);
+                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -1f);
             } else {
                 d.add(data(ALLIED_UNITS), 2);
-                d.add(data(enemyDamageTypeFromClass(unit.type.shipClass)), -0.5f);
+                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -0.5f);
             }
-            if (unit.stealthMode)
+            if (unit.data.stealthMode)
                 d.add(data(SCOUT_NEEDED), 1);
             else
-                d.add(data(enemyDamageTypeFromClass(unit.type.shipClass)), -1f);
+                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -1f);
             unitMoveData.put(unit, d);
         }
     }
@@ -521,14 +533,14 @@ public class BotHandler implements Deletable, Tickable {
 
     private void selectUnitTile(Unit u) {
         if (u.renderVisible()) {
-            Tile t = level.getTile(u.pos);
+            Tile t = level.getTile(u.data.pos);
             level.tileSelector.select(t);
             level.levelRenderer.setCameraInterpBlockPos(t.renderPosCentered);
         } else {
             level.tileSelector.deselect();
         }
         if (level.networkState == NetworkState.SERVER)
-            level.server.sendBotSelectTile(u.pos);
+            level.server.sendBotSelectTile(u.data.pos);
     }
 
     public void selectTileClient(Point pos) {
@@ -536,7 +548,7 @@ public class BotHandler implements Deletable, Tickable {
         if (u == null)
             return;
         if (u.renderVisible()) {
-            Tile t = level.getTile(u.pos);
+            Tile t = level.getTile(u.data.pos);
             level.tileSelector.select(t);
             level.levelRenderer.setCameraInterpBlockPos(t.renderPosCentered);
         } else {
@@ -565,7 +577,7 @@ public class BotHandler implements Deletable, Tickable {
     }
 
     private float costModifier(float value, Unit u) {
-        return u.type.canPerformAction(Action.FIRE) || u.type.canPerformAction(Action.REPAIR) ? value : 0;
+        return u.data.type.canPerformAction(Action.FIRE) || u.data.type.canPerformAction(Action.REPAIR) ? value : 0;
     }
 
     @Override

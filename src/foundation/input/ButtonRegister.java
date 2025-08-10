@@ -4,15 +4,16 @@ import foundation.Deletable;
 import foundation.Main;
 import foundation.MainPanel;
 import foundation.math.ObjPos;
+import render.RenderOrder;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -21,13 +22,10 @@ public class ButtonRegister implements IButtonRegister, Deletable {
     private final Set<RegisteredButtonInputReceiver>
             qRegister = ConcurrentHashMap.newKeySet(),
             qRemove = ConcurrentHashMap.newKeySet();
-    private final TreeMap<ButtonOrder, TreeMap<Integer, HashSet<RegisteredButtonInputReceiver>>> buttons = new TreeMap<>();
+    private final TreeMap<RenderOrder, TreeMap<Integer, HashSet<RegisteredButtonInputReceiver>>> buttons = new TreeMap<>(Comparator.reverseOrder());
     private boolean deleted = false;
 
     public ButtonRegister() {
-        for (ButtonOrder order : ButtonOrder.values()) {
-            buttons.put(order, new TreeMap<>());
-        }
     }
 
     @Override
@@ -73,14 +71,16 @@ public class ButtonRegister implements IButtonRegister, Deletable {
 
     private synchronized void processQueued() {
         qRegister.forEach(b -> {
-            TreeMap<Integer, HashSet<RegisteredButtonInputReceiver>> order = buttons.get(b.getButtonOrder());
+            if (!buttons.containsKey(b.getButtonOrderTemp()))
+                buttons.put(b.getButtonOrderTemp(), new TreeMap<>(Comparator.reverseOrder()));
+            TreeMap<Integer, HashSet<RegisteredButtonInputReceiver>> order = buttons.get(b.getButtonOrderTemp());
             if (!order.containsKey(b.getZOrder()))
                 order.put(b.getZOrder(), new HashSet<>());
             order.get(b.getZOrder()).add(b);
         });
         qRegister.clear();
         qRemove.forEach(b -> {
-            buttons.get(b.getButtonOrder()).get(b.getZOrder()).remove(b);
+            buttons.get(b.getButtonOrderTemp()).get(b.getZOrder()).remove(b);
         });
         qRemove.clear();
     }

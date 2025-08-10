@@ -1,6 +1,5 @@
 package render.level.ui;
 
-import foundation.input.ButtonOrder;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
@@ -46,11 +45,6 @@ public class UITurnBox extends AbstractRenderElement implements RegisteredButton
     @Override
     public boolean blocking(InputType type) {
         return type.isMouseInput();
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return ButtonOrder.LEVEL_UI;
     }
 
     @Override

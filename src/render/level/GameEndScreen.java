@@ -1,7 +1,6 @@
 package render.level;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import level.Level;
 import level.PlayerTeam;
@@ -24,7 +23,7 @@ public class GameEndScreen extends LevelUIContainer<Level> {
     private boolean renderablesAdded = false;
 
     public GameEndScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
-        super(register, buttonRegister, RenderOrder.END_SCREEN, ButtonOrder.END_SCREEN, 0, 0, level);
+        super(register, buttonRegister, RenderOrder.END_SCREEN, 0, 0, level);
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
                     g -> {
@@ -50,7 +49,7 @@ public class GameEndScreen extends LevelUIContainer<Level> {
                     new UITextLabel(12, 1.5f, false).setTextCenterBold()
                             .updateTextCenter("Team " + surviving.getName() + " wins").translate(3, Renderable.top() - 6)
             );
-            new UIScoreBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, Renderable.right() - 26, Renderable.top() - 16, surviving, level);
+            new UIScoreBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, Renderable.right() - 26, Renderable.top() - 16, surviving, level);
             int i = 0;
             for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
                 if (level.initialPlayerTeams.containsKey(team) && level.initialPlayerTeams.get(team) == surviving) {
@@ -61,7 +60,7 @@ public class GameEndScreen extends LevelUIContainer<Level> {
                     i++;
                 }
             }
-            new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, ButtonOrder.MAIN_BUTTONS, Renderable.right() / 2 - 5, 2, 10, 2, 1.5f, false)
+            new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, Renderable.right() / 2 - 5, 2, 10, 2, 1.5f, false)
                     .setText("Main Menu").setBold().setOnClick(() -> MainPanel.addTask(MainPanel::toTitleScreen));
         });
     }

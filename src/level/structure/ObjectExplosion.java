@@ -21,7 +21,8 @@ public class ObjectExplosion implements Renderable {
 
     public ObjectExplosion(ObjPos center, float time) {
         this.center = center;
-        fullAnim = new LerpAnimation(time * 2.6f);
+        fullAnim = new LerpAnimation(time);
+        time /= 2.6f;
         ArrayList<ImageSequenceAnim> animList = new ArrayList<>();
         anim1 = new ImageSequenceAnim(ImageSequenceGroup.EXPLOSION.getRandomSequence(), TILE_SIZE, time);
         animList.add(anim1);

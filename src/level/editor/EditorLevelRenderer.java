@@ -1,7 +1,6 @@
 package level.editor;
 
 import foundation.MainPanel;
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.OnButtonInput;
@@ -17,7 +16,6 @@ import render.level.tile.HexagonRenderer;
 import render.level.tile.RenderElement;
 import render.save.UISaveMenu;
 import render.texture.ImageRenderer;
-import render.types.box.UIBox;
 import render.types.box.UIDisplayBox;
 import render.types.box.UIShapeDisplayBox;
 import render.types.container.LevelUIContainer;
@@ -76,23 +74,23 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
         confirm = new UIConfirm(levelUIRenderer, RenderOrder.CONFIRM_UI, level)
                 .setTextSize(0.7f).setTextConfirm("Back").setTextCancel("Exit");
         level.buttonRegister.register(confirm);
-        new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 0.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, level, () -> {
+        new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, 0.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, level, () -> {
             if (level.unsaved)
                 confirm.makeVisible("Map has unsaved work. Exit to main menu without saving?", () -> confirm.makeInvisible(), () -> MainPanel.addTask(MainPanel::toTitleScreen));
             else
                 MainPanel.addTask(MainPanel::toTitleScreen);
         }).setText("Exit").setColourTheme(UIColourTheme.DEEP_RED).setBold();
-        new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+        new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 44, 4, level).addRenderables((r, b) -> {
-            tabSwitcher = new UITabSwitcher(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+            tabSwitcher = new UITabSwitcher(r, b, RenderOrder.LEVEL_UI,
                     0, 0, 14, Renderable.top() - 8)
                     .addTab(3, "Tiles", (r2, b2) -> {
-                        new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                        new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI,
                                 0, 0, 14, Renderable.top() - 8, false, size -> size * 5f + 0.5f)
-                                .addElements(TileType.values().length, (r3, b3, i) -> new UIContainer(r3, b3, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                                .addElements(TileType.values().length, (r3, b3, i) -> new UIContainer(r3, b3, RenderOrder.LEVEL_UI,
                                         1, -5 * (i + 1)).addRenderables((r4, b4) -> {
                                     TileType type = TileType.values()[i];
-                                    tileButtons.add(new UIButton(r4, b4, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                                    tileButtons.add(new UIButton(r4, b4, RenderOrder.LEVEL_UI,
                                             0, 0, 12, 4.5f, 0, true).setColourTheme(UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER).noDeselect().setOnClick(() -> {
                                         for (int j = 0; j < tileButtons.size(); j++) {
                                             if (i != j)
@@ -116,11 +114,11 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                                     .updateTextCenter(type.getName() + " tile").translate(0.5f, 3.3f)).setZOrder(2);
                                 })).addScrollBar(0.7f, 0.3f, -0.4f);
                     }).addTab(3, "Units", (r2, b2) -> {
-                        new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                        new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI,
                                 0, 0, 14, Renderable.top() - 8, false, size -> size * 5f + 0.5f)
                                 .addElements(UnitType.ORDERED_UNIT_TYPES.length + 1, (r3, b3, i) -> {
                                     UnitType type = i == 0 ? null : UnitType.ORDERED_UNIT_TYPES[i - 1];
-                                    UITeamDisplay display = new UITeamDisplay(r3, b3, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                                    UITeamDisplay display = new UITeamDisplay(r3, b3, RenderOrder.LEVEL_UI,
                                             1, -5 * (i + 1), () -> {
                                         unitButtons.get(i).setColourTheme(editingTeam == NeutralUnitTeam.NEUTRAL ? UIColourTheme.GRAYED_OUT_OPAQUE : UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER)
                                                 .setClickEnabled(editingTeam != NeutralUnitTeam.NEUTRAL);
@@ -133,7 +131,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                     });
                                     unitDisplays.add(display);
                                     return display.addRenderables((r4, b4) -> {
-                                        unitButtons.add(new UIButton(r4, b4, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                                        unitButtons.add(new UIButton(r4, b4, RenderOrder.LEVEL_UI,
                                                 0, 0, 12, 4.5f, 0, true).setColourTheme(UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER).noDeselect().setOnClick(() -> {
                                             for (int j = 0; j < unitButtons.size(); j++) {
                                                 if (i != j) {
@@ -166,11 +164,11 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                     });
                                 }).addScrollBar(0.7f, 0.3f, -0.4f);
                     }).addTab(4.5f, "Structures", (r2, b2) -> {
-                        new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                        new UIElementScrollSurface<>(r2, b2, RenderOrder.LEVEL_UI,
                                 0, 0, 14, Renderable.top() - 8, false, size -> size * 5f + 0.5f)
                                 .addElements(StructureType.values().length + 1, (r3, b3, i) -> {
                                     StructureType type = i == 0 ? null : StructureType.values()[i - 1];
-                                    UITeamDisplay display = new UITeamDisplay(r3, b3, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                                    UITeamDisplay display = new UITeamDisplay(r3, b3, RenderOrder.LEVEL_UI,
                                             1, -5 * (i + 1), () -> {
                                         if (type != null && !type.hasNeutral)
                                             structureButtons.get(i).setColourTheme(editingTeam == NeutralUnitTeam.NEUTRAL ? UIColourTheme.GRAYED_OUT_OPAQUE : UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER)
@@ -187,7 +185,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                     });
                                     structureDisplays.add(display);
                                     return display.addRenderables((r4, b4) -> {
-                                        structureButtons.add(new UIButton(r4, b4, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+                                        structureButtons.add(new UIButton(r4, b4, RenderOrder.LEVEL_UI,
                                                 0, 0, 12, 4.5f, 0, true).setColourTheme(UIColourTheme.GREEN_SELECTED_OPAQUE_CENTER).noDeselect().setOnClick(() -> {
                                             for (int j = 0; j < structureButtons.size(); j++) {
                                                 if (i != j)
@@ -218,7 +216,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                 }).addScrollBar(0.7f, 0.3f, -0.4f);
                     });
             NeutralUnitTeam[] allowedTeams = NeutralUnitTeam.toNeutralTeamArray(Arrays.copyOf(UnitTeam.ORDERED_TEAMS, level.playerCount));
-            teamSelector = new UIEnumSelector<>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK,
+            teamSelector = new UIEnumSelector<>(r, b, RenderOrder.LEVEL_UI,
                     14 / 2f - UIEnumSelector.totalWidth(2f, 6.5f) / 2, -2.5f, 2f, 6.5f, allowedTeams, 1) {
                 @Override
                 public boolean posInside(ObjPos pos, InputType type) {
@@ -248,19 +246,22 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
             }
         });
 
-        new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 9.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, level, () -> saveMenu.setEnabled(true))
+        new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, 9.5f, Renderable.top() - 2.5f, 8, 2, 1.4f, false, level, () -> saveMenu.setEnabled(true))
                 .setText("Save").setBold();
-        new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU,
+        new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.PAUSE_MENU,
                 0, 0, level).addRenderables((r, b) -> {
-            saveMenu = new UISaveMenu<>(r, b, RenderOrder.PAUSE_MENU, ButtonOrder.PAUSE_MENU, MainPanel.mapSaves, name -> new MapSave(level, name))
+            saveMenu = new UISaveMenu<>(r, b, RenderOrder.PAUSE_MENU, MainPanel.mapSaves, name -> new MapSave(level, name))
                     .setOnSave(() -> level.unsaved = false);
         });
-        new OnButtonInput(level.buttonRegister, ButtonOrder.LEVEL_UI_BACK, t -> t.isCharInput && (t.c == 't' || t.c == '1'), () -> tabSwitcher.selectTab(0));
-        new OnButtonInput(level.buttonRegister, ButtonOrder.LEVEL_UI_BACK, t -> t.isCharInput && (t.c == 'u' || t.c == '2'), () -> tabSwitcher.selectTab(1));
-        new OnButtonInput(level.buttonRegister, ButtonOrder.LEVEL_UI_BACK, t -> t.isCharInput && (t.c == 's' || t.c == '3'), () -> tabSwitcher.selectTab(2));
+        new OnButtonInput(level.buttonRegister, RenderOrder.LEVEL_UI, t -> t.isCharInput && (t.c == 't' || t.c == '1'), () -> tabSwitcher.selectTab(0))
+                .setZOrder(-10);
+        new OnButtonInput(level.buttonRegister, RenderOrder.LEVEL_UI, t -> t.isCharInput && (t.c == 'u' || t.c == '2'), () -> tabSwitcher.selectTab(1))
+                .setZOrder(-10);
+        new OnButtonInput(level.buttonRegister, RenderOrder.LEVEL_UI, t -> t.isCharInput && (t.c == 's' || t.c == '3'), () -> tabSwitcher.selectTab(2))
+                .setZOrder(-10);
         saveMenu.setEnabled(false);
 
-        invalidContainer = new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+        invalidContainer = new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 0, 0, level);
         invalidContainer.addRenderables((r, b) -> {
             invalidText = new UIDisplayBox(0.5f, 0.5f, 10, 3, uiBox -> uiBox.setColourTheme(UIColourTheme.DEEP_RED), false)
@@ -272,7 +273,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
             );
         });
 
-        new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+        new LevelUIShapeButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 Renderable.right() / 2 + 5, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
@@ -281,10 +282,10 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
 
-        LevelUIContainer<LevelEditor> generateContainer = new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+        LevelUIContainer<LevelEditor> generateContainer = new LevelUIContainer<>(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 Renderable.right() / 2 - 4, Renderable.top() - 10.5f, level);
         generateContainer.addRenderables((r, b) -> {
-            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK, 0, 0, 8, 7, box ->
+            new UIClickBlockingBox(r, b, RenderOrder.LEVEL_UI, 0, 0, 8, 7, box ->
                     box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK)).setZOrder(-2);
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     new UITextLabel(6, 0.8f, false).setTextCenterBold()
@@ -292,11 +293,11 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                     new TextRenderer("Removes all units", 0.6f, TEXT_COLOUR)
                             .setItalic(true).setTextAlign(HorizontalAlign.CENTER).translate(4, 1f)
             ).setZOrder(-1);
-            UITextInputBox seedBox = new UITextInputBox(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+            UITextInputBox seedBox = new UITextInputBox(r, b, RenderOrder.LEVEL_UI,
                     0.5f, 4, 7, 1.5f, 0.8f, true, 15, InputType::isDigit);
             seedBox.setBold().setColourTheme(UIColourTheme.GREEN_SELECTED).tooltip(t -> t.add(12, AbstractUITooltip.dark(),
                     "Enter number as seed to generate map from, or leave blank for random seed. Seeds are not guaranteed to generate the same maps as other seed entry boxes."));
-            new UIButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 1.5f, 2.2f, 5, 1.2f, 1f, false)
+            new UIButton(r, b, RenderOrder.LEVEL_UI, 1.5f, 2.2f, 5, 1.2f, 1f, false)
                     .setText("Generate").setBold().setOnClick(() -> {
                         long seed = seedBox.getText().isEmpty() ? new Random().nextLong() : Long.parseLong(seedBox.getText());
                         level.createRandom(seed);
@@ -304,7 +305,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                         level.generateTiles();
                     }).setBoxCorner(0.35f);
         }).setEnabled(false);
-        new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI_BACK,
+        new LevelUIButton(levelUIRenderer, level.buttonRegister, RenderOrder.LEVEL_UI,
                 Renderable.right() / 2 - 4, Renderable.top() - 2.5f, 8, 2, 1.2f, true, level)
                 .setBold().setColourTheme(UIColourTheme.GREEN_SELECTED).toggleMode().noDeselect().setText("Generate").setOnClick(() -> {
                     generateContainer.setEnabled(true);
@@ -370,8 +371,8 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
         public ImageRenderer image;
         public Supplier<ImageRenderer> imageSupplier;
 
-        public UITeamDisplay(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, Supplier<ImageRenderer> imageSupplier) {
-            super(register, buttonRegister, order, buttonOrder, x, y);
+        public UITeamDisplay(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, Supplier<ImageRenderer> imageSupplier) {
+            super(register, buttonRegister, order, x, y);
             this.imageSupplier = imageSupplier;
         }
 

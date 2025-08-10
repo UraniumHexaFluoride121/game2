@@ -1,6 +1,5 @@
 package render.types.box;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
@@ -17,22 +16,19 @@ public class UIClickBlockingBox extends RenderElement implements RegisteredButto
     private final HitBox hitBox;
     private UnaryOperator<ObjPos> posTransformer = p -> p;
     private ButtonRegister buttonRegister;
-    private final ButtonOrder buttonOrder;
 
-    public UIClickBlockingBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height) {
+    public UIClickBlockingBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height) {
         super(register, order, new UIBox(width, height).translate(x, y));
         this.buttonRegister = buttonRegister;
-        this.buttonOrder = buttonOrder;
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
         hitBox = HitBox.createFromOriginAndSize(x, y, width, height);
     }
 
-    public UIClickBlockingBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, UnaryOperator<UIBox> boxTransformer) {
+    public UIClickBlockingBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, UnaryOperator<UIBox> boxTransformer) {
         super(register, order, boxTransformer.apply(new UIBox(width, height)).translate(x, y));
         this.buttonRegister = buttonRegister;
-        this.buttonOrder = buttonOrder;
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
@@ -52,11 +48,6 @@ public class UIClickBlockingBox extends RenderElement implements RegisteredButto
     @Override
     public boolean blocking(InputType type) {
         return type.isMouseInput();
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override

@@ -1,6 +1,5 @@
 package render.types.input.button;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.math.ObjPos;
@@ -11,13 +10,13 @@ import render.RenderRegister;
 
 public class LevelUIButton extends UIButton {
     public AbstractLevel<?, ?> level;
-    public LevelUIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, AbstractLevel<?, ?> level, Runnable onClick) {
-        super(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected, onClick);
+    public LevelUIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, float textSize, boolean staySelected, AbstractLevel<?, ?> level, Runnable onClick) {
+        super(register, buttonRegister, order, x, y, width, height, textSize, staySelected, onClick);
         this.level = level;
     }
 
-    public LevelUIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y, float width, float height, float textSize, boolean staySelected, AbstractLevel<?, ?> level) {
-        super(register, buttonRegister, order, buttonOrder, x, y, width, height, textSize, staySelected);
+    public LevelUIButton(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, float width, float height, float textSize, boolean staySelected, AbstractLevel<?, ?> level) {
+        super(register, buttonRegister, order, x, y, width, height, textSize, staySelected);
         this.level = level;
     }
 

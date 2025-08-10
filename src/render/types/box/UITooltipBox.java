@@ -11,14 +11,12 @@ import render.types.text.TooltipManager;
 
 public class UITooltipBox extends AbstractRenderElement implements TooltipHolder, RegisteredButtonInputReceiver {
     private final HitBox hitBox;
-    private final ButtonOrder buttonOrder;
     private ButtonRegister buttonRegister;
     private ButtonClickHandler clickHandler;
     private TooltipManager tooltip;
 
-    public UITooltipBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, ButtonOrder buttonOrder, float x, float y, float width, float height) {
+    public UITooltipBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, float x, float y, float width, float height) {
         super(register, RenderOrder.LEVEL_UI);
-        this.buttonOrder = buttonOrder;
         this.buttonRegister = buttonRegister;
         buttonRegister.register(this);
         hitBox = HitBox.createFromOriginAndSize(x, y, width, height);
@@ -45,11 +43,6 @@ public class UITooltipBox extends AbstractRenderElement implements TooltipHolder
     @Override
     public boolean blocking(InputType type) {
         return false;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override

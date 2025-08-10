@@ -33,7 +33,7 @@ public class UIMovementModifiers extends LevelUIContainer<Level> {
     private final TextRenderer costModifier = new TextRenderer("Cost modifiers in effect:", 0.6f, UITextLabel.TEXT_COLOUR).setTextAlign(HorizontalAlign.CENTER).setBold(true);
 
     public UIMovementModifiers(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
-        super(register, buttonRegister, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, Renderable.right() / 2, 0, level);
+        super(register, buttonRegister, RenderOrder.LEVEL_UI, Renderable.right() / 2, 0, level);
         addRenderables((r, b) -> {
             new RenderElement(r, RenderOrder.LEVEL_UI,
                     new UIBox(20, 5)
@@ -47,7 +47,7 @@ public class UIMovementModifiers extends LevelUIContainer<Level> {
                             });
                     }, costModifier.translate(0, 6.8f), costText.translate(0, 7.5f)
             ).setZOrder(-10);
-            scrollSurface = new UIElementScrollSurface<UIDisplayBoxRenderElement>(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI,
+            scrollSurface = new UIElementScrollSurface<UIDisplayBoxRenderElement>(r, b, RenderOrder.LEVEL_UI,
                     -10, 2 + 1.5f, 20, 3, false, count -> (count + 1) * 0.4f) {
                 @Override
                 public boolean posInside(ObjPos pos, InputType type) {
@@ -57,7 +57,7 @@ public class UIMovementModifiers extends LevelUIContainer<Level> {
             scrollSurface.setScrollSpeed(0.2f).addScrollBar(0.5f, 0.25f, -0.25f).setScrollBarButtonEnabled(false);
             result = new UIDisplayBoxRenderElement(r, RenderOrder.LEVEL_UI, 0, 0.5f, 20, 1, box -> box.setColourTheme(WeaponEffectiveness.BOX_GRAY), false);
             result.box.addText(0.6f, HorizontalAlign.CENTER, null).setHorizontalAlign(HorizontalAlign.CENTER);
-            new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type == InputType.MOUSE_MIDDLE, () -> {
+            new OnButtonInput(b, RenderOrder.LEVEL_UI, type -> type == InputType.MOUSE_MIDDLE, () -> {
                 level.levelRenderer.movementModifierInfo.enable();
             });
         });

@@ -50,6 +50,10 @@ public abstract class AbstractRenderElement implements OrderedRenderable, Deleta
         return order;
     }
 
+    public RenderOrder getButtonOrderTemp() {
+        return order;
+    }
+
     @Override
     public int getZOrder() {
         return zOrder;

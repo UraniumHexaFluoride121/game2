@@ -80,5 +80,4 @@ public final class EditorUnitData implements Renderable, Serializable, LoadedFro
                 "type=" + type + ", " +
                 "team=" + team + ']';
     }
-
 }

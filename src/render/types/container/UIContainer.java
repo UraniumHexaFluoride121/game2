@@ -1,6 +1,5 @@
 package render.types.container;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
@@ -12,15 +11,13 @@ import java.util.function.BiConsumer;
 
 public class UIContainer extends AbstractRenderElement implements RegisteredButtonInputReceiver {
     public final float x, y;
-    protected final ButtonOrder buttonOrder;
     protected ButtonRegister buttonRegister, internal = new ButtonRegister();
     protected GameRenderer renderer = new GameRenderer(new AffineTransform(), null);
 
-    public UIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, float x, float y) {
+    public UIContainer(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y) {
         super(register, order);
         this.x = x;
         this.y = y;
-        this.buttonOrder = buttonOrder;
         this.buttonRegister = buttonRegister;
         if (buttonRegister != null) {
             buttonRegister.register(this);
@@ -54,11 +51,6 @@ public class UIContainer extends AbstractRenderElement implements RegisteredButt
     @Override
     public boolean blocking(InputType type) {
         return blocking;
-    }
-
-    @Override
-    public ButtonOrder getButtonOrder() {
-        return buttonOrder;
     }
 
     @Override

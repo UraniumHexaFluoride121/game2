@@ -68,24 +68,19 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
         borderImage = createTiles(Tile.TILE_SIZE, 0.1f, level, (g, pos, type) -> Tile.renderTile(g, BORDER_RENDERER, TILE_SIZE, pos));
         new BackgroundRenderer(backgroundRenderer, RenderOrder.BACKGROUND, this::getCameraPosition).setTextures(BackgroundTexture.NORMAL_1);
 
-
+        //Terrain
         new RenderElement(mainRenderer, RenderOrder.TERRAIN, g -> {
             level.tileSelector.tileSet.forEach(t -> {
                 t.renderFogOfWarBackground(g);
             });
-        }).setZOrder(-1);
-
-        //Terrain
-        new RenderElement(mainRenderer, RenderOrder.TERRAIN, g -> {
             for (Tile[] tileColumn : level.tiles) {
                 for (Tile tile : tileColumn) {
                     tile.renderTerrain(g);
                 }
             }
-        });
-
-        //Tile borders
-        new RenderElement(mainRenderer, RenderOrder.TILE_BORDER, Renderable.renderImage(borderImage, false, false, -1).translate(-Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f, -Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f));
+        }, Renderable.renderImage(borderImage, false, false, -1)
+                .translate(-Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f, -Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f)
+        );
 
         //Tile highlight
         new RenderElement(mainRenderer, RenderOrder.TILE_HIGHLIGHT, g -> {
@@ -116,14 +111,22 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
             if (tutorialBorderRenderer != null)
                 tutorialBorderRenderer.render(g);
             if (level.tileSelector.getSelectedTile() != null && renderSelectedTile())
-                level.tileSelector.getSelectedTile().renderTile(g, Tile.BLUE_HIGHLIGHT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
+                renderSelectedTileHighlight(level.tileSelector.getSelectedTile(), g);
             tileHighlights.forEach(f -> f.renderBorder(g));
         });
         new RenderElement(mainRenderer, RenderOrder.TILE_BORDER_HIGHLIGHTS, g -> {
             if (level.tileSelector.mouseOverTile != null && renderMouseOverTile() && mouseBlockingObjects.isEmpty())
-                level.tileSelector.mouseOverTile.renderTile(g, Tile.BLUE_TRANSPARENT_COLOUR, BORDER_HIGHLIGHT_RENDERER);
+                renderMouseHoverTileHighlight(level.tileSelector.mouseOverTile, g);
         }).setZOrder(1);
         new TooltipRenderer(levelUIRenderer, RenderOrder.TOOLTIP);
+    }
+
+    protected void renderSelectedTileHighlight(Tile tile, Graphics2D g) {
+        tile.renderTile(g, Tile.SELECTED_COLOUR, SELECTED_BORDER_HIGHLIGHT_RENDERER);
+    }
+
+    protected void renderMouseHoverTileHighlight(Tile tile, Graphics2D g) {
+        tile.renderTile(g, Tile.MOUSE_OVER_COLOUR, SEGMENTED_BORDER_HIGHLIGHT_RENDERER);
     }
 
     protected boolean renderMouseOverTile() {

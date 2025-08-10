@@ -1,6 +1,5 @@
 package render.level.info;
 
-import foundation.input.ButtonOrder;
 import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import foundation.input.OnButtonInput;
@@ -30,7 +29,6 @@ import render.types.input.button.UIShapeButton;
 import render.types.text.*;
 import unit.ShipClass;
 import unit.Unit;
-import unit.UnitData;
 import unit.UnitPose;
 import unit.action.Action;
 import unit.stats.Modifier;
@@ -52,8 +50,8 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
     public UIShapeButton infoButton, viewFiringRange, viewEffectiveness;
     private MultiColourHighlight rangeHighlight = null, effectivenessHighlight = null;
 
-    public UIUnitInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, ButtonOrder buttonOrder, Level level) {
-        super(register, buttonRegister, order, buttonOrder, 0, 0, level);
+    public UIUnitInfo(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, Level level) {
+        super(register, buttonRegister, order, 0, 0, level);
         this.level = level;
         addRenderables((r, b) -> {
             UIDisplayBoxRenderElement systems = new UIDisplayBoxRenderElement(r, RenderOrder.LEVEL_UI, 0.5f, 0.5f, 11, HEIGHT - 7, uiBox -> {
@@ -148,7 +146,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
             systems.box.addSpace(0.3f, 0);
             systems.box.addBox(mining, HorizontalAlign.CENTER, 0);
 
-            UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, systems.box);
+            UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r, b, RenderOrder.LEVEL_UI, systems.box);
             buttonHandler.addTooltip(2, 0, true).add(button -> {
                 UIStaticTooltip tooltip = new UIStaticTooltip(12, 1.8f, 12, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX), false, button);
                 UIDisplayBox hpStats = new UIDisplayBox(0, 0, 11, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
@@ -177,7 +175,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     UIHitPointBar bar = tooltip.getBar(2, 0);
-                    bar.setSegments((int) unit.stats.maxHP()).setFill(unit.hitPoints);
+                    bar.setSegments((int) unit.stats.maxHP()).setFill(unit.data.renderHP);
                     float fill = bar.getRenderFill() / bar.getSegments();
                     UIColourTheme theme;
                     if (fill < 0.35f) {
@@ -187,7 +185,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                     } else
                         theme = Modifier.GREEN_BACKGROUND;
                     bar.setColour(theme);
-                    hpStats.setText(0, 1, unit.type.shipClass.icon.display + unit.type.shipClass.getName());
+                    hpStats.setText(0, 1, unit.data.type.shipClass.icon.display + unit.data.type.shipClass.getName());
                     hpStats.setText(2, 1, MathUtil.floatToString(unit.stats.maxHP(), 1) + TextRenderable.HP_ICON.display);
                     viewRangeStats.setText(0, 1, MathUtil.floatToString(unit.stats.maxViewRange(), 1) + TextRenderable.VIEW_RANGE_ICON.display);
                 });
@@ -222,9 +220,9 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                     Unit unit = getUnit(level);
                     if (unit.stats.maxShieldHP() == 0)
                         return;
-                    tooltip.getBar(2, 0).setSegments((int) unit.stats.maxShieldHP()).setFill(unit.shieldHP);
+                    tooltip.getBar(2, 0).setSegments((int) unit.stats.maxShieldHP()).setFill(unit.data.shieldRenderHP);
                     shieldStats.setText(0, 1, MathUtil.floatToString(unit.stats.maxShieldHP(), 1) + TextRenderable.SHIELD_ICON.display);
-                    boolean shieldRegen = unit.type.canPerformAction(Action.SHIELD_REGEN);
+                    boolean shieldRegen = unit.data.type.canPerformAction(Action.SHIELD_REGEN);
                     for (int i = 7; i <= 12; i++) {
                         tooltip.setElementEnabled(shieldRegen, i, 0);
                     }
@@ -356,7 +354,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addBox(repairStats, HorizontalAlign.CENTER, 0);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
-                    if (!unit.type.canPerformAction(Action.REPAIR))
+                    if (!unit.data.type.canPerformAction(Action.REPAIR))
                         return;
                     repairStats.setText(0, 1, MathUtil.floatToString(unit.stats.repair(), 1) + TextRenderable.REPAIR_ICON.display)
                             .setText(2, 1, unit.getActionCostText(Action.REPAIR) + TextRenderable.ENERGY_ICON.display);
@@ -377,7 +375,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addBox(resupplyStats, HorizontalAlign.CENTER, 0);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
-                    if (!unit.type.canPerformAction(Action.RESUPPLY))
+                    if (!unit.data.type.canPerformAction(Action.RESUPPLY))
                         return;
                     resupplyStats.setText(0, 1, unit.getActionCostText(Action.RESUPPLY) + TextRenderable.ENERGY_ICON.display);
                 });
@@ -407,7 +405,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addBox(stealthStats, HorizontalAlign.CENTER, 0);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
-                    if (!unit.type.canPerformAction(Action.STEALTH))
+                    if (!unit.data.type.canPerformAction(Action.STEALTH))
                         return;
                     stealthStats
                             .setText(0, 1, unit.getActionCostText(Action.STEALTH) + TextRenderable.ENERGY_ICON.display)
@@ -431,7 +429,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addBox(miningStats, HorizontalAlign.CENTER, 0);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
-                    if (!unit.type.canPerformAction(Action.MINE))
+                    if (!unit.data.type.canPerformAction(Action.MINE))
                         return;
                     miningStats.setText(0, 1, unit.getPerTurnActionCostText(Action.MINE) + TextRenderable.ENERGY_ICON.display + " / Turn");
                 });
@@ -445,21 +443,21 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             g.translate(0.5, 0.5);
                             box.render(g);
                             GameRenderer.renderOffset(0, HEIGHT - 10, g, () -> {
-                                Renderable.renderImage(unit.type.getImage(unit.team, UnitPose.INFO), false, true, 11).render(g);
+                                Renderable.renderImage(unit.data.type.getImage(unit.data.team, UnitPose.INFO), false, true, 11).render(g);
                             });
                             GameRenderer.renderOffset(-0.2f, HEIGHT + 0.5f, g, () -> {
-                                title.updateTextLeft(unit.type.shipClass.icon.display + unit.type.getName());
+                                title.updateTextLeft(unit.data.type.shipClass.icon.display + unit.data.type.getName());
                                 title.render(g);
                             });
-                            hp.getBar(2, 0).setSegments((int) unit.stats.maxHP()).setFill(unit.hitPoints);
-                            hp.setText(0, 1, MathUtil.floatToString(unit.hitPoints, 1) + " / " + MathUtil.floatToString(unit.stats.maxHP(), 1) + TextRenderable.HP_ICON.display);
+                            hp.getBar(2, 0).setSegments((int) unit.stats.maxHP()).setFill(unit.data.renderHP);
+                            hp.setText(0, 1, MathUtil.floatToString(unit.data.renderHP, 1) + " / " + MathUtil.floatToString(unit.stats.maxHP(), 1) + TextRenderable.HP_ICON.display);
 
                             boolean hasShield = unit.stats.maxShieldHP() != 0;
                             systems.box.setElementEnabled(hasShield, 3, 0);
                             systems.box.setElementEnabled(hasShield, 4, 0);
                             if (hasShield) {
-                                shield.getBar(2, 0).setSegments((int) unit.stats.maxShieldHP()).setFill(unit.shieldHP);
-                                shield.setText(0, 1, MathUtil.floatToString(unit.shieldHP, 1) + " / " + MathUtil.floatToString(unit.stats.maxShieldHP(), 1) + TextRenderable.SHIELD_ICON.display);
+                                shield.getBar(2, 0).setSegments((int) unit.stats.maxShieldHP()).setFill(unit.data.shieldRenderHP);
+                                shield.setText(0, 1, MathUtil.floatToString(unit.data.shieldRenderHP, 1) + " / " + MathUtil.floatToString(unit.stats.maxShieldHP(), 1) + TextRenderable.SHIELD_ICON.display);
                             }
 
                             movement.setText(0, 1, MathUtil.floatToString(unit.stats.maxMovement(), 1) + TextRenderable.MOVE_ICON.display);
@@ -483,26 +481,26 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                                 if (nonStandardRange)
                                     weapons.setText(2, 1, unit.stats.getRangeText());
                                 if (consumesAmmo) {
-                                    ammo.setText(0, 1, ((unit.ammo == 1 && unit.stats.ammoCapacity() > 1) || unit.ammo == 0 ? StyleElement.RED.display : "") + unit.ammo + " / " + unit.stats.ammoCapacity() + TextRenderable.AMMO_ICON.display);
+                                    ammo.setText(0, 1, ((unit.data.ammo == 1 && unit.stats.ammoCapacity() > 1) || unit.data.ammo == 0 ? StyleElement.RED.display : "") + unit.data.ammo + " / " + unit.stats.ammoCapacity() + TextRenderable.AMMO_ICON.display);
                                 }
                             }
 
-                            boolean hasRepair = unit.type.canPerformAction(Action.REPAIR);
+                            boolean hasRepair = unit.data.type.canPerformAction(Action.REPAIR);
                             systems.box.setElementEnabled(hasRepair, 11, 0);
                             systems.box.setElementEnabled(hasRepair, 12, 0);
                             if (hasRepair) {
                                 repair.setText(0, 1, MathUtil.floatToString(unit.stats.repair(), 1) + TextRenderable.REPAIR_ICON.display);
                             }
 
-                            boolean hasResupply = unit.type.canPerformAction(Action.RESUPPLY);
+                            boolean hasResupply = unit.data.type.canPerformAction(Action.RESUPPLY);
                             systems.box.setElementEnabled(hasResupply, 13, 0);
                             systems.box.setElementEnabled(hasResupply, 14, 0);
 
-                            boolean hasStealth = unit.type.canPerformAction(Action.STEALTH);
+                            boolean hasStealth = unit.data.type.canPerformAction(Action.STEALTH);
                             systems.box.setElementEnabled(hasStealth, 15, 0);
                             systems.box.setElementEnabled(hasStealth, 16, 0);
 
-                            boolean hasMining = unit.type.canPerformAction(Action.MINE);
+                            boolean hasMining = unit.data.type.canPerformAction(Action.MINE);
                             systems.box.setElementEnabled(hasMining, 17, 0);
                             systems.box.setElementEnabled(hasMining, 18, 0);
                             if (hasMining) {
@@ -510,13 +508,13 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             }
                         });
                     }).setZOrder(-1);
-            infoButton = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 9.5f, HEIGHT - 1.5f, 1.5f, 1.5f, false)
+            infoButton = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, 9.5f, HEIGHT - 1.5f, 1.5f, 1.5f, false)
                     .setShape(UIShapeButton::i).drawShape(0.25f).setBoxCorner(0.3f).setOnClick(() -> {
                         Unit unit = getUnit(level);
                         if (unit != null)
                             level.levelRenderer.unitInfoScreen.enable(unit);
                     }).tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Click to view detailed unit info"));
-            viewFiringRange = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 7.5f, HEIGHT - 1.5f, 1.5f, 1.5f, true) {
+            viewFiringRange = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, 7.5f, HEIGHT - 1.5f, 1.5f, 1.5f, true) {
                 @Override
                 public boolean selectEnabled() {
                     return TutorialManager.isEnabled(TutorialElement.ACTION_DESELECT) && TutorialManager.isEnabled(TutorialElement.VIEW_FIRING_RANGE);
@@ -533,7 +531,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             return;
                         closeEffectivenessView();
                         level.endAction();
-                        TileSet tiles = unit.stats.tilesInFiringRange(level.currentVisibility, new UnitData(unit), false);
+                        TileSet tiles = unit.stats.tilesInFiringRange(level.currentVisibility, unit.data, false);
                         MultiColourHighlight highlight = new MultiColourHighlight(tiles, p -> Action.FIRE.tileColour, 1, FIRE_TILE_BORDER_COLOUR);
                         highlight.setOnFinish(() -> {
                             level.levelRenderer.removeTileHighlight(highlight);
@@ -545,7 +543,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         TutorialManager.acceptEvent(new EventUISelect(level, UIElement.VIEW_FIRING_RANGE));
                     }).setOnDeselect(this::closeFiringRangeView).toggleMode()
                     .tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Click to view unit " + ModifierCategory.FIRING_RANGE.getName().toLowerCase()));
-            viewEffectiveness = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, ButtonOrder.LEVEL_UI, 5.5f, HEIGHT - 1.5f, 1.5f, 1.5f, true) {
+            viewEffectiveness = new UIShapeButton(r, b, RenderOrder.LEVEL_UI, 5.5f, HEIGHT - 1.5f, 1.5f, 1.5f, true) {
                 @Override
                 public boolean selectEnabled() {
                     return TutorialManager.isEnabled(TutorialElement.ACTION_DESELECT) && TutorialManager.isEnabled(TutorialElement.VIEW_EFFECTIVENESS);
@@ -562,7 +560,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                             return;
                         closeFiringRangeView();
                         level.endAction();
-                        TileSet tiles = TileSet.all(level).m(level, t -> t.unitFilter(TileModifier.withVisibleEnemies(unit.team, level)));
+                        TileSet tiles = TileSet.all(level).m(level, t -> t.unitFilter(TileModifier.withVisibleEnemies(unit.data.team, level)));
                         MultiColourHighlight highlight = new MultiColourHighlight(tiles, p -> unit.getWeaponEffectivenessAgainst(level.getUnit(p)), 0.25f, new Color(0, 0, 0, 0));
                         highlight.setOnFinish(() -> {
                             level.levelRenderer.removeTileHighlight(highlight);
@@ -575,7 +573,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         TutorialManager.acceptEvent(new EventUISelect(level, UIElement.VIEW_EFFECTIVENESS));
                     }).setOnDeselect(this::closeEffectivenessView).toggleMode()
                     .tooltip(t -> t.add(12, AbstractUITooltip.dark(), "Click to view this unit's weapon effectiveness against enemies. The colour depends on which weapon effectiveness modifier would be applied when attacking.\n\nPress middle mouse while weapon effectiveness view is active to view colour coding."));
-            new OnButtonInput(b, ButtonOrder.LEVEL_UI, type -> type.isCharInput, type -> {
+            new OnButtonInput(b, RenderOrder.LEVEL_UI, type -> type.isCharInput, type -> {
                 switch (type.c) {
                     case 'c' -> {
                         if (viewFiringRange.isSelected())
