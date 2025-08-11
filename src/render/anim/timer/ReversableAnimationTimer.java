@@ -1,4 +1,4 @@
-package render.anim;
+package render.anim.timer;
 
 public interface ReversableAnimationTimer extends AnimationTimer {
     void setReversed(boolean reversed);

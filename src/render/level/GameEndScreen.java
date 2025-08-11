@@ -8,7 +8,7 @@ import render.OrderedRenderable;
 import render.RenderOrder;
 import render.RenderRegister;
 import render.Renderable;
-import render.anim.LerpAnimation;
+import render.anim.timer.LerpAnimation;
 import render.level.tile.RenderElement;
 import render.level.ui.UIScoreBox;
 import render.texture.ResourceLocation;

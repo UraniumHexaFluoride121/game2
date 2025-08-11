@@ -3,8 +3,8 @@ package unit.weapon;
 import foundation.math.MathUtil;
 import render.GameRenderer;
 import render.Renderable;
-import render.anim.ImageSequenceAnim;
-import render.anim.LerpAnimation;
+import render.anim.sequence.ImageSequenceAnim;
+import render.anim.timer.LerpAnimation;
 
 import java.awt.*;
 

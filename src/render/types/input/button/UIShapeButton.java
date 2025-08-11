@@ -212,6 +212,28 @@ public class UIShapeButton extends AbstractUIButton {
         }, 12);
     }
 
+    public static Path2D.Float plus(float scale) {
+        return plus(0.7f * scale, 0.3f * scale);
+    }
+
+    public static Path2D.Float plus(float size, float width) {
+        Path2D.Float path = new Path2D.Float();
+        path.moveTo(-size, -width);
+        path.lineTo(-size, width);
+        path.lineTo(-width, width);
+        path.lineTo(-width, size);
+        path.lineTo(width, size);
+        path.lineTo(width, width);
+        path.lineTo(size, width);
+        path.lineTo(size, -width);
+        path.lineTo(width, -width);
+        path.lineTo(width, -size);
+        path.lineTo(-width, -size);
+        path.lineTo(-width, -width);
+        path.closePath();
+        return path;
+    }
+
     public static Shape plus(UIBox b) {
         return plus(b, 0.7f, 0.3f);
     }

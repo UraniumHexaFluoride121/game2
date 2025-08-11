@@ -44,9 +44,13 @@ public class RandomHandler {
     }
 
     public <T> T[] randomise(T[] array, RandomType type) {
+        return randomise(array, getDoubleSupplier(type));
+    }
+
+    public static <T> T[] randomise(T[] array, Supplier<Double> random) {
         ArrayList<T> list = new ArrayList<>(List.of(array));
         for (int i = 0; i < array.length; i++) {
-            array[i] = list.remove((int) (generateFloat(type) * list.size()));
+            array[i] = list.remove((int) (random.get() * list.size()));
         }
         return array;
     }

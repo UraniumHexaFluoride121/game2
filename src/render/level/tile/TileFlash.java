@@ -4,7 +4,7 @@ import foundation.Deletable;
 import foundation.MainPanel;
 import level.AbstractLevel;
 import level.tile.TileSet;
-import render.anim.LerpAnimation;
+import render.anim.timer.LerpAnimation;
 
 import java.awt.*;
 
@@ -27,14 +27,13 @@ public class TileFlash implements ITileHighlight, Deletable {
         c = color;
         border = new HexagonBorder(tiles, getBorderColor());
         level.levelRenderer.registerTileHighlight(this, true);
+        MainPanel.addTimedTask(timer, this::delete);
     }
 
     @Override
     public void renderHighlight(Graphics2D g) {
         HexagonRenderer hexagonRenderer = HIGHLIGHT_RENDERER.setColor(getHighlightColor());
         tiles.forEach(t -> level.getTile(t).renderTile(g, hexagonRenderer));
-        if (timer.finished())
-            MainPanel.addTask(this::delete);
     }
 
     @Override

@@ -1,6 +1,7 @@
-package render.anim;
+package render.anim.timer;
 
 import network.PacketWriter;
+import render.anim.sequence.AnimationType;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

@@ -1,67 +1,41 @@
-package render.anim;
+package render.anim.timer;
 
 import foundation.math.MathUtil;
 import network.PacketWriter;
-import render.Renderable;
+import render.anim.sequence.AnimationType;
 
-import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.function.Function;
 
-public class LerpAnimation implements ReversableAnimationTimer {
+public class PowAnimation implements ReversableAnimationTimer {
     private long startTime, endTime;
     private final long time;
     private boolean reversed = false;
+    private final float exponent;
 
-    public LerpAnimation(float seconds) {
+    public PowAnimation(float seconds, float exponent) {
         this.time = (long) (seconds * 1000);
+        this.exponent = exponent;
         startTimer();
     }
 
-    public LerpAnimation(DataInputStream reader) throws IOException {
+    public PowAnimation(DataInputStream reader) throws IOException {
         startTime = reader.readLong();
         endTime = reader.readLong();
         time = reader.readLong();
         reversed = reader.readBoolean();
+        exponent = reader.readFloat();
     }
 
-    @Override
-    public float timeElapsed() {
-        return (System.currentTimeMillis() - startTime) / 1000f;
-    }
-
-    public void renderOverlay(Graphics2D g) {
-        g.setColor(new Color(0, 0, 0, normalisedProgress()));
-        g.fillRect(0, 0, 60, (int) Renderable.top() + 1);
-    }
-
-    public void renderOverlay(Graphics2D g, Function<LerpAnimation, Float> alpha) {
-        g.setColor(new Color(0, 0, 0, alpha.apply(this)));
-        g.fillRect(0, 0, 60, (int) Renderable.top() + 1);
+    public float getTime() {
+        return time / 1000f;
     }
 
     @Override
     public void startTimer() {
         startTime = System.currentTimeMillis();
         endTime = startTime + time;
-    }
-
-    public void startTimer(float delay) {
-        startTime = System.currentTimeMillis() + (long) (delay * 1000);
-        endTime = startTime + time;
-    }
-
-    public void loopTimer() {
-        startTime += time;
-        endTime += time;
-    }
-
-    public void advanceTimer(float time) {
-        long t = (long) (time * 1000);
-        startTime -= t;
-        endTime -= t;
     }
 
     @Override
@@ -72,17 +46,17 @@ public class LerpAnimation implements ReversableAnimationTimer {
                 startTime = t;
                 endTime = t + time;
             } else {
-                startTime = -endTime + 2 * t;
+                float progress = reversed ? normalisedProgress() : 1 - normalisedProgress();
+                startTime = t - (long) ((Math.pow(1 - progress, 1 / exponent)) * time);
                 endTime = startTime + time;
             }
             this.reversed = reversed;
         }
     }
 
-    public LerpAnimation finish() {
+    public void finish() {
         endTime = System.currentTimeMillis();
         startTime = endTime - time;
-        return this;
     }
 
     @Override
@@ -97,7 +71,7 @@ public class LerpAnimation implements ReversableAnimationTimer {
 
     @Override
     public float normalisedProgress() {
-        float t = Math.clamp(MathUtil.normalise(0, endTime - startTime, System.currentTimeMillis() - startTime), 0, 1);
+        float t = ((float) Math.pow(Math.clamp(MathUtil.normalise(0, endTime - startTime, System.currentTimeMillis() - startTime), 0, 1), exponent));
         if (reversed) {
             return 1 - t;
         } else {
@@ -105,20 +79,18 @@ public class LerpAnimation implements ReversableAnimationTimer {
         }
     }
 
-    public float triangleProgress() {
-        return 1 - Math.abs(normalisedProgress() * 2 - 1);
-    }
-
-    public float doubleTriangleProgress() {
-        return 1 - Math.abs(triangleProgress() * 2 - 1);
+    @Override
+    public float timeElapsed() {
+        return (startTime - System.currentTimeMillis()) / 1000f;
     }
 
     @Override
     public void write(DataOutputStream w) throws IOException {
-        PacketWriter.writeEnum(AnimationType.LERP, w);
+        PacketWriter.writeEnum(AnimationType.POW, w);
         w.writeLong(startTime);
         w.writeLong(endTime);
         w.writeLong(time);
         w.writeBoolean(reversed);
+        w.writeFloat(exponent);
     }
 }

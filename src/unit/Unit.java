@@ -16,21 +16,18 @@ import level.tutorial.sequence.event.EventActionSelect;
 import network.NetworkState;
 import render.GameRenderer;
 import render.Renderable;
-import render.anim.AnimTilePath;
-import render.anim.ImageSequenceAnim;
-import render.anim.LerpAnimation;
-import render.anim.SineAnimation;
+import render.anim.timer.LerpAnimation;
+import render.anim.timer.SineAnimation;
+import render.anim.unit.*;
 import render.level.tile.HexagonBorder;
 import render.level.tile.HighlightTileRenderer;
 import render.level.tile.TileFlash;
 import render.level.tile.TilePath;
 import render.level.ui.UnitDamageNumberUI;
 import render.level.ui.UnitTextUI;
-import render.texture.ImageSequenceGroup;
 import render.types.text.DynamicTextRenderer;
 import unit.action.Action;
 import unit.action.ActionSelector;
-import unit.action.UnitFiringAnim;
 import unit.bot.VisibilityData;
 import unit.stats.Modifier;
 import unit.stats.ModifierCategory;
@@ -48,14 +45,13 @@ import java.util.HashMap;
 import static level.tile.Tile.*;
 import static unit.action.Action.*;
 
-public class Unit implements Deletable, Tickable, UnitLike {
+public class Unit extends UnitLike implements Deletable, Tickable {
     public UnitData data;
     public StatManager stats;
 
     private ObjPos renderPos;
 
     private final SineAnimation idleAnimX, idleAnimY, moveAnimX, moveAnimY;
-    private final LerpAnimation stealthTransparencyAnim = new LerpAnimation(1).finish();
 
     private ActionSelector actionUI = new ActionSelector(() -> {
         if (getLevel().getThisTeam() != getLevel().getActiveTeam() || getLevel().getThisTeam() != getTeam())
@@ -70,10 +66,13 @@ public class Unit implements Deletable, Tickable, UnitLike {
 
     private final ArrayList<UnitTextUI> damageUIs = new ArrayList<>();
 
+    private AnimHandler animHandler = new AnimHandler();
+
     private Level level;
 
     public Unit(UnitType type, UnitTeam team, Point pos, Level level) {
         this.level = level;
+        stealthTransparencyAnim = new LerpAnimation(1).finish();
         data = new UnitData(type, team, pos);
         stats = new StatManager(this);
         data.initialise(stats);
@@ -91,15 +90,8 @@ public class Unit implements Deletable, Tickable, UnitLike {
     }
 
     public void renderTile(Graphics2D g) {
-        if (level == null || explosion != null) return;
-        Composite c = null;
-        if (!stealthTransparencyAnim.finished()) {
-            c = g.getComposite();
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, stealthTransparencyAnim.normalisedProgress()));
-        } else if (!renderVisible()) return;
+        if (level == null || exploding) return;
         renderUnit(g, getPose(), stats.maxShieldHP() != 0);
-        if (c != null)
-            g.setComposite(c);
     }
 
     public void renderActions(Graphics2D g) {
@@ -115,9 +107,7 @@ public class Unit implements Deletable, Tickable, UnitLike {
     public void renderActionBelowUnits(Graphics2D g) {
         if (level == null)
             return;
-        if (firingEffect != null) {
-            firingEffect.renderBelowUnits(g);
-        }
+        animHandler.render(g, AnimType.BELOW_UNIT);
         if (level.selectedUnit == this) {
             if (movePath != null) {
                 if (selector().mouseOverTile != null)
@@ -135,8 +125,7 @@ public class Unit implements Deletable, Tickable, UnitLike {
     public static final BasicStroke AIM_TARGET_STROKE = new BasicStroke(0.03f * Renderable.SCALING, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 500);
     private final SineAnimation targetAnim = new SineAnimation(2, 90);
 
-    private ImageSequenceAnim explosion = null;
-    private UnitFiringAnim firingEffect = null;
+    private boolean exploding = false;
 
     public synchronized void renderActionAboveUnits(Graphics2D g) {
         if (level == null || (data.stealthMode && !data.visibleInStealthMode)) return;
@@ -166,20 +155,7 @@ public class Unit implements Deletable, Tickable, UnitLike {
                     targetAnim.startTimer();
             }
         }
-        if (firingEffect != null) {
-            firingEffect.render(g);
-        }
-        if (explosion != null) {
-            GameRenderer.renderOffset(getRenderPos().copy().add(0, TILE_SIZE * SIN_60_DEG / 2), g, () -> {
-                explosion.render(g);
-            });
-            if (explosion.timer.normalisedProgress() > 0.5f)
-                level.levelRenderer.disableCameraShake();
-            if (explosion.timer.finished()) {
-                level.levelRenderer.removeAnimBlock(explosion);
-                level.qRemoveUnit(this);
-            }
-        }
+        animHandler.render(g, AnimType.ABOVE_UNIT);
     }
 
     public synchronized void renderEnergyCostIndicator(Graphics2D g) {
@@ -398,6 +374,7 @@ public class Unit implements Deletable, Tickable, UnitLike {
         }
         other.data.setHP(other.data.renderHP + stats.repair(), other.stats.maxHP(), other::addDamageUI);
         data.addPerformedAction(REPAIR);
+        other.animHandler.registerAnim(new UnitRepair(other.getCenter()));
         other.tileFlash(REPAIR_TILE_FLASH);
     }
 
@@ -454,7 +431,7 @@ public class Unit implements Deletable, Tickable, UnitLike {
             level.removePlayer(tile.structure.team);
         }
         if (tile.structure.type.destroyedOnCapture) {
-            tile.explodeStructure();
+            tile.explodeStructure(level);
         } else {
             tile.structure.setTeam(data.team);
         }
@@ -537,25 +514,32 @@ public class Unit implements Deletable, Tickable, UnitLike {
     public void attack(Unit other) {
         FiringData firingData = getCurrentFiringData(other);
         WeaponInstance thisWeapon = firingData.getBestWeaponAgainst(true);
-        WeaponInstance otherWeapon = null;
+        WeaponInstance otherWeapon;
         if (firingData.otherData.hitPoints > 0 && thisWeapon.template.counterattack) {
             otherWeapon = FiringData.reverse(firingData).getBestWeaponAgainst(true);
+        } else {
+            otherWeapon = null;
         }
-        firingData.updateTempHP();
+        firingData.realiseDamage();
         if (renderVisible() && other.renderVisible() && level.gameplaySettings.showFiringAnim) {
-            level.levelRenderer.beginFiring(this, other, thisWeapon, otherWeapon);
+            animHandler.registerAnim(new AttackArrow(getCenter(), other.getCenter()), () -> {
+                level.levelRenderer.beginFiring(this, other, thisWeapon, otherWeapon);
+            });
         } else if (other.renderVisible()) {
-            firingEffect = new UnitFiringAnim(this, other, () -> {
-                firingEffect.delete();
-                firingEffect = null;
-            }, renderVisible());
+            AttackArrow.createAttackArrow(getCenter(), level.getTile(other.data.pos).renderPosCentered,
+                    other.data.shieldRenderHP > 0, renderVisible(), animHandler, () -> postFiringOther(other, false));
+            animHandler.animBlock(0.7f, level);
             other.tileFlash(ATTACK_TILE_FLASH);
         } else {
-            postFiring(other, true, false);
-            other.postFiring(this, false, false);
+            postFiringOther(other, false);
         }
         if (other.renderVisible())
             other.cameraTo(data.team);
+    }
+
+    public void postFiringOther(Unit other, boolean firingAnim) {
+        postFiring(other, true, firingAnim);
+        other.postFiring(this, false, firingAnim);
     }
 
     public void postFiring(Unit other, boolean isThisAttacking, boolean firingAnim) {
@@ -587,8 +571,12 @@ public class Unit implements Deletable, Tickable, UnitLike {
             level.destroyedUnitsByTeam.put(destroyedBy.data.team, level.destroyedUnitsByTeam.get(destroyedBy.data.team) + 1);
         }
         if (renderVisible()) {
-            explosion = new ImageSequenceAnim(ImageSequenceGroup.EXPLOSION.getRandomSequence(), TILE_SIZE * 2f, 0.5f);
-            level.levelRenderer.registerAnimBlock(explosion);
+            UnitExplosion anim = new UnitExplosion(getCenter(), level);
+            animHandler.registerAnim(anim);
+            exploding = true;
+            level.levelRenderer.registerTimerBlock(anim, () -> {
+                level.qRemoveUnit(this);
+            });
             level.levelRenderer.enableCameraShake(new ObjPos(0.2f, 0.2f));
         } else {
             level.qRemoveUnit(this);
@@ -778,19 +766,19 @@ public class Unit implements Deletable, Tickable, UnitLike {
 
     public void cameraTo() {
         if (visible(level.currentVisibility) && level.getThisTeam() != data.team) {
-            level.levelRenderer.setCameraInterpBlockPos(level.getTile(data.pos).renderPosCentered);
+            level.levelRenderer.setCameraInterpBlockPos(getCenter());
         }
     }
 
     public void cameraTo(UnitTeam actionPerformingTeam) {
         if (visible(level.currentVisibility) && level.getThisTeam() != actionPerformingTeam) {
-            level.levelRenderer.setCameraInterpBlockPos(level.getTile(data.pos).renderPosCentered);
+            level.levelRenderer.setCameraInterpBlockPos(getCenter());
         }
     }
 
     private void cameraToIgnoreStealth() {
         if (!isRenderFoW() && level.getThisTeam() != data.team) {
-            level.levelRenderer.setCameraInterpBlockPos(level.getTile(data.pos).renderPosCentered);
+            level.levelRenderer.setCameraInterpBlockPos(getCenter());
         }
     }
 
@@ -799,12 +787,12 @@ public class Unit implements Deletable, Tickable, UnitLike {
         return u == null || !u.visible(visibility);
     }
 
+    private ObjPos getCenter() {
+        return level.getTile(data.pos).renderPosCentered;
+    }
+
     @Override
     public void delete() {
-        if (explosion != null) {
-            level.levelRenderer.removeAnimBlock(explosion);
-            level.levelRenderer.disableCameraShake();
-        }
         level.buttonRegister.remove(actionUI);
         level = null;
         actionUI.delete();
@@ -813,6 +801,8 @@ public class Unit implements Deletable, Tickable, UnitLike {
         hitPointText.delete();
         shieldHitPointText.delete();
         stats = null;
+        animHandler.delete();
+        animHandler = null;
     }
 
     private final DynamicTextRenderer hitPointText = createHPText();
@@ -831,6 +821,7 @@ public class Unit implements Deletable, Tickable, UnitLike {
     @Override
     public void tick(float deltaTime) {
         updateRenderPos();
+        animHandler.tick(deltaTime);
     }
 
     private void endAndDeselectAction() {
@@ -856,6 +847,7 @@ public class Unit implements Deletable, Tickable, UnitLike {
         return selector().tileAtPos(getRenderPos().copy().addY(0.5f * SIN_60_DEG * TILE_SIZE));
     }
 
+    @Override
     public boolean renderVisible() {
         return !isRenderFoW() && (!data.stealthMode || isRenderStealthVisible());
     }

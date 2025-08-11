@@ -1,8 +1,8 @@
-package render.anim;
+package render.anim.sequence;
 
 import render.Renderable;
+import render.anim.timer.LerpAnimation;
 import render.texture.CachedImageSequence;
-import render.texture.ImageSequence;
 
 import java.awt.*;
 

@@ -61,7 +61,7 @@ public final class FiringData {
         return new FiringData(old.otherUnit, old.thisUnit, old.otherData, old.thisData, old.level);
     }
 
-    public void updateTempHP() {
+    public void realiseDamage() {
         thisUnit.data.hitPoints = thisData.hitPoints;
         thisUnit.data.shieldHP = thisData.shieldHP;
         otherUnit.data.hitPoints = otherData.hitPoints;

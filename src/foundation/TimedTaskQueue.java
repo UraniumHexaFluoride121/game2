@@ -10,8 +10,19 @@ public class TimedTaskQueue implements Tickable, Deletable {
     public TimedTaskQueue() {
     }
 
-    public synchronized void addTask(float time, Runnable r) {
+    public synchronized TimedTaskQueue addTask(float time, Runnable r) {
         tasksQ.add(new Task(r, System.currentTimeMillis() + (long) (time * 1000)));
+        return this;
+    }
+
+    public synchronized TimedTaskQueue andThen(float time, Runnable r) {
+        tasks.addAll(tasksQ);
+        tasksQ.clear();
+        if (tasks.isEmpty())
+            addTask(time, r);
+        else
+            tasksQ.add(new Task(r, tasks.getLast().time + (long) (time * 1000)));
+        return this;
     }
 
     public synchronized boolean hasIncompleteTask() {

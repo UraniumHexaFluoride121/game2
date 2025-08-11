@@ -1,7 +1,7 @@
 package unit.weapon;
 
 import render.Renderable;
-import render.anim.ImageSequenceAnim;
+import render.anim.sequence.ImageSequenceAnim;
 import render.texture.ImageSequenceGroup;
 import render.texture.ResourceLocation;
 

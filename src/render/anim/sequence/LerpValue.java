@@ -1,4 +1,4 @@
-package render.anim;
+package render.anim.sequence;
 
 import foundation.math.MathUtil;
 

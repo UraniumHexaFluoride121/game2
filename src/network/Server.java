@@ -5,7 +5,7 @@ import foundation.MainPanel;
 import level.Level;
 import level.tile.Tile;
 import level.tile.TileData;
-import render.anim.AnimTilePath;
+import render.anim.unit.AnimTilePath;
 import unit.UnitData;
 import unit.Unit;
 import unit.UnitTeam;

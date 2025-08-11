@@ -6,7 +6,7 @@ import foundation.input.InputType;
 import foundation.math.ObjPos;
 import render.GameRenderer;
 import render.HorizontalAlign;
-import render.anim.SineAnimation;
+import render.anim.timer.SineAnimation;
 
 import java.awt.*;
 import java.awt.font.TextLayout;

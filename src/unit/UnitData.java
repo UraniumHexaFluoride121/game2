@@ -5,7 +5,7 @@ import level.Level;
 import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
-import render.anim.SineAnimation;
+import render.anim.timer.SineAnimation;
 import save.LoadedFromSave;
 import unit.action.Action;
 import unit.stats.StatManager;

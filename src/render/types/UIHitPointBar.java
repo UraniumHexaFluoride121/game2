@@ -3,7 +3,7 @@ package render.types;
 import foundation.math.MathUtil;
 import render.GameRenderer;
 import render.Renderable;
-import render.anim.PowAnimation;
+import render.anim.timer.PowAnimation;
 import render.UIColourTheme;
 import unit.Unit;
 

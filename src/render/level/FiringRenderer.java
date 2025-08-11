@@ -4,10 +4,10 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import level.Level;
 import render.*;
-import render.anim.ExpAnimation;
-import render.anim.ImageSequenceAnim;
-import render.anim.LerpAnimation;
-import render.anim.SineAnimation;
+import render.anim.timer.ExpAnimation;
+import render.anim.sequence.ImageSequenceAnim;
+import render.anim.timer.LerpAnimation;
+import render.anim.timer.SineAnimation;
 import render.texture.*;
 import render.UIColourTheme;
 import render.types.UIHitPointBar;
@@ -363,7 +363,7 @@ public class FiringRenderer extends AbstractRenderElement {
     };
 
     public static float estimatedAnimationTime(boolean showAnim) {
-        return showAnim ? 6.5f : 2f;
+        return showAnim ? 7f : 2f;
     }
 
     private static class UnitRenderer implements Renderable {

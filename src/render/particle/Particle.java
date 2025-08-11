@@ -5,26 +5,23 @@ import foundation.math.ObjPos;
 import foundation.tick.Tickable;
 import render.GameRenderer;
 import render.Renderable;
-import render.anim.LerpAnimation;
+import render.anim.timer.LerpAnimation;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.function.BiConsumer;
 
 public class Particle implements Renderable, Tickable {
     public final LerpAnimation timer;
-    public final Shape shape;
-    public final ParticleModifier[] modifiers;
+    public final ParticleBehaviour[] modifiers;
     public final float lifetime;
     public ObjPos offset = new ObjPos();
     public AffineTransform rotation = new AffineTransform();
 
-    public Particle(float lifetime, Shape shape, ParticleModifier... modifiers) {
+    public Particle(float lifetime, ParticleBehaviour... modifiers) {
         this.lifetime = lifetime;
-        this.shape = shape;
         this.modifiers = modifiers;
-        for (ParticleModifier modifier : modifiers) {
-            modifier.initialisation().accept(this);
+        for (ParticleBehaviour behaviour : modifiers) {
+            behaviour.initialisation().accept(this);
         }
         timer = new LerpAnimation(lifetime);
     }
@@ -33,17 +30,16 @@ public class Particle implements Renderable, Tickable {
     public void render(Graphics2D g) {
         GameRenderer.renderOffset(offset, g, () -> {
             g.transform(rotation);
-            for (ParticleModifier modifier : modifiers) {
-                modifier.render().accept(this, g);
+            for (ParticleBehaviour behaviour : modifiers) {
+                behaviour.render().accept(this, g);
             }
-            g.fill(shape);
         });
     }
 
     @Override
     public void tick(float deltaTime) {
-        for (ParticleModifier modifier : modifiers) {
-            modifier.tick().accept(this, deltaTime);
+        for (ParticleBehaviour behaviour : modifiers) {
+            behaviour.tick().accept(this, deltaTime);
         }
     }
 
@@ -55,6 +51,15 @@ public class Particle implements Renderable, Tickable {
     public Particle offsetRandomOnLine(ObjPos start, ObjPos end) {
         offset.add(start.lerp(end, (float) Math.random()));
         return this;
+    }
+
+    public Particle offsetRandomInCircle(float radius) {
+        offset.add(randomRadialOffset(radius));
+        return this;
+    }
+
+    public static ObjPos randomRadialOffset(float radius) {
+        return new ObjPos((float) (radius * Math.random())).rotate(randomAngleOffset(180));
     }
 
     public Particle offsetRandomOnLine(float radians, float maxOffset, float forwardOffset) {

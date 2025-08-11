@@ -4,7 +4,7 @@ import foundation.input.ButtonRegister;
 import foundation.input.InputType;
 import level.Level;
 import render.*;
-import render.anim.LerpAnimation;
+import render.anim.timer.LerpAnimation;
 import render.level.tile.RenderElement;
 import render.types.container.LevelUIContainer;
 import render.types.input.button.UIButton;

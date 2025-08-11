@@ -9,7 +9,7 @@ import level.structure.Structure;
 import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileData;
-import render.anim.AnimTilePath;
+import render.anim.unit.AnimTilePath;
 import unit.UnitData;
 import unit.Unit;
 import unit.UnitTeam;
@@ -304,7 +304,7 @@ public class Client implements Deletable {
                         } else {
                             if (tile.structure.type == StructureType.BASE)
                                 l.removePlayer(tile.structure.team);
-                            tile.explodeStructure();
+                            tile.explodeStructure(MainPanel.getActiveLevel());
                             if (cameraTo)
                                 l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
                         }
@@ -331,7 +331,7 @@ public class Client implements Deletable {
                         requestLevelData();
                         return;
                     }
-                    tile.explodeStructure();
+                    tile.explodeStructure(MainPanel.getActiveLevel());
                     if (cameraTo)
                         l.levelRenderer.setCameraInterpBlockPos(tile.renderPosCentered);
                 });

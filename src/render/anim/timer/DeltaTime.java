@@ -1,4 +1,4 @@
-package render.anim;
+package render.anim.timer;
 
 public class DeltaTime {
     private long time;

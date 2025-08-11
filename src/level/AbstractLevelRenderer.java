@@ -14,7 +14,9 @@ import level.tutorial.TutorialManager;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
-import render.anim.AnimationTimer;
+import render.anim.timer.AnimationTimer;
+import render.anim.unit.AnimHandler;
+import render.anim.unit.AnimType;
 import render.level.tile.HexagonBorder;
 import render.level.tile.HighlightTileRenderer;
 import render.level.tile.ITileHighlight;
@@ -36,6 +38,8 @@ import static level.tile.Tile.*;
 public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> implements Deletable, Renderable, Tickable, InputReceiver {
     public static final float MOUSE_EDGE_CAMERA_BORDER = 0.5f;
     private static final float MOUSE_EDGE_CAMERA_MOVE_SPEED = 20;
+
+    public final AnimHandler animHandler = new AnimHandler();
 
     public Vector<Object> mouseBlockingObjects = new Vector<>();
     public Vector<ITileHighlight> tileHighlights = new Vector<>();
@@ -78,6 +82,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
                     tile.renderTerrain(g);
                 }
             }
+            animHandler.render(g, AnimType.TILE_TERRAIN);
         }, Renderable.renderImage(borderImage, false, false, -1)
                 .translate(-Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f, -Tile.BLOCK_STROKE_WIDTH_MARGIN / 2f)
         );
@@ -352,6 +357,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
             }
             level.buttonRegister.acceptInput(cameraTransformedPos, InputType.MOUSE_OVER, true, false);
         }
+        animHandler.tick(deltaTime);
     }
 
     @Override
@@ -362,5 +368,6 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
         backgroundRenderer.delete();
         mainRenderer.delete();
         levelUIRenderer.delete();
+        animHandler.delete();
     }
 }

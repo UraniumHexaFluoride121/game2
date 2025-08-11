@@ -5,7 +5,7 @@ import foundation.input.InputType;
 import foundation.input.OnButtonInput;
 import level.Level;
 import render.*;
-import render.anim.PowAnimation;
+import render.anim.timer.PowAnimation;
 import render.types.box.UIDisplayBox;
 import render.types.box.UIDisplayBoxRenderElement;
 import render.types.container.LevelUIContainer;

@@ -1,10 +1,12 @@
 package level.structure;
 
-import foundation.math.ObjPos;
+import level.Level;
 import level.tile.Tile;
 import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
+import render.anim.unit.AnimType;
+import render.anim.unit.ObjectExplosion;
 import render.texture.ImageRenderer;
 import unit.UnitTeam;
 
@@ -19,7 +21,7 @@ public class Structure implements Writable {
     public final StructureType type;
     public UnitTeam team;
     public ImageRenderer renderer;
-    public boolean canBeCaptured;
+    public boolean canBeCaptured, exploding = false;
 
     public Structure(Point pos, StructureType type, UnitTeam team) {
         this.pos = pos;
@@ -42,21 +44,16 @@ public class Structure implements Writable {
         return this;
     }
 
-    public void renderExplosion(Graphics2D g, Tile parent) {
-        if (destroyedExplosion == null)
-            return;
-        destroyedExplosion.render(g);
-        if (destroyedExplosion.finished())
-            parent.removeStructure();
-    }
-
-    public void explode() {
-        if (destroyedExplosion == null)
-            destroyedExplosion = new ObjectExplosion(new ObjPos(), 0.8f);
+    public void explode(Tile parent, Level level) {
+        if (!exploding) {
+            exploding = true;
+            level.levelRenderer.animHandler.registerAnim(new ObjectExplosion(parent.renderPosCentered, 0.8f, false, AnimType.TILE_TERRAIN));
+            level.levelRenderer.animHandler.tasks.addTask(0.3f, parent::removeStructure);
+        }
     }
 
     public boolean exploding() {
-        return destroyedExplosion != null;
+        return exploding;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package render.anim;
+package render.anim.unit;
 
 import foundation.math.HexagonalDirection;
 import foundation.math.ObjPos;
@@ -7,6 +7,8 @@ import level.tile.Tile;
 import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
+import render.anim.timer.AnimationTimer;
+import render.anim.sequence.AnimationType;
 import render.level.tile.TilePath;
 import unit.Unit;
 

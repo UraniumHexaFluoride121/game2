@@ -270,8 +270,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
 
     public void endFiring(Unit attacking, Unit defending) {
         isFiring = false;
-        attacking.postFiring(defending, true, true);
-        defending.postFiring(attacking, false, true);
+        attacking.postFiringOther(defending, true);
         defending.tileFlash(Unit.ATTACK_TILE_FLASH);
         removeAnimBlock(firingAnimRenderer);
     }

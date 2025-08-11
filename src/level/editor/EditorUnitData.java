@@ -2,7 +2,7 @@ package level.editor;
 
 import foundation.math.ObjPos;
 import render.Renderable;
-import render.anim.SineAnimation;
+import render.anim.timer.SineAnimation;
 import save.LoadedFromSave;
 import unit.UnitPose;
 import unit.UnitTeam;

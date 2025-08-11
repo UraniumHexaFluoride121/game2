@@ -4,8 +4,8 @@ import level.Level;
 import level.tile.Tile;
 import level.tile.TileSet;
 import render.Renderable;
-import render.anim.ReversableAnimationTimer;
-import render.anim.PowAnimation;
+import render.anim.timer.ReversableAnimationTimer;
+import render.anim.timer.PowAnimation;
 
 import java.awt.*;
 import java.util.HashSet;

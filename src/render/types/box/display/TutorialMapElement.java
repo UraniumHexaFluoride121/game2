@@ -9,7 +9,7 @@ import render.GameRenderer;
 import render.HorizontalAlign;
 import render.Renderable;
 import render.UIColourTheme;
-import render.anim.SineAnimation;
+import render.anim.timer.SineAnimation;
 import render.level.tile.HexagonRenderer;
 import render.types.box.UIBox;
 import render.types.text.DynamicTextRenderer;
@@ -164,7 +164,7 @@ public class TutorialMapElement extends BoxElement {
         }
     }
 
-    public static class MapUnit implements Renderable, UnitLike, Deletable {
+    public static class MapUnit extends UnitLike implements Renderable, Deletable {
         private final UnitData data;
         private final SineAnimation idleAnimX, idleAnimY;
         private final ObjPos renderPos;

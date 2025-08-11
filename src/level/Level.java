@@ -431,7 +431,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         levelRenderer.onTeamEliminated.start(team.getName() + " Eliminated!", team);
         Tile baseTile = getTile(basePositions.get(team));
         if (baseTile.hasStructure())
-            baseTile.explodeStructure();
+            baseTile.explodeStructure(this);
         basePositions.remove(team);
         playerTeam.remove(team);
         unitSet.forEach(u -> {
@@ -442,7 +442,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         tileSelector.tileSet.forEach(t -> {
             if (t.hasStructure() && t.structure.team == team) {
                 if (t.structure.type.destroyedOnCapture) {
-                    t.explodeStructure();
+                    t.explodeStructure(this);
                     if (networkState == NetworkState.SERVER)
                         server.sendStructureDestroy(t, false);
                 } else {

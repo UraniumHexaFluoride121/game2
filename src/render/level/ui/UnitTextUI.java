@@ -1,7 +1,7 @@
 package render.level.ui;
 
 import render.GameRenderer;
-import render.anim.PowAnimation;
+import render.anim.timer.PowAnimation;
 import render.types.text.TextRenderer;
 import render.HorizontalAlign;
 

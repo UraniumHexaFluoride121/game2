@@ -8,7 +8,7 @@ import network.NetworkState;
 import network.PacketWriter;
 import network.Writable;
 import render.*;
-import render.anim.PowAnimation;
+import render.anim.timer.PowAnimation;
 import render.level.tile.RenderElement;
 import render.types.text.*;
 import render.HorizontalAlign;

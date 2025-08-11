@@ -4,8 +4,8 @@ import foundation.Deletable;
 import foundation.MainPanel;
 import level.tile.Tile;
 import level.tile.TileSet;
-import render.anim.PowAnimation;
-import render.anim.ReversableAnimationTimer;
+import render.anim.timer.PowAnimation;
+import render.anim.timer.ReversableAnimationTimer;
 
 import java.awt.*;
 import java.util.HashMap;

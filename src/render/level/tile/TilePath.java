@@ -13,9 +13,9 @@ import level.tile.TileSet;
 import level.tile.TileType;
 import render.GameRenderer;
 import render.Renderable;
-import render.anim.AnimTilePath;
-import render.anim.LerpAnimation;
-import render.anim.PowAnimation;
+import render.anim.unit.AnimTilePath;
+import render.anim.timer.LerpAnimation;
+import render.anim.timer.PowAnimation;
 import render.types.text.StyleElement;
 import unit.stats.StatManager;
 

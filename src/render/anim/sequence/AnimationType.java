@@ -1,6 +1,7 @@
-package render.anim;
+package render.anim.sequence;
 
 import network.PacketReceiver;
+import render.anim.timer.*;
 
 import java.io.DataInputStream;
 import java.io.IOException;

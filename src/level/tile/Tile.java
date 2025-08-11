@@ -12,7 +12,7 @@ import network.PacketReceiver;
 import network.Writable;
 import render.GameRenderer;
 import render.UIColourTheme;
-import render.anim.LerpAnimation;
+import render.anim.timer.LerpAnimation;
 import render.level.tile.HexagonRenderer;
 import render.texture.ImageRenderer;
 import render.types.UIHitPointBar;
@@ -101,8 +101,6 @@ public class Tile implements Writable {
                 imageRenderer.render(g, TILE_SIZE);
             if (hasAnyStructure()) {
                 structure.renderer.render(g, TILE_SIZE);
-                if (structure.exploding())
-                    structure.renderExplosion(g, this);
             }
         });
     }
@@ -190,16 +188,12 @@ public class Tile implements Writable {
         captureBar = null;
     }
 
-    public void explodeStructure() {
-        structure.explode();
+    public void explodeStructure(Level level) {
+        structure.explode(this, level);
     }
 
     public boolean hasStructure() {
         return structure != null && !structure.exploding();
-    }
-
-    public boolean hasExplodingStructure() {
-        return structure != null && structure.exploding();
     }
 
     public boolean hasAnyStructure() {
@@ -212,7 +206,7 @@ public class Tile implements Writable {
     }
 
     public void setProgress(int progress) {
-        captureBar.setFill(progress, 0.5f, 0.8f);
+        captureBar.setFill(progress, 1f, 0.8f);
     }
 
     public void setProgress(int progress, Level level, boolean runOnComplete, Runnable onFillComplete) {

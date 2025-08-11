@@ -2,8 +2,8 @@ package render.types.text;
 
 import level.Level;
 import render.*;
-import render.anim.PowAnimation;
-import render.anim.LerpAnimation;
+import render.anim.timer.PowAnimation;
+import render.anim.timer.LerpAnimation;
 import unit.UnitTeam;
 
 public class UITextNotification extends AbstractRenderElement {
