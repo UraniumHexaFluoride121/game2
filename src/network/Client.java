@@ -264,6 +264,27 @@ public class Client implements Deletable {
                     fromUnit.resupply(toUnit);
                 });
             }
+            case SERVER_STRUCTURE_RESUPPLY -> {
+                UnitData data = new UnitData(reader);
+                if (!levelCreated)
+                    return;
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.getActiveLevel();
+                    Unit u = data.getUnit(l, true);
+                    u.resupply(true);
+                });
+            }
+            case SERVER_STRUCTURE_REPAIR -> {
+                UnitData data = new UnitData(reader);
+                float amount = reader.readFloat();
+                if (!levelCreated)
+                    return;
+                MainPanel.addTaskAfterAnimBlock(() -> {
+                    Level l = MainPanel.getActiveLevel();
+                    Unit u = data.getUnit(l, true);
+                    u.regenerateHP(amount, true);
+                });
+            }
             case SERVER_CAPTURE_UNIT -> {
                 Point pos = PacketReceiver.readPoint(reader);
                 boolean action = reader.readBoolean();

@@ -1,34 +1,34 @@
 package unit.weapon;
 
-import level.Level;
 import level.tile.TileType;
 import unit.UnitData;
-import unit.Unit;
+import unit.UnitLike;
 import unit.stats.Modifier;
 import unit.stats.ModifierCategory;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public final class FiringData {
-    public final Unit thisUnit, otherUnit;
+    public final UnitLike<?> thisUnit, otherUnit;
     public final UnitData thisData, otherData;
-    public final Level level;
+    public final Function<Point, TileType> tileType;
 
-    public FiringData(Unit thisUnit, Unit otherUnit, Level level) {
+    public FiringData(UnitLike<?> thisUnit, UnitLike<?> otherUnit, Function<Point, TileType> tileType) {
         this.thisUnit = thisUnit;
         this.otherUnit = otherUnit;
-        this.level = level;
+        this.tileType = tileType;
         thisData = thisUnit.data.copy();
         otherData = otherUnit.data.copy();
     }
 
-    private FiringData(Unit thisUnit, Unit otherUnit, UnitData thisData, UnitData otherData, Level level) {
+    private FiringData(UnitLike<?> thisUnit, UnitLike<?> otherUnit, UnitData thisData, UnitData otherData, Function<Point, TileType> tileType) {
         this.thisUnit = thisUnit;
         this.otherUnit = otherUnit;
         this.thisData = thisData;
         this.otherData = otherData;
-        this.level = level;
+        this.tileType = tileType;
     }
 
     public float getDamageMultiplier() {
@@ -52,13 +52,13 @@ public final class FiringData {
 
     public ArrayList<DamageModifier> damageModifiers(WeaponInstance weapon) {
         ArrayList<DamageModifier> modifiers = new ArrayList<>(weapon.template.getModifiers(otherUnit.data.type).stream().map(m -> new DamageModifier(m, true)).toList());
-        TileType tile = level.getTile(otherUnit.data.pos).type;
+        TileType tile = tileType.apply(otherUnit.data.pos);
         modifiers.add(new DamageModifier(tile.damageModifier, false));
         return modifiers;
     }
 
     public static FiringData reverse(FiringData old) {
-        return new FiringData(old.otherUnit, old.thisUnit, old.otherData, old.thisData, old.level);
+        return new FiringData(old.otherUnit, old.thisUnit, old.otherData, old.thisData, old.tileType);
     }
 
     public void realiseDamage() {

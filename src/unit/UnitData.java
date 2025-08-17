@@ -9,6 +9,7 @@ import render.anim.timer.SineAnimation;
 import save.LoadedFromSave;
 import unit.action.Action;
 import unit.stats.StatManager;
+import unit.stats.UnitStatManager;
 import unit.type.UnitType;
 
 import java.awt.*;
@@ -38,15 +39,15 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         this.pos = pos;
     }
 
-    public void initialise(StatManager stats) {
-        initialise(stats.maxHP(), stats.maxShieldHP(), stats.ammoCapacity());
+    public void init(StatManager<?> stats) {
+        init(stats.maxHP(), stats.maxShieldHP(), stats.ammoCapacity());
     }
 
-    public void initialise() {
-        initialise(type.hitPoints, type.shieldHP, type.ammoCapacity);
+    public void init() {
+        init(type.hitPoints, type.shieldHP, type.ammoCapacity);
     }
 
-    public void initialise(float maxHP, float maxShieldHP, int ammoCapacity) {
+    public void init(float maxHP, float maxShieldHP, int ammoCapacity) {
         hitPoints = maxHP;
         renderHP = hitPoints;
         lowestHP = hitPoints;

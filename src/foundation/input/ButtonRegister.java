@@ -71,16 +71,16 @@ public class ButtonRegister implements IButtonRegister, Deletable {
 
     private synchronized void processQueued() {
         qRegister.forEach(b -> {
-            if (!buttons.containsKey(b.getButtonOrderTemp()))
-                buttons.put(b.getButtonOrderTemp(), new TreeMap<>(Comparator.reverseOrder()));
-            TreeMap<Integer, HashSet<RegisteredButtonInputReceiver>> order = buttons.get(b.getButtonOrderTemp());
+            if (!buttons.containsKey(b.getButtonOrder()))
+                buttons.put(b.getButtonOrder(), new TreeMap<>(Comparator.reverseOrder()));
+            TreeMap<Integer, HashSet<RegisteredButtonInputReceiver>> order = buttons.get(b.getButtonOrder());
             if (!order.containsKey(b.getZOrder()))
                 order.put(b.getZOrder(), new HashSet<>());
             order.get(b.getZOrder()).add(b);
         });
         qRegister.clear();
         qRemove.forEach(b -> {
-            buttons.get(b.getButtonOrderTemp()).get(b.getZOrder()).remove(b);
+            buttons.get(b.getButtonOrder()).get(b.getZOrder()).remove(b);
         });
         qRemove.clear();
     }

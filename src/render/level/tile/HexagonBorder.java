@@ -9,6 +9,7 @@ import render.Renderable;
 
 import java.awt.*;
 import java.awt.geom.Path2D;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -17,7 +18,7 @@ public class HexagonBorder implements Renderable {
     private final Path2D.Float path;
     private Color colour;
 
-    public HexagonBorder(TileSet tiles, Color colour) {
+    public HexagonBorder(Collection<Point> tiles, Color colour) {
         this.colour = colour;
         path = new Path2D.Float();
         HashMap<Point, HashSet<HexagonalDirection>> borders = new HashMap<>(), usedBorders = new HashMap<>();
@@ -76,5 +77,10 @@ public class HexagonBorder implements Renderable {
         g.setStroke(stroke);
         g.setColor(colour);
         g.draw(path);
+    }
+
+    public void renderFill(Graphics2D g, Color colour) {
+        g.setColor(colour);
+        g.fill(path);
     }
 }

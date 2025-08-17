@@ -58,7 +58,7 @@ public class DamageModifierInfo extends InfoScreen {
                 UIDisplayBoxRenderElement e = m.modifier().renderBox(r, RenderOrder.INFO_SCREEN, 1, 0, 22);
                 UIDisplayBox unitBox = new UIDisplayBox(0, 0, 10, -1, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX), true);
                 unitBox.addText(0.55f, HorizontalAlign.RIGHT, 1, m.isOnAttackingUnit() ? "Attacking Unit" : "Enemy Unit");
-                e.box.addBox(unitBox, HorizontalAlign.RIGHT, 1)
+                e.box.addBox(unitBox, HorizontalAlign.RIGHT, 1, false)
                         .setColumnVerticalAlign(1, VerticalAlign.TOP);
                 e.box.attemptUpdate(g);
                 height.updateAndGet(v -> v + e.box.height + 0.5f);

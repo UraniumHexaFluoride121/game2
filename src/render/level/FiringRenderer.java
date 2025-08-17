@@ -363,7 +363,7 @@ public class FiringRenderer extends AbstractRenderElement {
     };
 
     public static float estimatedAnimationTime(boolean showAnim) {
-        return showAnim ? 7f : 2f;
+        return showAnim ? 7.5f : 2f;
     }
 
     private static class UnitRenderer implements Renderable {

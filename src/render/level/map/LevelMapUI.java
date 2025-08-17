@@ -77,7 +77,7 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
                 }
 
                 @Override
-                public RenderOrder getButtonOrderTemp() {
+                public RenderOrder getButtonOrder() {
                     return RenderOrder.MAP;
                 }
 

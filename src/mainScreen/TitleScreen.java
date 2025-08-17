@@ -189,8 +189,6 @@ public class TitleScreen implements Renderable, InputReceiver {
             new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
                     new UIBox(10, 14).setColourTheme(LIGHT_BLUE_TRANSPARENT_CENTER),
                     new UITextLabel(10.3f, 1, true).setTextLeftBold().updateTextLeft("Select tutorial:").translate(-0.3f, 14.5f));
-            UIDisplayBoxRenderElement textBox = new UIDisplayBoxRenderElement(r, RenderOrder.TITLE_SCREEN_BUTTONS, -10, 2, 8, 10, box -> box.setColourTheme(LIGHT_BLUE_BOX_DARK), false);
-            textBox.addText(0.7f, HorizontalAlign.LEFT, null).setEnabled(false);
             UIButton startButton = new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, 1.5f, -2.5f, 7, 1.5f, 1.2f, false)
                     .setBold().setText("Start").setClickEnabled(false).setColourTheme(GRAYED_OUT).setOnClick(() -> {
                         MainPanel.startNewLevel(selectedTutorialLevel, () -> loadTutorialLevel(MainPanel.tutorialMaps.gameSaves.get(selectedTutorialLevel.saveFileName), selectedTutorialLevel.levelData));
@@ -199,15 +197,13 @@ public class TitleScreen implements Renderable, InputReceiver {
                     0, 0, 10, 14, false, count -> count * 2f + 0.5f);
             tutorialButtons.addElements(TutorialLevel.values().length, (r2, b2, i) -> {
                 TutorialLevel level = TutorialLevel.values()[i];
-                UIButton button = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, 1, -2 * (i + 1), 8, 1.5f, 0.8f, true)
+                UIButton button = new UIButton(r2, b2, RenderOrder.TITLE_SCREEN_BUTTONS, 0.5f, -2 * (i + 1), 9, 1.5f, 0.8f, true)
                         .setText(level.getName()).setColourTheme(GREEN_SELECTED).setBold().noDeselect();
                 return button.setOnClick(() -> {
                     tutorialButtons.forEach(other -> {
                         if (button != other)
                             other.deselect();
                     });
-                    textBox.setEnabled(true);
-                    textBox.box.setText(level.description);
                     startButton.setClickEnabled(true).setColourTheme(LIGHT_BLUE);
                     selectedTutorialLevel = level;
                 });

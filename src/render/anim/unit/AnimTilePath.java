@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class AnimTilePath implements Writable {
-    private final ArrayList<Point> tiles = new ArrayList<>();
+    public final ArrayList<Point> tiles = new ArrayList<>();
     public final ArrayList<HexagonalDirection> directions = new ArrayList<>();
-    private final ArrayList<ObjPos> points = new ArrayList<>();
+    public final ArrayList<ObjPos> points = new ArrayList<>();
     private AnimationTimer timer;
 
     public AnimTilePath(ArrayList<Point> tiles) {
@@ -88,6 +88,8 @@ public class AnimTilePath implements Writable {
     }
 
     public HexagonalDirection getDirection() {
+        if (directions.isEmpty())
+            return null;
         float t = timer.normalisedProgress();
         if (t == 1)
             return directions.getLast();

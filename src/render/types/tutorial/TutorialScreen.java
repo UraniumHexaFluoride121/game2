@@ -21,7 +21,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public class TutorialScreen extends LevelUIContainer<Level> {
-    public static final float NORMAL_WIDTH = 40;
+    public static final float NORMAL_WIDTH = 30;
     public final float width;
     private UIScrollSurface scrollSurface;
     private UIButton continueButton = null;
@@ -30,10 +30,11 @@ public class TutorialScreen extends LevelUIContainer<Level> {
         return new TutorialScreenElement(l, width, boxConsumer);
     }
 
-    public TutorialScreen(Level l, float width, HorizontalAlign textAlign, BiConsumer<UIDisplayBox, Level> boxConsumer, Runnable onContinue) {
+    public TutorialScreen(Level l, float width, BiConsumer<UIDisplayBox, Level> boxConsumer, Runnable onContinue) {
         super(l.levelRenderer.levelUIRenderer, l.buttonRegister, RenderOrder.TUTORIAL_INFO_SCREEN, 0, 0, l);
         this.width = width;
         addRenderables((r, b) -> {
+            float maxHeight = Renderable.top() * 0.8f;
             new UIFullScreenColour(r, RenderOrder.TUTORIAL_INFO_SCREEN, UnitInfoScreen.FULL_SCREEN_MENU_BACKGROUND_COLOUR)
                     .setZOrder(-100);
             scrollSurface = new UIScrollSurface(r, b, RenderOrder.TUTORIAL_INFO_SCREEN, 0, 0, Renderable.right(), Renderable.top(), false, (r2, b2) -> {
@@ -43,13 +44,14 @@ public class TutorialScreen extends LevelUIContainer<Level> {
                 boxConsumer.accept(element.box, l);
                 element.box.setHorizontalAlign(HorizontalAlign.CENTER).addOnUpdate(() -> {
                     UIDisplayBox box = element.box;
-                    float maxHeight = Renderable.top() * 0.8f;
                     float y;
                     if (box.height > maxHeight) {
                         y = -Renderable.top() / 2 - box.height + maxHeight / 2;
+                        scrollSurface.setScrollMax(box.height - maxHeight);
                         box.setY(y);
                     } else {
                         y = -Renderable.top() / 2 - box.height / 2;
+                        scrollSurface.setScrollMax(0);
                         box.setY(y);
                     }
                     if (continueButton != null) {
@@ -59,6 +61,7 @@ public class TutorialScreen extends LevelUIContainer<Level> {
                             .setBold().setText("Continue").setColourTheme(UIColourTheme.DEEP_GREEN).setOnClick(onContinue);
                 });
             });
+            scrollSurface.addScrollBar((Renderable.top() - maxHeight) / 2 + 0.25f, 0.5f, 0.65f - (Renderable.right() - width) / 2);
         });
     }
 
@@ -74,7 +77,7 @@ public class TutorialScreen extends LevelUIContainer<Level> {
         private Supplier<UIContainer> textBoxSupplier;
 
         private TutorialScreenElement(Level l, float width, BiConsumer<UIDisplayBox, Level> boxConsumer) {
-            textBoxSupplier = () -> new TutorialScreen(l, width, HorizontalAlign.CENTER, boxConsumer, TutorialSequenceElement::next);
+            textBoxSupplier = () -> new TutorialScreen(l, width, boxConsumer, TutorialSequenceElement::next);
         }
 
         @Override

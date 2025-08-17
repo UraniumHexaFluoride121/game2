@@ -119,32 +119,32 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
             systems.box.addText(0.6f, HorizontalAlign.CENTER, "Hover for more info").getText().setItalic(true);
             systems.box.addSpace(0.3f, 0);
 
-            systems.box.addBox(hp, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(hp, HorizontalAlign.CENTER, 0, false);
             systems.box.setColumnVerticalAlign(0, VerticalAlign.TOP);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(shield, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(shield, HorizontalAlign.CENTER, 0, false);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(movement, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(movement, HorizontalAlign.CENTER, 0, false);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(weapons, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(weapons, HorizontalAlign.CENTER, 0, false);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(ammo, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(ammo, HorizontalAlign.CENTER, 0, false);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(repair, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(repair, HorizontalAlign.CENTER, 0, false);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(resupply, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(resupply, HorizontalAlign.CENTER, 0, false);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(stealth, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(stealth, HorizontalAlign.CENTER, 0, false);
 
             systems.box.addSpace(0.3f, 0);
-            systems.box.addBox(mining, HorizontalAlign.CENTER, 0);
+            systems.box.addBox(mining, HorizontalAlign.CENTER, 0, false);
 
             UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r, b, RenderOrder.LEVEL_UI, systems.box);
             buttonHandler.addTooltip(2, 0, true).add(button -> {
@@ -165,13 +165,13 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "Every unit has a limited amount of HP. The more damage a unit has taken, the less damage it can deal with its weapons. When its HP drops to 0, it is destroyed.")
                         .addSpace(0.3f, 0)
-                        .addBox(hpStats, HorizontalAlign.CENTER, 0)
+                        .addBox(hpStats, HorizontalAlign.CENTER, 0, false)
                         .addSpace(0.6f, 0)
                         .addText(1, HorizontalAlign.LEFT, ModifierCategory.VIEW_RANGE.getName())
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "The unit's " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + " determines how far the unit can reveal tiles hidden by fog of war. Tiles directly adjacent to allied units are always revealed.")
                         .addSpace(0.3f, 0)
-                        .addBox(viewRangeStats, HorizontalAlign.CENTER, 0);
+                        .addBox(viewRangeStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     UIHitPointBar bar = tooltip.getBar(2, 0);
@@ -209,13 +209,13 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This unit has a shield that protects the hull from taking damage. Any damage received will first drain the shield HP before impacting the hull.")
                         .addSpace(0.3f, 0)
-                        .addBox(shieldStats, HorizontalAlign.CENTER, 0)
+                        .addBox(shieldStats, HorizontalAlign.CENTER, 0, false)
                         .addSpace(1.2f, 0)
                         .addText(1, HorizontalAlign.LEFT, ModifierCategory.SHIELD_REGEN.getName())
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This unit is capable of regenerating its shield using the " + StyleElement.MODIFIER_SHIELD_HP.display + Action.SHIELD_REGEN.getName() + " " + TextRenderable.SHIELD_REGEN_ICON.display + StyleElement.NO_COLOUR.display + " action.")
                         .addSpace(0.3f, 0)
-                        .addBox(shieldRegenStats, HorizontalAlign.CENTER, 0);
+                        .addBox(shieldRegenStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     if (unit.stats.maxShieldHP() == 0)
@@ -248,7 +248,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                                 "A unit can only move to tiles where the total " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " of the tiles along its path is lower than the unit's max " +
                                         ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + ".\n\nDifferent tile types have different " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + ".")
                         .addSpace(0.3f, 0)
-                        .addBox(moveStats, HorizontalAlign.CENTER, 0);
+                        .addBox(moveStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     moveStats.setText(0, 1, MathUtil.floatToString(unit.stats.maxMovement(), 1) + TextRenderable.MOVE_ICON.display)
@@ -290,11 +290,11 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addSpace(0.6f, 0)
                         .addText(0.8f, HorizontalAlign.LEFT, "Effectiveness:")
                         .addSpace(0.3f, 0)
-                        .addBox(weaponEffectiveness, HorizontalAlign.CENTER, 0)
+                        .addBox(weaponEffectiveness, HorizontalAlign.CENTER, 0, false)
                         .addSpace(0.5f, 0)
                         .addText(0.8f, HorizontalAlign.LEFT, "Characteristics:")
                         .addSpace(0.3f, 0)
-                        .addBox(weaponStats, HorizontalAlign.CENTER, 0);
+                        .addBox(weaponStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     if (unit.weapons.isEmpty())
@@ -329,7 +329,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                                         "Ammo can be resupplied by certain structures if the unit is on the same tile at the start of the turn, as well " +
                                         "as by units which have the " + Action.RESUPPLY.colouredIconName(StyleElement.NO_COLOUR, false) + " action.")
                         .addSpace(0.3f, 0)
-                        .addBox(ammoStats, HorizontalAlign.CENTER, 0);
+                        .addBox(ammoStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     ammoStats.setText(0, 1, unit.stats.ammoCapacity() + TextRenderable.AMMO_ICON.display);
@@ -351,7 +351,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                                 "This unit has the " + Action.REPAIR.colouredIconName(StyleElement.NO_COLOUR, false) + " action, " +
                                         "which allows it to repair the HP of allied units that are adjacent to this unit.")
                         .addSpace(0.3f, 0)
-                        .addBox(repairStats, HorizontalAlign.CENTER, 0);
+                        .addBox(repairStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     if (!unit.data.type.canPerformAction(Action.REPAIR))
@@ -372,7 +372,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                                 "This unit has the " + Action.RESUPPLY.colouredIconName(StyleElement.NO_COLOUR, false) + " action, " +
                                         "which allows it to fully replenish the ammunition of allied units that are adjacent to this unit.")
                         .addSpace(0.3f, 0)
-                        .addBox(resupplyStats, HorizontalAlign.CENTER, 0);
+                        .addBox(resupplyStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     if (!unit.data.type.canPerformAction(Action.RESUPPLY))
@@ -402,7 +402,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                         .addText(0.6f, HorizontalAlign.LEFT, "The " + Action.STEALTH.colouredIconName(StyleElement.NO_COLOUR, false) + " action has two " + EnergyManager.displayName +
                                 " costs. The first is a one-time cost for activating stealth mode, and the other is a per-turn cost which reduces income while stealth mode is active. Exiting stealth mode has no cost.")
                         .addSpace(0.3f, 0)
-                        .addBox(stealthStats, HorizontalAlign.CENTER, 0);
+                        .addBox(stealthStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     if (!unit.data.type.canPerformAction(Action.STEALTH))
@@ -426,7 +426,7 @@ public class UIUnitInfo extends LevelUIContainer<Level> {
                                         "which allows it to mine " + TileType.ASTEROIDS.getName().toLowerCase() + " tiles. To do this, the unit must be positioned on an " + TileType.ASTEROIDS.getName().toLowerCase() + " tile.\n\n" +
                                         "While mining, the " + EnergyManager.displayName + " income received at the start of the turn is increased. After a few turns the " + TileType.ASTEROIDS.getName().toLowerCase() + " will deplete, turning the tile into an " + TileType.EMPTY.getName().toLowerCase() + " tile.")
                         .addSpace(0.3f, 0)
-                        .addBox(miningStats, HorizontalAlign.CENTER, 0);
+                        .addBox(miningStats, HorizontalAlign.CENTER, 0, false);
                 tooltip.setOnStartRender(() -> {
                     Unit unit = getUnit(level);
                     if (!unit.data.type.canPerformAction(Action.MINE))

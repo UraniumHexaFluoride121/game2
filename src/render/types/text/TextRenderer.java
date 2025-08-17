@@ -22,6 +22,10 @@ public class TextRenderer implements Renderable {
     private float renderBoxBorder = -1, renderBoxRounding;
     private TextStyle initialStyle = new TextStyle(), finalStyle = null;
 
+    public TextRenderer(String text, float textSize) {
+        this(text, textSize, UITextLabel.TEXT_COLOUR);
+    }
+
     public TextRenderer(String text, float textSize, Color main) {
         this.text = text;
         this.textSize = textSize / 20;

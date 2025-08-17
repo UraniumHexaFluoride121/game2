@@ -6,8 +6,9 @@ import level.tile.TileSet;
 import level.tile.TileType;
 import render.level.tile.TilePath;
 import render.types.text.TextRenderable;
-import unit.UnitData;
 import unit.Unit;
+import unit.UnitData;
+import unit.UnitLike;
 import unit.action.Action;
 import unit.bot.VisibilityData;
 import unit.stats.modifiers.MovementModifier;
@@ -17,13 +18,14 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import static unit.action.Action.*;
-import static unit.action.Action.CAPTURE;
-import static unit.action.Action.MINE;
 
-public class StatManager implements Deletable {
-    public Unit u;
+public class StatManager<T extends UnitLike<?>> implements Deletable {
+    public T u;
 
-    public StatManager(Unit u) {
+    public StatManager() {
+    }
+
+    public void init(T u) {
         this.u = u;
     }
 
@@ -53,12 +55,11 @@ public class StatManager implements Deletable {
     }
 
     public ArrayList<Modifier> getMovementModifiers() {
-        ArrayList<Modifier> list = new ArrayList<>(u.data.type.modifiers);
-        return list;
+        return new ArrayList<>(u.data.type.modifiers);
     }
 
     public boolean canAffordMove(TilePath path) {
-        return u.getLevel().levelRenderer.energyManager.canAfford(u.data.team, path.getEnergyCost(this, u.getLevel()), false);
+        return true;
     }
 
     public float viewRange(TileType tile) {
@@ -101,36 +102,10 @@ public class StatManager implements Deletable {
         return ammoCapacity() != 0;
     }
 
-    public TileSet getResupplyTiles(Point pos) {
-        return TileSet.tilesInRadius(pos, 1, 1, u.getLevel())
-                .m(u.getLevel(), t -> t.unitFilter(TileModifier.hasAlliedUnit(u.data.team, u.getLevel()).and(u -> u.stats.consumesAmmo() && u.data.ammo < u.stats.ammoCapacity())));
-    }
-
-    public TileSet getRepairTiles(Point pos) {
-        return TileSet.tilesInRadius(pos, 1, 1, u.getLevel())
-                .m(u.getLevel(), t -> t.unitFilter(TileModifier.hasAlliedUnit(u.data.team, u.getLevel()).and(u2 -> u2.data.renderHP < u2.data.type.hitPoints && u2 != u)));
-    }
-
-    public TileSet tilesInMoveRange(VisibilityData visibility) {
-        return TileSet.all(u.getLevel()).m(u.getLevel(), t -> t
-                .unitFilter(TileModifier.withoutVisibleEnemies(u.data.team, u.getLevel(), visibility))
-                .tilesInRange(u.data.pos, this::moveCost, maxMovement())
-        );
-    }
-
     public TileSet tilesInFiringRange(UnitData data) {
-        TileSet tiles = TileSet.tilesInRadius(data.pos, data.type.maxRange, u.getLevel());
+        TileSet tiles = TileSet.tilesInRadius(data.pos, data.type.maxRange, null);
         if (data.type.minRange != data.type.maxRange)
-            tiles.removeAll(TileSet.tilesInRadius(data.pos, data.type.minRange - 1, u.getLevel()));
-        return tiles;
-    }
-
-    public TileSet tilesInFiringRange(VisibilityData visibility, UnitData data, boolean onlyWithEnemies) {
-        TileSet tiles = new TileSet(u.getLevel().tilesX, u.getLevel().tilesY);
-        if (onlyWithEnemies) {
-            tiles.addAll(tilesInFiringRange(data).m(u.getLevel(), t -> t.unitFilter(TileModifier.withEnemiesThatCanBeFiredAt(u, visibility))));
-        } else
-            tiles.addAll(tilesInFiringRange(data));
+            tiles.removeAll(TileSet.tilesInRadius(data.pos, data.type.minRange - 1, null));
         return tiles;
     }
 
@@ -155,7 +130,7 @@ public class StatManager implements Deletable {
 
     //Used for toggle actions. If true, one-time action costs are removed, and per-turn action costs are reversed
     public boolean removeActionEnergyCost(Action a) {
-        return a == STEALTH && u.data.stealthMode || a == MINE && u.data.mining || a == CAPTURE && u.isCapturing();
+        return a == STEALTH && u.data.stealthMode || a == MINE && u.data.mining;
     }
 
     @Override

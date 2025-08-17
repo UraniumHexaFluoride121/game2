@@ -65,7 +65,7 @@ public interface Modifier extends Comparable<Modifier> {
         UIDisplayBox effectsBox = new UIDisplayBox(0, 0, 16, -1, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX), false);
         effectsBox.addText(0.7f, HorizontalAlign.LEFT, effectDescription());
         effectsBox.addText(0.7f, HorizontalAlign.RIGHT, 1, effectDescriptionValue());
-        b.box.addBox(effectsBox, HorizontalAlign.CENTER, 0);
+        b.box.addBox(effectsBox, HorizontalAlign.CENTER, 0, false);
         return b;
     }
 

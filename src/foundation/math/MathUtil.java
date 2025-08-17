@@ -129,6 +129,16 @@ public abstract class MathUtil {
         }
     }
 
+    public static String floatToString(float v) {
+        int r = 1;
+        int i = 0;
+        while (Math.abs(v * r - Math.round(v * r)) > 0.001f) {
+            r *= 10;
+            i++;
+        }
+        return floatToString(v, i);
+    }
+
     public static String floatToString(float v, int decimals) {
         int r = 1;
         for (int i = 0; i < decimals; i++) {

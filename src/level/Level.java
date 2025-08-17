@@ -296,7 +296,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         unitStartTurnUpdate();
         if (bots.get(getActiveTeam()))
             botHandlerMap.get(getActiveTeam()).startTurn();
-        if (networkState == NetworkState.SERVER)
+        if (isServer())
             server.sendTurnUpdatePacket();
         TutorialManager.acceptEvent(new EventTurnStart(this, getActiveTeam()));
     }
@@ -330,10 +330,23 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             Structure s = t.structure;
             if (u == null || u.data.team != getActiveTeam() || !samePlayerTeam(s.team, u.data.team))
                 return;
-            if (s.type.resupply)
-                u.resupply();
-            u.regenerateHP(s.type.unitRegen);
+            if (s.type.resupply && u.stats.consumesAmmo() && u.data.ammo != u.stats.ammoCapacity()) {
+                u.resupply(true);
+                if (isServer()) {
+                    server.sendStructureResupplyPacket(u);
+                }
+            }
+            if (s.type.unitRegen != 0 && u.data.hitPoints < u.stats.maxHP()) {
+                u.regenerateHP(s.type.unitRegen, true);
+                if (isServer()) {
+                    server.sendStructureRepairPacket(u, s.type.unitRegen);
+                }
+            }
         });
+    }
+
+    private boolean isServer() {
+        return networkState == NetworkState.SERVER;
     }
 
     public void unitStartTurnUpdate() {
@@ -345,7 +358,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             if (u.data.team == getActiveTeam()) {
                 if (u.isCapturing()) {
                     u.incrementCapture(false);
-                    if (networkState == NetworkState.SERVER)
+                    if (isServer())
                         server.sendUnitCapturePacket(u, false);
                 }
                 if (u.data.mining) {
@@ -358,7 +371,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
                     if (t == tileSelector.getSelectedTile()) {
                         levelRenderer.tileInfo.setTile(t);
                     }
-                    if (networkState == NetworkState.SERVER)
+                    if (isServer())
                         server.sendTileTypePacket(t);
                 }
             }
@@ -443,11 +456,11 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             if (t.hasStructure() && t.structure.team == team) {
                 if (t.structure.type.destroyedOnCapture) {
                     t.explodeStructure(this);
-                    if (networkState == NetworkState.SERVER)
+                    if (isServer())
                         server.sendStructureDestroy(t, false);
                 } else {
                     t.structure.setTeam(null);
-                    if (networkState == NetworkState.SERVER)
+                    if (isServer())
                         server.sendStructurePacket(t, false);
                 }
             }
@@ -483,7 +496,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             tileSelector.tileSet.forEach(t -> t.isFoW = false);
             unitSet.forEach(u -> u.data.visibleInStealthMode = true);
             levelRenderer.fowTileBorder = null;
-            TileSet points = new TileSet(tilesX, tilesY);
+            TileSet points = new TileSet(this);
             for (Tile t : tileSelector.tileSet) {
                 points.add(t.pos);
             }
@@ -499,7 +512,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public VisibilityData getVisibilityData(UnitTeam team) {
-        TileSet visible = new TileSet(tilesX, tilesY);
+        TileSet visible = new TileSet(this);
         HashSet<Unit> stealthVisible = new HashSet<>();
         unitSet.forEach(u -> {
             if (samePlayerTeam(u.data.team, team)) {

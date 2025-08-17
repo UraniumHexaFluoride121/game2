@@ -27,14 +27,14 @@ public class UIWeaponEffectivenessInfo extends LevelUIContainer<Level> {
             displayBox.box.setHorizontalAlign(HorizontalAlign.CENTER)
                     .addText(0.8f, HorizontalAlign.CENTER, "Weapon effectiveness colour coding:")
                     .addSpace(0.3f, 0)
-                    .addBox(newBox(WeaponDamageModifier.NORMAL_STRENGTH, "Normal Weapon Strength"), HorizontalAlign.LEFT, 0)
+                    .addBox(newBox(WeaponDamageModifier.NORMAL_STRENGTH, "Normal Weapon Strength"), HorizontalAlign.LEFT, 0, false)
                     .addSpace(0.3f, 0)
-                    .addBox(newBox(WeaponDamageModifier.STRENGTH_1, "Weapon Strength I - III"), HorizontalAlign.LEFT, 0)
-                    .addBox(newBox(null, "Unable to Attack"), HorizontalAlign.RIGHT, 1)
+                    .addBox(newBox(WeaponDamageModifier.STRENGTH_1, "Weapon Strength I - III"), HorizontalAlign.LEFT, 0, false)
+                    .addBox(newBox(null, "Unable to Attack"), HorizontalAlign.RIGHT, 1, false)
                     .addSpace(0.3f, 1)
-                    .addBox(newBox(WeaponDamageModifier.WEAKNESS_1, "Weapon Weakness I - III"), HorizontalAlign.RIGHT, 1)
+                    .addBox(newBox(WeaponDamageModifier.WEAKNESS_1, "Weapon Weakness I - III"), HorizontalAlign.RIGHT, 1, false)
                     .addBox(new UIDisplayBox(0, 2, 20, -1, box -> box.setColourTheme(WeaponEffectiveness.BOX_GRAY), true)
-                            .addText(0.6f, HorizontalAlign.CENTER, "Press middle mouse to show / hide colour coding"), HorizontalAlign.CENTER, 2)
+                            .addText(0.6f, HorizontalAlign.CENTER, "Press middle mouse to show / hide colour coding"), HorizontalAlign.CENTER, 2, false)
                     .setColumnVerticalAlign(1, VerticalAlign.BOTTOM).setColumnVerticalAlign(2, VerticalAlign.TOP);
             new OnButtonInput(b, RenderOrder.LEVEL_UI, type -> type == InputType.MOUSE_MIDDLE, () -> {
                 anim.setReversed(!anim.reversed());

@@ -21,7 +21,7 @@ public class TileModifier {
 
     public TileModifier(AbstractLevel<?, ?> l, TileSet set) {
         this.l = l;
-        t = l.tileSelector;
+        t = l == null ? null : l.tileSelector;
         this.set = set;
     }
 
@@ -90,7 +90,7 @@ public class TileModifier {
     }
 
     public TileModifier tilesInRange(Point origin, Function<TileType, Float> tileCostFunction, float maxCost) {
-        set = new TileSet(t.w, t.h, new HashSet<>(t.tilesInRangeCostMap(origin, set, tileCostFunction, maxCost).keySet()));
+        set = new TileSet(l, new HashSet<>(t.tilesInRangeCostMap(origin, set, tileCostFunction, maxCost).keySet()));
         return this;
     }
 

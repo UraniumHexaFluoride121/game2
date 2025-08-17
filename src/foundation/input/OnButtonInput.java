@@ -38,7 +38,7 @@ public class OnButtonInput implements RegisteredButtonInputReceiver, Deletable {
     }
 
     @Override
-    public RenderOrder getButtonOrderTemp() {
+    public RenderOrder getButtonOrder() {
         return order;
     }
 

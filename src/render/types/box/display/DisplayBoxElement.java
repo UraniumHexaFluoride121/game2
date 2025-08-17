@@ -12,11 +12,13 @@ public class DisplayBoxElement extends BoxElement {
     public final UIDisplayBox box;
     public final HorizontalAlign align;
     public boolean enabled = true;
+    public final boolean maxWidth;
 
-    public DisplayBoxElement(float initialMargin, UIDisplayBox box, HorizontalAlign align, Runnable onUpdate) {
+    public DisplayBoxElement(float initialMargin, UIDisplayBox box, HorizontalAlign align, Runnable onUpdate, boolean maxWidth) {
         super(initialMargin);
         this.box = box;
         this.align = align;
+        this.maxWidth = maxWidth;
         box.addOnUpdate(onUpdate);
     }
 
@@ -50,6 +52,12 @@ public class DisplayBoxElement extends BoxElement {
 
     private float yOffset() {
         return -height();
+    }
+
+    @Override
+    public void setWidth(float width) {
+        if (maxWidth)
+            box.setWidth(width);
     }
 
     @Override

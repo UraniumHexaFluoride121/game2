@@ -11,6 +11,7 @@ import render.Renderable;
 import render.VerticalAlign;
 import render.types.UIHitPointBar;
 import render.types.box.display.*;
+import render.types.box.display.tutorial.TutorialMapElement;
 import render.types.text.MultiLineTextBox;
 
 import java.awt.*;
@@ -97,9 +98,12 @@ public class UIDisplayBox implements Renderable, Deletable {
         return this;
     }
 
-    public UIDisplayBox addBox(UIDisplayBox box, HorizontalAlign align, int columnIndex) {
+    public UIDisplayBox addBox(UIDisplayBox box, HorizontalAlign align, int columnIndex, boolean maxWith) {
         updateColumnCount(columnIndex);
-        elements(columnIndex).add(new DisplayBoxElement(widthMargin, box, align, updateSize));
+        DisplayBoxElement e = new DisplayBoxElement(widthMargin, box, align, updateSize, maxWith);
+        elements(columnIndex).add(e);
+        if (maxWith)
+            e.setWidth(width - e.rightMargin - e.leftMargin);
         return this;
     }
 
@@ -118,9 +122,9 @@ public class UIDisplayBox implements Renderable, Deletable {
         return this;
     }
 
-    public UIDisplayBox addTutorialMap(HorizontalAlign align, float width, float height, float tileSize, int columnIndex, Consumer<TutorialMapElement> action) {
+    public UIDisplayBox addTutorialMap(HorizontalAlign align, float width, float height, float tileSize, float lifetime, int columnIndex, Consumer<TutorialMapElement> action) {
         updateColumnCount(columnIndex);
-        TutorialMapElement e = new TutorialMapElement(widthMargin, align, width, height, tileSize);
+        TutorialMapElement e = new TutorialMapElement(widthMargin, align, width, height, tileSize, lifetime);
         elements(columnIndex).add(e);
         action.accept(e);
         updateSize.run();
@@ -169,11 +173,11 @@ public class UIDisplayBox implements Renderable, Deletable {
         return this;
     }
 
-    public UIDisplayBox setElementLeftMarginToElement(int columnIndex, int element, int otherColumn, int otherElement, HorizontalAlign otherElementAlign) {
+    public UIDisplayBox setElementLeftMarginToElement(int columnIndex, int element, int otherColumn, int otherElement, HorizontalAlign otherElementAlign, float offset) {
         addOnUpdate(() -> {
             BoxElement e = element(columnIndex, element);
             BoxElement eOther = element(otherColumn, otherElement);
-            float newMargin = getElementXOffset(eOther) + eOther.width() * (otherElementAlign.ordinal() - eOther.align().ordinal()) / 2;
+            float newMargin = getElementXOffset(eOther) + eOther.width() * (otherElementAlign.ordinal() - eOther.align().ordinal()) / 2 + offset;
             if (!MathUtil.equal(newMargin, e.leftMargin, 0.01f)) {
                 e.leftMargin = newMargin;
                 updateElementWidth(e);
@@ -184,11 +188,11 @@ public class UIDisplayBox implements Renderable, Deletable {
         return this;
     }
 
-    public UIDisplayBox setElementRightMarginToElement(int columnIndex, int element, int otherColumn, int otherElement, HorizontalAlign otherElementAlign) {
+    public UIDisplayBox setElementRightMarginToElement(int columnIndex, int element, int otherColumn, int otherElement, HorizontalAlign otherElementAlign, float offset) {
         addOnUpdate(() -> {
             BoxElement e = element(columnIndex, element);
             BoxElement eOther = element(otherColumn, otherElement);
-            float newMargin = width - (getElementXOffset(eOther) + eOther.width() * (otherElementAlign.ordinal() - eOther.align().ordinal()) / 2);
+            float newMargin = width - (getElementXOffset(eOther) + eOther.width() * (otherElementAlign.ordinal() - eOther.align().ordinal()) / 2) + offset;
             if (!MathUtil.equal(newMargin, e.rightMargin, 0.01f)) {
                 e.rightMargin = newMargin;
                 updateElementWidth(e);
@@ -370,6 +374,13 @@ public class UIDisplayBox implements Renderable, Deletable {
     private void setWidthToSize() {
         width = columns.stream().map(column -> column.elements.stream().filter(BoxElement::isEnabled).map(BoxElement::width).reduce(0f, Float::max) + widthMargin * 2).reduce(0f, Float::max);
         box.setWidth(width);
+    }
+
+    public void setWidth(float width) {
+        this.width = width;
+        originalWidth = width;
+        box.setWidth(width);
+        updateSize.run();
     }
 
     public void setClickHandler(ButtonClickHandler clickHandler) {

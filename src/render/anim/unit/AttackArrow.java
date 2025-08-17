@@ -21,7 +21,8 @@ public class AttackArrow implements Animation {
     public static final float ARROW_TIME = 1.2f;
     private static final AnimSequence particleRate = new AnimSequence()
             .addKeyframe(0, 30, KeyframeFunction.lerp())
-            .endSequence(0.2f, 0);
+            .addKeyframe(0.2f, 10, KeyframeFunction.lerp())
+            .endSequence(0.4f, 0);
     private static final AnimSequence staticParticleRate = new AnimSequence()
             .addKeyframe(0, 30, KeyframeFunction.pow(1.5f))
             .endSequence(1.2f, 0);
@@ -47,8 +48,8 @@ public class AttackArrow implements Animation {
 
     private final ObjPos start, end;
 
-    private static final ParticleBehaviour diamondShape = ParticleEmitter.diamond(0.3f, 0.15f);
-    private static final ParticleBehaviour rectangleShape = ParticleEmitter.rectangle(0.3f, 0.15f);
+    private static final ParticleBehaviour diamondShape = ParticleBehaviour.diamond(0.3f, 0.15f);
+    private static final ParticleBehaviour rectangleShape = ParticleBehaviour.rectangle(0.3f, 0.15f);
 
     public AttackArrow(ObjPos start, ObjPos end) {
         this.start = start;
@@ -59,16 +60,16 @@ public class AttackArrow implements Animation {
         float angle = end.angleToPos(start), angleOffset = (float) Math.toRadians(40);
         arrowParticleEmitter.addParticleSupplier(() -> {
             return new Particle(1.1f + Particle.randomOffset(0.3f),
-                    ParticleEmitter.lerpColour(particleColour, particleColour2, AnimValue.UNCHANGED),
-                    ParticleEmitter.velocity(new LerpValue(0, 1, 1.2f, 0.8f), angle + angleOffset),
-                    ParticleEmitter.scale(new LerpValue(0, 1, 1, 0.2f)),
+                    ParticleBehaviour.lerpColour(particleColour, particleColour2, AnimValue.UNCHANGED),
+                    ParticleBehaviour.velocity(new LerpValue(0, 1, 1.2f, 0.8f), angle + angleOffset),
+                    ParticleBehaviour.scale(new LerpValue(0, 1, 1, 0.2f)),
                     diamondShape
             ).offsetRandomOnLine(angle, 0.25f, 0.4f);
         }, () -> particleRate.getValue(timer.timeElapsed())).addParticleSupplier(() -> {
             return new Particle(1.1f + Particle.randomOffset(0.3f),
-                    ParticleEmitter.lerpColour(particleColour, particleColour2, AnimValue.UNCHANGED),
-                    ParticleEmitter.velocity(new LerpValue(0, 1, 1.2f, 0.8f), angle - angleOffset),
-                    ParticleEmitter.scale(new LerpValue(0, 1, 1, 0.2f)),
+                    ParticleBehaviour.lerpColour(particleColour, particleColour2, AnimValue.UNCHANGED),
+                    ParticleBehaviour.velocity(new LerpValue(0, 1, 1.2f, 0.8f), angle - angleOffset),
+                    ParticleBehaviour.scale(new LerpValue(0, 1, 1, 0.2f)),
                     diamondShape
             ).offsetRandomOnLine(angle, 0.25f, 0.8f);
         }, () -> particleRate.getValue(timer.timeElapsed())).accelerateTime(1.5f);
@@ -78,9 +79,9 @@ public class AttackArrow implements Animation {
             ObjPos p2 = start.lerp(finalEnd, animP2.getValue(timer.timeElapsed()));
             float v = (float) Math.sqrt(p1.distance(p2) / Tile.TILE_SIZE);
             return new Particle(0.7f + Particle.randomOffset(0.3f),
-                    ParticleEmitter.lerpColour(rectangleParticleColour, rectangleParticleColour2, AnimValue.UNCHANGED),
-                    ParticleEmitter.velocity(new LerpValue(0, 1, 1.2f * v, 0.8f * v), (float) (angle + Math.toRadians(180))),
-                    ParticleEmitter.scale(new LerpValue(0, 1, 1, 0.2f)),
+                    ParticleBehaviour.lerpColour(rectangleParticleColour, rectangleParticleColour2, AnimValue.UNCHANGED),
+                    ParticleBehaviour.velocity(new LerpValue(0, 1, 1.2f * v, 0.8f * v), (float) (angle + Math.toRadians(180))),
+                    ParticleBehaviour.scale(new LerpValue(0, 1, 1, 0.2f)),
                     rectangleShape
             ).offsetRandomOnLine(p1, p2).offsetRandomOnLine((float) (angle + Math.toRadians(90)), 0.2f, 0);
         }, () -> staticParticleRate.getValue(timer.timeElapsed()) * finalEnd.distance(start) / Tile.TILE_SIZE);
@@ -143,12 +144,12 @@ public class AttackArrow implements Animation {
         return timer.timeElapsed();
     }
 
-    public static void createAttackArrow(ObjPos start, ObjPos end, boolean shieldParticles, boolean showArrow, AnimHandler animHandler, Runnable onComplete) {
+    public static void createAttackArrow(ObjPos start, ObjPos end, boolean shieldParticles, boolean showArrow, AnimHandler arrowAnimHandler, AnimHandler explosionAnimHandler, Runnable onComplete) {
         if (showArrow) {
-            animHandler.registerAnim(new AttackArrow(start, end))
-                    .queueAnim(() -> new ObjectExplosion(end, 1.2f, shieldParticles, AnimType.ABOVE_UNIT), 0.5f, onComplete);
+            arrowAnimHandler.registerAnim(new AttackArrow(start, end));
+            explosionAnimHandler.queueAnim(() -> new ObjectExplosion(end, 1.2f, shieldParticles, AnimType.ABOVE_UNIT), 0.5f, onComplete);
         } else {
-            animHandler.registerAnim(new ObjectExplosion(end, 1.2f, shieldParticles, AnimType.ABOVE_UNIT), onComplete);
+            explosionAnimHandler.registerAnim(new ObjectExplosion(end, 1.2f, shieldParticles, AnimType.ABOVE_UNIT), onComplete);
         }
     }
 }

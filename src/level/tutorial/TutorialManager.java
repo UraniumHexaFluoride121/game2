@@ -33,7 +33,7 @@ public abstract class TutorialManager {
         TutorialManager.level = level;
         disabledElements.clear();
         permanentlyEnabledElements.clear();
-        allowedActions.clear();
+        Action.forEach(allowedActions::add);
         selectableTiles.clear();
         clearActionTiles();
         renderElements.clear();

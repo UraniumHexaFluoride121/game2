@@ -314,7 +314,7 @@ public class BotHandler implements Deletable, Tickable {
             return false;
         VisibilityData visibility = level.getVisibilityData(team);
         if (d.action == Action.MOVE) {
-            TilePath path = new TilePath(d.unit.stats.tilesInMoveRange(visibility), d.unit.data.pos, level.tileSelector);
+            TilePath path = new TilePath(d.unit.stats.tilesInMoveRange(visibility), d.unit.data.pos);
             path.setShortestPath(d.target, d.unit.stats, level);
             AnimTilePath animPath = path.getAnimPath(p -> d.unit.isIllegalTile(p, visibility));
             selectUnitTile(d.unit);

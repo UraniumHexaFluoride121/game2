@@ -10,6 +10,7 @@ import render.anim.sequence.ImageSequenceAnim;
 import render.anim.sequence.KeyframeFunction;
 import render.anim.timer.LerpAnimation;
 import render.particle.Particle;
+import render.particle.ParticleBehaviour;
 import render.particle.ParticleEmitter;
 import render.texture.ImageSequenceGroup;
 
@@ -29,29 +30,29 @@ public class UnitExplosion implements Animation {
             level.levelRenderer.registerTimerBlock(new LerpAnimation(TIME / 2), () -> level.levelRenderer.disableCameraShake());
         }
         emitter.addParticle(new Particle(TIME,
-                        ParticleEmitter.lerpRadialGradient(5, 0.7f, 1,
+                        ParticleBehaviour.lerpRadialGradient(5, 0.7f, 1,
                                 new Color(255, 255, 255, 0), new Color(251, 197, 134),
                                 new Color(142, 142, 142, 0), new Color(168, 126, 78, 0),
                                 AnimValue.UNCHANGED),
-                        ParticleEmitter.scale(new AnimSequence()
+                        ParticleBehaviour.scale(new AnimSequence()
                                 .addKeyframe(0, 0.3f, KeyframeFunction.pow(0.5f))
                                 .endSequence(1, 1.5f)),
-                        ParticleEmitter.circle(5)
+                        ParticleBehaviour.circle(5)
                 )
         );
         for (int i = 0; i < 15; i++) {
             emitter.addParticle(
                     new Particle(TIME,
-                            ParticleEmitter.lerpColour(UIColourTheme.lerp(
+                            ParticleBehaviour.lerpColour(UIColourTheme.lerp(
                                             new Color(243, 207, 166),
                                             new Color(213, 146, 72), (float) Math.random()),
                                     new Color(184, 139, 85, 0), new AnimSequence()
                                             .addKeyframe(0.4f, 0, KeyframeFunction.lerp())
                                             .endSequence(1, 1)),
-                            ParticleEmitter.velocity(new AnimSequence()
+                            ParticleBehaviour.velocity(new AnimSequence()
                                     .addKeyframe(0, 0.3f * 15, KeyframeFunction.pow(0.5f))
                                     .endSequence(1, 1.5f * 7), Particle.randomAngleOffset(180)),
-                            ParticleEmitter.diamond(0.7f + Particle.randomOffset(0.2f), 0.05f + Particle.randomOffset(0.015f))
+                            ParticleBehaviour.diamond(0.7f + Particle.randomOffset(0.2f), 0.05f + Particle.randomOffset(0.015f))
                     )
             );
         }

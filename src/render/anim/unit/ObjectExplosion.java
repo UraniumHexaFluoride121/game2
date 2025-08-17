@@ -64,15 +64,15 @@ public class ObjectExplosion implements Animation {
         return fullAnim.timeElapsed();
     }
 
-    private static final ParticleBehaviour circle = ParticleEmitter.circle(0.3f);
+    private static final ParticleBehaviour circle = ParticleBehaviour.circle(0.3f);
 
     private void explosionParticles(int index) {
         ObjPos pos = new ObjPos(xOffset(index), yOffset(index));
         for (int i = 0; i < 20; i++) {
             explosionParticleEmitter.addParticle(new Particle(0.3f,
-                            ParticleEmitter.lerpColour(shieldParticles ? shieldedExplosionParticleColour : explosionParticleColour, shieldParticles ? shieldedExplosionParticleColour2 : explosionParticleColour2, AnimValue.UNCHANGED),
-                            ParticleEmitter.velocity(new LerpValue(0, 1, 10 + Particle.randomOffset(4), 1), Particle.randomAngleOffset(180)),
-                            ParticleEmitter.scale(new AnimSequence()
+                            ParticleBehaviour.lerpColour(shieldParticles ? shieldedExplosionParticleColour : explosionParticleColour, shieldParticles ? shieldedExplosionParticleColour2 : explosionParticleColour2, AnimValue.UNCHANGED),
+                            ParticleBehaviour.velocity(new LerpValue(0, 1, 10 + Particle.randomOffset(4), 1), Particle.randomAngleOffset(180)),
+                            ParticleBehaviour.scale(new AnimSequence()
                                     .addKeyframe(0, 1, KeyframeFunction.lerp())
                                     .addKeyframe(0.2f, 1, KeyframeFunction.lerp())
                                     .endSequence(1, 0f).andThen(AnimValue.scaledValue(1 + Particle.randomOffset(0.4f)))),

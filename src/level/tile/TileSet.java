@@ -25,21 +25,29 @@ public class TileSet implements Collection<Point> {
     }
 
     public TileSet(int width, int height) {
-        this.width = width;
-        this.height = height;
-        tiles = new HashSet<>();
+        this(width, height, new HashSet<>());
+    }
+
+    public TileSet(AbstractLevel<?, ?> l) {
+        this(l, new HashSet<>());
+    }
+
+    public TileSet(AbstractLevel<?, ?> l, Collection<Point> tiles) {
+        width = l == null ? -1 : l.tilesX;
+        height = l == null ? -1 : l.tilesY;
+        this.tiles = tiles;
     }
 
     public static TileSet all(AbstractLevel<?, ?> l) {
-        return new TileSet(l.tilesX, l.tilesY, new HashSet<>(l.tileSelector.tileSet.stream().map(t -> t.pos).toList()));
+        return new TileSet(l, new HashSet<>(l.tileSelector.tileSet.stream().map(t -> t.pos).toList()));
     }
 
     public static TileSet of(AbstractLevel<?, ?> l, Point... points) {
-        return new TileSet(l.tilesX, l.tilesY, List.of(points));
+        return new TileSet(l, List.of(points));
     }
 
     public static TileSet tilesInRadius(Point origin, int radius, Level l) {
-        TileSet set = new TileSet(l.tilesX, l.tilesY);
+        TileSet set = new TileSet(l);
         set.add(origin);
         for (int i = 0; i < radius; i++) {
             HashSet<Point> newTiles = new HashSet<>();
@@ -59,7 +67,7 @@ public class TileSet implements Collection<Point> {
     }
 
     public static TileSet tilesInRadiusDeterministic(Point origin, int radius, Level l) {
-        TileSet set = TileSet.ordered(l.tilesX, l.tilesY);
+        TileSet set = new TileSet(l, new ArrayList<>());
         set.add(origin);
         for (int i = 0; i < radius; i++) {
             ArrayList<Point> newTiles = new ArrayList<>();
@@ -72,10 +80,6 @@ public class TileSet implements Collection<Point> {
             set.addAll(newTiles);
         }
         return set;
-    }
-
-    public static TileSet ordered(int width, int height) {
-        return new TileSet(width, height, new ArrayList<>());
     }
 
     public TileSet copy() {
@@ -143,7 +147,7 @@ public class TileSet implements Collection<Point> {
 
     @Override
     public boolean add(Point point) {
-        if (!tiles.contains(point) && AbstractTileSelector.validCoordinate(width, height, point))
+        if (!tiles.contains(point) && (AbstractTileSelector.validCoordinate(width, height, point) || width < 0))
             return tiles.add(point);
         else
             return false;

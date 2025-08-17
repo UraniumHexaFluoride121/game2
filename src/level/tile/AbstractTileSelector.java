@@ -11,10 +11,7 @@ import render.RenderOrder;
 import render.Renderable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -57,6 +54,10 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
     }
 
     public ArrayList<Point> shortestPathTo(Point origin, Point end, TileSet tiles, Function<TileType, Float> tileCostFunction) {
+        return shortestPathToStatic(origin, end, tiles, p -> tileCostFunction.apply(getTile(p).type));
+    }
+
+    public static ArrayList<Point> shortestPathToStatic(Point origin, Point end, Collection<Point> tiles, Function<Point, Float> tileCostFunction) {
         HashMap<Point, Float> costMap = new HashMap<>();
         HashMap<Point, ArrayList<Point>> pathMap = new HashMap<>();
         tiles.forEach(t -> costMap.put(t, -1f));
@@ -73,7 +74,7 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
                     Point p = d.offset(tile);
                     if (!tiles.contains(p))
                         continue;
-                    float newCost = cost + tileCostFunction.apply(getTile(p).type);
+                    float newCost = cost + tileCostFunction.apply(p);
                     if (costMap.get(p) == -1 || costMap.get(p) > newCost) {
                         costMap.put(p, newCost);
                         ArrayList<Point> newPath = new ArrayList<>(path);
@@ -90,7 +91,11 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
         return pathMap.get(end);
     }
 
-    public HashMap<Point, Float> tilesInRangeCostMap(Point origin, TileSet tiles, Function<TileType, Float> tileCostFunction, float maxCost) {
+    public HashMap<Point, Float> tilesInRangeCostMap(Point origin, Collection<Point> tiles, Function<TileType, Float> tileCostFunction, float maxCost) {
+        return tilesInRangeCostMapStatic(origin, tiles, p -> tileCostFunction.apply(getTile(p).type), maxCost);
+    }
+
+    public static HashMap<Point, Float> tilesInRangeCostMapStatic(Point origin, Collection<Point> tiles, Function<Point, Float> tileCostFunction, float maxCost) {
         HashMap<Point, Float> costMap = new HashMap<>(), finalMap = new HashMap<>();
         tiles.forEach(t -> costMap.put(t, -1f));
         costMap.put(origin, 0f);
@@ -104,7 +109,7 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
                     Point p = d.offset(tile);
                     if (!tiles.contains(p))
                         continue;
-                    float newCost = cost + tileCostFunction.apply(getTile(p).type);
+                    float newCost = cost + tileCostFunction.apply(p);
                     if (newCost > maxCost)
                         continue;
                     if (costMap.get(p) == -1 || costMap.get(p) > newCost) {
@@ -170,7 +175,7 @@ public abstract class AbstractTileSelector<T extends AbstractLevel<?, ?>> implem
     }
 
     @Override
-    public RenderOrder getButtonOrderTemp() {
+    public RenderOrder getButtonOrder() {
         return RenderOrder.TERRAIN;
     }
 

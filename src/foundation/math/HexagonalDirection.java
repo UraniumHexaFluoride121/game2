@@ -11,10 +11,10 @@ public enum HexagonalDirection {
         return switch (this) {
             case UP -> new Point(p.x, p.y + 1);
             case DOWN -> new Point(p.x, p.y - 1);
-            case UP_LEFT -> new Point(p.x - 1, p.y + 1 - p.x % 2);
-            case UP_RIGHT -> new Point(p.x + 1, p.y + 1 - p.x % 2);
-            case DOWN_LEFT -> new Point(p.x - 1, p.y - p.x % 2);
-            case DOWN_RIGHT -> new Point(p.x + 1, p.y - p.x % 2);
+            case UP_LEFT -> new Point(p.x - 1, p.y + 1 - (p.x & 1));
+            case UP_RIGHT -> new Point(p.x + 1, p.y + 1 - (p.x & 1));
+            case DOWN_LEFT -> new Point(p.x - 1, p.y - (p.x & 1));
+            case DOWN_RIGHT -> new Point(p.x + 1, p.y - (p.x & 1));
         };
     }
 
@@ -59,6 +59,17 @@ public enum HexagonalDirection {
             case UP -> UP_RIGHT;
             case UP_RIGHT -> DOWN_RIGHT;
             case DOWN_RIGHT -> DOWN;
+        };
+    }
+
+    public HexagonalDirection counterClockwise() {
+        return switch (this) {
+            case DOWN -> DOWN_RIGHT;
+            case DOWN_LEFT -> DOWN;
+            case UP_LEFT -> DOWN_LEFT;
+            case UP -> UP_LEFT;
+            case UP_RIGHT -> UP;
+            case DOWN_RIGHT -> UP_RIGHT;
         };
     }
 

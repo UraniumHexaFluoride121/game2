@@ -77,28 +77,28 @@ public class Server implements Deletable {
     }
 
     public void sendTeamsAvailablePacket() {
-        clients.forEach((id, c) -> c.queueTeamsAvailablePacket());
+        clients.forEach((_, c) -> c.queueTeamsAvailablePacket());
     }
 
     public void sendTurnUpdatePacket() {
-        clients.forEach((id, c) -> c.queueTurnUpdatePacket(true));
+        clients.forEach((_, c) -> c.queueTurnUpdatePacket(true));
         sendEnergyUpdatePacket();
     }
 
     public void sendUnitUpdatePacket() {
-        clients.forEach((id, c) -> c.queueUnitUpdatePacket());
+        clients.forEach((_, c) -> c.queueUnitUpdatePacket());
     }
 
     public void sendTileTypePacket(Tile tile) {
         TileData data = tile.getTileData();
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.TILE_TYPE_UPDATE, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.TILE_TYPE_UPDATE, w -> {
             PacketWriter.writePoint(tile.pos, w);
             data.write(w);
         })));
     }
 
     public void sendUnitMovePacket(AnimTilePath path, Point illegalTile, Point pos, Unit unit) {
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_MOVE_UNIT, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_MOVE_UNIT, w -> {
             path.write(w);
             w.writeBoolean(illegalTile != null);
             if (illegalTile != null) {
@@ -113,7 +113,7 @@ public class Server implements Deletable {
     public void sendUnitShootPacket(Unit from, Unit to) {
         UnitData fromData = from.data.copy();
         UnitData toData = to.data.copy();
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHOOT_UNIT, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHOOT_UNIT, w -> {
             fromData.write(w);
             toData.write(w);
         })));
@@ -121,29 +121,42 @@ public class Server implements Deletable {
 
     public void sendUnitMinePacket(Unit unit) {
         UnitData data = unit.data.copy();
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_MINE, data::write)));
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_MINE, data::write)));
     }
 
     public void sendUnitRepairPacket(Unit from, Unit to) {
         UnitData fromData = from.data.copy();
         UnitData toData = to.data.copy();
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_REPAIR, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_REPAIR, w -> {
             fromData.write(w);
             toData.write(w);
+        })));
+    }
+
+    public void sendStructureRepairPacket(Unit u, float amount) {
+        UnitData data = u.data.copy();
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STRUCTURE_REPAIR, w -> {
+            data.write(w);
+            w.writeFloat(amount);
         })));
     }
 
     public void sendUnitResupplyPacket(Unit from, Unit to) {
         UnitData fromData = from.data.copy();
         UnitData toData = to.data.copy();
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_RESUPPLY, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_RESUPPLY, w -> {
             fromData.write(w);
             toData.write(w);
         })));
     }
 
+    public void sendStructureResupplyPacket(Unit u) {
+        UnitData data = u.data.copy();
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STRUCTURE_RESUPPLY, data::write)));
+    }
+
     public void sendUnitCapturePacket(Unit unit, boolean action) {
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_CAPTURE_UNIT, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_CAPTURE_UNIT, w -> {
             PacketWriter.writePoint(unit.data.pos, w);
             w.writeBoolean(action);
             w.writeInt(unit.getCaptureProgress());
@@ -151,25 +164,25 @@ public class Server implements Deletable {
     }
 
     public void sendEnergyUpdatePacket() {
-        clients.forEach((id, c) -> c.queueEnergyUpdatePacket());
+        clients.forEach((_, c) -> c.queueEnergyUpdatePacket());
     }
 
     public void sendUnitShieldRegenPacket(Unit unit) {
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHIELD_REGEN, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_SHIELD_REGEN, w -> {
             PacketWriter.writePoint(unit.data.pos, w);
             w.writeFloat(unit.data.shieldRenderHP);
         })));
     }
 
     public void sendUnitStealthPacket(Unit unit) {
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STEALTH_UNIT, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STEALTH_UNIT, w -> {
             PacketWriter.writePoint(unit.data.pos, w);
             w.writeBoolean(unit.data.stealthMode);
         })));
     }
 
     public void sendStructurePacket(Tile tile, boolean cameraTo) {
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STRUCTURE_UPDATE, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_STRUCTURE_UPDATE, w -> {
             PacketWriter.writePoint(tile.pos, w);
             boolean hasStructure = tile.hasStructure();
             w.writeBoolean(hasStructure);
@@ -181,14 +194,14 @@ public class Server implements Deletable {
     }
 
     public void sendStructureDestroy(Tile tile, boolean cameraTo) {
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_DESTROY_STRUCTURE, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.SERVER_DESTROY_STRUCTURE, w -> {
             PacketWriter.writePoint(tile.pos, w);
             w.writeBoolean(cameraTo);
         })));
     }
 
     public void sendBotSelectTile(Point pos) {
-        clients.forEach((id, c) -> c.queuePacket(new PacketWriter(PacketType.BOT_SELECT_TILE, w -> {
+        clients.forEach((_, c) -> c.queuePacket(new PacketWriter(PacketType.BOT_SELECT_TILE, w -> {
             PacketWriter.writePoint(pos, w);
         })));
     }

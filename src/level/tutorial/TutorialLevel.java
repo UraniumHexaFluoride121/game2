@@ -1,22 +1,31 @@
 package level.tutorial;
 
 import foundation.NamedEnum;
+import foundation.math.MathUtil;
 import level.GameplaySettings;
 import level.Level;
 import level.PlayerTeam;
 import level.structure.StructureType;
+import level.tile.TileType;
 import level.tutorial.sequence.BoxSize;
 import level.tutorial.sequence.action.*;
 import level.tutorial.sequence.event.*;
-import render.Renderable;
-import render.VerticalAlign;
-import render.level.info.UITileInfo;
 import render.HorizontalAlign;
-import render.types.box.display.TutorialMapElement;
-import render.types.text.StyleElement;
+import render.Renderable;
+import render.UIColourTheme;
+import render.VerticalAlign;
+import render.anim.sequence.KeyframeFunction;
+import render.level.info.UITileInfo;
+import render.types.box.UIDisplayBox;
+import render.types.box.display.tutorial.TutorialMapElement;
+import render.types.box.display.tutorial.TutorialMapText;
+import render.types.box.display.tutorial.TutorialMapUnit;
+import render.types.box.display.tutorial.TutorialMouseKeyframe;
+import render.types.text.TextRenderer;
 import render.types.tutorial.TutorialScreen;
 import unit.UnitTeam;
 import unit.action.Action;
+import unit.action.ActionIconType;
 import unit.bot.BotActionData;
 import unit.stats.ModifierCategory;
 import unit.type.CorvetteType;
@@ -27,6 +36,7 @@ import java.util.function.Function;
 
 import static level.tutorial.TutorialElement.*;
 import static level.tutorial.TutorialManager.*;
+import static render.types.text.StyleElement.*;
 
 public enum TutorialLevel implements NamedEnum {
     INTRODUCTION("Introduction", "tutorial-intro",
@@ -43,24 +53,8 @@ public enum TutorialLevel implements NamedEnum {
                         l.levelRenderer.uiUnitInfo.infoButton.setEnabled(false);
                         l.levelRenderer.uiUnitInfo.viewFiringRange.setEnabled(false);
                         l.levelRenderer.uiUnitInfo.viewEffectiveness.setEnabled(false);
-                        tileInfoEnabled = false;
                     }),
-                    ModifyElements.disableAll(l),
-                    CameraMove.toTile(l, 3, 4),
-                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
-                        box.addText(1.2f, HorizontalAlign.LEFT, "Moving Units");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "Each unit can be moved once per turn by using the " + Action.MOVE.colouredName(StyleElement.NO_COLOUR, true) + " action.");
-                        box.getTextElement(2, 0).dynamicWidth(true);
-                        box.addSpace(0.3f, 0);
-                        box.addTutorialMap(HorizontalAlign.CENTER, 20, 10, TutorialMapElement.TILE_SIZE_LARGE, 0, map -> {
-                            map.addTile(0, 0).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
-                            map.addTile(-1, 0);
-                            map.addTile(1, 0);
-                            map.addTile(0, 1);
-                        });
-                    }),
-
+                    ModifyElements.disable(l, END_TURN, TILE_SELECTION),
                     CameraMove.toTile(l, 1, 4),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 1, 4),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 4.7f, HorizontalAlign.LEFT,
@@ -69,31 +63,347 @@ public enum TutorialLevel implements NamedEnum {
                     CameraMove.toTile(l, 2, 4),
                     TutorialHighlight.tiles(l, BLUE_HIGHLIGHT, new Point(1, 5), new Point(2, 4)),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, HorizontalAlign.LEFT,
-                            "These are your [BLUE]units[NO_COLOUR]. For this tutorial, you've been provided with two [BLUE]Fighter[NO_COLOUR] units."),
+                            "These are your [BLUE]units[NO_COLOUR]. For this tutorial, you've been provided with two [BLUE]" + FighterType.INTERCEPTOR.getName() + "[NO_COLOUR] units."),
 
                     ModifyElements.enable(l, TILE_SELECTION),
                     TutorialHighlight.disable(l),
                     BlockingTextBox.onMap(l, BoxSize.SMALL, 1.5f, 6f, HorizontalAlign.LEFT,
-                            "Select one of the Fighters by left-clicking it.",
+                            "[BLUE]Select[NO_COLOUR] one of the " + FighterType.INTERCEPTOR.getPluralName() + " by [BLUE]left-clicking it[NO_COLOUR].",
                             UnitSelectListener.ofTeam(UnitTeam.BLUE)),
 
-                    ModifyElements.disable(l, TILE_SELECTION),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, HorizontalAlign.LEFT,
-                            "Below the unit you can see two icons. These are the actions that the unit is able to perform."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, HorizontalAlign.LEFT,
-                            "The red one to the left is the [RED]Fire[NO_COLOUR] action, which is currently unavailable as there are no enemies in range.\n\nThis can be seen by hovering over the action."),
-                    ModifyElements.enable(l, ACTIONS),
-                    AllowedActions.only(Action.MOVE),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, HorizontalAlign.LEFT,
-                            "The other action on the right is the [BLUE]Move[NO_COLOUR] action. Try selecting it now.",
-                            ActionListener.select(Action.MOVE)),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, HorizontalAlign.LEFT,
-                            "Highlighted in blue you can see all the tiles that the selected Fighter can be moved to."),
+                            "Below the unit you can see [BLUE]two icons[NO_COLOUR]. These are the [BLUE]actions[NO_COLOUR] that the unit is able to perform."),
 
-                    TutorialHighlight.tiles(l, RED_HIGHLIGHT, new Point(6, 4), new Point(6, 5)),
-                    CameraMove.toTile(l, 6, 5),
-                    ContinueTextBox.onMap(l, BoxSize.SMALL, 4, 5.5f, HorizontalAlign.LEFT,
-                            "These are the enemy units."),
+                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
+                        box.setWidthMargin(0.5f);
+                        box.addText(1.2f, HorizontalAlign.LEFT, "Moving Units");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "Each unit can be moved once per turn by using the " + Action.MOVE.colouredName(NO_COLOUR, true) + " action.");
+                        box.addSpace(0.8f, 0);
+                        box.addTutorialMap(HorizontalAlign.LEFT, 20, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 7, 0, map -> {
+                            map.addTile(-2, -1, TileType.EMPTY);
+                            map.addTile(-2, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-2, 1, TileType.NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.NEBULA);
+                            map.addTile(0, 1, TileType.ASTEROIDS);
+                            map.addTile(1, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY);
+                            map.addTile(1, 1, TileType.ASTEROIDS);
+                            map.addTile(2, 0, TileType.EMPTY);
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 1, 0, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.pow(1.5f)),
+                                    TutorialMouseKeyframe.tile(1f, -2, 0, 0.2f, 0.2f,
+                                                    KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.3f, () -> map.setSelectedTile(-2, 0)
+                                                    .actionSelector().setActionState(Action.FIRE, ActionIconType.UNUSABLE)),
+                                    TutorialMouseKeyframe.delayUntil(1.6f),
+                                    TutorialMouseKeyframe.actionSelector(2.5f, -2, 0, -0.05f, 0.1f, 2, 1,
+                                                    KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.3f, () -> map.selectMoveAction(-2, 0)),
+                                    TutorialMouseKeyframe.delayUntil(3.2f, KeyframeFunction.lerp(), KeyframeFunction.pow(0.5f)),
+                                    TutorialMouseKeyframe.tile(4.5f, 2, 0, -0.23f, 0.15f,
+                                            null, null).setOnClick(0.4f, map::moveUnit)
+                            );
+                            map.finalise();
+                        });
+                        UIDisplayBox moveInstructions = new UIDisplayBox(0, 0, 10, 10, b -> b.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX), false);
+                        box.addBox(moveInstructions, HorizontalAlign.CENTER, 1, true);
+                        box.setElementLeftMarginToElement(1, 0, 0, 4, HorizontalAlign.RIGHT, 0.5f);
+                        box.setColumnTopMarginToElement(1, 0, 4, VerticalAlign.TOP);
+                        box.setColumnVerticalAlign(1, VerticalAlign.TOP);
+                        String c = MODIFIER_MOVEMENT_SPEED.display;
+                        moveInstructions.addText(0.7f, HorizontalAlign.LEFT, "1. Select the unit to be moved.\n\n" +
+                                "2. Select the " + Action.MOVE.colouredIconName(NO_COLOUR, false) + " action.\n\n" +
+                                "3. Select one of the " + c + "highlighted tiles[NO_COLOUR] to move to.");
+                        moveInstructions.setColumnVerticalAlign(0, VerticalAlign.TOP);
+                        box.addSpace(1f, 0);
+                        box.addText(1, HorizontalAlign.LEFT, ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName());
+                        box.addSpace(0.3f, 0);
+                        String maxMovement = MathUtil.floatToString(FighterType.INTERCEPTOR.maxMovement);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "The " + c + "blue highlight[NO_COLOUR] that appears when the action is " +
+                                "selected shows the tiles that are in " + c + "move range[NO_COLOUR]. " +
+                                "Each unit has a maximum " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.colouredName(NO_COLOUR, true) + ", and each tile the unit moves over " +
+                                "has a " + ModifierCategory.MOVEMENT_COST_DISPLAY.colouredName(NO_COLOUR, true) + " that depends on the type of tile.\n\n" +
+
+                                "The " + FighterType.INTERCEPTOR.getName() + " unit used in this example has a maximum " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + " of " +
+                                c + maxMovement + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon() + "[NO_COLOUR].");
+                        box.addSpace(0.6f, 0);
+                        box.addTutorialMap(HorizontalAlign.CENTER, 26, 6, TutorialMapElement.TILE_SIZE_MEDIUM, 6, 0, map -> {
+                            map.addTile(-3, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-2, 0, TileType.EMPTY);
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY);
+                            map.addTile(2, 0, TileType.EMPTY);
+                            map.addTile(3, 0, TileType.EMPTY);
+                            map.addText(new TutorialMapText(map, 26 / 2, 0.5f, new TextRenderer(null, 1).setBold(true).setTextAlign(HorizontalAlign.CENTER), null, t -> {
+                                t.updateText(MathUtil.floatToString(map.getTilePathCost().orElse(0f)) + " / " + maxMovement + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon());
+                            }));
+                            map.onResetTask(() -> {
+                                map.selectMoveAction(-3, 0);
+                            });
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(1, -3, 0, 0.2f, 0.2f,
+                                            KeyframeFunction.lerp(), KeyframeFunction.pow(1.5f)),
+                                    TutorialMouseKeyframe.tile(5, 3, 0, -0.2f, 0.2f,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                            );
+                            map.finalise();
+                        });
+                        box.addSpace(0.5f, 0);
+                        box.addTutorialMap(HorizontalAlign.CENTER, 26, 6, TutorialMapElement.TILE_SIZE_MEDIUM, 6, 0, map -> {
+                            map.addTile(-3, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-2, 0, TileType.NEBULA);
+                            map.addTile(-1, 0, TileType.NEBULA);
+                            map.addTile(0, 0, TileType.NEBULA);
+                            map.addTile(1, 0, TileType.NEBULA);
+                            map.addTile(2, 0, TileType.NEBULA);
+                            map.addTile(3, 0, TileType.NEBULA);
+                            map.addText(new TutorialMapText(map, 26 / 2, 0.5f, new TextRenderer(null, 1).setBold(true).setTextAlign(HorizontalAlign.CENTER), null, t -> {
+                                t.updateText(MathUtil.floatToString(map.getTilePathCost().orElse(0f)) + " / " + maxMovement + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon());
+                            }));
+                            map.onResetTask(() -> {
+                                map.selectMoveAction(-3, 0);
+                            });
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(1, -3, 0, 0.2f, 0.2f,
+                                            KeyframeFunction.lerp(), KeyframeFunction.pow(1.5f)),
+                                    TutorialMouseKeyframe.tile(5, 3, 0, -0.2f, 0.2f,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                            );
+                            map.finalise();
+                        });
+                        box.addSpace(0.5f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "In the first example, the unit is moving through " + c + TileType.EMPTY.getName().toLowerCase() +
+                                " tiles[NO_COLOUR], which have a " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " of " + c + "just " +
+                                MathUtil.floatToString(TileType.EMPTY.moveCost) + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon() + "[NO_COLOUR], while in the second example, the unit is moving through " +
+                                c + TileType.NEBULA.getName().toLowerCase() +
+                                " tiles[NO_COLOUR], which have a " + c + "higher " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " of " +
+                                MathUtil.floatToString(TileType.NEBULA.moveCost) + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon() + "[NO_COLOUR].\n\n" +
+
+                                "The " + c + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + "[NO_COLOUR] of a given tile can be found by using the " + c + "tile info screen[NO_COLOUR] in the " + c + "bottom right corner[NO_COLOUR] whenever a tile is selected.\n\n" +
+
+                                c + "Note:[NO_COLOUR] the tile which the unit is currently standing on " + c + "does not count[NO_COLOUR] toward the final " +
+                                ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + "."
+                        );
+
+                        box.addSpace(2f, 0);
+                        box.addText(1, HorizontalAlign.LEFT, "Movement Modifiers");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "When moving a unit, certain " + c + "modifiers[NO_COLOUR] may come into play that affect the " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() +
+                                " of different tile types. By default, " + c + "each type of unit[NO_COLOUR] has a modifier that affects how they move through " + c + TileType.ASTEROIDS.getName().toLowerCase() +
+                                " tiles[NO_COLOUR], depending on the size of the unit.\n\n" +
+                                "The modifiers in effect are prominently displayed for the " + c + "active unit[NO_COLOUR] while the " + c + Action.MOVE.getName().toLowerCase() + " action[NO_COLOUR] is selected.");
+                    }),
+                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 2f, 5.7f, HorizontalAlign.LEFT,
+                            "Try moving one of your units",
+                            ActionListener.perform(Action.MOVE)),
+                    ModifyElements.disable(l, ACTIONS),
+                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 20, 20, HorizontalAlign.LEFT,
+                            "Great! Now that you can move units, it's also important to be able to move the camera. " +
+                                    "[BLUE]Right-click + drag[NO_COLOUR], or alternatively, move the mouse to the edge of the screen to move the camera. " +
+                                    "Try moving the camera around the level.", CameraMoveListener.distance(15)),
+                    CameraMove.toTile(l, 7, 5),
+                    ModifyElements.disable(l, CAMERA_MOVEMENT),
+                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 7, 6.7f, HorizontalAlign.LEFT,
+                            "Here we see the [RED]enemy base[NO_COLOUR], along with one of their units. [BLUE]Select the enemy unit[NO_COLOUR] to see more info about it.",
+                            TileSelectListener.tile(6, 5)),
+                    ModifyElements.disable(l, TILE_DESELECTION, TILE_SELECTION),
+                    ContinueTextBox.onUI(l, BoxSize.LARGE, 20, 5f, HorizontalAlign.LEFT,
+                            "With the unit selected, you get access to the [BLUE]unit info screen[NO_COLOUR] on the left. At the top, you can see that it's an " +
+                                    FighterType.INTERCEPTOR.getName().toLowerCase() + " unit, just like the two allied units.\n\nThere are also boxes marked " +
+                                    "[GREEN]hull[NO_COLOUR], [BLUE]engines[NO_COLOUR] and [RED]weapons[NO_COLOUR]. These display the [BLUE]most important characteristics[NO_COLOUR] of the unit.\n\nEach box can be " +
+                                    "[BLUE]hovered over[NO_COLOUR] for more info."),
+                    ContinueTextBox.onUI(l, BoxSize.LARGE, 36, 5f, HorizontalAlign.LEFT,
+                            "Then there's the [BLUE]tile info screen[NO_COLOUR] on the right. It has information about the [BLUE]selected tile[NO_COLOUR].\n\nSimilar to the unit info screen, the boxes can be hovered over for more info."),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 7, 6.7f, HorizontalAlign.LEFT,
+                            "To win, you're going to have to [RED]attack[NO_COLOUR] this enemy unit."),
+                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
+                        box.setWidthMargin(0.5f);
+                        box.addText(1.2f, HorizontalAlign.LEFT, "Attacking Enemy Units");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "Just like with the " + Action.MOVE.getName().toLowerCase() + " action, [BLUE]each unit[NO_COLOUR] can be attack [BLUE]once per turn[NO_COLOUR] by using the " + Action.FIRE.colouredName(NO_COLOUR, true) + " action.\n\n" +
+                                "In general, each unit can use each of its actions once per turn, in whichever order you choose.");
+                        box.addSpace(0.8f, 0);
+                        box.addTutorialMap(HorizontalAlign.LEFT, 20, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 13, 0, map -> {
+                            map.addTile(-2, -1, TileType.EMPTY);
+                            map.addTile(-2, 0, TileType.NEBULA);
+                            map.addTile(-2, 1, TileType.NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(-1, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(-1, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY);
+                            map.addTile(0, 1, TileType.ASTEROIDS);
+                            map.addTile(1, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(1, 1, TileType.ASTEROIDS);
+                            map.addTile(2, 0, TileType.EMPTY);
+                            map.addText(new TutorialMapText(map, 10, 9, null, HorizontalAlign.CENTER, t -> {
+                                t.updateText("Most units can only attack [BLUE]adjacent[NO_COLOUR] enemies.");
+                                t.task(3.5f, TutorialMapText.setText("The unit must be [BLUE]moved closer[NO_COLOUR] before attacking."));
+                                t.task(7, TutorialMapText.setText("Once [BLUE]in range[NO_COLOUR], you can [RED]attack[NO_COLOUR]."));
+                            }, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0f, -1, 0, 0.2f, 0.2f,
+                                                    KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.4f, () -> map.setSelectedTile(-1, 0)
+                                                    .actionSelector().setActionState(Action.FIRE, ActionIconType.UNUSABLE)),
+                                    TutorialMouseKeyframe.delayUntil(0.8f),
+                                    TutorialMouseKeyframe.actionSelector(1.2f, -1, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()),
+                                    TutorialMouseKeyframe.delayUntil(2.5f),
+                                    TutorialMouseKeyframe.actionSelector(3f, -1, 0, -0.05f, 0.1f, 2, 1,
+                                            KeyframeFunction.pow(1.4f), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectMoveAction(-1, 0)),
+                                    TutorialMouseKeyframe.delayUntil(3.5f),
+                                    TutorialMouseKeyframe.tile(4.2f, 0, 0, -0.2f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, map::moveUnit),
+                                    TutorialMouseKeyframe.delayUntil(5.6f).setOnClick(0, () -> map.setSelectedTile(0, 0)
+                                            .actionSelector().setActionState(Action.MOVE, ActionIconType.DISABLED)),
+                                    TutorialMouseKeyframe.actionSelector(6.4f, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectFireAction(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(7),
+                                    TutorialMouseKeyframe.tile(7.7f, 1, 0, -0.07f, -0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, () -> map.attackUnit(0, 0, 1, 0))
+                            );
+                            map.finalise();
+                        });
+                        UIDisplayBox fireInstructions = new UIDisplayBox(0, 0, 10, 10, b -> b.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX), false);
+                        box.addBox(fireInstructions, HorizontalAlign.CENTER, 1, true)
+                                .setElementLeftMarginToElement(1, 0, 0, 4, HorizontalAlign.RIGHT, 0.5f)
+                                .setColumnTopMarginToElement(1, 0, 4, VerticalAlign.TOP)
+                                .setColumnVerticalAlign(1, VerticalAlign.TOP);
+                        fireInstructions.addText(0.7f, HorizontalAlign.LEFT, "1. [BLUE]Move the unit[NO_COLOUR] to a tile adjacent to the enemy.\n\n" +
+                                "2. Select the " + Action.FIRE.colouredIconName(NO_COLOUR, false) + " action.\n\n" +
+                                "3. Select the [BLUE]enemy unit[NO_COLOUR] to attack.");
+                        fireInstructions.setColumnVerticalAlign(0, VerticalAlign.TOP);
+                        box.addSpace(1f, 0);
+                        box.addText(1, HorizontalAlign.LEFT, "Unit HP");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "As you've probably noticed by now, each unit has a number in the [BLUE]bottom-right[NO_COLOUR] corner of its tile. " +
+                                "This is its [BLUE]remaining HP[NO_COLOUR]. Note that it is always [BLUE]rounded up[NO_COLOUR], and that a more precise value is available in each unit's [BLUE]info screen[NO_COLOUR].\n\n" +
+                                "In the example above, you can see the [BLUE]damage taken[NO_COLOUR] by each unit from the attack with the [RED]damage indicators[NO_COLOUR] that appear next to the HP number.");
+                        box.addSpace(1.5f, 0);
+                        box.addText(1, HorizontalAlign.LEFT, "Dealing Damage");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "There are a [BLUE]few factors[NO_COLOUR] that influence the damage dealt to an enemy unit.\n\n" +
+                                "Firstly, the [RED]base weapon damage[BLUE]. This depends on which [BLUE]type of unit[NO_COLOUR] is attacking, and can be seen in the [BLUE]unit info screen]. " +
+                                FighterType.INTERCEPTOR.getPluralName() + " have a base damage of [RED]" + MathUtil.floatToString(FighterType.INTERCEPTOR.damage) + ModifierCategory.DAMAGE.icon() + "[NO_COLOUR].\n\n" +
+                                "Secondly, a unit with [BLUE]less HP remaining[NO_COLOUR] will deal [RED]less damage[NO_COLOUR], depending on how much HP it has lost. A [BLUE]severely damaged[NO_COLOUR] unit may do as little as " +
+                                "[BLUE]25%[NO_COLOUR] of its normal damage.");
+                        box.addSpace(0.5f, 0);
+                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 0, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("A unit with [GREEN]max HP[NO_COLOUR] deals [GREEN]full damage[NO_COLOUR]", 0.6f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectFireAction(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.6f),
+                                    TutorialMouseKeyframe.tile(3.4f, 1, 0, -0.07f, -0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, () -> map.attackUnit(0, 0, 1, 0))
+                            );
+                            map.finalise();
+                        });
+                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 2, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(u -> u.restoreHP(4));
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("A [RED]damaged[NO_COLOUR] unit deals [RED]reduced damage[NO_COLOUR]", 0.6f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectFireAction(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.6f),
+                                    TutorialMouseKeyframe.tile(3.4f, 1, 0, -0.07f, -0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, () -> map.attackUnit(0, 0, 1, 0))
+                            );
+                            map.finalise();
+                        });
+                        box.setColumnTopMarginToElement(2, 0, 14, VerticalAlign.TOP)
+                                .setColumnVerticalAlign(2, VerticalAlign.TOP);
+                        box.addSpace(1f, 0);
+                        box.addText(1, HorizontalAlign.LEFT, "Modifiers");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "Similar to [BLUE]movement modifiers[NO_COLOUR], attacks can also have [BLUE]modifiers[NO_COLOUR]. While other modifiers do exist, " +
+                                "[BLUE]most attacks[NO_COLOUR] only have two: the [BLUE]weapon effectiveness modifier[NO_COLOUR] (more on that later), and the [BLUE]tile modifier[NO_COLOUR].\n\n" +
+                                "Different [BLUE]tile types[NO_COLOUR] have different modifiers, typically [BLUE]reducing[NO_COLOUR] the damage received by the unit standing on it.\n\n" +
+                                "The effect of the tile modifier can be seen in the [RED]" + ModifierCategory.INCOMING_DAMAGE.getName() + "[NO_COLOUR] box in the [BLUE]tile info screen[NO_COLOUR].");
+                        box.addSpace(0.5f, 0);
+                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 0, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("The enemy on an [BLUE]" + TileType.EMPTY.getName().toLowerCase() + " tile[NO_COLOUR] receives [GREEN]full damage[NO_COLOUR]", 0.55f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectFireAction(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.6f),
+                                    TutorialMouseKeyframe.tile(3.4f, 1, 0, -0.07f, -0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, () -> map.attackUnit(0, 0, 1, 0))
+                            );
+                            map.finalise();
+                        });
+                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 3, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("The enemy on a [BLUE]" + TileType.NEBULA.getName().toLowerCase() + " tile[NO_COLOUR] receives [RED]reduced damage[NO_COLOUR]", 0.5f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectFireAction(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.6f),
+                                    TutorialMouseKeyframe.tile(3.4f, 1, 0, -0.07f, -0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, () -> map.attackUnit(0, 0, 1, 0))
+                            );
+                            map.finalise();
+                        });
+                        box.setColumnTopMarginToElement(3, 0, 20, VerticalAlign.TOP)
+                                .setColumnVerticalAlign(3, VerticalAlign.TOP);
+                        box.addSpace(1f, 0);
+                        box.addText(1, HorizontalAlign.LEFT, "Counterattacks");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "In all the examples above, it is [BLUE]not only the enemy[NO_COLOUR] that takes damage, but also the [BLUE]allied unit[NO_COLOUR]. Whenever attacking, the " +
+                                "enemy will retaliate with a [RED]counterattack[NO_COLOUR].\n\nThe only difference between the initial attack and the counterattack is the [BLUE]order they are calculated[NO_COLOUR].\n\n" +
+                                "The counterattack is performed [BLUE]after[NO_COLOUR] the enemy unit has [BLUE]taken damage[NO_COLOUR] from the initial attack and has been [BLUE]weakened[NO_COLOUR]. You therefore gain an [BLUE]advantage[NO_COLOUR] by attacking first.\n\n" +
+                                "When counterattacking, the enemy unit will use its [BLUE]own weapons[NO_COLOUR] and [BLUE]damage modifiers[NO_COLOUR], so be careful with which enemies you choose to engage. " +
+                                "Positioning [BLUE]allied units[NO_COLOUR] on tiles which reduce [RED]" + ModifierCategory.INCOMING_DAMAGE.getName().toLowerCase() + "[NO_COLOUR] is generally a good idea.");
+                    }),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT,
+                            "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit."),
 
                     TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, new Point(5, 6)),
                     ModifyElements.enable(l, ACTION_TILE_SELECTION, TILE_SELECTION),
@@ -662,12 +972,12 @@ public enum TutorialLevel implements NamedEnum {
 
 
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1, 3, HorizontalAlign.LEFT,
-                                    "As you saw during the enemy's turn, the Bomber units were not able to do much damage to the Cruisers when they counterattacked. " +
-                                            "We need to be able to [RESUPPLY]resupply[NO_COLOUR] the Bombers."),
+                            "As you saw during the enemy's turn, the Bomber units were not able to do much damage to the Cruisers when they counterattacked. " +
+                                    "We need to be able to [RESUPPLY]resupply[NO_COLOUR] the Bombers."),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 1, 3, HorizontalAlign.LEFT,
-                                    "There are several ways to replenish ammo, but for this tutorial, we'll only cover one of them.\n\n" +
-                                            "At the start of your turn, if a unit is on the [BLUE]same tile as an allied base structure[NO_COLOUR], it gets all its ammo resupplied.\n\n" +
-                                            "Not only that, it also regains some HP."),
+                            "There are several ways to replenish ammo, but for this tutorial, we'll only cover one of them.\n\n" +
+                                    "At the start of your turn, if a unit is on the [BLUE]same tile as an allied base structure[NO_COLOUR], it gets all its ammo resupplied.\n\n" +
+                                    "Not only that, it also regains some HP."),
                     ModifyElements.moveUnit(l, true, true, new Point[]{new Point(4, 3), new Point(7, 3)}, new Point[]{new Point(8, 1)}),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1, 3, HorizontalAlign.LEFT,
                             "Move one of the Bombers to the base so that it gets resupplied at the start of the next turn.",

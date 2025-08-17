@@ -205,7 +205,7 @@ public class UITabSwitcher extends UIContainer {
         }
 
         @Override
-        public RenderOrder getButtonOrderTemp() {
+        public RenderOrder getButtonOrder() {
             return parent.order;
         }
 

@@ -75,20 +75,20 @@ public class UITileInfo extends LevelUIContainer<Level> {
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null)
                     .setColumnVerticalAlign(1, VerticalAlign.TOP);
 
-            elements.box.addBox(structure, HorizontalAlign.CENTER, 0);
+            elements.box.addBox(structure, HorizontalAlign.CENTER, 0, false);
             elements.box.setColumnVerticalAlign(0, VerticalAlign.TOP);
 
             elements.box.addSpace(0.3f, 0);
-            elements.box.addBox(concealment, HorizontalAlign.CENTER, 0);
+            elements.box.addBox(concealment, HorizontalAlign.CENTER, 0, false);
 
             elements.box.addSpace(0.3f, 0);
-            elements.box.addBox(movement, HorizontalAlign.CENTER, 0);
+            elements.box.addBox(movement, HorizontalAlign.CENTER, 0, false);
 
             elements.box.addSpace(0.3f, 0);
-            elements.box.addBox(incomingDamage, HorizontalAlign.CENTER, 0);
+            elements.box.addBox(incomingDamage, HorizontalAlign.CENTER, 0, false);
 
             elements.box.addSpace(0.3f, 0);
-            elements.box.addBox(mining, HorizontalAlign.CENTER, 0);
+            elements.box.addBox(mining, HorizontalAlign.CENTER, 0, false);
 
             UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r, b, RenderOrder.LEVEL_UI, elements.box);
             buttonHandler.addTooltip(0, 0, true).add(button -> {
@@ -102,7 +102,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
                         .addSpace(0.2f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This structure increases " + EnergyManager.displayName + " income, which gets credited to you at the start of your turn.")
                         .addSpace(0.3f, 0)
-                        .addBox(energyIncomeStats, HorizontalAlign.CENTER, 0);
+                        .addBox(energyIncomeStats, HorizontalAlign.CENTER, 0, false);
                 UIDisplayBox repairStats = new UIDisplayBox(0, 0, width - 2, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.REPAIR.getName())
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
@@ -111,7 +111,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
                         .addSpace(0.2f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This structure repairs the HP of allied units on the same tile at the start of their turn.")
                         .addSpace(0.3f, 0)
-                        .addBox(repairStats, HorizontalAlign.CENTER, 0);
+                        .addBox(repairStats, HorizontalAlign.CENTER, 0, false);
                 UIDisplayBox resupply = new UIDisplayBox(0, 0, width - 1, -1, uiBox -> uiBox.setColourTheme(Modifier.RESUPPLY_BACKGROUND), false)
                         .addText(0.8f, HorizontalAlign.LEFT, "Unit " + Action.RESUPPLY.getName())
                         .addSpace(0.2f, 0)
@@ -125,13 +125,13 @@ public class UITileInfo extends LevelUIContainer<Level> {
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, null)
                         .addSpace(0.3f, 0)
-                        .addBox(captureStats, HorizontalAlign.CENTER, 0)
+                        .addBox(captureStats, HorizontalAlign.CENTER, 0, false)
                         .addSpace(0.3f, 0)
-                        .addBox(energyIncome, HorizontalAlign.CENTER, 0)
+                        .addBox(energyIncome, HorizontalAlign.CENTER, 0, false)
                         .addSpace(0.3f, 0)
-                        .addBox(repair, HorizontalAlign.CENTER, 0)
+                        .addBox(repair, HorizontalAlign.CENTER, 0, false)
                         .addSpace(0.3f, 0)
-                        .addBox(resupply, HorizontalAlign.CENTER, 0)
+                        .addBox(resupply, HorizontalAlign.CENTER, 0, false)
                 ;
                 return structureBox;
             });
@@ -231,7 +231,8 @@ public class UITileInfo extends LevelUIContainer<Level> {
         this.structure.setText(0, 1, structure == null ? "None" : structure.type.getName());
         concealment.setText(0, 1, tile.type.concealment > 50 ? "Infinite" : MathUtil.floatToString(tile.type.concealment, 1) + ModifierCategory.CONCEALMENT.icon());
         movement.setText(0, 1, MathUtil.floatToString(tile.type.moveCost, 1) + ModifierCategory.MOVEMENT_COST_DISPLAY.icon());
-        incomingDamage.setText(0, 1, Modifier.percentMultiplicative(tile.type.damageModifier.effect(ModifierCategory.INCOMING_DAMAGE)) + ModifierCategory.INCOMING_DAMAGE.icon());
+        boolean hasDamageModifier = tile.type.damageModifier.effect(ModifierCategory.INCOMING_DAMAGE) != 1;
+        incomingDamage.setText(0, 1, hasDamageModifier ? Modifier.percentMultiplicative(tile.type.damageModifier.effect(ModifierCategory.INCOMING_DAMAGE)) + ModifierCategory.INCOMING_DAMAGE.icon() : "Unchanged");
 
         if (miningPreviouslyDisabled && tile.miningBarSegments() != 0) {
             miningPreviouslyDisabled = false;

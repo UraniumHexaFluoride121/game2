@@ -11,6 +11,7 @@ import level.tile.Tile;
 import level.tile.TileImageRenderer;
 import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EventCameraPos;
 import render.GameRenderer;
 import render.RenderOrder;
 import render.Renderable;
@@ -326,6 +327,9 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
             ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
             ObjPos cameraTransformedPos = transformMousePosToCamera(p);
             if ((interpCameraTo == null || interpCameraTo.distance(cameraPosition) < 4) && !runningAnim() && !TutorialManager.isDisabled(TutorialElement.CAMERA_MOVEMENT)) {
+                if (TutorialManager.isTutorial()) {
+                    TutorialManager.acceptEvent(new EventCameraPos(true, cameraPosition));
+                }
                 if (moveCameraEnabled) {
                     if (prevMousePos != null) {
                         if (interpCameraTo != null)
@@ -354,6 +358,9 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
                     }
                 }
                 cameraPosition.clamp(-level.tileBound.x / 2, level.tileBound.x / 2, -level.tileBound.y / 2, level.tileBound.y / 2);
+                if (TutorialManager.isTutorial()) {
+                    TutorialManager.acceptEvent(new EventCameraPos(false, cameraPosition));
+                }
             }
             level.buttonRegister.acceptInput(cameraTransformedPos, InputType.MOUSE_OVER, true, false);
         }
