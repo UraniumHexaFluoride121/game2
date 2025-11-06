@@ -160,7 +160,11 @@ public abstract class UnitLike<T extends StatManager<?>> {
         if (value == 0 || !renderVisible())
             return;
         ObjPos pos = getRenderPos();
-        damageUIs.add(new UnitDamageNumberUI(value, pos.x + (shield ? -TILE_SIZE * 0.2f : TILE_SIZE * 0.2f), pos.y, value > 0 ? 1 : -0.7f, shield));
+        damageUIs.add(new UnitDamageNumberUI(value, pos.x + (shield ? -TILE_SIZE * 0.2f : TILE_SIZE * 0.2f), pos.y, value > 0 ? 1 : -0.7f, shield, infoUITime()));
+    }
+
+    public float infoUITime() {
+        return 1.2f;
     }
 
     public void renderDamageUIs(Graphics2D g) {

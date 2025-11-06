@@ -27,6 +27,7 @@ import render.particle.ParticleEmitter;
 import render.types.box.UIBox;
 import render.types.box.display.BoxElement;
 import unit.Unit;
+import unit.UnitTeam;
 import unit.action.Action;
 import unit.weapon.FiringData;
 
@@ -36,11 +37,13 @@ import java.awt.geom.Path2D;
 import java.util.*;
 import java.util.function.Function;
 
+import static level.Level.*;
 import static level.tile.Tile.*;
 
 public class TutorialMapElement extends BoxElement {
     private static final UIColourTheme THEME = new UIColourTheme(new Color(128, 128, 128), new Color(25, 22, 22));
     private static final Stroke stroke = Renderable.roundedStroke(0.2f);
+    private static final Stroke fowStroke = Renderable.roundedStroke(0.1f);
     private static final Color borderColour = UIColourTheme.setAlpha(BORDER_COLOUR, 0.2f);
 
     public static final float DEG_30 = (float) Math.toRadians(30);
@@ -63,7 +66,7 @@ public class TutorialMapElement extends BoxElement {
     private final HashMap<Runnable, Float> actions = new HashMap<>();
     private final TutorialActionSelector actionSelector = new TutorialActionSelector();
     private TutorialTilePath tilePath = null;
-    private HexagonBorder hexagonBorder = null;
+    private HexagonBorder hexagonBorder = null, fowBorder = null;
     private Color hexagonBorderFill = null;
     private Collection<Point> hexagonBorderPoints = null;
     private Runnable onResetTask = null;
@@ -72,6 +75,9 @@ public class TutorialMapElement extends BoxElement {
     private final SineAnimation targetAnim = new SineAnimation(2, 90);
 
     public final HashSet<TutorialMapUnit> allUnits = new HashSet<>();
+
+    private boolean fow = false;
+    private UnitTeam fowTeam = null;
 
     public TutorialMapElement(float initialMargin, HorizontalAlign align, float width, float height, float tileSize, float lifetime) {
         super(initialMargin);
@@ -149,6 +155,33 @@ public class TutorialMapElement extends BoxElement {
         }, 0f);
     }
 
+    public void enableFoW(UnitTeam team) {
+        fowTeam = team;
+        fow = true;
+    }
+
+    public void calculateFoW(UnitTeam team) {
+        TileSet visible = new TileSet(null);
+        allUnits.forEach(u -> {
+            if (u.data.team == team) {
+                TileSet t = new TileSet(null, tiles.stream().map(m -> m.pos).toList())
+                        .m(null, m -> m.tilesInRangeStatic(u.data.pos, p -> getTile(p).type.concealment, u.stats.maxViewRange()));
+                t.addAll(TileSet.tilesInRadius(u.data.pos, 1, null));
+                visible.addAll(t);
+            }
+        });
+        visible.removeIf(t -> getTile(t) == null);
+        tiles.forEach(t -> {
+            t.fow = !visible.contains(t.pos);
+        });
+        fowBorder = new HexagonBorder(visible.stream().map(p -> new Point(p.y, -p.x)).toList(), FOW_TILE_BORDER_COLOUR);
+    }
+
+    public void calculateFoW() {
+        if (fow)
+            calculateFoW(fowTeam);
+    }
+
     public TutorialMapElement setSelectedTile(int x, int y) {
         selectedTile = new Point(x, y);
         TutorialMapTile tile = getTile(x, y);
@@ -158,6 +191,8 @@ public class TutorialMapElement extends BoxElement {
     }
 
     public TutorialMapTile getTile(int x, int y) {
+        if (!coordinateTiles.containsKey(x))
+            return null;
         return coordinateTiles.get(x).get(y);
     }
 
@@ -354,15 +389,21 @@ public class TutorialMapElement extends BoxElement {
         animHandler.tick(dT);
         GameRenderer.renderOffset(xOffset(), yOffset(), g, () -> {
             box.render(g);
-            g.setColor(borderColour);
-            g.setStroke(stroke);
             GameRenderer.renderOffsetScaled(width() / 2, height() / 2, size / TILE_SIZE, g, () -> {
                 tiles.forEach(map -> map.renderTerrain(g));
+                g.setStroke(fow ? fowStroke : stroke);
+                g.setColor(borderColour);
                 g.draw(borderPath);
+                if (fow && fowBorder != null) {
+                    GameRenderer.renderTransformed(g, () -> {
+                        transformCoordinateSystem(g);
+                        fowBorder.render(g);
+                    });
+                }
                 if (tilePath != null)
                     tilePath.render(g);
                 animHandler.render(g, AnimType.BELOW_UNIT);
-                tiles.forEach(map -> map.render(g));
+                tiles.forEach(t -> t.render(g));
                 animHandler.render(g, AnimType.ABOVE_UNIT);
                 TutorialMapTile hoverTile = null;
                 if (mouseParticle != null) {
@@ -416,12 +457,15 @@ public class TutorialMapElement extends BoxElement {
         selectedTile = null;
         actionSelector.reset();
         hexagonBorder = null;
+        fowBorder = null;
         tilePath = null;
         actions.forEach((r, t) -> animHandler.tasks.addTask(t, r));
         allUnits.forEach(TutorialMapUnit::reset);
         textRenderers.forEach(TutorialMapText::reset);
         if (onResetTask != null)
             onResetTask.run();
+        if (fow)
+            calculateFoW(fowTeam);
     }
 
     @Override

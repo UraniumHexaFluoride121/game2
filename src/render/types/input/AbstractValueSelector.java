@@ -1,5 +1,6 @@
 package render.types.input;
 
+import foundation.MainPanel;
 import foundation.input.*;
 import foundation.math.ObjPos;
 import foundation.math.HitBox;
@@ -161,6 +162,8 @@ public abstract class AbstractValueSelector<T> extends AbstractRenderElement imp
         if (isEnabled()) {
             tooltipClickHandler.buttonPressed(pos, inside, blocked, type);
             if (!blocked && inside && type instanceof ScrollInputType s) {
+                if (MainPanel.scrollBlocked(this))
+                    return;
                 if (s.up) {
                     increment();
                 } else

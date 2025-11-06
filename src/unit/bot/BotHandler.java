@@ -534,10 +534,7 @@ public class BotHandler implements Deletable, Tickable {
     private void selectUnitTile(Unit u) {
         if (u.renderVisible()) {
             Tile t = level.getTile(u.data.pos);
-            level.tileSelector.select(t);
             level.levelRenderer.setCameraInterpBlockPos(t.renderPosCentered);
-        } else {
-            level.tileSelector.deselect();
         }
         if (level.networkState == NetworkState.SERVER)
             level.server.sendBotSelectTile(u.data.pos);
@@ -549,10 +546,7 @@ public class BotHandler implements Deletable, Tickable {
             return;
         if (u.renderVisible()) {
             Tile t = level.getTile(u.data.pos);
-            level.tileSelector.select(t);
             level.levelRenderer.setCameraInterpBlockPos(t.renderPosCentered);
-        } else {
-            level.tileSelector.deselect();
         }
     }
 

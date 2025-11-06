@@ -1,5 +1,6 @@
 package render.types.container;
 
+import foundation.MainPanel;
 import foundation.input.*;
 import foundation.math.ObjPos;
 import foundation.math.HitBox;
@@ -138,6 +139,8 @@ public class UIScrollSurface extends AbstractRenderElement implements Registered
         else
             blocking = internal.acceptInput(new ObjPos(-1000, -1000), type, true, blocked);
         if (!blocking && inside && !blocked && type instanceof ScrollInputType s) {
+            if (MainPanel.scrollBlocked(this))
+                return;
             if (s.up)
                 scrollAmount = Math.clamp(scrollAmount - scrollSpeed * s.scrollAmount, 0, scrollMax);
             else

@@ -48,10 +48,12 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
         if (movePath != null && movePath.finished()) {
             moveUnit(movePath.getLastTile(), true);
             movePath = null;
+            map.calculateFoW();
         }
         HexagonalDirection direction = null;
         if (movePath != null) {
             direction = movePath.getDirection();
+
         }
         renderUnit(g, (direction != null) ? direction.counterClockwise().getPose() : UnitPose.FORWARD, data.type.shieldHP != 0);
         renderDamageUIs(g);
@@ -84,6 +86,11 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
         movePath = null;
         moveUnit(startPos, false);
         onReset.accept(this);
+    }
+
+    @Override
+    public float infoUITime() {
+        return 3;
     }
 
     @Override

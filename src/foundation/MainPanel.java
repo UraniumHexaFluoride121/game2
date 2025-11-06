@@ -308,6 +308,23 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         });
     }
 
+    public static long scrollBlock = 0;
+    public static Object lastScrollObject = null;
+
+    public static boolean scrollBlocked(Object o) {
+        if (lastScrollObject == null || lastScrollObject == o) {
+            lastScrollObject = o;
+            scrollBlock = System.currentTimeMillis();
+            return false;
+        }
+        if (System.currentTimeMillis() < scrollBlock + 200) {
+            return true;
+        } else {
+            lastScrollObject = null;
+            return false;
+        }
+    }
+
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
         tasks.add(() -> {

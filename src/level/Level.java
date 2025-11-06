@@ -569,7 +569,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public float getTurnScore(UnitTeam team) {
-        return Math.clamp((float) (1 - Math.pow(turn / 50f, 0.5f)) * TURN_SCORE_MAX * 1.6f, 0, TURN_SCORE_MAX);
+        return Math.clamp((float) (Math.sqrt(tilesX * tilesX) / 5 * (1 - Math.pow(turn / 50f, 0.1f * initialPlayerTeams.size()))) * TURN_SCORE_MAX, 0, TURN_SCORE_MAX);
     }
 
     public int getUnitsDestroyedByTeam(UnitTeam team) {

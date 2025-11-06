@@ -94,6 +94,11 @@ public class TileModifier {
         return this;
     }
 
+    public TileModifier tilesInRangeStatic(Point origin, Function<Point, Float> tileCostFunction, float maxCost) {
+        set = new TileSet(l, new HashSet<>(AbstractTileSelector.tilesInRangeCostMapStatic(origin, set, tileCostFunction, maxCost).keySet()));
+        return this;
+    }
+
     public TileModifier unitFilter(Predicate<Unit> predicate) {
         Level l = (Level) this.l;
         set.removeIf(p -> !predicate.test(l.getUnit(p)));

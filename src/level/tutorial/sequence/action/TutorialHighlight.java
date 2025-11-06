@@ -6,7 +6,6 @@ import render.level.tile.HexagonBorder;
 import render.level.tile.HighlightTileRenderer;
 
 import java.awt.*;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -21,6 +20,7 @@ public class TutorialHighlight extends TutorialAction {
         TileSet tiles = new TileSet(l.tilesX, l.tilesY, List.of(points));
         return new TutorialHighlight(l, tiles, c);
     }
+
     public static TutorialHighlight radius(Level l, Color c, int x, int y, int r) {
         TileSet tiles = TileSet.tilesInRadius(new Point(x, y), r, l);
         return new TutorialHighlight(l, tiles, c);
@@ -28,7 +28,8 @@ public class TutorialHighlight extends TutorialAction {
 
     public static TutorialAction disable(Level l) {
         return new TutorialAction(() -> {
-            l.levelRenderer.tutorialHighlightRenderer.close();
+            if (l.levelRenderer.tutorialHighlightRenderer != null)
+                l.levelRenderer.tutorialHighlightRenderer.close();
             l.levelRenderer.tutorialBorderRenderer = null;
         });
     }

@@ -13,6 +13,10 @@ public class TileSelect extends TutorialAction {
         return new TutorialAction(() -> l.tileSelector.deselect());
     }
 
+    public static TutorialAction deselectAction(Level l) {
+        return new TutorialAction(() -> l.tileSelector.deselectAction());
+    }
+
     private TileSelect(Level l, Point pos) {
         super(() -> l.tileSelector.select(l.getTile(pos)));
     }

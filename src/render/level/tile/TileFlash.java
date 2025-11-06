@@ -60,6 +60,8 @@ public class TileFlash implements ITileHighlight, Deletable {
 
     @Override
     public void delete() {
+        if (level.levelRenderer == null)
+            return;
         level.levelRenderer.removeTileHighlight(this);
         level = null;
     }

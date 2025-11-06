@@ -65,7 +65,7 @@ public class Tile implements Writable {
     public int miningBarFill = 0;
     private UIHitPointBar captureBar = null;
 
-    public LerpAnimation illegalTileTimer = new LerpAnimation(0.8f).finish();
+    public LerpAnimation illegalTileTimer = null;
 
     public Tile(int x, int y, TileType type, AbstractLevel<?, ?> level) {
         pos = new Point(x, y);
@@ -117,9 +117,13 @@ public class Tile implements Writable {
             HIGHLIGHT_RENDERER.setColor(FOW_COLOUR);
             GameRenderer.renderOffset(renderPos, g, () -> HIGHLIGHT_RENDERER.render(g));
         } else {
-            if (!illegalTileTimer.finished()) {
-                HIGHLIGHT_RENDERER.setColor(new Color(ILLEGAL_TILE_COLOUR.getRed(), ILLEGAL_TILE_COLOUR.getGreen(), ILLEGAL_TILE_COLOUR.getBlue(), (int) (128 * illegalTileTimer.doubleTriangleProgress())));
-                GameRenderer.renderOffset(renderPos, g, () -> HIGHLIGHT_RENDERER.render(g));
+            if (illegalTileTimer != null) {
+                if (illegalTileTimer.finished()) {
+                    illegalTileTimer = null;
+                } else {
+                    HIGHLIGHT_RENDERER.setColor(new Color(ILLEGAL_TILE_COLOUR.getRed(), ILLEGAL_TILE_COLOUR.getGreen(), ILLEGAL_TILE_COLOUR.getBlue(), (int) (128 * illegalTileTimer.doubleTriangleProgress())));
+                    GameRenderer.renderOffset(renderPos, g, () -> HIGHLIGHT_RENDERER.render(g));
+                }
             }
         }
     }
@@ -147,7 +151,7 @@ public class Tile implements Writable {
     }
 
     public void setIllegalTile() {
-        illegalTileTimer.startTimer();
+        illegalTileTimer = new LerpAnimation(0.8f);
     }
 
     public void setTileType(TileType type, AbstractLevel<?, ?> level) {

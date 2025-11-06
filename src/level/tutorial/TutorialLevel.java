@@ -6,6 +6,7 @@ import level.GameplaySettings;
 import level.Level;
 import level.PlayerTeam;
 import level.structure.StructureType;
+import level.tile.TileSet;
 import level.tile.TileType;
 import level.tutorial.sequence.BoxSize;
 import level.tutorial.sequence.action.*;
@@ -40,7 +41,6 @@ import static render.types.text.StyleElement.*;
 
 public enum TutorialLevel implements NamedEnum {
     INTRODUCTION("Introduction", "tutorial-intro",
-            "Learn the basics of controlling units.",
             new TutorialLevelData(
                     new GameplaySettings(false, true)
             ).addPlayer(PlayerTeam.A, false).addPlayer(PlayerTeam.B, true),
@@ -54,7 +54,7 @@ public enum TutorialLevel implements NamedEnum {
                         l.levelRenderer.uiUnitInfo.viewFiringRange.setEnabled(false);
                         l.levelRenderer.uiUnitInfo.viewEffectiveness.setEnabled(false);
                     }),
-                    ModifyElements.disable(l, END_TURN, TILE_SELECTION),
+                    ModifyElements.disable(l, END_TURN, TILE_SELECTION, ACTIONS),
                     CameraMove.toTile(l, 1, 4),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 1, 4),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 4.7f, HorizontalAlign.LEFT,
@@ -200,6 +200,7 @@ public enum TutorialLevel implements NamedEnum {
                                 " tiles[NO_COLOUR], depending on the size of the unit.\n\n" +
                                 "The modifiers in effect are prominently displayed for the " + c + "active unit[NO_COLOUR] while the " + c + Action.MOVE.getName().toLowerCase() + " action[NO_COLOUR] is selected.");
                     }),
+                    ModifyElements.enable(l, ACTIONS),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 2f, 5.7f, HorizontalAlign.LEFT,
                             "Try moving one of your units",
                             ActionListener.perform(Action.MOVE)),
@@ -208,6 +209,10 @@ public enum TutorialLevel implements NamedEnum {
                             "Great! Now that you can move units, it's also important to be able to move the camera. " +
                                     "[BLUE]Right-click + drag[NO_COLOUR], or alternatively, move the mouse to the edge of the screen to move the camera. " +
                                     "Try moving the camera around the level.", CameraMoveListener.distance(15)),
+                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 20, 20, HorizontalAlign.LEFT,
+                            "Great! Now that you can move units, it's also important to be able to move the camera. " +
+                                    "[BLUE]Right-click + drag[NO_COLOUR], or alternatively, move the mouse to the edge of the screen to move the camera. " +
+                                    "Try moving the camera around the level."),
                     CameraMove.toTile(l, 7, 5),
                     ModifyElements.disable(l, CAMERA_MOVEMENT),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 7, 6.7f, HorizontalAlign.LEFT,
@@ -227,10 +232,10 @@ public enum TutorialLevel implements NamedEnum {
                         box.setWidthMargin(0.5f);
                         box.addText(1.2f, HorizontalAlign.LEFT, "Attacking Enemy Units");
                         box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "Just like with the " + Action.MOVE.getName().toLowerCase() + " action, [BLUE]each unit[NO_COLOUR] can be attack [BLUE]once per turn[NO_COLOUR] by using the " + Action.FIRE.colouredName(NO_COLOUR, true) + " action.\n\n" +
+                        box.addText(0.7f, HorizontalAlign.LEFT, "Just like with the " + Action.MOVE.getName().toLowerCase() + " action, [BLUE]each unit[NO_COLOUR] can attack [BLUE]once per turn[NO_COLOUR] by using the " + Action.FIRE.colouredName(NO_COLOUR, true) + " action.\n\n" +
                                 "In general, each unit can use each of its actions once per turn, in whichever order you choose.");
                         box.addSpace(0.8f, 0);
-                        box.addTutorialMap(HorizontalAlign.LEFT, 20, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 13, 0, map -> {
+                        box.addTutorialMap(HorizontalAlign.LEFT, 20, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 14.5f, 0, map -> {
                             map.addTile(-2, -1, TileType.EMPTY);
                             map.addTile(-2, 0, TileType.NEBULA);
                             map.addTile(-2, 1, TileType.NEBULA);
@@ -285,19 +290,19 @@ public enum TutorialLevel implements NamedEnum {
                         box.addSpace(1f, 0);
                         box.addText(1, HorizontalAlign.LEFT, "Unit HP");
                         box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "As you've probably noticed by now, each unit has a number in the [BLUE]bottom-right[NO_COLOUR] corner of its tile. " +
+                        box.addText(0.7f, HorizontalAlign.LEFT, "Each unit has a number in the [BLUE]bottom-right[NO_COLOUR] corner of its tile. " +
                                 "This is its [BLUE]remaining HP[NO_COLOUR]. Note that it is always [BLUE]rounded up[NO_COLOUR], and that a more precise value is available in each unit's [BLUE]info screen[NO_COLOUR].\n\n" +
                                 "In the example above, you can see the [BLUE]damage taken[NO_COLOUR] by each unit from the attack with the [RED]damage indicators[NO_COLOUR] that appear next to the HP number.");
                         box.addSpace(1.5f, 0);
                         box.addText(1, HorizontalAlign.LEFT, "Dealing Damage");
                         box.addSpace(0.3f, 0);
                         box.addText(0.7f, HorizontalAlign.LEFT, "There are a [BLUE]few factors[NO_COLOUR] that influence the damage dealt to an enemy unit.\n\n" +
-                                "Firstly, the [RED]base weapon damage[BLUE]. This depends on which [BLUE]type of unit[NO_COLOUR] is attacking, and can be seen in the [BLUE]unit info screen]. " +
+                                "Firstly, the [RED]base weapon damage[BLUE]. This depends on which [BLUE]type of unit[NO_COLOUR] is attacking, and can be seen in the [BLUE]unit info screen[NO_COLOUR]. " +
                                 FighterType.INTERCEPTOR.getPluralName() + " have a base damage of [RED]" + MathUtil.floatToString(FighterType.INTERCEPTOR.damage) + ModifierCategory.DAMAGE.icon() + "[NO_COLOUR].\n\n" +
                                 "Secondly, a unit with [BLUE]less HP remaining[NO_COLOUR] will deal [RED]less damage[NO_COLOUR], depending on how much HP it has lost. A [BLUE]severely damaged[NO_COLOUR] unit may do as little as " +
                                 "[BLUE]25%[NO_COLOUR] of its normal damage.");
                         box.addSpace(0.5f, 0);
-                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 0, map -> {
+                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 0, map -> {
                             map.addTile(-1, 0, TileType.EMPTY);
                             map.addTile(-1, 1, TileType.DENSE_NEBULA);
                             map.addTile(-1, -1, TileType.EMPTY);
@@ -318,7 +323,7 @@ public enum TutorialLevel implements NamedEnum {
                             );
                             map.finalise();
                         });
-                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 2, map -> {
+                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 2, map -> {
                             map.addTile(-1, 0, TileType.EMPTY);
                             map.addTile(-1, 1, TileType.DENSE_NEBULA);
                             map.addTile(-1, -1, TileType.EMPTY);
@@ -344,12 +349,12 @@ public enum TutorialLevel implements NamedEnum {
                         box.addSpace(1f, 0);
                         box.addText(1, HorizontalAlign.LEFT, "Modifiers");
                         box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "Similar to [BLUE]movement modifiers[NO_COLOUR], attacks can also have [BLUE]modifiers[NO_COLOUR]. While other modifiers do exist, " +
-                                "[BLUE]most attacks[NO_COLOUR] only have two: the [BLUE]weapon effectiveness modifier[NO_COLOUR] (more on that later), and the [BLUE]tile modifier[NO_COLOUR].\n\n" +
+                        box.addText(0.7f, HorizontalAlign.LEFT, "Similar to [BLUE]movement modifiers[NO_COLOUR], attacks can also have [BLUE]modifiers[NO_COLOUR]. The " +
+                                "[BLUE]main ones[NO_COLOUR] are: the [BLUE]weapon effectiveness modifier[NO_COLOUR] (more on that later), and the [BLUE]tile modifier[NO_COLOUR].\n\n" +
                                 "Different [BLUE]tile types[NO_COLOUR] have different modifiers, typically [BLUE]reducing[NO_COLOUR] the damage received by the unit standing on it.\n\n" +
                                 "The effect of the tile modifier can be seen in the [RED]" + ModifierCategory.INCOMING_DAMAGE.getName() + "[NO_COLOUR] box in the [BLUE]tile info screen[NO_COLOUR].");
                         box.addSpace(0.5f, 0);
-                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 0, map -> {
+                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 0, map -> {
                             map.addTile(-1, 0, TileType.EMPTY);
                             map.addTile(-1, 1, TileType.DENSE_NEBULA);
                             map.addTile(-1, -1, TileType.EMPTY);
@@ -370,7 +375,7 @@ public enum TutorialLevel implements NamedEnum {
                             );
                             map.finalise();
                         });
-                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 8, 3, map -> {
+                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 3, map -> {
                             map.addTile(-1, 0, TileType.EMPTY);
                             map.addTile(-1, 1, TileType.DENSE_NEBULA);
                             map.addTile(-1, -1, TileType.EMPTY);
@@ -402,100 +407,83 @@ public enum TutorialLevel implements NamedEnum {
                                 "When counterattacking, the enemy unit will use its [BLUE]own weapons[NO_COLOUR] and [BLUE]damage modifiers[NO_COLOUR], so be careful with which enemies you choose to engage. " +
                                 "Positioning [BLUE]allied units[NO_COLOUR] on tiles which reduce [RED]" + ModifierCategory.INCOMING_DAMAGE.getName().toLowerCase() + "[NO_COLOUR] is generally a good idea.");
                     }),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT,
-                            "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit."),
-
-                    TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, new Point(5, 6)),
-                    ModifyElements.enable(l, ACTION_TILE_SELECTION, TILE_SELECTION),
-                    AllowedActionTiles.only(Action.MOVE, 5, 6),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.8f, HorizontalAlign.LEFT,
-                            "Most units can only attack enemies on [RED]adjacent tiles[NO_COLOUR].\n\nLeft-click the highlighted tile to move the selected unit in range to attack.",
-                            ActionListener.perform(Action.MOVE)),
-
+                    ModifyElements.enable(l, CAMERA_MOVEMENT, TILE_SELECTION, TILE_DESELECTION, ACTIONS),
+                    AllowedActionTiles.only(Action.MOVE, TileSet.tilesInRadius(new Point(6, 5), 1, 1, null).toArray(new Point[0])),
+                    BranchTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT,
+                            "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.", ActionListener.tileSelectAnyExcept(Action.MOVE, TileSet.tilesInRadius(new Point(6, 5), 1, 1, null).toArray(new Point[0])), ActionListener.perform(Action.FIRE),
+                            TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, TileSet.tilesInRadius(new Point(6, 5), 1, 1, null).toArray(new Point[0])),
+                            TileSelect.deselectAction(l),
+                            BranchTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT, "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.\n\n" +
+                                            "The unit must be moved to a tile [BLUE]adjacent to the enemy unit[NO_COLOUR] before it can attack.", ActionListener.perform(Action.MOVE), ActionListener.perform(Action.FIRE),
+                                    TutorialHighlight.disable(l), BlockingTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT, "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.\n\n" +
+                                            "The unit must be moved to a tile [BLUE]adjacent to the enemy unit[NO_COLOUR] before it can attack.", ActionListener.perform(Action.FIRE)))),
                     TutorialHighlight.disable(l),
-                    BlockingAction.waitFor(ActionListener.complete(Action.MOVE)),
-
-                    ModifyElements.disable(l, TILE_SELECTION),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "You can see that the Move action is now greyed out.\n\nEach unit can only perform each of its actions [BLUE]once per turn[NO_COLOUR]."),
-
-                    AllowedActions.only(Action.FIRE),
-                    AllowedActionTiles.only(Action.FIRE, 6, 5),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "Now that the enemy unit is in range, select the Fire action, then select the unit to attack it.",
-                            ActionListener.perform(Action.FIRE)),
-
+                    AllowedActionTiles.all(),
                     BlockingAction.waitFor(ActionListener.complete(Action.FIRE)),
-                    ModifyElements.enable(l, TILE_SELECTION),
-                    AllowedTiles.only(5, 6),
-                    TileSelect.tile(l, 5, 6),
 
-                    TutorialUI.onMap(l, "unitHPHighlight")
-                            .rectangle(5.18f, 6.01f, 0.8f, 1, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW)
-                            .rectangle(6.18f, 5.01f, 0.8f, 1, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "There is a number in the bottom right corner of each unit. This number shows the [GREEN]remaining HP[NO_COLOUR] of the unit, rounded up."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "Fighter units start with " + ((int) (FighterType.INTERCEPTOR.hitPoints)) + " HP, and, as you can see, [BLUE]both the attacking unit and " +
-                                    "the enemy unit[NO_COLOUR] have taken some damage.\n\nNotice that the enemy unit took more damage than the attacking one."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "This is because after you attack a unit, the now weakened enemy will [BLUE]counterattack[NO_COLOUR] with whatever strength it has left.\n\n" +
-                                    "[RED]The less HP a unit has, the less damage it will be able to do.[NO_COLOUR]"),
-
-                    TutorialUI.remove("unitHPHighlight"),
-                    TutorialUI.onUI(l, "unitInfoHP")
-                            .rectangle(6, 4.75f, 10, 1.4f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 20, 4, HorizontalAlign.LEFT,
-                            "You can also view the HP of the selected unit on the panel to the left, this time with one decimal place of precision."),
-
-                    TutorialUI.remove("unitInfoHP"),
-
-                    ModifyElements.enable(l, CAMERA_MOVEMENT, ACTIONS, TILE_SELECTION, TILE_DESELECTION),
-                    AllowedActions.only(Action.MOVE),
-                    AllowedTiles.all(),
-                    AllowedActionTiles.only(Action.MOVE, new Point(5, 5), new Point(5, 4)),
-                    TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, new Point(5, 5), new Point(5, 4)),
-                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "Move the other Fighter to the one of the highlighted tiles and attack the enemy.\n\nTo move the camera, use [BLUE]right-click + drag[NO_COLOUR], or move the mouse to the edge of the screen.",
-                            BlockingAction.waitFor(ActionListener.complete(Action.MOVE)),
-
-                            TutorialHighlight.disable(l),
-                            AllowedActions.only(Action.FIRE),
-                            AllowedActionTiles.all(),
-                            BlockingAction.waitFor(ActionListener.complete(Action.FIRE))
-                    ),
                     new TutorialAction(() -> {
                         l.levelRenderer.turnBox.setEnabled(true);
                         l.levelRenderer.endTurn.setEnabled(true);
                     }),
-                    TutorialUI.onUI(l, "endTurnHighlight")
-                            .rectangle(8f, Renderable.top() - 3, 10, 3, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NORMAL),
-                    ModifyElements.enable(l, END_TURN, ACTION_DESELECT),
-                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 7, Renderable.top() - 10, HorizontalAlign.LEFT,
-                            "Now that you've performed all the actions you can, it's time to end this turn.\n\nThe enemy will now attack, but by attacking first, you've gained the upper hand.",
-                            TurnListener.start()),
-                    TutorialUI.remove("endTurnHighlight"),
-
-                    BlockingAction.waitFor(TurnListener.start(UnitTeam.BLUE)),
-
-                    AllowedActions.all(),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 2, 6, HorizontalAlign.LEFT,
-                            "Use what you've learnt to destroy the remaining enemy units.",
-                            ActionListener.perform()),
-
+                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 7, Renderable.top() - 10, HorizontalAlign.LEFT,
+                            "[BLUE]End the turn[NO_COLOUR] once all the actions you wanted to perform have been completed."),
+                    BlockingAction.waitFor(TurnListener.start()),
+                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 7, Renderable.top() - 10, HorizontalAlign.LEFT,
+                            "That's the end of this tutorial. It's now up to you to win by destroying all the enemy units."),
                     new EndTutorial()
             }),
-    FOW("Tile Types", "tutorial-tile-types",
-            "This tutorial covers the fog of war mechanic, tile types and capturing structures.",
+    FOW("Unit Types", "tutorial-unit",
             new TutorialLevelData(
                     new GameplaySettings(true, true)
             ).addPlayer(PlayerTeam.A, false).addPlayer(PlayerTeam.B, true),
             l -> new TutorialSequenceElement[]{
                     ModifyElements.disable(l, TILE_DESELECTION, TILE_SELECTION, CAMERA_MOVEMENT, ACTIONS, ACTION_DESELECT, ACTION_TILE_SELECTION, END_TURN, VIEW_FIRING_RANGE, VIEW_EFFECTIVENESS),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, HorizontalAlign.LEFT,
-                            "Welcome to the second tutorial, about fog of war, tile types, and structure capturing."),
+                            "Welcome to the [BLUE]second tutorial[NO_COLOUR], about unit types and fog of war."),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, HorizontalAlign.LEFT,
-                            "As you can quite clearly see, many of the tiles are greyed out this time. That's because of the [BLUE]fog of war[NO_COLOUR] setting, which is enabled by default.\n\nExpect to see it in most future tutorials."),
+                            "As you can quite clearly see, many of the tiles are greyed out this time. That's because of the [BLUE]fog of war[NO_COLOUR] setting, which is enabled by default."),
+
+                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
+                        box.setWidthMargin(0.5f);
+                        box.addText(1.2f, HorizontalAlign.LEFT, "Fog of War");
+                        box.addSpace(0.3f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "When the fog of war setting is [BLUE]enabled[NO_COLOUR], tiles that aren't [BLUE]close to your units[NO_COLOUR] will be darkened. " +
+                                "[BLUE]Enemy units[NO_COLOUR] on such tiles are [BLUE]hidden[NO_COLOUR].");
+                        box.addSpace(0.5f, 0);
+                        box.addTutorialMap(HorizontalAlign.CENTER, 25, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 7, 0, map -> {
+                            map.addTile(-3, -1, TileType.ASTEROIDS);
+                            map.addTile(-3, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-3, 1, TileType.EMPTY);
+                            map.addTile(-2, -1, TileType.ASTEROIDS);
+                            map.addTile(-2, 0, TileType.EMPTY);
+                            map.addTile(-2, 1, TileType.EMPTY);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.EMPTY);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY);
+                            map.addTile(0, 1, TileType.EMPTY);
+                            map.addTile(1, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY);
+                            map.addTile(1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(2, -1, TileType.EMPTY);
+                            map.addTile(2, 0, TileType.NEBULA);
+                            map.addTile(2, 1, TileType.NEBULA);
+                            map.addTile(3, 0, TileType.NEBULA);
+                            map.enableFoW(UnitTeam.BLUE);
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, -3, 0, 0.2f, 0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(1, () -> map.setSelectedTile(-3, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1.5f),
+                                    TutorialMouseKeyframe.actionSelector(2, -3, 0, -0.04f, 0.03f, 2, 1, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.3f, () -> map.selectMoveAction(-3, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.7f, KeyframeFunction.pow(1.3f), KeyframeFunction.pow(0.7f)),
+                                    TutorialMouseKeyframe.tile(4, 2, 0, -0.15f, 0.2f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.3f, map::moveUnit)
+                            );
+                            map.finalise();
+                        });
+                    }),
 
                     TutorialHighlight.visibleTiles(l, GREEN_HIGHLIGHT),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, HorizontalAlign.LEFT,
@@ -717,7 +705,6 @@ public enum TutorialLevel implements NamedEnum {
                     new EndTutorial()
             }),
     WEAPONS("Ship Classes", "tutorial-weapons",
-            "This tutorial introduces different ship classes, weapon types as well as ranged units.",
             new TutorialLevelData(
                     new GameplaySettings(true, true)
             ).addPlayer(PlayerTeam.A, false).addPlayer(PlayerTeam.B, true),
@@ -994,14 +981,13 @@ public enum TutorialLevel implements NamedEnum {
                     new EndTutorial()
             });
 
-    public final String displayName, saveFileName, description;
+    public final String displayName, saveFileName;
     public final TutorialLevelData levelData;
     public final Function<Level, TutorialSequenceElement[]> sequence;
 
-    TutorialLevel(String displayName, String saveFileName, String description, TutorialLevelData levelData, Function<Level, TutorialSequenceElement[]> sequence) {
+    TutorialLevel(String displayName, String saveFileName, TutorialLevelData levelData, Function<Level, TutorialSequenceElement[]> sequence) {
         this.displayName = displayName;
         this.saveFileName = saveFileName;
-        this.description = description;
         this.levelData = levelData;
         this.sequence = sequence;
     }

@@ -228,6 +228,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                 unitDisplays.forEach(UITeamDisplay::updateImage);
                 structureDisplays.forEach(UITeamDisplay::updateImage);
             });
+            teamSelector.setZOrder(-20);
         });
 
         unitDisplays.forEach(UITeamDisplay::updateImage);

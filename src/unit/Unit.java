@@ -13,6 +13,7 @@ import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventActionComplete;
 import level.tutorial.sequence.event.EventActionPerform;
 import level.tutorial.sequence.event.EventActionSelect;
+import level.tutorial.sequence.event.EventActionTileSelect;
 import network.NetworkState;
 import render.GameRenderer;
 import render.Renderable;
@@ -225,7 +226,9 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
 
     //Called when there is an active action and this unit is selected
     public synchronized void onTileClicked(Tile tile, Action action) {
-        if (tile == null || level == null || TutorialManager.actionTileNotSelectable(tile.pos, action)) return;
+        if (tile == null || level == null) return;
+        TutorialManager.acceptEvent(new EventActionTileSelect(level, action, tile.pos));
+        if (TutorialManager.actionTileNotSelectable(tile.pos, action)) return;
         if (level.networkState == NetworkState.CLIENT) {
             onTileClickedAsClient(tile, action);
             return;
@@ -397,7 +400,7 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
         if (renderVisible()) {
             tileFlash(RESUPPLY_TILE_FLASH);
             ObjPos pos = getRenderPos();
-            damageUIs.add(new UnitTextUI("RESUPPLY", pos.x, pos.y, 0.7f, 1, UnitTextUI.RESUPPLY_COLOR));
+            damageUIs.add(new UnitTextUI("RESUPPLY", pos.x, pos.y, 0.7f, 1, UnitTextUI.RESUPPLY_COLOR, infoUITime()));
         }
     }
 
