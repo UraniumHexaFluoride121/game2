@@ -5,32 +5,37 @@ import foundation.math.MathUtil;
 import level.GameplaySettings;
 import level.Level;
 import level.PlayerTeam;
+import level.energy.EnergyManager;
 import level.structure.StructureType;
 import level.tile.TileSet;
 import level.tile.TileType;
 import level.tutorial.sequence.BoxSize;
 import level.tutorial.sequence.action.*;
 import level.tutorial.sequence.event.*;
+import level.tutorial.sequence.predicates.SelectedUnit;
+import level.tutorial.sequence.predicates.TileState;
+import level.tutorial.sequence.predicates.UnitState;
 import render.HorizontalAlign;
 import render.Renderable;
 import render.UIColourTheme;
 import render.VerticalAlign;
 import render.anim.sequence.KeyframeFunction;
-import render.level.info.UITileInfo;
+import render.level.info.UIUnitInfo;
 import render.types.box.UIDisplayBox;
-import render.types.box.display.tutorial.TutorialMapElement;
-import render.types.box.display.tutorial.TutorialMapText;
-import render.types.box.display.tutorial.TutorialMapUnit;
-import render.types.box.display.tutorial.TutorialMouseKeyframe;
+import render.types.box.display.tutorial.*;
+import render.types.text.MultiLineTextBox;
 import render.types.text.TextRenderer;
 import render.types.tutorial.TutorialScreen;
+import unit.ShipClass;
 import unit.UnitTeam;
 import unit.action.Action;
 import unit.action.ActionIconType;
 import unit.bot.BotActionData;
-import unit.stats.ModifierCategory;
+import unit.stats.modifiers.types.ModifierCategory;
 import unit.type.CorvetteType;
+import unit.type.CruiserType;
 import unit.type.FighterType;
+import unit.weapon.WeaponEffectiveness;
 
 import java.awt.*;
 import java.util.function.Function;
@@ -50,11 +55,10 @@ public enum TutorialLevel implements NamedEnum {
                         l.levelRenderer.mapButton.setEnabled(false);
                         l.levelRenderer.turnBox.setEnabled(false);
                         l.levelRenderer.endTurn.setEnabled(false);
-                        l.levelRenderer.uiUnitInfo.infoButton.setEnabled(false);
                         l.levelRenderer.uiUnitInfo.viewFiringRange.setEnabled(false);
                         l.levelRenderer.uiUnitInfo.viewEffectiveness.setEnabled(false);
                     }),
-                    ModifyElements.disable(l, END_TURN, TILE_SELECTION, ACTIONS),
+                    ModifyElements.disable(l, END_TURN, TILE_SELECTION, ACTIONS, TUTORIAL_INCOME_DISABLED),
                     CameraMove.toTile(l, 1, 4),
                     TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 1, 4),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 2, 4.7f, HorizontalAlign.LEFT,
@@ -63,7 +67,7 @@ public enum TutorialLevel implements NamedEnum {
                     CameraMove.toTile(l, 2, 4),
                     TutorialHighlight.tiles(l, BLUE_HIGHLIGHT, new Point(1, 5), new Point(2, 4)),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1.6f, 6.4f, HorizontalAlign.LEFT,
-                            "These are your [BLUE]units[NO_COLOUR]. For this tutorial, you've been provided with two [BLUE]" + FighterType.INTERCEPTOR.getName() + "[NO_COLOUR] units."),
+                            "These are your [BLUE]units[NO_COLOUR]. For this tutorial, you've been provided with two [BLUE]" + FighterType.INTERCEPTOR.getPluralName() + "[NO_COLOUR]."),
 
                     ModifyElements.enable(l, TILE_SELECTION),
                     TutorialHighlight.disable(l),
@@ -76,10 +80,9 @@ public enum TutorialLevel implements NamedEnum {
 
                     TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
                         box.setWidthMargin(0.5f);
-                        box.addText(1.2f, HorizontalAlign.LEFT, "Moving Units");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "Each unit can be moved once per turn by using the " + Action.MOVE.colouredName(NO_COLOUR, true) + " action.");
-                        box.addSpace(0.8f, 0);
+                        box.addParagraph("Moving Units",
+                                        "Each unit can be moved once per turn by using the " + Action.MOVE.colouredName(NO_COLOUR, true) + " action.")
+                                .mainHeader().defaultBottomSpacing().finalise();
                         box.addTutorialMap(HorizontalAlign.LEFT, 20, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 7, 0, map -> {
                             map.addTile(-2, -1, TileType.EMPTY);
                             map.addTile(-2, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
@@ -121,18 +124,15 @@ public enum TutorialLevel implements NamedEnum {
                                 "2. Select the " + Action.MOVE.colouredIconName(NO_COLOUR, false) + " action.\n\n" +
                                 "3. Select one of the " + c + "highlighted tiles[NO_COLOUR] to move to.");
                         moveInstructions.setColumnVerticalAlign(0, VerticalAlign.TOP);
-                        box.addSpace(1f, 0);
-                        box.addText(1, HorizontalAlign.LEFT, ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName());
-                        box.addSpace(0.3f, 0);
                         String maxMovement = MathUtil.floatToString(FighterType.INTERCEPTOR.maxMovement);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "The " + c + "blue highlight[NO_COLOUR] that appears when the action is " +
-                                "selected shows the tiles that are in " + c + "move range[NO_COLOUR]. " +
-                                "Each unit has a maximum " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.colouredName(NO_COLOUR, true) + ", and each tile the unit moves over " +
-                                "has a " + ModifierCategory.MOVEMENT_COST_DISPLAY.colouredName(NO_COLOUR, true) + " that depends on the type of tile.\n\n" +
+                        box.addParagraph(ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName(), "The " + c + "blue highlight[NO_COLOUR] that appears when the action is " +
+                                        "selected shows the tiles that are in " + c + "move range[NO_COLOUR]. " +
+                                        "Each unit has a maximum " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.colouredName(NO_COLOUR, true) + ", and each tile the unit moves over " +
+                                        "has " + ModifierCategory.MOVEMENT_COST_DISPLAY.getArticle().toLowerCase() + ModifierCategory.MOVEMENT_COST_DISPLAY.colouredName(NO_COLOUR, true) + " that depends on the type of tile.\n\n" +
 
-                                "The " + FighterType.INTERCEPTOR.getName() + " unit used in this example has a maximum " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + " of " +
-                                c + maxMovement + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon() + "[NO_COLOUR].");
-                        box.addSpace(0.6f, 0);
+                                        "The " + FighterType.INTERCEPTOR.getName() + " unit used in this example has a maximum " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + " of " +
+                                        c + maxMovement + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon() + "[NO_COLOUR].")
+                                .defaultBottomSpacing().finalise();
                         box.addTutorialMap(HorizontalAlign.CENTER, 26, 6, TutorialMapElement.TILE_SIZE_MEDIUM, 6, 0, map -> {
                             map.addTile(-3, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
                             map.addTile(-2, 0, TileType.EMPTY);
@@ -180,7 +180,7 @@ public enum TutorialLevel implements NamedEnum {
                         });
                         box.addSpace(0.5f, 0);
                         box.addText(0.7f, HorizontalAlign.LEFT, "In the first example, the unit is moving through " + c + TileType.EMPTY.getName().toLowerCase() +
-                                " tiles[NO_COLOUR], which have a " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " of " + c + "just " +
+                                " tiles[NO_COLOUR], which have " + ModifierCategory.MOVEMENT_COST_DISPLAY.getNameArticle().toLowerCase() + " of " + c + "just " +
                                 MathUtil.floatToString(TileType.EMPTY.moveCost) + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon() + "[NO_COLOUR], while in the second example, the unit is moving through " +
                                 c + TileType.NEBULA.getName().toLowerCase() +
                                 " tiles[NO_COLOUR], which have a " + c + "higher " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " of " +
@@ -192,13 +192,11 @@ public enum TutorialLevel implements NamedEnum {
                                 ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + "."
                         );
 
-                        box.addSpace(2f, 0);
-                        box.addText(1, HorizontalAlign.LEFT, "Movement Modifiers");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "When moving a unit, certain " + c + "modifiers[NO_COLOUR] may come into play that affect the " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() +
-                                " of different tile types. By default, " + c + "each type of unit[NO_COLOUR] has a modifier that affects how they move through " + c + TileType.ASTEROIDS.getName().toLowerCase() +
-                                " tiles[NO_COLOUR], depending on the size of the unit.\n\n" +
-                                "The modifiers in effect are prominently displayed for the " + c + "active unit[NO_COLOUR] while the " + c + Action.MOVE.getName().toLowerCase() + " action[NO_COLOUR] is selected.");
+                        box.addParagraph("Movement Modifiers", "When moving a unit, certain " + c + "modifiers[NO_COLOUR] may come into play that affect the " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() +
+                                        " of different tile types. By default, " + c + "each type of unit[NO_COLOUR] has a modifier that affects how they move through " + c + TileType.ASTEROIDS.getName().toLowerCase() +
+                                        " tiles[NO_COLOUR], depending on the size of the unit.\n\n" +
+                                        "The modifiers in effect are prominently displayed for the " + c + "active unit[NO_COLOUR] while the " + c + Action.MOVE.getName().toLowerCase() + " action[NO_COLOUR] is selected.")
+                                .setTopSpacing(2).finalise();
                     }),
                     ModifyElements.enable(l, ACTIONS),
                     BlockingTextBox.onMap(l, BoxSize.MEDIUM, 2f, 5.7f, HorizontalAlign.LEFT,
@@ -230,11 +228,9 @@ public enum TutorialLevel implements NamedEnum {
                             "To win, you're going to have to [RED]attack[NO_COLOUR] this enemy unit."),
                     TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
                         box.setWidthMargin(0.5f);
-                        box.addText(1.2f, HorizontalAlign.LEFT, "Attacking Enemy Units");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "Just like with the " + Action.MOVE.getName().toLowerCase() + " action, [BLUE]each unit[NO_COLOUR] can attack [BLUE]once per turn[NO_COLOUR] by using the " + Action.FIRE.colouredName(NO_COLOUR, true) + " action.\n\n" +
-                                "In general, each unit can use each of its actions once per turn, in whichever order you choose.");
-                        box.addSpace(0.8f, 0);
+                        box.addParagraph("Attacking Enemy Units", "Just like with the " + Action.MOVE.getName().toLowerCase() + " action, [BLUE]each unit[NO_COLOUR] can attack [BLUE]once per turn[NO_COLOUR] by using the " + Action.FIRE.colouredName(NO_COLOUR, true) + " action.\n\n" +
+                                        "In general, each unit can use each of its actions once per turn, in whichever order you choose.")
+                                .mainHeader().defaultBottomSpacing().finalise();
                         box.addTutorialMap(HorizontalAlign.LEFT, 20, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 14.5f, 0, map -> {
                             map.addTile(-2, -1, TileType.EMPTY);
                             map.addTile(-2, 0, TileType.NEBULA);
@@ -287,21 +283,16 @@ public enum TutorialLevel implements NamedEnum {
                                 "2. Select the " + Action.FIRE.colouredIconName(NO_COLOUR, false) + " action.\n\n" +
                                 "3. Select the [BLUE]enemy unit[NO_COLOUR] to attack.");
                         fireInstructions.setColumnVerticalAlign(0, VerticalAlign.TOP);
-                        box.addSpace(1f, 0);
-                        box.addText(1, HorizontalAlign.LEFT, "Unit HP");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "Each unit has a number in the [BLUE]bottom-right[NO_COLOUR] corner of its tile. " +
-                                "This is its [BLUE]remaining HP[NO_COLOUR]. Note that it is always [BLUE]rounded up[NO_COLOUR], and that a more precise value is available in each unit's [BLUE]info screen[NO_COLOUR].\n\n" +
-                                "In the example above, you can see the [BLUE]damage taken[NO_COLOUR] by each unit from the attack with the [RED]damage indicators[NO_COLOUR] that appear next to the HP number.");
-                        box.addSpace(1.5f, 0);
-                        box.addText(1, HorizontalAlign.LEFT, "Dealing Damage");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "There are a [BLUE]few factors[NO_COLOUR] that influence the damage dealt to an enemy unit.\n\n" +
-                                "Firstly, the [RED]base weapon damage[BLUE]. This depends on which [BLUE]type of unit[NO_COLOUR] is attacking, and can be seen in the [BLUE]unit info screen[NO_COLOUR]. " +
-                                FighterType.INTERCEPTOR.getPluralName() + " have a base damage of [RED]" + MathUtil.floatToString(FighterType.INTERCEPTOR.damage) + ModifierCategory.DAMAGE.icon() + "[NO_COLOUR].\n\n" +
-                                "Secondly, a unit with [BLUE]less HP remaining[NO_COLOUR] will deal [RED]less damage[NO_COLOUR], depending on how much HP it has lost. A [BLUE]severely damaged[NO_COLOUR] unit may do as little as " +
-                                "[BLUE]25%[NO_COLOUR] of its normal damage.");
-                        box.addSpace(0.5f, 0);
+                        box.addParagraph("Unit HP", "Each unit has a number in the [BLUE]bottom-right[NO_COLOUR] corner of its tile. " +
+                                        "This is its [BLUE]remaining HP[NO_COLOUR]. Note that it is always [BLUE]rounded up[NO_COLOUR], and that a more precise value is available in each unit's [BLUE]info screen[NO_COLOUR].\n\n" +
+                                        "In the example above, you can see the [BLUE]damage taken[NO_COLOUR] by each unit from the attack with the [RED]damage indicators[NO_COLOUR] that appear next to the HP number.")
+                                .finalise();
+                        box.addParagraph("Dealing Damage", "There are a [BLUE]few factors[NO_COLOUR] that influence the damage dealt to an enemy unit.\n\n" +
+                                        "Firstly, the [RED]base weapon damage[NO_COLOUR]. This depends on which [BLUE]type of unit[NO_COLOUR] is attacking, and can be seen in the [BLUE]unit info screen[NO_COLOUR]. " +
+                                        FighterType.INTERCEPTOR.getPluralName() + " have a base damage of [RED]" + MathUtil.floatToString(FighterType.INTERCEPTOR.damage) + ModifierCategory.DAMAGE.icon() + "[NO_COLOUR].\n\n" +
+                                        "Secondly, a unit with [BLUE]less HP remaining[NO_COLOUR] will deal [RED]less damage[NO_COLOUR], depending on how much HP it has lost. A [BLUE]severely damaged[NO_COLOUR] unit may do as little as " +
+                                        "[BLUE]25%[NO_COLOUR] of its normal damage.")
+                                .setTopSpacing(1.5f).defaultBottomSpacing().finalise();
                         box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 0, map -> {
                             map.addTile(-1, 0, TileType.EMPTY);
                             map.addTile(-1, 1, TileType.DENSE_NEBULA);
@@ -346,14 +337,11 @@ public enum TutorialLevel implements NamedEnum {
                         });
                         box.setColumnTopMarginToElement(2, 0, 14, VerticalAlign.TOP)
                                 .setColumnVerticalAlign(2, VerticalAlign.TOP);
-                        box.addSpace(1f, 0);
-                        box.addText(1, HorizontalAlign.LEFT, "Modifiers");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "Similar to [BLUE]movement modifiers[NO_COLOUR], attacks can also have [BLUE]modifiers[NO_COLOUR]. The " +
-                                "[BLUE]main ones[NO_COLOUR] are: the [BLUE]weapon effectiveness modifier[NO_COLOUR] (more on that later), and the [BLUE]tile modifier[NO_COLOUR].\n\n" +
-                                "Different [BLUE]tile types[NO_COLOUR] have different modifiers, typically [BLUE]reducing[NO_COLOUR] the damage received by the unit standing on it.\n\n" +
-                                "The effect of the tile modifier can be seen in the [RED]" + ModifierCategory.INCOMING_DAMAGE.getName() + "[NO_COLOUR] box in the [BLUE]tile info screen[NO_COLOUR].");
-                        box.addSpace(0.5f, 0);
+                        box.addParagraph("Modifiers", "Similar to [BLUE]movement modifiers[NO_COLOUR], attacks can also have [BLUE]modifiers[NO_COLOUR]. The " +
+                                        "[BLUE]main ones[NO_COLOUR] are the [BLUE]" + ModifierCategory.WEAPON_EFFECTIVENESS.getName().toLowerCase() + " modifier[NO_COLOUR] (more on that later), and the [BLUE]tile modifier[NO_COLOUR].\n\n" +
+                                        "Different [BLUE]tile types[NO_COLOUR] have different modifiers, typically [BLUE]reducing[NO_COLOUR] the damage received by the unit standing on it.\n\n" +
+                                        "The effect of the tile modifier can be seen in the [RED]" + ModifierCategory.INCOMING_DAMAGE.getName() + "[NO_COLOUR] box in the [BLUE]tile info screen[NO_COLOUR].")
+                                .defaultBottomSpacing().finalise();
                         box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 0, map -> {
                             map.addTile(-1, 0, TileType.EMPTY);
                             map.addTile(-1, 1, TileType.DENSE_NEBULA);
@@ -362,7 +350,7 @@ public enum TutorialLevel implements NamedEnum {
                             map.addTile(0, 1, TileType.NEBULA);
                             map.addTile(0, -1, TileType.EMPTY);
                             map.addTile(1, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
-                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("The enemy on an [BLUE]" + TileType.EMPTY.getName().toLowerCase() + " tile[NO_COLOUR] receives [GREEN]full damage[NO_COLOUR]", 0.55f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("The enemy on " + TileType.EMPTY.getArticle().toLowerCase() + "[BLUE]" + TileType.EMPTY.getName().toLowerCase() + " tile[NO_COLOUR] receives [GREEN]full damage[NO_COLOUR]", 0.55f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
                             map.addMouseParticle(
                                     TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
                                             .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
@@ -383,7 +371,7 @@ public enum TutorialLevel implements NamedEnum {
                             map.addTile(0, 1, TileType.NEBULA);
                             map.addTile(0, -1, TileType.EMPTY);
                             map.addTile(1, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
-                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("The enemy on a [BLUE]" + TileType.NEBULA.getName().toLowerCase() + " tile[NO_COLOUR] receives [RED]reduced damage[NO_COLOUR]", 0.5f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9, new TextRenderer("The enemy on " + TileType.NEBULA.getArticle().toLowerCase() + "[BLUE]" + TileType.NEBULA.getName().toLowerCase() + " tile[NO_COLOUR] receives [RED]reduced damage[NO_COLOUR]", 0.5f).setTextAlign(HorizontalAlign.CENTER).setBold(true), TutorialMapText::doNothing, TutorialMapText::doNothing));
                             map.addMouseParticle(
                                     TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
                                             .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
@@ -399,23 +387,22 @@ public enum TutorialLevel implements NamedEnum {
                         box.setColumnTopMarginToElement(3, 0, 20, VerticalAlign.TOP)
                                 .setColumnVerticalAlign(3, VerticalAlign.TOP);
                         box.addSpace(1f, 0);
-                        box.addText(1, HorizontalAlign.LEFT, "Counterattacks");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "In all the examples above, it is [BLUE]not only the enemy[NO_COLOUR] that takes damage, but also the [BLUE]allied unit[NO_COLOUR]. Whenever attacking, the " +
-                                "enemy will retaliate with a [RED]counterattack[NO_COLOUR].\n\nThe only difference between the initial attack and the counterattack is the [BLUE]order they are calculated[NO_COLOUR].\n\n" +
-                                "The counterattack is performed [BLUE]after[NO_COLOUR] the enemy unit has [BLUE]taken damage[NO_COLOUR] from the initial attack and has been [BLUE]weakened[NO_COLOUR]. You therefore gain an [BLUE]advantage[NO_COLOUR] by attacking first.\n\n" +
-                                "When counterattacking, the enemy unit will use its [BLUE]own weapons[NO_COLOUR] and [BLUE]damage modifiers[NO_COLOUR], so be careful with which enemies you choose to engage. " +
-                                "Positioning [BLUE]allied units[NO_COLOUR] on tiles which reduce [RED]" + ModifierCategory.INCOMING_DAMAGE.getName().toLowerCase() + "[NO_COLOUR] is generally a good idea.");
+                        box.addParagraph("Counterattacks", "In all the examples above, it is [BLUE]not only the enemy[NO_COLOUR] that takes damage, but also the [BLUE]allied unit[NO_COLOUR]. Whenever attacking, the " +
+                                        "enemy will retaliate with a [RED]counterattack[NO_COLOUR].\n\nThe only difference between the initial attack and the counterattack is the [BLUE]order they are calculated[NO_COLOUR].\n\n" +
+                                        "The counterattack is performed [BLUE]after[NO_COLOUR] the enemy unit has [BLUE]taken damage[NO_COLOUR] from the initial attack and has been [BLUE]weakened[NO_COLOUR]. You therefore gain an [BLUE]advantage[NO_COLOUR] by attacking first.\n\n" +
+                                        "When counterattacking, the enemy unit will use its [BLUE]own weapons[NO_COLOUR] and [BLUE]damage modifiers[NO_COLOUR], so be careful with which enemies you choose to engage. " +
+                                        "Positioning [BLUE]allied units[NO_COLOUR] on tiles which reduce [RED]" + ModifierCategory.INCOMING_DAMAGE.getName().toLowerCase() + "[NO_COLOUR] is generally a good idea.")
+                                .finalise();
                     }),
                     ModifyElements.enable(l, CAMERA_MOVEMENT, TILE_SELECTION, TILE_DESELECTION, ACTIONS),
                     AllowedActionTiles.only(Action.MOVE, TileSet.tilesInRadius(new Point(6, 5), 1, 1, null).toArray(new Point[0])),
                     BranchTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT,
-                            "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.", ActionListener.tileSelectAnyExcept(Action.MOVE, TileSet.tilesInRadius(new Point(6, 5), 1, 1, null).toArray(new Point[0])), ActionListener.perform(Action.FIRE),
+                            "Send " + FighterType.INTERCEPTOR.getNameArticle().toLowerCase() + " to attack the enemy unit.", ActionListener.tileSelectAnyExcept(Action.MOVE, TileSet.tilesInRadius(new Point(6, 5), 1, 1, null).toArray(new Point[0])), ActionListener.perform(Action.FIRE),
                             TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, TileSet.tilesInRadius(new Point(6, 5), 1, 1, null).toArray(new Point[0])),
                             TileSelect.deselectAction(l),
-                            BranchTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT, "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.\n\n" +
+                            BranchTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT, "Send " + FighterType.INTERCEPTOR.getArticle().toLowerCase() + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.\n\n" +
                                             "The unit must be moved to a tile [BLUE]adjacent to the enemy unit[NO_COLOUR] before it can attack.", ActionListener.perform(Action.MOVE), ActionListener.perform(Action.FIRE),
-                                    TutorialHighlight.disable(l), BlockingTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT, "Send an " + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.\n\n" +
+                                    TutorialHighlight.disable(l), BlockingTextBox.onMap(l, BoxSize.MEDIUM, 4, 6.5f, HorizontalAlign.LEFT, "Send " + FighterType.INTERCEPTOR.getArticle().toLowerCase() + FighterType.INTERCEPTOR.getName() + " to attack the enemy unit.\n\n" +
                                             "The unit must be moved to a tile [BLUE]adjacent to the enemy unit[NO_COLOUR] before it can attack.", ActionListener.perform(Action.FIRE)))),
                     TutorialHighlight.disable(l),
                     AllowedActionTiles.all(),
@@ -425,9 +412,10 @@ public enum TutorialLevel implements NamedEnum {
                         l.levelRenderer.turnBox.setEnabled(true);
                         l.levelRenderer.endTurn.setEnabled(true);
                     }),
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 7, Renderable.top() - 10, HorizontalAlign.LEFT,
-                            "[BLUE]End the turn[NO_COLOUR] once all the actions you wanted to perform have been completed."),
-                    BlockingAction.waitFor(TurnListener.start()),
+                    ModifyElements.enable(l, END_TURN),
+                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 7, Renderable.top() - 10, HorizontalAlign.LEFT,
+                            "[BLUE]End the turn[NO_COLOUR] once all the actions you wanted to perform have been completed.",
+                            TurnListener.start()),
                     ContinueTextBox.onUI(l, BoxSize.MEDIUM, 7, Renderable.top() - 10, HorizontalAlign.LEFT,
                             "That's the end of this tutorial. It's now up to you to win by destroying all the enemy units."),
                     new EndTutorial()
@@ -437,7 +425,11 @@ public enum TutorialLevel implements NamedEnum {
                     new GameplaySettings(true, true)
             ).addPlayer(PlayerTeam.A, false).addPlayer(PlayerTeam.B, true),
             l -> new TutorialSequenceElement[]{
-                    ModifyElements.disable(l, TILE_DESELECTION, TILE_SELECTION, CAMERA_MOVEMENT, ACTIONS, ACTION_DESELECT, ACTION_TILE_SELECTION, END_TURN, VIEW_FIRING_RANGE, VIEW_EFFECTIVENESS),
+                    new TutorialAction(() -> {
+                        l.levelRenderer.energyManager.setEnabled(false);
+                        l.levelRenderer.mapButton.setEnabled(false);
+                    }),
+                    ModifyElements.disable(l, TILE_SELECTION, CAMERA_MOVEMENT, ACTIONS, END_TURN, TUTORIAL_INCOME_DISABLED),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, HorizontalAlign.LEFT,
                             "Welcome to the [BLUE]second tutorial[NO_COLOUR], about unit types and fog of war."),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, HorizontalAlign.LEFT,
@@ -445,11 +437,9 @@ public enum TutorialLevel implements NamedEnum {
 
                     TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
                         box.setWidthMargin(0.5f);
-                        box.addText(1.2f, HorizontalAlign.LEFT, "Fog of War");
-                        box.addSpace(0.3f, 0);
-                        box.addText(0.7f, HorizontalAlign.LEFT, "When the fog of war setting is [BLUE]enabled[NO_COLOUR], tiles that aren't [BLUE]close to your units[NO_COLOUR] will be darkened. " +
-                                "[BLUE]Enemy units[NO_COLOUR] on such tiles are [BLUE]hidden[NO_COLOUR].");
-                        box.addSpace(0.5f, 0);
+                        box.addParagraph("Fog of War", "When the fog of war setting is [BLUE]enabled[NO_COLOUR], tiles that aren't [BLUE]close to your units[NO_COLOUR] will be darkened. " +
+                                        "[BLUE]Enemy units[NO_COLOUR] on such tiles are [BLUE]hidden[NO_COLOUR].")
+                                .mainHeader().defaultBottomSpacing().finalise();
                         box.addTutorialMap(HorizontalAlign.CENTER, 25, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 7, 0, map -> {
                             map.addTile(-3, -1, TileType.ASTEROIDS);
                             map.addTile(-3, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
@@ -468,7 +458,7 @@ public enum TutorialLevel implements NamedEnum {
                             map.addTile(1, 1, TileType.DENSE_NEBULA);
                             map.addTile(2, -1, TileType.EMPTY);
                             map.addTile(2, 0, TileType.NEBULA);
-                            map.addTile(2, 1, TileType.NEBULA);
+                            map.addTile(2, 1, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED);
                             map.addTile(3, 0, TileType.NEBULA);
                             map.enableFoW(UnitTeam.BLUE);
                             map.addMouseParticle(
@@ -483,501 +473,434 @@ public enum TutorialLevel implements NamedEnum {
                             );
                             map.finalise();
                         });
+                        box.addParagraph(ModifierCategory.VIEW_RANGE.getName(), "Each unit type has a different " + ModifierCategory.VIEW_RANGE.colouredName(NO_COLOUR, true) +
+                                        ", which determines how far it can [BLUE]reveal tiles[NO_COLOUR].\n\n" +
+                                        "Some tiles are [BLUE]harder to reveal[NO_COLOUR], which depends on the tiles' " + ModifierCategory.CONCEALMENT.colouredName(NO_COLOUR, true) + " value. This determines how much " +
+                                        ModifierCategory.VIEW_RANGE.colouredName(NO_COLOUR, true) + " is [BLUE]blocked[NO_COLOUR] by the tile.\n\n" +
+                                        "A unit's " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + " value can be found in the [GREEN]Hull[NO_COLOUR] tab of the [BLUE]unit info screen[NO_COLOUR] in the bottom left, after the unit has been selected. " +
+                                        "A tile's " + ModifierCategory.CONCEALMENT.getName().toLowerCase() + " value can be found in the [BLUE]tile info screen[NO_COLOUR] in the bottom right whenever a tile is selected.")
+                                .finalise();
+                        box.addParagraph("Example", FighterType.INTERCEPTOR.getNameArticle(false) +
+                                        " has " + ModifierCategory.VIEW_RANGE.getNameArticle().toLowerCase() + " of " + ModifierCategory.VIEW_RANGE.colour() + MathUtil.floatToString(FighterType.INTERCEPTOR.maxViewRange) + ModifierCategory.VIEW_RANGE.icon() + "[NO_COLOUR], and " +
+                                        TileType.EMPTY.getNameArticle().toLowerCase() + " tile has " + ModifierCategory.CONCEALMENT.getNameArticle().toLowerCase() + " of " + ModifierCategory.CONCEALMENT.colour() + MathUtil.floatToString(TileType.EMPTY.concealment) + ModifierCategory.CONCEALMENT.icon() + "[NO_COLOUR].\n\n" +
+                                        "This means that the " + FighterType.INTERCEPTOR.getName() + " can reveal [BLUE]up to " + (int) (FighterType.INTERCEPTOR.maxViewRange / TileType.EMPTY.concealment) + " " + TileType.EMPTY.getName().toLowerCase() +
+                                        " tiles[NO_COLOUR] in front of it, with the next tile being enough to block all the " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + ".")
+                                .finalise();
+                        box.addSpace(0.5f, 0);
+                        box.addTutorialMap(HorizontalAlign.CENTER, 23, 7, TutorialMapElement.TILE_SIZE_LARGE, 0, 0, map -> {
+                            map.addTile(-2, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY);
+                            map.addTile(2, 0, TileType.EMPTY);
+                            map.enableFoW(UnitTeam.BLUE);
+                            map.finalise();
+                        });
+                        box.addSpace(1f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "With [BLUE]" + TileType.NEBULA.getName().toLowerCase() + " tiles[NO_COLOUR], that have an increased " + ModifierCategory.CONCEALMENT.getName().toLowerCase() + " of " +
+                                ModifierCategory.CONCEALMENT.colour() + MathUtil.floatToString(TileType.NEBULA.concealment) + ModifierCategory.CONCEALMENT.icon() + "[NO_COLOUR], the unit can [BLUE]only " +
+                                "reveal " + (int) (FighterType.INTERCEPTOR.maxViewRange / TileType.NEBULA.concealment) + " tiles[NO_COLOUR] ahead.");
+                        box.addSpace(0.5f, 0);
+                        box.addTutorialMap(HorizontalAlign.CENTER, 23, 7, TutorialMapElement.TILE_SIZE_LARGE, 0, 0, map -> {
+                            map.addTile(-2, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-1, 0, TileType.NEBULA);
+                            map.addTile(0, 0, TileType.NEBULA);
+                            map.addTile(1, 0, TileType.NEBULA);
+                            map.addTile(2, 0, TileType.NEBULA);
+                            map.enableFoW(UnitTeam.BLUE);
+                            map.finalise();
+                        });
+                        box.addSpace(1f, 0);
+                        box.addText(0.7f, HorizontalAlign.LEFT, "[BLUE]" + TileType.DENSE_NEBULA.getNameFirstUpper() + " tiles[NO_COLOUR] have a special property: they can " +
+                                "only be revealed by [BLUE]directly adjacent units[NO_COLOUR], no matter the " + ModifierCategory.VIEW_RANGE.colouredName(NO_COLOUR, true) + " of other nearby units.");
+                        box.addSpace(0.5f, 0);
+                        box.addTutorialMap(HorizontalAlign.CENTER, 23, 7, TutorialMapElement.TILE_SIZE_LARGE, 0, 0, map -> {
+                            map.addTile(-2, 0, TileType.DENSE_NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-1, 0, TileType.DENSE_NEBULA);
+                            map.addTile(0, 0, TileType.DENSE_NEBULA);
+                            map.addTile(1, 0, TileType.DENSE_NEBULA);
+                            map.addTile(2, 0, TileType.DENSE_NEBULA);
+                            map.enableFoW(UnitTeam.BLUE);
+                            map.finalise();
+                        });
                     }),
 
                     TutorialHighlight.visibleTiles(l, GREEN_HIGHLIGHT),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, HorizontalAlign.LEFT,
-                            "The highlighted tiles are the ones that are visible. Each unit has a [BLUE]view range[NO_COLOUR] in which tiles are visible.\n\nTiles not visible will hide the positions of enemy units."),
+                            "The highlighted tiles are currently being [BLUE]revealed[NO_COLOUR] by the allied units. Each unit has a " + ModifierCategory.VIEW_RANGE.colouredName(NO_COLOUR, true) + " in which tiles are visible.\n\n" +
+                                    "Tiles not visible will [BLUE]hide the positions[NO_COLOUR] of enemy units."),
 
                     TutorialHighlight.fowTiles(l, RED_HIGHLIGHT),
                     ContinueTextBox.onMap(l, BoxSize.MEDIUM, -3, 5, HorizontalAlign.LEFT,
-                            "That means that there could be enemy units on any of these tiles that aren't visible.\n\nBefore you can attack, you'll need to find the enemy units."),
+                            "That means that there could be enemy units on any of these tiles that aren't visible.\n\nBefore you can attack, you'll need to [BLUE]find the enemy units[NO_COLOUR]."),
 
-                    TutorialHighlight.radius(l, RED_HIGHLIGHT, 8, 3, 1),
+                    TutorialHighlight.radius(l, RED_HIGHLIGHT, 9, 3, 1),
                     CameraMove.toTile(l, 8, 3),
                     ContinueTextBox.onMap(l, BoxSize.LARGE, 5, 5, HorizontalAlign.LEFT,
                             "We do, however, know where the enemy base is, as [BLUE]structures[NO_COLOUR] are always visible regardless of fog of war.\n\n" +
                                     "We also know that units spawn close to the base, so we can expect the enemy units to be somewhere in the highlighted area."),
 
                     TutorialHighlight.disable(l),
-                    CameraMove.toTile(l, 3, 3),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 2, 1, HorizontalAlign.LEFT,
-                            "As you've probably noticed, not all tiles are the same. Different tile types have different properties, one of them being visibility, " +
-                                    "which affects a unit's ability to see through the tile.\n\nFor example, a unit that can see through 3 empty tiles might only be able to see through 2 nebula tiles."),
-
-                    ModifyElements.enable(l, TILE_SELECTION),
-                    AllowedTiles.only(4, 3),
-                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 4, 3),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 2, 1.5f, HorizontalAlign.LEFT,
-                            "Select the highlighted tile to see more info about it.",
-                            TileSelectListener.any()),
-
-                    TutorialUI.onUI(l, "tileName")
-                            .rectangle(Renderable.right() - 8f, 17.65f, 15, 1.5f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, Renderable.right() - 23, 16, HorizontalAlign.LEFT,
-                            "Here you can see the type of tile that is selected, in this case a [BLUE]nebula tile[NO_COLOUR]."),
-                    TutorialUI.remove("tileName"),
-
-                    TutorialUI.onUI(l, "tileVisibility")
-                            .rectangle(Renderable.right() - 8f, 3 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, HorizontalAlign.LEFT,
-                            "This bar shows the [BLUE]visibility[NO_COLOUR] of the tile type.\n\nLow visibility is good for keeping your units hidden, but remember that it's not just " +
-                                    "about the tile the unit is on, but also which tiles lie between you and your enemy that matter for staying hidden."),
-                    TutorialUI.remove("tileVisibility"),
-
-                    TutorialUI.onUI(l, "tileDefence")
-                            .rectangle(Renderable.right() - 8f, 2 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, HorizontalAlign.LEFT,
-                            "Here you can see the [BLUE]defence[NO_COLOUR] bonus that units receive when on this tile. The defence bonus is a " +
-                                    "damage reduction when being attacked or counterattacked.\n\nIt is therefore ideal to attack " +
-                                    "from tiles with high defence to reduce the damage of the subsequent counterattack, and to reduce the damage when it's the " +
-                                    "enemy's turn to retaliate."),
-                    TutorialUI.remove("tileDefence"),
-
-                    TutorialUI.onUI(l, "tileMovement")
-                            .rectangle(Renderable.right() - 8f, 1 * UITileInfo.BAR_SPACING + UITileInfo.INITIAL_BAR_POS + 0.1f, 13.5f, 1.7f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onUI(l, BoxSize.LARGE, Renderable.right() - 25, 3, HorizontalAlign.LEFT,
-                            "This value represents the ease with which units can move through the tile, the [BLUE]movement speed[NO_COLOUR]. Moving a unit through tiles with low movement " +
-                                    "will reduce the distance the unit can travel.\n\nHigh movement " +
-                                    "tiles are ideal when moving units across long distances."),
-                    TutorialUI.remove("tileMovement"),
-
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, Renderable.right() - 25, 8, HorizontalAlign.LEFT,
-                            "As you can see, nebula tiles are good for hiding, while also having a small defence bonus."),
-
-                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 3, 3),
-                    AllowedTiles.only(3, 3),
-                    TileSelect.tile(l, 3, 3),
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, Renderable.right() - 25, 8, HorizontalAlign.LEFT,
-                            "This [BLUE]empty tile[NO_COLOUR] right next to it is almost the opposite. With no defence and high visibility, its main advantage is its low movement cost."),
-
-                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 4, 2),
-                    AllowedTiles.only(4, 2),
-                    TileSelect.tile(l, 4, 2),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 0, 1, HorizontalAlign.LEFT,
-                            "For the [BLUE]asteroid field tile[NO_COLOUR], while it does have a slightly lower visibility than an empty tile, its main advantage is its high defence bonus.\n\n" +
-                                    "While small units like the Fighters in this tutorial can move through asteroid fields without much difficulty, larger units either can't move through them at all, or can only move one tile at a time."),
-
-                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 5, 5),
-                    AllowedTiles.only(5, 5),
-                    TileSelect.tile(l, 5, 5),
-                    CameraMove.toTile(l, 5, 5),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 5, 2, HorizontalAlign.LEFT,
-                            "Lastly, the [BLUE]dense nebula tile[NO_COLOUR]. These appear scattered throughout regular nebula tiles, and have a defence bonus somewhere between a regular nebula and an asteroid field.\n\n" +
-                                    "Most importantly, they have a special property. No matter how good the view distance is for a given unit, the only way for it to see inside a dense nebula is if the unit is [BLUE]directly adjacent[NO_COLOUR] to it."),
-
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 5, 3, HorizontalAlign.LEFT,
-                            "We can use this property to our advantage in this situation. By moving a Fighter to this tile, it'll reveal the enemy positions without risking detection, preventing the enemy from attacking first on the next turn."),
-                    SequenceTextBox.onMap(l, BoxSize.SMALL, 5, 4, HorizontalAlign.LEFT,
-                            "Move one of the fighters to the dense nebula tile.",
-                            TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 5, 5),
-                            ModifyElements.actionCameraNoDeselect(l),
-                            TileSelect.deselect(l),
-                            AllowedTiles.all(),
-                            AllowedActions.all(),
-                            AllowedActionTiles.only(Action.MOVE, 5, 5),
-                            BlockingAction.waitFor(ActionListener.perform(Action.MOVE)),
-                            TutorialHighlight.disable(l)
-                    ),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    ModifyElements.disableAll(l),
-
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 5, 3, HorizontalAlign.LEFT,
-                            "Enemy spotted!\n\nWhile you could attack the enemy with your other Fighter, it'll only lead to the enemy retaliating two on one next turn."),
-
-                    ModifyElements.actionCameraNoDeselect(l),
-                    TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 4, 6),
-                    AllowedActionTiles.only(Action.MOVE, 4, 6),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 5, 3, HorizontalAlign.LEFT,
-                            "Instead, move the other Fighter to the highlighted tile, away from the enemy.\n\nWe'll wait until next turn to attack.",
+                    CameraMove.toTile(l, 2, 5),
+                    ModifyElements.enable(l, CAMERA_MOVEMENT, TILE_SELECTION, ACTIONS),
+                    BlockingTextBox.onMap(l, BoxSize.LARGE, 5, 7, HorizontalAlign.LEFT,
+                            "Move one of your units [BLUE]close to the enemy base[NO_COLOUR] to find the enemy units.",
                             ActionListener.perform(Action.MOVE)),
-
-                    TutorialHighlight.disable(l),
-
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    TileSelect.deselect(l),
-                    ModifyElements.endTurn(l),
-
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 0, 7, HorizontalAlign.LEFT,
-                            "Great! Now that both Fighters are outside of the enemy's view range, we can end the turn.",
-                            TurnListener.start()),
-
-                    BotActions.addActions(
-                            BotActionData.move(l, 8, 4, 3, 4),
-                            BotActionData.move(l, 7, 3, 1, 4),
-                            BotActionData.capture(l, 1, 4),
-                            BotActionData.end()
+                    BlockingAction.waitFor(ActionListener.complete(Action.MOVE)),
+                    BranchAction.skipIfBranch(l,
+                            TileState.any(
+                                    TileState.hasUnit(UnitState.ofTeam(UnitTeam.RED))
+                                            .and(TileState.tileVisible())),
+                            SubSequence.sequence(
+                                    ModifyElements.disable(l, BOT),
+                                    ModifyElements.enable(l, END_TURN),
+                                    BlockingTextBox.onMap(l, BoxSize.LARGE, 5, 7, HorizontalAlign.LEFT,
+                                            "Try moving a different unit. The unit must be moved [BLUE]close enough[NO_COLOUR] to see the enemy units.\n\n" +
+                                                    "You may [BLUE]end the turn[NO_COLOUR] if you run out of moves, allowing you to continue on the next turn.",
+                                            TileFoWListener.withUnit(l, UnitState.exists().and(UnitState.ofTeam(UnitTeam.RED))))
+                            )
                     ),
-                    BlockingAction.waitFor(TurnListener.start(UnitTeam.BLUE)),
-                    BlockingAction.waitFor(AnimStateListener.ended()),
+                    ModifyElements.enable(l, BOT),
+                    ModifyElements.disable(l, END_TURN, ACTIONS),
+                    ContinueTextBox.onMap(l, BoxSize.LARGE, 5, 7, HorizontalAlign.LEFT,
+                            "Instead of using " + FighterType.INTERCEPTOR.getPluralName() + ", this enemy has deployed [BLUE]" +
+                                    CorvetteType.FRIGATE.getPluralName() + "[NO_COLOUR] against you."),
 
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 0, 5, HorizontalAlign.LEFT,
-                            "The enemy could not find the Fighter units, and decided to start capturing the base instead!"),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 0, 5, HorizontalAlign.LEFT,
-                            "Most units can [DARK_GREEN]capture[NO_COLOUR] by simply being on the same tile as an enemy structure. Capturing takes multiple turns, as shown by the [BLUE]progress bar[NO_COLOUR] above the enemy unit that's currently capturing."),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 0, 5, HorizontalAlign.LEFT,
-                            "Once the progress bar fills, the enemy gains control over the structure, or the structure is destroyed, depending on the type of structure.\n\n" +
-                                    "As for the base structure, not only is it destroyed, the player gets eliminated if it is successfully captured.\n\n" +
-                                    "You must stop the capture of your base at any cost!"),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 0, 5, HorizontalAlign.LEFT,
-                            "To stop a capture, simply [RED]attack[NO_COLOUR] the capturing unit.\n\n" +
-                                    "Each time the capturing unit is attacked, or performs an attack, the capture progress bar is reduced by one turn."),
+                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
+                        box.setWidthMargin(0.5f);
+                        box.addParagraph("Unit Classes",
+                                        "While there are many different types of units, each type belongs to [BLUE]one of four classes[NO_COLOUR]. Each class has a [BLUE]unique icon[NO_COLOUR].")
+                                .mainHeader().defaultBottomSpacing().finalise();
+                        UIDisplayBox classes = new UIDisplayBox(0, 0, 5, 15, b -> b.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX), false);
+                        classes.addText(2, HorizontalAlign.CENTER, ShipClass.FIGHTER.icon.display);
+                        classes.addSpace(0.2f, 0);
+                        classes.addText(0.7f, HorizontalAlign.CENTER, ShipClass.FIGHTER.getName());
+                        classes.addSpace(1.0f, 0);
+                        classes.addText(2, HorizontalAlign.CENTER, ShipClass.CORVETTE.icon.display);
+                        classes.addSpace(0.2f, 0);
+                        classes.addText(0.7f, HorizontalAlign.CENTER, ShipClass.CORVETTE.getName());
+                        classes.addSpace(1.0f, 0);
+                        classes.addText(2, HorizontalAlign.CENTER, ShipClass.CRUISER.icon.display);
+                        classes.addSpace(0.2f, 0);
+                        classes.addText(0.7f, HorizontalAlign.CENTER, ShipClass.CRUISER.getName());
+                        classes.addSpace(0.5f, 0);
+                        box.addBox(classes, HorizontalAlign.LEFT, 0, false);
+                        int boxIndex = box.getLastIndex(0);
+                        box.addParagraph(null, "On the left you can see the four classes, from [BLUE]smallest to largest[NO_COLOUR].\n\n" +
+                                        "Smaller units typically have " +
+                                        "[GREEN]increased " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + "[NO_COLOUR] and " +
+                                        "[GREEN]greater " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + "[NO_COLOUR], at the cost of " +
+                                        "[RED]low " + ModifierCategory.NON_MAX_HP.getName() + "[NO_COLOUR] and " +
+                                        "[RED]reduced firepower[NO_COLOUR].\n\n" +
 
-                    TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 0, 4),
-                    CameraMove.toTile(l, 0, 4),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1, 7, HorizontalAlign.LEFT,
-                            "Move a Fighter unit here to attack the capturing unit. By attacking from an asteroid field, you'll also receive less damage when counterattacked."),
+                                        "Larger units are the opposite, prioritising [GREEN]durability[NO_COLOUR] and [GREEN]firepower[NO_COLOUR]. They are also " +
+                                        "generally [RED]more expensive[NO_COLOUR] to operate.\n\n" +
 
-                    ModifyElements.actionCameraNoDeselect(l),
-                    AllowedActionTiles.only(Action.MOVE, 0, 4),
-                    CameraMove.toTile(l, 5, 5),
-                    TutorialHighlight.tiles(l, GREEN_HIGHLIGHT, new Point(0, 4), new Point(5, 5)),
+                                        "The main [BLUE]characteristics[NO_COLOUR] of each class are:\n\n" +
+                                        "[BLUE]" + ShipClass.FIGHTER.icon.display + ShipClass.FIGHTER.getPluralName() + "[NO_COLOUR]: Fast, high " + ModifierCategory.VIEW_RANGE.getName().toLowerCase() + " and low operating cost, but weak.\n\n" +
+                                        "[BLUE]" + ShipClass.CORVETTE.icon.display + ShipClass.CORVETTE.getPluralName() + "[NO_COLOUR]: A good balance between speed and firepower. Moderate operating cost.\n\n" +
+                                        "[BLUE]" + ShipClass.CRUISER.icon.display + ShipClass.CRUISER.getPluralName() + "[NO_COLOUR]: Primary focus on durability and firepower while giving up speed. High operating cost.\n\n"
+                                )
+                                .setColumn(1).setTopSpacing(0.5f).setDynamicWidth().finalise().forEachElement(i -> {
+                                    box.setElementLeftMarginToElement(1, i, 0, boxIndex, HorizontalAlign.RIGHT, 0.5f);
+                                });
+                        box.setColumnTopMarginToElement(1, 0, boxIndex, VerticalAlign.TOP);
+                        box.setColumnBottomMarginToElement(1, 0, boxIndex, VerticalAlign.BOTTOM);
+                        box.setColumnVerticalAlign(1, VerticalAlign.TOP);
+                        box.addParagraph(ModifierCategory.WEAPON_EFFECTIVENESS.getNameFirstUpper() + " modifiers",
+                                        "When attacking, [BLUE]damage modifiers[NO_COLOUR] may be applied affecting damage dealt when performing an attack. " +
+                                                "The main ones are the [BLUE]tile modifier[NO_COLOUR] (mentioned in an earlier tutorial), and the [BLUE]" +
+                                                ModifierCategory.WEAPON_EFFECTIVENESS.getName().toLowerCase() + " modifier[NO_COLOUR]. This one affects " +
+                                                "the damage dealt depending on the [BLUE]class[NO_COLOUR] of the enemy unit.\n\n" +
+                                                "The " + ModifierCategory.WEAPON_EFFECTIVENESS.getName().toLowerCase() + " of " + FighterType.INTERCEPTOR.getArticle().toLowerCase() + "[BLUE]" + FighterType.INTERCEPTOR.getName() +
+                                                " unit[NO_COLOUR] can be summarised as " + WeaponEffectiveness.effectivenessSummary(NO_COLOUR, c -> WeaponEffectiveness.againstClass(FighterType.INTERCEPTOR, c)) + ". " +
+                                                "The colour of each class symbol describes whether the " + FighterType.INTERCEPTOR.getName() + " will deal " +
+                                                WeaponEffectiveness.STRONG.textColourGray().display + "increased[NO_COLOUR], " +
+                                                WeaponEffectiveness.NORMAL.textColourGray().display + "normal[NO_COLOUR], or " +
+                                                WeaponEffectiveness.WEAK.textColourGray().display + "reduced[NO_COLOUR] damage when attacking that class.\n\n" +
+                                                "This summary can be seen in the bottom left [BLUE]unit info screen[NO_COLOUR] whenever a unit is selected.")
+                                .finalise();
+                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 0, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9.3f,
+                                    new MultiLineTextBox(0, 0, 10, 0.5f, HorizontalAlign.CENTER)
+                                            .updateText(FighterType.INTERCEPTOR.getNameArticle() + " attacking a [BLUE]" + ShipClass.FIGHTER.getClassName().toLowerCase() + "[NO_COLOUR] unit deals [GREEN]increased damage[NO_COLOUR]"),
+                                    TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectFireAction(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.6f),
+                                    TutorialMouseKeyframe.tile(3.4f, 1, 0, -0.07f, -0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, () -> map.attackUnit(0, 0, 1, 0))
+                            );
+                            map.finalise();
+                        });
+                        int leftBoxIndex = box.getLastIndex(0);
+                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 2, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(CruiserType.BATTLECRUISER, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9.3f,
+                                    new MultiLineTextBox(0, 0, 10, 0.5f, HorizontalAlign.CENTER)
+                                            .updateText(FighterType.INTERCEPTOR.getNameArticle() + " attacking a [BLUE]" + ShipClass.CRUISER.getClassName().toLowerCase() + "[NO_COLOUR] unit deals [RED]reduced damage[NO_COLOUR]"),
+                                    TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp()).setOnClick(0.3f, () -> map.selectFireAction(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.6f),
+                                    TutorialMouseKeyframe.tile(3.4f, 1, 0, -0.07f, -0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, () -> map.attackUnit(0, 0, 1, 0))
+                            );
+                            map.finalise();
+                        });
+                        box.setColumnTopMarginToElement(2, 0, leftBoxIndex, VerticalAlign.TOP)
+                                .setColumnVerticalAlign(2, VerticalAlign.TOP);
+                        box.addParagraph(null, FighterType.INTERCEPTOR.getPluralName() + " have a base damage of [RED]" + MathUtil.floatToString(FighterType.INTERCEPTOR.damage) + ModifierCategory.DAMAGE.icon() + "[NO_COLOUR]. " +
+                                        "On the left example, the damage dealt against an enemy [BLUE]" + ShipClass.FIGHTER.icon.display + FighterType.INTERCEPTOR.getName() + "[NO_COLOUR] is [GREEN]greater[NO_COLOUR] than the base damage, while on the right, when attacking a " +
+                                        "[BLUE]" + ShipClass.CRUISER.icon.display + CruiserType.BATTLECRUISER.getName() + "[NO_COLOUR], it is [RED]less[NO_COLOUR] than the base damage.\n\n" +
+                                        "Keep in mind that each unit has different classes it is effective against. For the " + FighterType.INTERCEPTOR.getName() + " it's " +
+                                        WeaponEffectiveness.effectivenessSummary(NO_COLOUR, c -> WeaponEffectiveness.againstClass(FighterType.INTERCEPTOR, c)) + " but for " + CorvetteType.FRIGATE.getArticle().toLowerCase() + CorvetteType.FRIGATE.getName() + " it's instead " +
+                                        WeaponEffectiveness.effectivenessSummary(NO_COLOUR, c -> WeaponEffectiveness.againstClass(CorvetteType.FRIGATE, c)) + ".\n\n")
+                                .finalise();
+                    }),
+                    BranchAction.skipIfBranch(l,
+                            SelectedUnit.is(UnitState.ofTeam(UnitTeam.BLUE)),
+                            BlockingTextBox.onMap(l, BoxSize.MEDIUM, 5, 7, HorizontalAlign.LEFT,
+                                    "Select one of your units", UnitSelectListener.ofTeam(UnitTeam.BLUE))
+                    ),
+                    ModifyElements.disable(l, TILE_SELECTION, TILE_DESELECTION),
 
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 5, 6.3f, HorizontalAlign.LEFT,
-                            "Select this unit and move it to the highlighted asteroid field tile.",
-                            ActionListener.select()),
-
-                    CameraMove.toTile(l, 0, 4),
-                    ModifyElements.disableAll(l),
-                    ModifyElements.enable(l, ACTION_DESELECT),
-                    TutorialHighlight.tile(l, RED_HIGHLIGHT, 0, 4),
-
-                    BlockingTextBox.onMap(l, BoxSize.LARGE, -3, 5.5f, HorizontalAlign.LEFT,
-                            "You can see that the tile is just out of range.\n\n" +
-                                    "After selecting an action, you can go back by using the [BLUE]Exit Action[NO_COLOUR] button below the End Turn button, or by using the [BLUE]Escape key[NO_COLOUR], but remember that you cannot undo actions that have been completed.\n\n" +
-                                    "Exit the move action so you can select the other Fighter that is in range.",
-                            ActionListener.deselect()),
-
-                    ModifyElements.action(l, true),
-                    TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 0, 4),
-
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1, 7, HorizontalAlign.LEFT,
-                            "Move the other Fighter to the highlighted asteroid field tile instead.",
-                            ActionListener.perform()),
-
-                    TutorialHighlight.disable(l),
-                    AllowedTiles.only(0, 4),
-
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    BlockingTextBox.onMap(l, BoxSize.SMALL, 1, 6, HorizontalAlign.LEFT,
-                            "Attack the capturing enemy unit.",
-                            ActionListener.perform()),
-
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1, 6, HorizontalAlign.LEFT,
-                            "You can see that the capture progress went down after the attack."),
-
-                    CameraMove.toTile(l, 5, 5),
-                    AllowedTiles.only(5, 5),
-                    AllowedActionTiles.only(Action.MOVE, 8, 3),
-                    TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 8, 3),
-
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 5, 6.3f, HorizontalAlign.LEFT,
-                            "It may not be the best move, but for the sake of the tutorial, move the remaining Fighter unit to the enemy base to begin capturing it.",
-                            ActionListener.perform()),
-                    TutorialHighlight.disable(l),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    ModifyElements.action(l, true),
-                    ModifyElements.forceTileSelect(l, 8, 3),
-                    AllowedTiles.only(8, 3),
-                    AllowedActions.only(Action.CAPTURE),
-
-
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 5, 4, HorizontalAlign.LEFT,
-                            "Select the unit, and capture. The capture action appears only when the unit is on an enemy structure.",
-                            ActionListener.perform()),
-                    ModifyElements.disableAll(l),
-
-
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 5, 4, HorizontalAlign.LEFT,
-                            "It takes " + StructureType.BASE.captureSteps + " turns to capture a base, and on each of those turns you have to perform the capture action; [BLUE]it is not automatic[NO_COLOUR]. " +
-                                    "Moving the capturing unit away from the structure will [RED]reset[NO_COLOUR] the progress.\n\n" +
-                                    "Players always have visibility over tiles with allied structures, meaning that the enemy can see the capture progress of their structures, even if there are no units nearby with view range over the area."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 5, 4, HorizontalAlign.LEFT,
-                            "It is likely that the enemy will come after your capturing unit. It's up to you now to win the game."),
-
-                    AllowedActions.all(),
-                    ModifyElements.action(l, true),
-                    ModifyElements.enable(l, END_TURN),
-                    AllowedTiles.all(),
-                    AllowedActionTiles.all(),
-
+                    TutorialUI.onUI(l, "unitName")
+                            .rectangle(11 / 2f + 0.5f, UIUnitInfo.HEIGHT + 0.75f, 12, 1.5f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
+                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 19, UIUnitInfo.HEIGHT - 2, HorizontalAlign.LEFT,
+                            "Here you can see the [BLUE]name[NO_COLOUR] of the unit, along with its [BLUE]unit class[NO_COLOUR] symbol."),
+                    TutorialUI.remove("unitName"),
+                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 19, 3, HorizontalAlign.LEFT,
+                            "On the left, under the [RED]weapons[NO_COLOUR] tab, you can see the [BLUE]" + ModifierCategory.WEAPON_EFFECTIVENESS.getName().toLowerCase() + "[NO_COLOUR] modifiers this unit has when attacking each class."),
+                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 23, 10, HorizontalAlign.LEFT,
+                            "Now that we're done covering [BLUE]fog of war[NO_COLOUR] and [BLUE]unit classes[NO_COLOUR], it's up to you to finish off the enemy. Good luck."),
+                    ModifyElements.enable(l, TILE_SELECTION, TILE_DESELECTION, ACTIONS, END_TURN),
                     new EndTutorial()
             }),
-    WEAPONS("Ship Classes", "tutorial-weapons",
+    ENERGY(EnergyManager.displayName, "tutorial-energy",
             new TutorialLevelData(
                     new GameplaySettings(true, true)
             ).addPlayer(PlayerTeam.A, false).addPlayer(PlayerTeam.B, true),
             l -> new TutorialSequenceElement[]{
-                    ModifyElements.disableAll(l),
-                    CameraMove.toTile(l, 7, 1),
-                    ContinueTextBox.onUI(l, BoxSize.LARGE, 11, 18, HorizontalAlign.LEFT,
-                            "Welcome to the third tutorial. So far, the only units we've come across have been Fighter units. As you can see, this is no longer the case.\n\n" +
-                                    "Each ship belongs to a ship class. There are [BLUE]four different classes[NO_COLOUR]: fighters, corvettes, cruisers and capital ships."),
-                    ContinueTextBox.onUI(l, BoxSize.EXTRA_EXTRA_LARGE, 11, 18, HorizontalAlign.LEFT,
-                            "[BLUE]Fighters[NO_COLOUR] are small, agile units, which usually have weak weaponry.\n\n" +
-                                    "[BLUE]Corvettes[NO_COLOUR] are slightly larger and slower to allow for more powerful weapons, and come in many unique variants.\n\n" +
-                                    "Even larger than that, [BLUE]cruiser-class[NO_COLOUR] units often feature heavy armour to protect themselves from smaller units.\n\n" +
-                                    "The largest units, [BLUE]capital ships[NO_COLOUR], have the largest guns and strongest armour, often including shields or other specialised equipment."),
-                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 7, 2),
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, HorizontalAlign.LEFT,
-                            "This [BLUE]Fighter unit[NO_COLOUR][NO_COLOUR][NO_COLOUR] is, of course, a fighter-class unit, but it is not the only one of its kind."),
-                    TutorialHighlight.tiles(l, BLUE_HIGHLIGHT, new Point(6, 1), new Point(7, 1)),
-                    ContinueTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, HorizontalAlign.LEFT,
-                            "These are [BLUE]Bomber units[NO_COLOUR]. They are also fighter-class units, but are slightly weaker and slower than the Fighter unit is.\n\n" +
-                                    "They do, however, have a powerful missile weapon that we'll get to later."),
-                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 6, 0),
-                    ModifyElements.tileSelect(l, false),
-                    AllowedTiles.only(6, 0),
-                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, HorizontalAlign.LEFT,
-                            "Finally, this is an [BLUE]Artillery unit[NO_COLOUR]. It is a ranged corvette-class unit. Start by selecting this unit.",
-                            TileSelectListener.any()),
+                    CameraMove.toTile(l, 2, 2),
+                    ModifyElements.disable(l, ACTIONS, END_TURN),
+                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
+                        box.setWidthMargin(0.5f);
+                        box.addParagraph(EnergyManager.displayName,
+                                        "Each [BLUE]action[NO_COLOUR] costs a certain amount of " + EnergyManager.colouredDisplay(NO_COLOUR, false) + " to perform. " +
+                                                "This is a resource you'll have to [BLUE]manage carefully[NO_COLOUR], as when you run out, you will no longer be able to perform actions.\n\n" +
+                                                "Each action has a [BLUE]different cost[NO_COLOUR], depending on the specific action and type of unit performing it. Using the " + Action.FIRE.colouredIconName(NO_COLOUR, false) + " " +
+                                                "action with " + FighterType.INTERCEPTOR.getArticle().toLowerCase() + FighterType.INTERCEPTOR.getName() + " costs " +
+                                                EnergyManager.colouredAmount(NO_COLOUR, FighterType.INTERCEPTOR.getActionCost(Action.FIRE).orElse(0)) +
+                                                ", but it costs " + EnergyManager.colouredAmount(NO_COLOUR, CorvetteType.FRIGATE.getActionCost(Action.FIRE).orElse(0)) +
+                                                " for " + CorvetteType.FRIGATE.getPluralName() + ".\n\n" +
+
+                                                "In general, it costs [BLUE]more[NO_COLOUR] to perform actions on larger unit classes. This is the [BLUE]operating cost[NO_COLOUR] that was mentioned in the last tutorial.")
+                                .mainHeader().defaultBottomSpacing().finalise();
+
+                        box.addTutorialMap(HorizontalAlign.LEFT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 0, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9.3f,
+                                    new MultiLineTextBox(0, 0, 10, 0.5f, HorizontalAlign.CENTER)
+                                            .updateText("[BLUE]Hovering over[NO_COLOUR] the " + Action.FIRE.colouredIconName(NO_COLOUR, false) + " action allows you to see the cost."),
+                                    TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 0,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                            );
+                            map.finalise();
+                        });
+                        int leftBoxIndex = box.getLastIndex(0);
+                        box.addTutorialMap(HorizontalAlign.RIGHT, 14.25f, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 10, 1, map -> {
+                            map.addTile(-1, 0, TileType.EMPTY);
+                            map.addTile(-1, 1, TileType.DENSE_NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(0, 0, TileType.EMPTY).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE).onReset(TutorialMapUnit::restoreHP);
+                            map.addTile(0, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.EMPTY);
+                            map.addTile(1, 0, TileType.EMPTY).addUnit(CruiserType.BATTLECRUISER, UnitTeam.RED).onReset(TutorialMapUnit::restoreHP);
+                            map.addText(new TutorialMapText(map, 14.25f / 2, 9.3f,
+                                    new MultiLineTextBox(0, 0, 10, 0.5f, HorizontalAlign.CENTER)
+                                            .updateText("Hovering over the " + Action.MOVE.colouredIconName(NO_COLOUR, false) + " action doesn't show the cost. " +
+                                                    "It's cost is [BLUE]calculated differently[NO_COLOUR] than normal."),
+                                    TutorialMapText::doNothing, TutorialMapText::doNothing));
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, 0, 0, 0.17f, -0.1f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.7f, () -> map.setSelectedTile(0, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1),
+                                    TutorialMouseKeyframe.actionSelector(2, 0, 0, 0.05f, 0.1f, 2, 1,
+                                            KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                            );
+                            map.finalise();
+                        });
+                        box.setColumnTopMarginToElement(1, 0, leftBoxIndex, VerticalAlign.TOP)
+                                .setColumnVerticalAlign(1, VerticalAlign.TOP);
+                        box.addParagraph("Viewing action cost", "As seen in the example above on the left, the cost for most actions can be seen by [BLUE]hovering over the action button[NO_COLOUR].\n\n" +
+                                        "The cost of the " + Action.MOVE.colouredIconName(NO_COLOUR, false) + " action, however, is only visible while [BLUE]selecting a tile to move to[NO_COLOUR], as its cost " +
+                                        "is proportional to the " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.colouredName(null, false) + ModifierCategory.MOVEMENT_SPEED_DISPLAY.icon() + "[NO_COLOUR], and thus " +
+                                        "depends on the path the unit has to take.")
+                                .finalise().defaultBottomSpacing();
+                    }),
+                    BlockingTextBox.onUI(l, BoxSize.LARGE, 25, Renderable.top() - 12, HorizontalAlign.LEFT,
+                            "Above you can see the amount of " + EnergyManager.colouredDisplay(NO_COLOUR, false) + " you currently have, as well as your [BLUE]income[NO_COLOUR].\n\n" +
+                                    "This amount gets " + EnergyManager.displayName.toLowerCase() + " credited to you at the [BLUE]start of each turn[NO_COLOUR].\n\n" +
+                                    "Click the box above with the " + EnergyManager.displayName.toLowerCase() + " info.",
+                            EnergyBoxListener.openIncomeBox()),
+                    ContinueTextBox.onUI(l, BoxSize.LARGE, 17, Renderable.top() - 10, HorizontalAlign.LEFT,
+                            "Here you can see the [BLUE]income sources[NO_COLOUR] that contribute to your income.\n\n" +
+                                    "The [BLUE]" + StructureType.BASE.getName().toLowerCase() + " structure[NO_COLOUR] always provides a stable income, but there " +
+                                    "are ways to [BLUE]increase it[NO_COLOUR]."),
+                    CameraMove.toTile(l, 2, 1),
+                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 2, 1),
+                    BlockingTextBox.onUI(l, BoxSize.SMALL, 15, 22, HorizontalAlign.LEFT,
+                            "Select the [BLUE]" + StructureType.BASE.getName().toLowerCase() + "[NO_COLOUR] to view info about it.",
+                            TileSelectListener.tile(2, 1)),
                     TutorialHighlight.disable(l),
-                    TutorialUI.onUI(l, "viewRange").rectangle(8.25f, 12.25f, 2, 2, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ModifyElements.viewFiringRange(l, true),
-                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, HorizontalAlign.LEFT,
-                            "To see the range that this unit has, click the red button highlighted on the panel below.",
-                            UIListener.select(UIElement.VIEW_FIRING_RANGE)),
-                    TutorialUI.remove("viewRange"),
-                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, HorizontalAlign.LEFT,
-                            "Highlighted in red you can see the tiles that the selected unit is in [RED]firing range[NO_COLOUR] of. Click anywhere on the screen to exit firing range view.",
-                            UIListener.deselect(UIElement.VIEW_FIRING_RANGE)),
-                    ModifyElements.disableAll(l),
+                    ContinueTextBox.onUI(l, BoxSize.LARGE, 36, 5f, HorizontalAlign.LEFT,
+                            "The [BLUE]Structure[NO_COLOUR] tab in the [BLUE]tile info screen[NO_COLOUR] to the right " +
+                                    "shows which structure is on the current tile.\n\n[BLUE]Left-click[NO_COLOUR] or [BLUE]hover[NO_COLOUR] over the structure tab " +
+                                    "to see [BLUE]detailed info[NO_COLOUR] about what the structure does, including its income."),
                     CameraMove.toTile(l, 5, 3),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "Now with that out of the way, we can get to moving the units.\n\nYou can see that the enemy base is in the top left corner of the map, outside of our view range."),
-                    TutorialHighlight.radius(l, RED_HIGHLIGHT, 5, 4, 1),
-                    ModifyElements.enable(l, TILE_DESELECTION),
-                    TileSelect.deselect(l),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "The enemy will most likely move their units to this region on the next turn. We could hide our units in the nebula below this region to ambush them."),
-                    ModifyElements.moveUnit(l, false, false, 7, 2, 5, 2),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "Move the Fighter unit to the front of the nebula. It has the longest view range, and by moving it to the front, we can see further out of the nebula.",
-                            ActionListener.perform()),
+                    TutorialHighlight.tile(l, BLUE_HIGHLIGHT, 5, 3),
+                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 3, 4, HorizontalAlign.LEFT,
+                            "This is a [BLUE]" + StructureType.REFINERY.getName() + "[NO_COLOUR] structure. Whichever team controls it gets additional income."),
                     TutorialHighlight.disable(l),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    TileSelect.deselect(l),
-                    ModifyElements.moveUnit(l, false, true, 6, 0, 5, 0),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "The Artillery unit, due to its longer range, can be placed further back. Move it to the highlighted tile.",
-                            ActionListener.perform()),
-                    TutorialHighlight.disable(l),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    TileSelect.deselect(l),
-                    ModifyElements.moveUnit(l, false, true, new Point[]{new Point(6, 1), new Point(7, 1)}, new Point[]{new Point(4, 1), new Point(4, 0)}),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1, 0, HorizontalAlign.LEFT,
-                            "Finally, move the Bomber units to the highlighted positions.",
-                            ActionListener.perform(), ActionListener.perform()),
-                    TutorialHighlight.disable(l),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    TileSelect.deselect(l),
-                    ModifyElements.endTurn(l),
-                    BlockingTextBox.onUI(l, BoxSize.SMALL_MEDIUM, 8, Renderable.top() - 8, HorizontalAlign.LEFT,
-                            "All the units have been moved, you can now end the turn.",
-                            TurnListener.start()),
-                    ModifyElements.disableAll(l),
-                    BotActions.addActions(
-                            BotActionData.move(l, 3, 4, 7, 1),
-                            BotActionData.move(l, 3, 5, 6, 3),
-                            BotActionData.move(l, 2, 4, 5, 4),
-                            BotActionData.end()
-                    ),
-                    BlockingAction.waitFor(TurnListener.start()),
-                    BlockingAction.waitFor(AnimStateListener.ended()),
-                    CameraMove.toTile(l, 6, 3),
-                    TutorialHighlight.tiles(l, RED_HIGHLIGHT, new Point(6, 3), new Point(5, 4)),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "The enemy has deployed Cruisers against us!\n\n" +
-                                    "[BLUE]Cruiser units[NO_COLOUR] are the base configuration of the cruiser class, in the same way that Fighter units are the basic variant of the fighter class."),
-                    ModifyElements.tileSelect(l, false, 5, 2),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "Select the Fighter unit to see what kind damage we can do with it.",
-                            TileSelectListener.any()),
-                    TutorialHighlight.disable(l),
-                    ModifyElements.viewEffectiveness(l, false),
-                    TutorialUI.onUI(l, "viewEffectiveness").rectangle(6.25f, 12.25f, 2, 2, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    BlockingTextBox.onUI(l, BoxSize.MEDIUM, 11, 18, HorizontalAlign.LEFT,
-                            "To see the effectiveness of the weapons on this unit, click the orange button highlighted below.",
-                            UIListener.select(UIElement.VIEW_EFFECTIVENESS)),
-                    TutorialUI.remove("viewEffectiveness"),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "Each enemy now has its tile coloured based on weapon effectiveness. This does not always correspond to damage dealt, as it does not take into account unit HP.\n\n" +
-                                    "As you know, lower HP means lower damage dealt, but that does not change the base characteristics of the weapons, which is what you're seeing now."),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "It does, however, give us a rough estimate of the damage dealt by a full HP unit, which all of our units currently are.\n\n" +
-                                    "Yellow means [YELLOW]low damage[NO_COLOUR] (usually around 1 HP), while red means [RED]high damage[NO_COLOUR] (often more than half the unit's HP). Blue, not seen here, means [BLUE]no damage[NO_COLOUR] at all."),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "You can see by the orange colour that the Fighter can do [ORANGE]moderate damage[NO_COLOUR] to the enemy Fighter which is next to the base.\n\n" +
-                                    "When it comes to the Cruisers however, the yellow colour shows that this unit is [YELLOW]almost useless[NO_COLOUR] against them."),
-                    ModifyElements.tileSelect(l, false, new Point(4, 1), new Point(4, 0)),
-                    ModifyElements.viewEffectiveness(l, true).add(false),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "Select one of the Bomber units instead to see what damage they can do.", TileSelectListener.any()),
-                    TutorialHighlight.disable(l),
-                    ModifyElements.viewEffectiveness(l, false),
-                    BlockingTextBox.onMap(l, BoxSize.SMALL_MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "Click the orange button to view weapon effectiveness.", UIListener.select(UIElement.VIEW_EFFECTIVENESS)),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "As you can see, Bombers perform well not only against the [ORANGE]Fighter unit[NO_COLOUR], but also against the [ORANGE]Cruisers[NO_COLOUR].\n\n" +
-                                    "This is because they have two weapons. The first is a plasma gun, effective at destroying fighter-class units. The Fighter we looked " +
-                                    "at before has similar gun, which is why both that unit and this unit are effective at destroying the enemy Fighter."),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "The Bomber unit also has a missile weapon, which is most powerful when used against [RED]capital ships[NO_COLOUR].\n\n" +
-                                    "It does, however, still perform well against [ORANGE]cruiser-class[NO_COLOUR] ships."),
-                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "Each of the four unit classes has a corresponding weapon type that counters it. Here's a list showing which weapon type counters which unit class, in order of unit size:\n\n" +
-                                    "Plasma > Fighter-class units\n\n" +
-                                    "Cannon > Corvette-class units\n\n" +
-                                    "Railgun > Cruiser-class units\n\n" +
-                                    "Explosive > Capital ships\n\n"),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "Furthermore, weapons often (but not always) perform moderately well against " +
-                                    "enemies one size class up or down from the class that the weapon is most effective against.\n\n" +
-                                    "This is why the Bombers' missile weapons can do damage against cruiser-class units, even though explosives " +
-                                    "are meant for countering capital ships."),
-                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "Keep in mind that not all weapons of a given type are created equal. Some are stronger than others.\n\n" +
-                                    "A weak plasma gun might be [ORANGE]moderately effective[NO_COLOUR] against fighters, and [YELLOW]useless[NO_COLOUR] against other classes\n\nA strong " +
-                                    "plasma gun, on the other hand, may be [RED]highly effective[NO_COLOUR] against fighter-class units, [ORANGE]moderately effective[NO_COLOUR] against the corvette class, " +
-                                    "and [YELLOW]useless[NO_COLOUR] against any unit larger than a corvette."),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "You don't necessarily have to remember the exact details of the weapon each unit carries, what's important is that " +
-                                    "that each unit has one, or sometimes several classes it [RED]counters effectively[NO_COLOUR], and possibly has other classes that it's [ORANGE]moderately effective[NO_COLOUR] against.\n\n" +
-                                    "[BLUE]You can, and should, use the orange button to view weapon effectiveness.[NO_COLOUR]"),
-                    ModifyElements.tileSelect(l, false, new Point(6, 3), new Point(5, 4)),
-                    ModifyElements.viewEffectiveness(l, true).add(false),
-                    SequenceTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "Now, we know that the Bomber is effective against the Cruisers, but we should also check whether the Cruisers are effective " +
-                                    "against the Bombers before going to attack.\n\nSelect one of the Cruisers and view its weapon effectiveness.",
-                            BlockingAction.waitFor(TileSelectListener.any()),
-                            TutorialHighlight.disable(l),
-                            BlockingAction.waitFor(UIListener.select(UIElement.VIEW_EFFECTIVENESS))
-                    ),
-                    ModifyElements.viewEffectiveness(l, false),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 8, 4, HorizontalAlign.LEFT,
-                            "We see that the enemy Cruiser is [YELLOW]not effective[NO_COLOUR] against our fighter-class units, meaning that the Bombers can attack without taking much damage in return."),
 
-                    ModifyElements.moveUnit(l, true, true, new Point[]{new Point(4, 0), new Point(4, 1)}, new Point[]{new Point(7, 3)}),
-                    ModifyElements.viewEffectiveness(l, true).add(false),
-                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 8, 5, HorizontalAlign.LEFT,
-                            "Move a Bomber to this asteroid field and attack.",
-                            BlockingAction.waitFor(ActionListener.complete()),
-                            TutorialHighlight.disable(l),
-                            ModifyElements.forceTileSelect(l, 7, 3),
-                            ModifyElements.attack(l, true, 7, 3),
-                            BlockingAction.waitFor(ActionListener.perform())
-                    ),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    CameraMove.toTile(l, 7, 3),
-                    SequenceTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "You can see that the enemy Cruiser took significantly more damage than the Bomber, which came out almost unscathed.\n\n" +
-                                    "The Bomber's missile weapon does, however, have one major drawback.\n\n" +
-                                    "Select the Bomber, then select the button to view the Bomber's weapon effectiveness.",
-                            ModifyElements.tileSelect(l, false, 7, 3),
-                            BlockingAction.waitFor(TileSelectListener.any()),
-                            TutorialHighlight.disable(l),
-                            ModifyElements.viewEffectiveness(l, false),
-                            BlockingAction.waitFor(UIListener.select(UIElement.VIEW_EFFECTIVENESS))
-                    ),
-                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 5, 0, HorizontalAlign.LEFT,
-                            "You can see that the Cruisers are now coloured yellow, meaning that the Bomber is no longer effective against them.\n\n" +
-                                    "This is due to the missile weapon having [BLUE]limited ammo capacity[NO_COLOUR], just one round of ammo in this case.\n\n" +
-                                    "Since the missile weapon is out of ammo, attacking the Cruisers now will lead to the Bomber resorting to using its plasma gun, which is much less effective."),
-                    TutorialUI.onUI(l, "ammoLabel")
-                            .rectangle(1 + 9.4f / 2 + 0.5f / 2, 5 - 1 - 0.5f / 2, 9.4f + 0.5f, 1 + 0.5f, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 5, 0, HorizontalAlign.LEFT,
-                            "The remaining ammo can be seen on the panel to the left, where you can see that the ammo is at 0 / 1.\n\n" +
-                                    "Units can have at most one weapon that uses ammo, and using the unit's other weapons will not consume any ammo.\n\n" +
-                                    "If none of the weapons for a unit consume ammo, the ammo counter will not display a number."),
-                    TutorialUI.remove("ammoLabel"),
-                    TutorialUI.onUI(l, "unitInfo").rectangle(10.25f, 12.25f, 2, 2, GREEN_HIGHLIGHT, TutorialUI.StrokeWidth.NARROW),
-                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 5, 0, HorizontalAlign.LEFT,
-                            "When attacking an enemy, the most effective weapon not out of ammo will automatically be selected. Attacking a Fighter using " +
-                                    "a Bomber, for example, will use the plasma gun, even if the missile is available.\n\n" +
-                                    "To view the weapons a unit has, [BLUE]open the unit info screen[NO_COLOUR] using the button in the top right of the panel to the left. " +
-                                    "Then, navigate to the weapons tab, and click a weapon to view info about it. There, you can see the range, ammo usage, and effectiveness of " +
-                                    "each weapon."),
-                    TutorialUI.remove("unitInfo"),
-                    ModifyElements.viewEffectiveness(l, true).add(true),
-                    ModifyElements.moveUnit(l, true, true, new Point[]{new Point(4, 0), new Point(4, 1)}, new Point[]{new Point(4, 3)}),
-                    CameraMove.toTile(l, 5, 3),
-                    SequenceTextBox.onMap(l, BoxSize.LARGE, 8, 4, HorizontalAlign.LEFT,
-                            "That info screen also contains many other useful things about the selected unit, for example view range, " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + " and any special features the unit may have.\n\n" +
-                                    "Back to the game, it's time to move the other Bomber that still has ammo to attack. Move it to the highlighted tile, and attack the Cruiser.",
-                            BlockingAction.waitFor(ActionListener.complete()),
-                            TutorialHighlight.disable(l),
-                            ModifyElements.forceTileSelect(l, 4, 3),
-                            ModifyElements.attack(l, true, 4, 3),
-                            BlockingAction.waitFor(ActionListener.perform())
-                    ),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    CameraMove.toTile(l, 5, 2),
-                    ModifyElements.moveUnit(l, true, true, 5, 2, 6, 0),
-                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 8, 2, HorizontalAlign.LEFT,
-                            "The Fighter unit, which isn't of much use against the enemy Cruisers, can be used to defend the base from the enemy Fighter.\n\n" +
-                                    "Move the Fighter and attack.",
-                            BlockingAction.waitFor(ActionListener.complete()),
-                            TutorialHighlight.disable(l),
-                            ModifyElements.forceTileSelect(l, 6, 0),
-                            ModifyElements.attack(l, true, 6, 0),
-                            BlockingAction.waitFor(ActionListener.perform())
-                    ),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    ContinueTextBox.onMap(l, BoxSize.EXTRA_LARGE, 1.3f, 1.5f, HorizontalAlign.LEFT,
-                            "The Artillery unit has a [BLUE]ranged missile weapon[NO_COLOUR], meaning that it is effective against Cruisers, similar to the Bomber unit. Unlike the Bomber unit, it has an " +
-                                    "ammo capacity of " + CorvetteType.ARTILLERY.ammoCapacity + ".\n\n" +
-                                    "Ranged units have a special property. [BLUE]They do not receive counterattacks[NO_COLOUR] when attacking enemies, even if the enemy is also a ranged unit.\n\n" +
-                                    "They are, however, [BLUE]not able to defend themselves[NO_COLOUR] with a counterattack when attacked by an enemy."),
-                    ModifyElements.moveUnit(l, true, true, 5, 0, 5, 2),
-                    SequenceTextBox.onMap(l, BoxSize.MEDIUM, 1.3f, 1.5f, HorizontalAlign.LEFT,
-                            "Move the Artillery into the dense nebula, and attack one of the Cruisers. The dense nebula will " +
-                                    "hide the defenceless unit from the enemies next turn.",
-                            BlockingAction.waitFor(ActionListener.complete()),
-                            TutorialHighlight.disable(l),
-                            ModifyElements.forceTileSelect(l, 5, 2),
-                            ModifyElements.attack(l, true, 5, 2),
-                            AllowedActionTiles.only(Action.FIRE, new Point(5, 4), new Point(6, 3)),
-                            BlockingAction.waitFor(ActionListener.perform())
-                    ),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    ModifyElements.endTurn(l),
-                    BlockingTextBox.onUI(l, BoxSize.SMALL_MEDIUM, 8, Renderable.top() - 8, HorizontalAlign.LEFT,
-                            "We've done all we can, it's time to end the turn.",
-                            TurnListener.start()),
-                    ModifyElements.disableAll(l),
-                    BotActions.addActions(
-                            BotActionData.move(l, 7, 1, 8, 2),
-                            BotActionData.attack(l, 8, 2, 7, 3),
-                            BotActionData.move(l, 6, 3, 7, 4),
-                            BotActionData.attack(l, 7, 4, 7, 3),
-                            BotActionData.attack(l, 5, 4, 4, 3),
-                            BotActionData.end()
-                    ),
-                    BlockingAction.waitFor(TurnListener.start()),
-                    BlockingAction.waitFor(AnimStateListener.ended()),
+                    TutorialScreen.create(l, TutorialScreen.NORMAL_WIDTH, (box, level) -> {
+                        box.setWidthMargin(0.5f);
+                        String c = Action.CAPTURE.colour();
+                        box.addParagraph("Capturing structures",
+                                        "At the start of the game, each team will have always have a " + StructureType.BASE.getName().toLowerCase() + " structure. " +
+                                                "There may be other structures on the map, sometimes [BLUE]neutral[NO_COLOUR] and sometimes [BLUE]belonging to a team[NO_COLOUR].\n\n" +
 
+                                                "All of these structures can be " + c + "captured[NO_COLOUR] by moving a [BLUE]unit[NO_COLOUR] over the structure and using the " + Action.CAPTURE.colouredIconName(NO_COLOUR, false) + " action.")
+                                .mainHeader().defaultBottomSpacing().finalise();
 
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 1, 3, HorizontalAlign.LEFT,
-                            "As you saw during the enemy's turn, the Bomber units were not able to do much damage to the Cruisers when they counterattacked. " +
-                                    "We need to be able to [RESUPPLY]resupply[NO_COLOUR] the Bombers."),
-                    ContinueTextBox.onMap(l, BoxSize.LARGE, 1, 3, HorizontalAlign.LEFT,
-                            "There are several ways to replenish ammo, but for this tutorial, we'll only cover one of them.\n\n" +
-                                    "At the start of your turn, if a unit is on the [BLUE]same tile as an allied base structure[NO_COLOUR], it gets all its ammo resupplied.\n\n" +
-                                    "Not only that, it also regains some HP."),
-                    ModifyElements.moveUnit(l, true, true, new Point[]{new Point(4, 3), new Point(7, 3)}, new Point[]{new Point(8, 1)}),
-                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 1, 3, HorizontalAlign.LEFT,
-                            "Move one of the Bombers to the base so that it gets resupplied at the start of the next turn.",
-                            ActionListener.perform()),
-                    TutorialHighlight.disable(l),
-                    BlockingAction.waitFor(ActionListener.complete()),
-                    ContinueTextBox.onMap(l, BoxSize.MEDIUM, 4, 2, HorizontalAlign.LEFT,
-                            "That's it for this tutorial, use the weapon effectiveness view to make the best use of your units, and resupply ammo at the base when needed.\n\n" +
-                                    "Good luck."),
-                    ModifyElements.enableAll(l),
-                    AllowedTiles.all(),
+                        box.addTutorialMap(HorizontalAlign.CENTER, 25, 10, TutorialMapElement.TILE_SIZE_MEDIUM, 16, 0, map -> {
+                            map.addTile(-3, -1, TileType.EMPTY);
+                            map.addTile(-3, 0, TileType.NEBULA);
+                            map.addTile(-3, 1, TileType.EMPTY);
+                            map.addTile(-2, -1, TileType.EMPTY);
+                            map.addTile(-2, 0, TileType.NEBULA).addUnit(FighterType.INTERCEPTOR, UnitTeam.BLUE);
+                            map.addTile(-2, 1, TileType.NEBULA);
+                            map.addTile(-1, -1, TileType.EMPTY);
+                            map.addTile(-1, 0, TileType.NEBULA);
+                            map.addTile(-1, 1, TileType.NEBULA);
+                            map.addTile(0, -1, TileType.ASTEROIDS);
+                            map.addTile(0, 0, TileType.EMPTY);
+                            map.addTile(0, 1, TileType.EMPTY);
+                            map.addTile(1, -1, TileType.ASTEROIDS);
+                            map.addTile(1, 0, TileType.EMPTY);
+                            map.addTile(1, 1, TileType.EMPTY);
+                            map.addTile(2, -1, TileType.EMPTY);
+                            TutorialMapTile tile = map.addTile(2, 0, TileType.EMPTY);
+                            tile.addStructure(StructureType.REFINERY, null);
+                            tile.forceCaptureSegments(2);
+                            map.addTile(2, 1, TileType.EMPTY);
+                            map.addTile(3, 0, TileType.EMPTY);
+                            map.addMouseParticle(
+                                    TutorialMouseKeyframe.tile(0, -2, 0, 0.2f, 0.15f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(1, () -> map.setSelectedTile(-2, 0)),
+                                    TutorialMouseKeyframe.delayUntil(1.5f),
+                                    TutorialMouseKeyframe.actionSelector(2, -2, 0, -0.04f, 0.03f, 2, 1, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.3f, () -> map.selectMoveAction(-2, 0)),
+                                    TutorialMouseKeyframe.delayUntil(2.7f, KeyframeFunction.pow(1.3f), KeyframeFunction.pow(0.7f)),
+                                    TutorialMouseKeyframe.tile(4, 2, 0, -0.15f, 0.2f, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.3f, map::moveUnit),
+                                    TutorialMouseKeyframe.delayUntil(5.5f).setOnClick(0.5f,
+                                            () -> map.setSelectedTile(2, 0).actionSelector().setActionState(Action.MOVE, ActionIconType.DISABLED)),
+                                    TutorialMouseKeyframe.delayUntil(6.5f),
+                                    TutorialMouseKeyframe.actionSelector(7f, 2, 0, 0.15f, 0.12f, 3, 0, KeyframeFunction.lerp(), KeyframeFunction.lerp())
+                                            .setOnClick(0.5f, map::capture)
+                            );
+                            map.addPopup(9f, 1.5f, "Next Turn");
+                            map.addRepeatedTask(12, () -> map.capture(2, 0));
+                            map.addRepeatedTask(13, () -> map.getTile(2, 0).finishCapture(UnitTeam.BLUE));
+                            map.finalise();
+                        });
+                        box.addParagraph("The " + Action.CAPTURE.getName().toLowerCase() + " action",
+                                        "When using the " + Action.CAPTURE.colouredIconName(NO_COLOUR, false) + " action, a [BLUE]bar[NO_COLOUR] appears over the structure. This shows the [BLUE]capture progress[NO_COLOUR]. The initial use of the action adds one capture point, " +
+                                                "and each time you [BLUE]start your turn[NO_COLOUR], another point is added automatically. " +
+                                                "Different structure types may require different [BLUE]numbers of turns[NO_COLOUR] to capture.\n\n" +
+
+                                                "If you [RED]attack[NO_COLOUR] a capturing unit, the capturing unit [BLUE]loses one capture point[NO_COLOUR].\n\n" +
+
+                                                "The " + Action.CAPTURE.colouredIconName(NO_COLOUR, false) + " action is [BLUE]not shown[NO_COLOUR] unless it [BLUE]is available[NO_COLOUR], which is when the active unit is on a structure that can be captured.\n\n" +
+
+                                                "Also, it is a [BLUE]toggle action[NO_COLOUR], meaning that using it once [GREEN]starts capturing[NO_COLOUR], and using it a second time while already capturing will [RED]reset[NO_COLOUR] the current capture.\n\n" +
+
+                                                "Moving a capturing unit away from its tile ends the capture.")
+                                .defaultBottomSpacing().finalise();
+                        box.addParagraph("Capturing the " + StructureType.BASE.getName(),
+                                        "While most structures will provide a benefit when captured, the [BLUE]" + StructureType.BASE.getName().toLowerCase() + "[NO_COLOUR] is special. " +
+                                                "Capturing the enemy " + StructureType.BASE.getName().toLowerCase() + " [RED]eliminates the entire team[NO_COLOUR] immediately.\n\n" +
+                                                "You must [BLUE]protect[NO_COLOUR] your " + StructureType.BASE.getName().toLowerCase() + " [RED]at all costs[NO_COLOUR].")
+                                .finalise();
+                    }),
+                    ModifyElements.enable(l, ACTIONS),
+                    AllowedActionTiles.only(Action.MOVE, 5, 3),
+                    BranchTextBox.onMap(l, BoxSize.MEDIUM, 3, 4, HorizontalAlign.LEFT,
+                            "Move a unit to the [BLUE]" + StructureType.REFINERY.getName().toLowerCase() + "[NO_COLOUR] and start capturing.",
+                            ActionListener.tileSelectAnyExcept(Action.MOVE, new Point(5, 3)),
+                            ActionListener.perform(Action.CAPTURE),
+
+                            TutorialHighlight.tile(l, GREEN_HIGHLIGHT, 5, 3),
+                            SequenceTextBox.onMap(l, BoxSize.MEDIUM, 3, 4, HorizontalAlign.LEFT,
+                                    "Move a unit to the [BLUE]" + StructureType.REFINERY.getName().toLowerCase() + "[NO_COLOUR] and start capturing.\n\n" +
+                                            "The " + StructureType.REFINERY.getName().toLowerCase() + " structure is on the [GREEN]highlighted tile[NO_COLOUR].",
+                                    BlockingAction.waitFor(ActionListener.perform(Action.MOVE)),
+                                    TutorialHighlight.disable(l),
+                                    BlockingAction.waitFor(ActionListener.perform(Action.CAPTURE))
+                            )),
                     AllowedActionTiles.all(),
-                    AllowedActions.all(),
+                    ModifyElements.enable(l, END_TURN),
+                    ModifyElements.disable(l, ACTIONS),
+                    BotActions.addActions(
+                            BotActionData.move(l, 7, 6, 7, 5),
+                            BotActionData.move(l, 8, 6, 7, 4),
+                            BotActionData.move(l, 7, 7, 6, 5),
+                            BotActionData.capture(l, 6, 5)
+                    ),
+                    BlockingTextBox.onMap(l, BoxSize.MEDIUM, 3, 4, HorizontalAlign.LEFT,
+                            "[BLUE]End the turn[NO_COLOUR] to continue capturing on the next turn.",
+                            TurnListener.start(UnitTeam.RED)),
+                    BlockingAction.waitFor(TurnListener.start(UnitTeam.BLUE)),
+                    ContinueTextBox.onMap(l, BoxSize.LARGE, 3, 4.3f, HorizontalAlign.LEFT,
+                            "Now that the structure has been captured, you can see that your [BLUE]income has increased[NO_COLOUR]."),
+                    ContinueTextBox.onMap(l, BoxSize.LARGE, 3, 4.3f, HorizontalAlign.LEFT,
+                            "That's it for the main tutorial, you're now ready to fight real battles.\n\n" +
+                                    "There is much more to see that was not covered here, so short a explainer will be provided whenever you encounter a new game mechanic."),
+                    ModifyElements.enable(l, ACTIONS),
                     new EndTutorial()
             });
 

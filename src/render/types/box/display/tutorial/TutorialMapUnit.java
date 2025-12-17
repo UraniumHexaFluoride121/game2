@@ -26,7 +26,8 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
     private TutorialMapElement map;
     private AnimTilePath movePath = null;
     private final Point startPos;
-    private Consumer<TutorialMapUnit> onReset = u -> {};
+    private Consumer<TutorialMapUnit> onReset = _ -> {
+    };
 
     public TutorialMapUnit(UnitType type, UnitTeam team, Point pos, TutorialMapElement map) {
         super(new UnitData(type, team, pos), new StatManager<>());
@@ -45,15 +46,22 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
 
     @Override
     public void render(Graphics2D g) {
-        if (movePath != null && movePath.finished()) {
-            moveUnit(movePath.getLastTile(), true);
-            movePath = null;
-            map.calculateFoW();
+        if (movePath != null) {
+            Point pos = map.hexagon(getRenderPosCentered()).pos;
+            if (movePath.finished()) {
+                moveUnit(movePath.getLastTile(), true);
+                movePath = null;
+                map.calculateFoW();
+            } else if (pos != data.pos) {
+                moveUnit(pos, false);
+                map.calculateFoW();
+            }
         }
+        if (map.getTile(data.pos).fow)
+            return;
         HexagonalDirection direction = null;
         if (movePath != null) {
             direction = movePath.getDirection();
-
         }
         renderUnit(g, (direction != null) ? direction.counterClockwise().getPose() : UnitPose.FORWARD, data.type.shieldHP != 0);
         renderDamageUIs(g);
@@ -94,6 +102,13 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
     }
 
     @Override
+    public UnitLike<?> getUnit(Point pos) {
+        if (map.getTile(pos) == null)
+            return null;
+        return map.getTile(pos).unit;
+    }
+
+    @Override
     public void renderUnitPose(Graphics2D g, UnitPose pose, UnitData data) {
         if (pose == UnitPose.DOWN_RIGHT || pose == UnitPose.FORWARD) {
             super.renderUnitPose(g, UnitPose.FORWARD, data);
@@ -114,6 +129,10 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
             return movePath.getPos().copy().subtract((TILE_SIZE * SIN_60_DEG + TILE_SIZE) / 2, TILE_SIZE / 2 * SIN_60_DEG).perpendicular();
         }
         return renderPos;
+    }
+
+    public ObjPos getRenderPosCentered() {
+        return getRenderPos().copy().add(SIN_60_DEG * TILE_SIZE / 2);
     }
 
     private final DynamicTextRenderer textHP = createHPText(), textShieldHP = createShieldHPText();
@@ -140,7 +159,7 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
 
     @Override
     public FiringData getCurrentFiringData(UnitLike<?> otherUnit) {
-        return new FiringData(this, otherUnit, p -> map.getTile(p).type);
+        return new FiringData(this, otherUnit, p -> map.getTile(p).type, null);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package unit.weapon;
 
 import unit.ShipClass;
-import unit.stats.Modifier;
+import unit.stats.modifiers.types.Modifier;
 import unit.type.UnitType;
 
 import java.util.ArrayList;

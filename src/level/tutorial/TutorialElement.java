@@ -1,10 +1,20 @@
 package level.tutorial;
 
 import level.Level;
+import unit.UnitTeam;
 
 import java.util.function.Consumer;
 
+import static level.energy.EnergyManager.*;
+
 public enum TutorialElement {
+    TUTORIAL_INCOME_DISABLED(
+            l -> {
+                l.levelRenderer.energyManager.recalculateIncome();
+                l.levelRenderer.energyManager.addAvailable(UnitTeam.BLUE, TUTORIAL_INCOME);
+            },
+            l -> l.levelRenderer.energyManager.recalculateIncome()
+    ),
     TILE_SELECTION(
             empty(),
             empty()
@@ -46,6 +56,10 @@ public enum TutorialElement {
             empty()
     ),
     VIEW_EFFECTIVENESS_DESELECT(
+            empty(),
+            empty()
+    ),
+    BOT(
             empty(),
             empty()
     );

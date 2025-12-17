@@ -5,7 +5,7 @@ import level.tutorial.sequence.event.EventConsumer;
 import level.tutorial.sequence.event.TutorialEvent;
 import level.tutorial.sequence.event.TutorialEventListener;
 
-public class BlockingAction implements TutorialSequenceElement, EventConsumer {
+public class BlockingAction implements EventConsumer {
     private TutorialEventListener eventListener;
 
     public static BlockingAction waitFor(TutorialEventListener eventListener) {
@@ -23,8 +23,8 @@ public class BlockingAction implements TutorialSequenceElement, EventConsumer {
     }
 
     @Override
-    public void start() {
-
+    public TutorialEventListener[] getListeners() {
+        return new TutorialEventListener[]{eventListener};
     }
 
     @Override

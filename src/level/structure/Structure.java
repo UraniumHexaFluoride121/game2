@@ -22,17 +22,20 @@ public class Structure implements Writable {
     public UnitTeam team;
     public ImageRenderer renderer;
     public boolean canBeCaptured, exploding = false;
+    public final StructureStats stats;
 
     public Structure(Point pos, StructureType type, UnitTeam team) {
         this.pos = pos;
         this.type = type;
         canBeCaptured = type.canBeCapturedByDefault;
+        stats = new StructureStats(type);
         setTeam(team);
     }
 
     public Structure(DataInputStream reader) throws IOException {
         pos = PacketReceiver.readPoint(reader);
         type = PacketReceiver.readEnum(StructureType.class, reader);
+        stats = new StructureStats(type);
         boolean neutral = reader.readBoolean();
         setTeam(neutral ? null : PacketReceiver.readEnum(UnitTeam.class, reader));
         canBeCaptured = reader.readBoolean();

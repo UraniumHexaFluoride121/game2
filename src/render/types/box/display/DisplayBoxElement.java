@@ -55,6 +55,11 @@ public class DisplayBoxElement extends BoxElement {
     }
 
     @Override
+    public boolean maxWidth() {
+        return maxWidth;
+    }
+
+    @Override
     public void setWidth(float width) {
         if (maxWidth)
             box.setWidth(width);

@@ -18,7 +18,7 @@ import render.types.box.UIDisplayBoxRenderElement;
 
 import java.util.function.Supplier;
 
-public class BranchTextBox implements TutorialSequenceElement, EventConsumer, SequenceHolder {
+public class BranchTextBox implements EventConsumer, SequenceHolder {
     private UIDisplayBoxRenderElement textBox;
     private Supplier<UIDisplayBoxRenderElement> textBoxSupplier;
     private final TutorialSequence tutorialSequence = new TutorialSequence();
@@ -49,7 +49,13 @@ public class BranchTextBox implements TutorialSequenceElement, EventConsumer, Se
     }
 
     @Override
+    public TutorialEventListener[] getListeners() {
+        return new TutorialEventListener[]{trigger, skip};
+    }
+
+    @Override
     public void start() {
+        EventConsumer.super.start();
         textBox = textBoxSupplier.get();
     }
 

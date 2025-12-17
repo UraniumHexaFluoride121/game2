@@ -3,13 +3,16 @@ package save;
 import foundation.math.ObjPos;
 import level.GameplaySettings;
 import level.Level;
-import level.PlayerTeam;
+import level.TeamData;
 import level.structure.Structure;
 import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileData;
 import level.tile.TileType;
-import unit.*;
+import unit.TileMapDisplayable;
+import unit.UnitData;
+import unit.UnitMapDataConsumer;
+import unit.UnitTeam;
 
 import java.awt.*;
 import java.io.*;
@@ -23,13 +26,9 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
     public final long seed;
     public final int levelWidth, levelHeight, turn;
     public final HashSet<UnitData> unitData = new HashSet<>();
-    public final HashMap<UnitTeam, PlayerTeam> teams, initialTeams;
-    public final HashMap<UnitTeam, Float> destroyedUnitsDamage;
-    public final HashMap<UnitTeam, Integer> destroyedUnits;
+    public final HashMap<UnitTeam, TeamData> teamData;
     public final UnitTeam activeTeam;
     public final HashMap<UnitTeam, Integer> availableMap;
-    public final HashMap<UnitTeam, Boolean> bots;
-    public final HashMap<UnitTeam, Integer> botDestroyedUnitCount = new HashMap<>();
     public final byte[] tiles;
     public final String name;
     public final float botDifficulty;
@@ -61,22 +60,16 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
             throw new RuntimeException(e);
         }
         turn = level.getTurn();
-        teams = new HashMap<>(level.playerTeam);
-        initialTeams = new HashMap<>(level.initialPlayerTeams);
-        destroyedUnitsDamage = new HashMap<>(level.destroyedUnitsDamage);
-        destroyedUnits = new HashMap<>(level.destroyedUnitsByTeam);
+        teamData = new HashMap<>(level.teamData);
+        teamData.replaceAll((team, data) -> data.copy());
         level.unitSet.forEach(u -> unitData.add(u.data.copy()));
         activeTeam = level.getActiveTeam();
         availableMap = new HashMap<>(level.levelRenderer.energyManager.availableMap);
-        bots = level.bots;
-        for (UnitTeam team : bots.keySet()) {
-            if (bots.get(team))
-                botDestroyedUnitCount.put(team, level.botHandlerMap.get(team).getDestroyedUnits());
-        }
         gameplaySettings = level.gameplaySettings;
     }
 
     public void loadLevel(Level level) {
+        level.teamData.forEach((team, data) -> data.load());
         level.setTurn(activeTeam, turn, false);
         ByteArrayInputStream byteInput = new ByteArrayInputStream(tiles);
         DataInputStream tileReader = new DataInputStream(byteInput);
@@ -124,13 +117,6 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
         level.levelRenderer.energyManager.availableMap = new HashMap<>(availableMap);
         level.levelRenderer.energyManager.updateDisplay(level.getThisTeam());
         level.levelRenderer.pauseMenu.saveFileNameBox.setText(name);
-        for (UnitTeam team : bots.keySet()) {
-            if (bots.get(team))
-                level.botHandlerMap.get(team).loadDestroyedUnits(botDestroyedUnitCount.get(team));
-        }
-        level.initialPlayerTeams = new HashMap<>(initialTeams);
-        level.destroyedUnitsDamage = new HashMap<>(destroyedUnitsDamage);
-        level.destroyedUnitsByTeam = new HashMap<>(destroyedUnits);
     }
 
     @Override

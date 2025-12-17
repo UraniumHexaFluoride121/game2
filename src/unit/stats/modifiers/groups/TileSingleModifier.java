@@ -1,15 +1,15 @@
-package unit.stats.modifiers;
+package unit.stats.modifiers.groups;
 
 import level.tile.TileType;
 import render.UIColourTheme;
-import unit.stats.Modifier;
-import unit.stats.SingleModifier;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.SingleModifier;
 
 import java.awt.*;
 import java.util.function.Function;
 
 import static render.types.text.StyleElement.*;
-import static unit.stats.ModifierCategory.*;
+import static unit.stats.modifiers.types.ModifierCategory.*;
 
 public abstract class TileSingleModifier {
     public static UIColourTheme NEBULA_PURPLE = new UIColourTheme(
@@ -26,28 +26,24 @@ public abstract class TileSingleModifier {
             EMPTY = type -> new SingleModifier(1f, "Empty Tile",
             "The enemy unit is currently on an " + type.colouredName(null, false) + " Tile" + NO_COLOUR.display +
                     ", which provides no " + INCOMING_DAMAGE.colouredName(NO_COLOUR, true) + " reduction for the enemy.",
-            INCOMING_DAMAGE.displayEffectName(),
-            INCOMING_DAMAGE.displayEffectValue(1f, Modifier::percentMultiplicative),
-            INCOMING_DAMAGE, GRAY, Modifier.BLUE_BACKGROUND),
+            Modifier::percentMultiplicative, INCOMING_DAMAGE)
+            .setColour(GRAY).setListColour(Modifier.BLUE),
 
     NEBULA = type -> new SingleModifier(0.88f, "Nebula Tile",
             "The enemy unit is currently on a " + type.colouredName(null, false) + " Tile" + NO_COLOUR.display +
                     ", which slightly reduces " + INCOMING_DAMAGE.colouredName(NO_COLOUR, true) + " for the enemy.",
-            INCOMING_DAMAGE.displayEffectName(),
-            INCOMING_DAMAGE.displayEffectValue(0.88f, Modifier::percentMultiplicative),
-            INCOMING_DAMAGE, NEBULA_PURPLE, Modifier.RED_BACKGROUND),
+            Modifier::percentMultiplicative, INCOMING_DAMAGE)
+            .setColour(NEBULA_PURPLE).setListColour(Modifier.RED),
 
     DENSE_NEBULA = type -> new SingleModifier(0.82f, "Dense Nebula Tile",
             "The enemy unit is currently on a " + type.colouredName(null, false) + " Tile" + NO_COLOUR.display +
                     ", which reduces " + INCOMING_DAMAGE.colouredName(NO_COLOUR, true) + " for the enemy.",
-            INCOMING_DAMAGE.displayEffectName(),
-            INCOMING_DAMAGE.displayEffectValue(0.82f, Modifier::percentMultiplicative),
-            INCOMING_DAMAGE, DENSE_NEBULA_PURPLE, Modifier.RED_BACKGROUND),
+            Modifier::percentMultiplicative, INCOMING_DAMAGE)
+            .setColour(DENSE_NEBULA_PURPLE).setListColour(Modifier.RED),
 
     ASTEROID_FIELD = type -> new SingleModifier(0.76f, "Asteroid Field Tile",
             "The enemy unit is currently on an " + type.colouredName(null, false) + " Tile" + NO_COLOUR.display +
                     ", which reduces " + INCOMING_DAMAGE.colouredName(NO_COLOUR, true) + " for the enemy.",
-            INCOMING_DAMAGE.displayEffectName(),
-            INCOMING_DAMAGE.displayEffectValue(0.76f, Modifier::percentMultiplicative),
-            INCOMING_DAMAGE, GRAY, Modifier.RED_BACKGROUND);
+            Modifier::percentMultiplicative, INCOMING_DAMAGE)
+            .setColour(GRAY).setListColour(Modifier.RED);
 }

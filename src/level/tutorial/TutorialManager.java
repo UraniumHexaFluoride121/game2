@@ -99,7 +99,7 @@ public abstract class TutorialManager {
     }
 
     public static void acceptEvent(TutorialEvent e) {
-        if (isTutorial())
+        if (isTutorial() && !sequence.isEmpty())
             sequence.acceptEvent(e);
     }
 

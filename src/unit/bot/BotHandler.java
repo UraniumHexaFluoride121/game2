@@ -10,6 +10,7 @@ import level.tile.Tile;
 import level.tile.TileModifier;
 import level.tile.TileSet;
 import level.tile.TileType;
+import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
 import network.NetworkState;
 import render.anim.unit.AnimTilePath;
@@ -38,7 +39,7 @@ public class BotHandler implements Deletable, Tickable {
     public HashMap<BotTileDataType, BotTileData> tileData = new HashMap<>();
     private final AtomicBoolean executingMove = new AtomicBoolean(false), runningTurn = new AtomicBoolean(false);
     private final TimedTaskQueue anim = new TimedTaskQueue();
-    private int enemiesDestroyed = 0;
+    private BotHandlerData data = new BotHandlerData();
 
     public BotHandler(Level level, UnitTeam team) {
         this.level = level;
@@ -54,12 +55,16 @@ public class BotHandler implements Deletable, Tickable {
     }
 
     public boolean findBestMove() {
-        if (TutorialManager.isTutorial() && !TutorialManager.forcedBotActions.isEmpty()) {
-            BotActionData data = TutorialManager.forcedBotActions.pollFirst().get();
-            if (data == null)
+        if (TutorialManager.isTutorial()) {
+            if (TutorialManager.isDisabled(TutorialElement.BOT))
                 return false;
-            else
-                return executeMove(data);
+            if (!TutorialManager.forcedBotActions.isEmpty()) {
+                BotActionData data = TutorialManager.forcedBotActions.pollFirst().get();
+                if (data == null)
+                    return false;
+                else
+                    return executeMove(data);
+            }
         }
         long teamUnitCount = level.unitSet.stream().filter(u -> u.data.team == team).count();
         float m = Math.max(MathUtil.lerp(15, 0, teamUnitCount / (level.levelRenderer.energyManager.incomeMap.get(team) / 12f)), 0);
@@ -115,11 +120,11 @@ public class BotHandler implements Deletable, Tickable {
                         WeaponInstance thisWeapon = firingData.getBestWeaponAgainst(true);
                         if (thisWeapon == null)
                             break;
-                        float damageDealt = thisWeapon.getDamageAgainst(firingData);
+                        float damageDealt = firingData.displayDamage(thisWeapon).amount;
                         FiringData reverse = FiringData.reverse(firingData);
                         WeaponInstance otherWeapon = reverse.getBestWeaponAgainst(true);
                         if (firingData.otherData.hitPoints > 0 && otherWeapon != null && otherWeapon.template.counterattack) {
-                            damageDealt -= otherWeapon.getDamageAgainst(reverse);
+                            damageDealt -= firingData.displayDamage(otherWeapon).amount;
                         }
                         v = noise() * (d.get(p) - current + damageDealt * 30) / (energyCost + 2 + costModifier(m, u) + u.stats.getActionCost(Action.FIRE).orElse(0));
                         if (t.hasStructure() && level.samePlayerTeam(team, t.structure.team) && other.canCapture())
@@ -182,11 +187,11 @@ public class BotHandler implements Deletable, Tickable {
                 WeaponInstance thisWeapon = firingData.getBestWeaponAgainst(true);
                 if (thisWeapon == null)
                     break;
-                float damageDealt = thisWeapon.getDamageAgainst(firingData);
+                float damageDealt = firingData.displayDamage(thisWeapon).amount;
                 FiringData reverse = FiringData.reverse(firingData);
                 WeaponInstance otherWeapon = reverse.getBestWeaponAgainst(true);
                 if (firingData.otherData.hitPoints > 0 && otherWeapon != null && otherWeapon.template.counterattack) {
-                    damageDealt -= otherWeapon.getDamageAgainst(reverse);
+                    damageDealt -= firingData.displayDamage(otherWeapon).amount;
                 }
                 Tile t = level.getTile(firingTile);
                 float v = (damageDealt * 30) / (u.stats.getActionCost(Action.FIRE).orElse(0) + costModifier(m, u));
@@ -294,9 +299,9 @@ public class BotHandler implements Deletable, Tickable {
             }
             float v;
             if (u.data.stealthMode) {
-                v = noise() * 0.3f * (3 * enemyCount + 10 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5) * (float) Math.log(u.stats.getPerTurnActionCost(Action.STEALTH).orElse(1) + 1 + costModifier(m, u));
+                v = noise() * 0.3f * (3 * enemyCount + 10 * (float) Math.log((float) (data.enemiesDestroyed + 1) / (level.initialPlayerCount() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5) * (float) Math.log(u.stats.getPerTurnActionCost(Action.STEALTH).orElse(1) + 1 + costModifier(m, u));
             } else
-                v = noise() * (28 - 4 * enemyCount - 5 * (float) Math.log((float) (enemiesDestroyed + 1) / (level.playerTeam.size() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5 * u.stats.getPerTurnActionCost(Action.STEALTH).orElse(0) + 1 + costModifier(m, u));
+                v = noise() * (28 - 4 * enemyCount - 5 * (float) Math.log((float) (data.enemiesDestroyed + 1) / (level.initialPlayerCount() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5 * u.stats.getPerTurnActionCost(Action.STEALTH).orElse(0) + 1 + costModifier(m, u));
             if (v > value.get() && v > 0.4f) {
                 unit.set(u);
                 action.set(Action.STEALTH);
@@ -456,7 +461,8 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
 
-        level.basePositions.forEach((t, pos) -> {
+        level.teamData.forEach((t, data) -> {
+            Point pos = data.basePos;
             if (!level.samePlayerTeam(t, team)) {
                 data(ENEMY_UNIT_POSITIONS)
                         .addValue(pos, 25, r -> (float) Math.pow(100f - 4 * r, 0.7f) * 3);
@@ -551,15 +557,15 @@ public class BotHandler implements Deletable, Tickable {
     }
 
     public void incrementDestroyedUnits() {
-        enemiesDestroyed++;
+        data.enemiesDestroyed++;
     }
 
     public int getDestroyedUnits() {
-        return enemiesDestroyed;
+        return data.enemiesDestroyed;
     }
 
     public void loadDestroyedUnits(int count) {
-        enemiesDestroyed = count;
+        data.enemiesDestroyed = count;
     }
 
     private float noise() {

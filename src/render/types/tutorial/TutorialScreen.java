@@ -8,7 +8,7 @@ import render.HorizontalAlign;
 import render.RenderOrder;
 import render.Renderable;
 import render.UIColourTheme;
-import render.level.info.UnitInfoScreen;
+import render.level.info.InfoScreen;
 import render.types.UIFullScreenColour;
 import render.types.box.UIDisplayBox;
 import render.types.box.UIDisplayBoxRenderElement;
@@ -35,7 +35,7 @@ public class TutorialScreen extends LevelUIContainer<Level> {
         this.width = width;
         addRenderables((r, b) -> {
             float maxHeight = Renderable.top() * 0.8f;
-            new UIFullScreenColour(r, RenderOrder.TUTORIAL_INFO_SCREEN, UnitInfoScreen.FULL_SCREEN_MENU_BACKGROUND_COLOUR)
+            new UIFullScreenColour(r, RenderOrder.TUTORIAL_INFO_SCREEN, InfoScreen.FULL_SCREEN_MENU_BACKGROUND_COLOUR)
                     .setZOrder(-100);
             scrollSurface = new UIScrollSurface(r, b, RenderOrder.TUTORIAL_INFO_SCREEN, 0, 0, Renderable.right(), Renderable.top(), false, (r2, b2) -> {
                 UIDisplayBoxRenderElement element = new UIDisplayBoxRenderElement(r2, RenderOrder.TUTORIAL_INFO_SCREEN, Renderable.right() / 2, 0, width, -1, box -> {

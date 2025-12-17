@@ -8,17 +8,16 @@ import level.Level;
 import level.tutorial.TutorialManager;
 import network.NetworkState;
 import render.*;
+import render.level.info.InfoScreen;
 import render.level.tile.RenderElement;
 import render.save.UISaveBox;
-import render.UIColourTheme;
-import render.types.text.UITextLabel;
-import render.types.input.button.UIButton;
-import render.types.input.UITextInputBox;
 import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
+import render.types.input.UITextInputBox;
+import render.types.input.button.UIButton;
+import render.types.text.UITextLabel;
 import save.GameSave;
-
-import static render.level.info.UnitInfoScreen.*;
+import save.LoadedFromSave;
 
 public class PauseMenu extends LevelUIContainer<Level> {
     private static final float WIDTH = 18, HEIGHT = 2.5f, Y_OFFSET = -5;
@@ -26,16 +25,16 @@ public class PauseMenu extends LevelUIContainer<Level> {
     public UITextInputBox saveFileNameBox;
     private UIButton saveButton, saveGame;
     private boolean botPlaying = false;
-    private UISaveBox<GameSave> saveBox;
+    private UISaveBox<? extends LoadedFromSave> saveBox;
 
     public PauseMenu(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, Level level) {
         super(register, buttonRegister, order, 0, 0, level);
         addRenderables((r, b) -> {
             new OnButtonInput(b, RenderOrder.PAUSE_MENU, t -> t == InputType.ESCAPE, () -> setEnabled(false));
             new RenderElement(r, RenderOrder.PAUSE_MENU_BACKGROUND, g -> {
-                g.setColor(FULL_SCREEN_MENU_BACKGROUND_COLOUR);
+                g.setColor(InfoScreen.FULL_SCREEN_MENU_BACKGROUND_COLOUR);
                 g.fillRect(0, 0, (int) Math.ceil(Renderable.right()), (int) Math.ceil(Renderable.top()));
-                if (botPlaying != level.bots.get(level.getActiveTeam())) {
+                if (botPlaying != level.getActiveTeamData().bot) {
                     botPlaying = !botPlaying;
                     updateSaveGameButton();
                 }
@@ -68,7 +67,10 @@ public class PauseMenu extends LevelUIContainer<Level> {
                 saveButton = new UIButton(r2, b2, RenderOrder.PAUSE_MENU, (15 - 8) / 2f + 2, 17.3f, 8, 1.2f, 1, false)
                         .setText("Save").setBold().setColourTheme(UIColourTheme.GRAYED_OUT).setClickEnabled(false).setOnClick(() -> {
                             String name = saveFileNameBox.getText();
-                            MainPanel.levelSaves.addSave(new GameSave(level, name), name);
+                            if (MainPanel.spState != null)
+                                MainPanel.levelSaves.addSave(MainPanel.spState.copy().save(level, name), name);
+                            else
+                                MainPanel.levelSaves.addSave(new GameSave(level, name), name);
                             saveButton.setColourTheme(UIColourTheme.DEEP_GREEN).setText("Saved!").setClickEnabled(false);
                             updateSaves();
                         });

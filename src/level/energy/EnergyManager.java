@@ -4,6 +4,9 @@ import foundation.input.ButtonRegister;
 import foundation.math.MathUtil;
 import level.Level;
 import level.structure.Structure;
+import level.tutorial.TutorialElement;
+import level.tutorial.TutorialManager;
+import level.tutorial.sequence.event.EnergyBoxListener;
 import network.NetworkState;
 import network.PacketWriter;
 import network.Writable;
@@ -23,6 +26,7 @@ import render.types.container.UIScrollSurface;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
+import unit.stats.modifiers.types.ModifierCategory;
 
 import java.awt.*;
 import java.io.DataOutputStream;
@@ -34,6 +38,7 @@ import static render.types.text.UITextLabel.*;
 
 public class EnergyManager extends LevelUIContainer<Level> implements Writable {
     public static final ImageRenderer ENERGY_IMAGE = ImageRenderer.renderImageCentered(new ResourceLocation("icons/energy.png"), true, true);
+    public static final int TUTORIAL_INCOME = 100;
     public static final String displayName = "Antimatter";
 
     private final TextRenderer availableText, incomeText, availableChangeText, incomeChangeText;
@@ -66,8 +71,9 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         Renderable incomeChangeTranslated = incomeChangeText.translate(8.4f, .15f);
         addRenderables((r, b) -> {
             new UIButton(r, b, RenderOrder.LEVEL_UI, 0, -.6f, 10, 3.6f, 0, true)
-                    .setColourTheme(UIColourTheme.LIGHT_BLUE_TRANSPARENT_CENTER).setOnClick(() -> {
+                    .setColourTheme(UIColourTheme.LIGHT_BLUE_BOX).setOnClick(() -> {
                         incomeBox.setEnabled(true);
+                        TutorialManager.acceptEvent(new EnergyBoxListener.IncomeBoxEvent(level));
                     }).setOnDeselect(() -> {
                         incomeBox.setEnabled(false);
                     }).toggleMode().tooltip(t -> t.add(13, AbstractUITooltip.dark(), displayName + " is used by your units to perform actions. Income is credited to you at the start of each turn. Click this window to see more details.")).setZOrder(-1);
@@ -164,7 +170,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         addAvailable(team, incomeMap.get(team) + costsMap.get(team));
     }
 
-    private void addAvailable(UnitTeam team, int amount) {
+    public void addAvailable(UnitTeam team, int amount) {
         availableMap.compute(team, (t, i) -> Math.clamp(i + amount, 0, Math.max(i, getEnergyCapacity(team))));
         if (level.getThisTeam() == team) {
             updateDisplay(team);
@@ -188,13 +194,28 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
         costLineItems.forEach(UIContainer::delete);
         costLineItems.clear();
         ArrayList<LineItemData> incomeList = new ArrayList<>(), expenseList = new ArrayList<>();
+        if (TutorialManager.isDisabled(TutorialElement.TUTORIAL_INCOME_DISABLED)) {
+            incomeList.add(new LineItemData("Tutorial", TUTORIAL_INCOME, -1));
+            for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
+                incomeMap.compute(team, (t, i) -> i + TUTORIAL_INCOME);
+            }
+        }
+        for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
+            if (!level.teamData.containsKey(team))
+                continue;
+            int income = Math.round(level.teamData.get(team).getCardModifierValue(ModifierCategory.INCOME, Float::sum));
+            if (income != 0) {
+                incomeList.add(new LineItemData("Cards", income, -1));
+                incomeMap.compute(team, (t, i) -> i + income);
+            }
+        }
         level.tileSelector.tileSet.forEach(t -> {
             Structure s = t.structure;
             if (t.hasStructure() && s.team != null) {
                 incomeMap.compute(s.team, (team, i) -> {
                     if (team == thisTeam)
-                        LineItemData.addToList(s.type.getName(), s.type.energyIncome, incomeList);
-                    return i + s.type.energyIncome;
+                        LineItemData.addToList(s.type.getName(), s.stats.energyIncome(level), incomeList);
+                    return i + s.stats.energyIncome(level);
                 });
             }
         });
@@ -231,7 +252,7 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
                 incomeLineItems.add(new UIContainer(r, b, RenderOrder.LEVEL_UI, 0.5f, i.get() * -1.3f).addRenderables((r2, b2) -> {
                     new RenderElement(r2, RenderOrder.LEVEL_UI,
                             new UIBox(9, 1f).setColourTheme(UIColourTheme.DARK_GRAY).setCorner(0.5f),
-                            new TextRenderer(s.count + "x " + s.name, 0.6f, TEXT_COLOUR)
+                            new TextRenderer((s.count == -1 ? "" : s.count + "x ") + s.name, 0.6f, TEXT_COLOUR)
                                     .setBold(true).setTextAlign(HorizontalAlign.LEFT).translate(0.3f, 0.3f),
                             new TextRenderer(numberText(s.income) + TextRenderable.ENERGY.display, 0.7f, numberColour(s.income))
                                     .setBold(true).setTextAlign(HorizontalAlign.RIGHT).translate(9 - 0.1f, 0.25f)
@@ -309,6 +330,14 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
 
     public static Color numberColour(float amount) {
         return amount == 0 ? TEXT_COLOUR : (amount < 0 ? StyleElement.ENERGY_COST_RED : StyleElement.ENERGY_COST_GREEN).colour;
+    }
+
+    public static String colouredDisplay(StyleElement end, boolean lowercase) {
+        return StyleElement.ENERGY_DISPLAY.display + (lowercase ? displayName.toLowerCase() : displayName) + TextRenderable.ENERGY_ICON.display + (end == null ? "" : end.display);
+    }
+
+    public static String colouredAmount(StyleElement end, int amount) {
+        return StyleElement.ENERGY_DISPLAY.display + amount + TextRenderable.ENERGY_ICON.display + (end == null ? "" : end.display);
     }
 
     @Override

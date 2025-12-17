@@ -27,6 +27,10 @@ public class AnimSequence implements AnimValue {
         return this;
     }
 
+    public int keyframeCount() {
+        return keyframes.size();
+    }
+
     @Override
     public float getValue(float time) {
         Map.Entry<Float, Keyframe> entryA = keyframes.floorEntry(time);

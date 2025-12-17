@@ -127,7 +127,7 @@ public class EditorLevelRenderer extends AbstractLevelRenderer<LevelEditor> {
                                         }
                                         if (type == null)
                                             return null;
-                                        return ImageRenderer.renderImageCentered(type.getImage(editingTeam == NeutralUnitTeam.NEUTRAL ? UnitTeam.ORDERED_TEAMS[0] : editingTeam.unitTeam, UnitPose.INFO), true);
+                                        return ImageRenderer.renderImageCentered(type.getImage(editingTeam == NeutralUnitTeam.NEUTRAL ? UnitTeam.ORDERED_TEAMS[0] : editingTeam.unitTeam, UnitPose.INFO, false), true);
                                     });
                                     unitDisplays.add(display);
                                     return display.addRenderables((r4, b4) -> {

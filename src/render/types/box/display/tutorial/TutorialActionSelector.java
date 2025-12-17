@@ -32,7 +32,7 @@ public class TutorialActionSelector extends AbstractActionSelector {
         return this;
     }
 
-    public TutorialActionSelector setUnit(UnitLike unit) {
+    public TutorialActionSelector setUnit(TutorialMapUnit unit, boolean capture) {
         this.unit = unit;
         renderPos = unit.getRenderPos();
         setEnabled(true);
@@ -40,6 +40,8 @@ public class TutorialActionSelector extends AbstractActionSelector {
         for (Action action : unit.data.type.actions) {
             addActionEnabled(action, null);
         }
+        if (capture && unit.data.type.canCapture)
+            addActionEnabled(Action.CAPTURE, null);
         return this;
     }
 

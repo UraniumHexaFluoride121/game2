@@ -7,7 +7,7 @@ import unit.type.UnitType;
 import java.util.function.Predicate;
 
 public class UnitSelectListener implements TutorialEventListener {
-    private final Predicate<Unit> unitPredicate;
+    private Predicate<Unit> unitPredicate;
 
     public static UnitSelectListener ofTeam(UnitTeam team) {
         return new UnitSelectListener(u -> u.data.team == team);
@@ -15,6 +15,10 @@ public class UnitSelectListener implements TutorialEventListener {
 
     public static UnitSelectListener ofType(UnitType type) {
         return new UnitSelectListener(u -> u.data.type == type);
+    }
+
+    public static UnitSelectListener any() {
+        return new UnitSelectListener(_ -> true);
     }
 
     private UnitSelectListener(Predicate<Unit> unitPredicate) {
@@ -29,5 +33,11 @@ public class UnitSelectListener implements TutorialEventListener {
                 return unitPredicate.test(u);
         }
         return false;
+    }
+
+    @Override
+    public void delete() {
+        TutorialEventListener.super.delete();
+        unitPredicate = null;
     }
 }

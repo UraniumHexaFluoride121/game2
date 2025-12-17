@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Vector;
@@ -260,7 +261,11 @@ public class Server implements Deletable {
         public void queueTeamsAvailablePacket() {
             queuePacket(new PacketWriter(PacketType.TEAMS_AVAILABLE, w -> {
                 PacketWriter.writeMap(server.teamClientIDs, k -> PacketWriter.writeEnum(k, w), w::writeInt, w);
-                PacketWriter.writeMap(server.level.bots, k -> PacketWriter.writeEnum(k, w), w::writeBoolean, w);
+                HashMap<UnitTeam, Boolean> bots = new HashMap<>();
+                server.level.teamData.forEach((team, data) -> {
+                    bots.put(team, data.bot);
+                });
+                PacketWriter.writeMap(bots, k -> PacketWriter.writeEnum(k, w), w::writeBoolean, w);
             }));
         }
 
@@ -284,6 +289,14 @@ public class Server implements Deletable {
             queuePacket(new PacketWriter(PacketType.ENERGY_UPDATE, w -> {
                 server.level.levelRenderer.energyManager.write(w);
             }));
+        }
+
+        public void queueTeamDataPacket() {
+            queuePacket(new PacketWriter(PacketType.TEAM_DATA_UPDATE, this::writeTeamData));
+        }
+
+        private void writeTeamData(DataOutputStream w) throws IOException {
+            PacketWriter.writeMap(server.level.teamData, k -> PacketWriter.writeEnum(k, w), v -> v.write(w), w);
         }
 
         public synchronized void queuePacket(PacketWriter packet) {
@@ -317,16 +330,13 @@ public class Server implements Deletable {
                 case JOIN_REQUEST -> {
                     UnitTeam requestedTeam = PacketReceiver.readEnum(UnitTeam.class, reader);
                     MainPanel.addTask(() -> {
-                        if (server.teamClientIDs.containsKey(requestedTeam) || server.level.bots.get(requestedTeam)) {
+                        if (server.teamClientIDs.containsKey(requestedTeam) || server.level.teamData.get(requestedTeam).bot) {
                             queueTeamsAvailablePacket();
                         } else {
                             server.teamClientIDs.put(requestedTeam, clientID);
                             server.sendTeamsAvailablePacket();
                             queuePacket(new PacketWriter(PacketType.JOIN_REQUEST_ACCEPTED, w -> {
-                                PacketWriter.writeMap(server.level.playerTeam, k -> PacketWriter.writeEnum(k, w), v -> PacketWriter.writeEnum(v, w), w);
-                                PacketWriter.writeMap(server.level.initialPlayerTeams, k -> PacketWriter.writeEnum(k, w), v -> PacketWriter.writeEnum(v, w), w);
-                                PacketWriter.writeMap(server.level.destroyedUnitsDamage, k -> PacketWriter.writeEnum(k, w), w::writeFloat, w);
-                                PacketWriter.writeMap(server.level.destroyedUnitsByTeam, k -> PacketWriter.writeEnum(k, w), w::writeInt, w);
+                                writeTeamData(w);
                                 w.writeLong(server.level.seed);
                                 w.writeFloat(server.level.botDifficulty);
                                 w.writeInt(server.level.tilesX);

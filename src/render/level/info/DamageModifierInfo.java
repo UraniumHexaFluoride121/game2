@@ -33,7 +33,7 @@ public class DamageModifierInfo extends InfoScreen {
                     new MultiLineTextBox(1, 21.5f, 22, 0.6f, HorizontalAlign.LEFT)
                             .updateText("""
                                     These are the damage modifiers currently in effect for attacking the selected enemy unit. Certain modifiers \
-                                    are applied to the attacking unit, while others are applied to the enemy unit being attacked. \
+                                    affect the attacking unit, while others affect the enemy unit being attacked. \
                                     This can be seen in the top right corner of each modifier.
                                     
                                     All modifiers are applied multiplicatively to the attacking unit's base damage, along with the penalty \

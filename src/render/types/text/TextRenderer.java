@@ -10,7 +10,7 @@ import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-public class TextRenderer implements Renderable {
+public class TextRenderer implements TextObject {
     protected HitBox bounds, boxBounds;
     private final ArrayList<TextRenderElement> elements = new ArrayList<>();
     private float widthNonScaled = 0;
@@ -122,11 +122,13 @@ public class TextRenderer implements Renderable {
         update = true;
     }
 
-    public void updateText(String text) {
+    @Override
+    public TextRenderer updateText(String text) {
         if (this.text == null || !this.text.equals(text)) {
             this.text = text;
             update = true;
         }
+        return this;
     }
 
     private void applyStyle(TextStyle style, Graphics2D g) {

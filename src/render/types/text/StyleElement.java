@@ -1,6 +1,7 @@
 package render.types.text;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.function.BiFunction;
 
 public enum StyleElement {
@@ -10,6 +11,9 @@ public enum StyleElement {
 
     ENERGY_COST_GREEN(TextStyle::setColour, new Color(105, 214, 87)),
     ENERGY_COST_RED(TextStyle::setColour, new Color(214, 83, 83)),
+    ENERGY_DISPLAY(TextStyle::setColour, new Color(134, 49, 213)),
+
+    ATTRIBUTE_DEFENCE_NETWORK(TextStyle::setColour, new Color(83, 135, 84)),
 
     MODIFIER_RESUPPLY(TextStyle::setColour, new Color(161, 101, 37)),
     MODIFIER_VIEW_RANGE(TextStyle::setColour, new Color(45, 218, 152)),
@@ -25,10 +29,12 @@ public enum StyleElement {
     MODIFIER_SHIELD_HP(TextStyle::setColour, new Color(45, 218, 204)),
     MODIFIER_SHIELD_REGEN(TextStyle::setColour, new Color(45, 218, 204)),
     MODIFIER_MINING(TextStyle::setColour, new Color(134, 49, 213)),
+    MODIFIER_INCOME(TextStyle::setColour, new Color(134, 49, 213)),
+    MODIFIER_ACTION_COST(TextStyle::setColour, new Color(197, 138, 75)),
 
     EMPTY_TILE(TextStyle::setColour, new Color(112, 112, 112)),
     NEBULA_TILE(TextStyle::setColour, new Color(156, 64, 182)),
-    DENSE_NEBULA_TILE(TextStyle::setColour, new Color(120, 49, 186)),
+    DENSE_NEBULA_TILE(TextStyle::setColour, new Color(132, 56, 209)),
     ASTEROID_TILE(TextStyle::setColour, new Color(145, 145, 145)),
 
     BOX_GRAY(TextStyle::setColour, new Color(191, 191, 191)),
@@ -48,5 +54,21 @@ public enum StyleElement {
         this.modifier = modifier;
         this.colour = colour;
         display = "[" + name() + "]";
+    }
+
+    public static String removeStyle(String s) {
+        while (s.indexOf('[') != -1) {
+            s = s.substring(0, s.indexOf('[')) + s.substring(s.indexOf(']') + 1);
+        }
+        return s;
+    }
+
+    public static String[] getStyles(String s) {
+        ArrayList<String> styles = new ArrayList<>();
+        while (s.indexOf('[') != -1) {
+            styles.add(s.substring(s.indexOf('['), s.indexOf(']') + 1));
+            s = s.substring(0, s.indexOf('[')) + s.substring(s.indexOf(']') + 1);
+        }
+        return styles.toArray(new String[0]);
     }
 }

@@ -28,14 +28,6 @@ public class ModifyElements extends TutorialAction {
         return new ModifyElements(l, false, false, elements);
     }
 
-    public static ModifyElements disableAll(Level l) {
-        return new ModifyElements(l, false, false, TutorialElement.values());
-    }
-
-    public static ModifyElements enableAll(Level l) {
-        return new ModifyElements(l, true, false, TutorialElement.values());
-    }
-
     public static ModifyElements actionCameraNoDeselect(Level l) {
         return new ModifyElements(l,
                 TutorialElement.TILE_SELECTION,

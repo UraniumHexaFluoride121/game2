@@ -8,7 +8,7 @@ import render.Renderable;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class MultiLineTextBox implements Renderable, Deletable {
+public class MultiLineTextBox implements TextObject, Deletable {
     private String s, newString;
     private final float x, y;
     private float width;
@@ -28,6 +28,7 @@ public class MultiLineTextBox implements Renderable, Deletable {
         this.textAlign = textAlign;
     }
 
+    @Override
     public MultiLineTextBox updateText(String s) {
         newString = s;
         if (newString == null) {

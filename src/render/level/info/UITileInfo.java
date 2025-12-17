@@ -23,8 +23,8 @@ import render.types.text.TextRenderable;
 import render.types.text.UIStaticTooltip;
 import render.types.text.UITextLabel;
 import unit.action.Action;
-import unit.stats.Modifier;
-import unit.stats.ModifierCategory;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.ModifierCategory;
 
 import java.awt.*;
 
@@ -50,27 +50,27 @@ public class UITileInfo extends LevelUIContainer<Level> {
             }, false);
             elements.box.setRenderBox(false);
             elements.setZOrder(2);
-            structure = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(Modifier.BLUE_BACKGROUND), false)
+            structure = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(UIColourTheme.createBoxTheme(DEEP_LIGHT_BLUE)), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, "Structure")
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
-            concealment = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(Modifier.VIEW_RANGE_BACKGROUND), false)
+            concealment = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(ModifierCategory.CONCEALMENT.colour), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, ModifierCategory.CONCEALMENT.getName())
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
-            movement = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(Modifier.MOVEMENT_BACKGROUND), false)
+            movement = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(ModifierCategory.MOVEMENT_COST_DISPLAY.colour), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, ModifierCategory.MOVEMENT_COST_DISPLAY.getName())
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
-            incomingDamage = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(Modifier.INCOMING_DAMAGE_BACKGROUND), false)
+            incomingDamage = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(ModifierCategory.INCOMING_DAMAGE.colour), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, ModifierCategory.INCOMING_DAMAGE.getName())
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null);
-            mining = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(Modifier.MINING_BACKGROUND), false)
+            mining = new UIDisplayBox(0, 0, 13, -1, uiBox -> uiBox.setColourTheme(Action.MINE.colourTheme), false)
                     .setWidthMargin(0.2f)
                     .addText(0.7f, HorizontalAlign.LEFT, EnergyManager.displayName)
                     .addSpace(0.2f, 0)
-                    .addBar(new UIHitPointBar(0f, 1, 0.6f, 0.15f, 1, Modifier.MINING_BACKGROUND).barOnly().setRounding(0.5f), HorizontalAlign.CENTER, 0, true)
+                    .addBar(new UIHitPointBar(0f, 1, 0.6f, 0.15f, 1, Action.MINE.colourTheme).barOnly().setRounding(0.5f), HorizontalAlign.CENTER, 0, true)
                     .addSpace(0.1f, 0)
                     .addText(0.7f, HorizontalAlign.RIGHT, 1, null)
                     .setColumnVerticalAlign(1, VerticalAlign.TOP);
@@ -97,7 +97,7 @@ public class UITileInfo extends LevelUIContainer<Level> {
                 UIDisplayBox energyIncomeStats = new UIDisplayBox(0, 0, width - 2, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, EnergyManager.displayName + " Income:")
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
-                UIDisplayBox energyIncome = new UIDisplayBox(0, 0, width - 1, -1, uiBox -> uiBox.setColourTheme(Modifier.MINING_BACKGROUND), false)
+                UIDisplayBox energyIncome = new UIDisplayBox(0, 0, width - 1, -1, uiBox -> uiBox.setColourTheme(ModifierCategory.INCOME.colour), false)
                         .addText(0.8f, HorizontalAlign.LEFT, EnergyManager.displayName + " Income")
                         .addSpace(0.2f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This structure increases " + EnergyManager.displayName + " income, which gets credited to you at the start of your turn.")
@@ -106,13 +106,13 @@ public class UITileInfo extends LevelUIContainer<Level> {
                 UIDisplayBox repairStats = new UIDisplayBox(0, 0, width - 2, -1, uiBox -> uiBox.setColourTheme(LIGHT_BLUE_BOX_DARK), false)
                         .addText(0.6f, HorizontalAlign.LEFT, ModifierCategory.REPAIR.getName())
                         .addText(0.6f, HorizontalAlign.RIGHT, 1, null);
-                UIDisplayBox repair = new UIDisplayBox(0, 0, width - 1, -1, uiBox -> uiBox.setColourTheme(Modifier.GREEN_BACKGROUND), false)
+                UIDisplayBox repair = new UIDisplayBox(0, 0, width - 1, -1, uiBox -> uiBox.setColourTheme(Action.REPAIR.colourTheme), false)
                         .addText(0.8f, HorizontalAlign.LEFT, "Unit " + ModifierCategory.REPAIR.getName())
                         .addSpace(0.2f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This structure repairs the HP of allied units on the same tile at the start of their turn.")
                         .addSpace(0.3f, 0)
                         .addBox(repairStats, HorizontalAlign.CENTER, 0, false);
-                UIDisplayBox resupply = new UIDisplayBox(0, 0, width - 1, -1, uiBox -> uiBox.setColourTheme(Modifier.RESUPPLY_BACKGROUND), false)
+                UIDisplayBox resupply = new UIDisplayBox(0, 0, width - 1, -1, uiBox -> uiBox.setColourTheme(Action.RESUPPLY.colourTheme), false)
                         .addText(0.8f, HorizontalAlign.LEFT, "Unit " + Action.RESUPPLY.getName())
                         .addSpace(0.2f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT, "This structure fully resupplies the ammunition of allied units on the same tile at the start of their turn.");
@@ -167,8 +167,8 @@ public class UITileInfo extends LevelUIContainer<Level> {
                 displayBox.addText(0.9f, HorizontalAlign.LEFT, EnergyManager.displayName)
                         .addSpace(0.3f, 0)
                         .addText(0.6f, HorizontalAlign.LEFT,
-                                "This is the number of turns left that this tile can be mined for " + EnergyManager.displayName + " before it is depleted. Once depleted, the tile will turn into an " +
-                                        TileType.EMPTY.getName().toLowerCase() + " tile.");
+                                "This is the number of turns left that this tile can be mined for " + EnergyManager.displayName + " before it is depleted. Once depleted, the tile will turn into " +
+                                        TileType.EMPTY.getNameArticle().toLowerCase() + " tile.");
                 return displayBox;
             });
 
@@ -217,13 +217,13 @@ public class UITileInfo extends LevelUIContainer<Level> {
             structureBox.setText(2, 0, structure.type.description);
             structureBox.getDisplayBox(4, 0).setText(0, 1, structure.type.captureSteps + " Turns");
 
-            structureBox.setElementEnabled(structure.type.energyIncome != 0, 6, 0);
-            structureBox.getDisplayBox(6, 0).getDisplayBox(4, 0).setText(0, 1, "+" + structure.type.energyIncome + TextRenderable.ENERGY_ICON.display);
+            structureBox.setElementEnabled(structure.stats.energyIncome(level) != 0, 6, 0);
+            structureBox.getDisplayBox(6, 0).getDisplayBox(4, 0).setText(0, 1, "+" + structure.stats.energyIncome(level) + TextRenderable.ENERGY_ICON.display);
 
-            structureBox.setElementEnabled(structure.type.unitRegen != 0, 8, 0);
-            structureBox.getDisplayBox(8, 0).getDisplayBox(4, 0).setText(0, 1, "+" + structure.type.unitRegen + TextRenderable.REPAIR_ICON.display);
+            structureBox.setElementEnabled(structure.stats.unitRegen(level) != 0, 8, 0);
+            structureBox.getDisplayBox(8, 0).getDisplayBox(4, 0).setText(0, 1, "+" + structure.stats.unitRegen(level) + TextRenderable.REPAIR_ICON.display);
 
-            structureBox.setElementEnabled(structure.type.resupply, 10, 0);
+            structureBox.setElementEnabled(structure.stats.resupply(level), 10, 0);
         } else
             structureImage = null;
         structureBox.setEnabled(tile.hasStructure());

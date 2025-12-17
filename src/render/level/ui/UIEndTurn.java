@@ -23,7 +23,7 @@ public class UIEndTurn extends AbstractRenderElement implements RegisteredButton
     private final HitBox hitBox = HitBox.createFromOriginAndSize(3.5f, Renderable.top() - 2.5f, 9, 2);
     private Level level;
     private final ButtonClickHandler clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, false, this::onClick);
-    private final UIBox box = new UIBox(9, 2).setClickHandler(clickHandler);
+    private final UIBox box = new UIBox(9, 2).setClickHandler(clickHandler).setColourTheme(UIColourTheme.LIGHT_BLUE_BOX);
     private float textOffset = 0.5f;
 
     public UIEndTurn(RenderRegister<OrderedRenderable> register, RenderOrder order, Level level) {

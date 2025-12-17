@@ -28,6 +28,7 @@ import render.types.text.UITextNotification;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.action.Action;
+import unit.weapon.DamageHandler;
 import unit.weapon.WeaponInstance;
 
 import java.awt.*;
@@ -54,7 +55,6 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
     public UIEndTurn endTurn;
     public UITileInfo tileInfo;
     public UIButton exitActionButton;
-    public UnitInfoScreen unitInfoScreen;
     public DamageModifierInfo damageModifierInfo;
     public MovementModifierInfo movementModifierInfo;
     public EnergyManager energyManager;
@@ -69,12 +69,12 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         super.createRenderers();
         if (MainPanel.BOT_DEBUG_RENDER != null) {
             new RenderElement(mainRenderer, RenderOrder.TILE_HIGHLIGHT, g -> {
-                if (level.bots.get(level.getActiveTeam())) {
+                if (level.teamData.get(level.getActiveTeam()).bot) {
                     if (MainPanel.BOT_DEBUG_RENDER_UNIT) {
-                        if (level.botHandlerMap.get(level.getActiveTeam()).unitDebugData != null)
-                            level.botHandlerMap.get(level.getActiveTeam()).unitDebugData.render(g);
+                        if (level.getActiveTeamData().botHandler.unitDebugData != null)
+                            level.getActiveTeamData().botHandler.unitDebugData.render(g);
                     } else
-                        level.botHandlerMap.get(level.getActiveTeam()).tileData.get(MainPanel.BOT_DEBUG_RENDER).render(g);
+                        level.getActiveTeamData().botHandler.tileData.get(MainPanel.BOT_DEBUG_RENDER).render(g);
                 }
             });
         }
@@ -156,7 +156,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
                 .setShape(UIShapeButton::map).setOnClick(() -> {
                     mapUI.setEnabled(true);
                     mapUI.update();
-                }).tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Open map"));
+                }).setColourTheme(UIColourTheme.LIGHT_BLUE_BOX).tooltip(t -> t.add(-1, AbstractUITooltip.dark(), "Open map"));
         mapUI = new LevelMapUI(levelUIRenderer, level.buttonRegister, level);
         mapUI.setEnabled(false);
 
@@ -166,8 +166,6 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         nextPlayerScreen = new LocalNextPlayerScreen(levelUIRenderer, level.buttonRegister, level);
         nextPlayerScreen.setEnabled(false);
 
-        unitInfoScreen = new UnitInfoScreen(levelUIRenderer, level.buttonRegister, level);
-        unitInfoScreen.setEnabled(false);
         damageModifierInfo = new DamageModifierInfo(levelUIRenderer, level.buttonRegister, level);
         movementModifierInfo = new MovementModifierInfo(levelUIRenderer, level.buttonRegister, level);
 
@@ -177,7 +175,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
                 0.5f, Renderable.top() - 2.5f, 2, 2, false, level)
                 .setShape(UIShapeButton::threeLines).drawShape(0.15f).setOnClick(() -> {
                     pauseMenu.setEnabled(true);
-                });
+                }).setColourTheme(UIColourTheme.LIGHT_BLUE_BOX);
         pauseMenu = new PauseMenu(levelUIRenderer, level.buttonRegister, RenderOrder.PAUSE_MENU, level);
         pauseMenu.setEnabled(false);
     }
@@ -262,15 +260,15 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         return isFiring;
     }
 
-    public void beginFiring(Unit attacking, Unit defending, WeaponInstance weaponA, WeaponInstance weaponB) {
+    public void beginFiring(Unit attacking, Unit defending, WeaponInstance weaponA, WeaponInstance weaponB, DamageHandler handler) {
         isFiring = true;
         registerAnimBlock(firingAnimRenderer);
-        firingRenderer.start(attacking, defending, weaponA, weaponB);
+        firingRenderer.start(attacking, defending, weaponA, weaponB, handler);
     }
 
-    public void endFiring(Unit attacking, Unit defending) {
+    public void endFiring(Unit attacking, Unit defending, DamageHandler handler) {
         isFiring = false;
-        attacking.postFiringOther(defending);
+        attacking.postFiringOther(defending, handler);
         defending.tileFlash(Unit.ATTACK_TILE_FLASH);
         removeAnimBlock(firingAnimRenderer);
     }

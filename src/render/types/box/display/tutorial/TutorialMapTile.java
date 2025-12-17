@@ -2,11 +2,15 @@ package render.types.box.display.tutorial;
 
 import foundation.Deletable;
 import foundation.math.ObjPos;
+import level.structure.Structure;
+import level.structure.StructureType;
+import level.tile.Tile;
 import level.tile.TileType;
 import render.GameRenderer;
 import render.Renderable;
 import render.level.tile.HexagonRenderer;
 import render.texture.ImageRenderer;
+import render.types.UIHitPointBar;
 import unit.UnitTeam;
 import unit.type.UnitType;
 
@@ -20,6 +24,10 @@ public class TutorialMapTile implements Renderable, Deletable {
     public final int x, y;
     public final Point pos;
     public TutorialMapUnit unit = null;
+    public Structure structure = null;
+    public UnitTeam initialStructureTeam = null;
+    private UIHitPointBar captureBar = null;
+    public boolean capturing = false;
     public final ObjPos renderPos, centeredRenderPos;
     public final TileType type;
     public final ImageRenderer terrainRenderer;
@@ -48,6 +56,37 @@ public class TutorialMapTile implements Renderable, Deletable {
         return unit;
     }
 
+    public Structure addStructure(StructureType type, UnitTeam team) {
+        structure = new Structure(pos, type, team);
+        captureBar = Tile.newCaptureBar(structure);
+        initialStructureTeam = team;
+        return structure;
+    }
+
+    public void startCapture(UnitTeam team) {
+        captureBar.setFill(0);
+        captureBar.setColour(team.uiColour);
+        capturing = true;
+    }
+
+    public TutorialMapTile forceCaptureSegments(int segments) {
+        captureBar.setSegments(segments);
+        return this;
+    }
+
+    public void setProgress(int progress) {
+        captureBar.setFill(progress, 1f, 0.8f);
+    }
+
+    public void incrementProgress() {
+        setProgress((int) (captureBar.getFill() + 1));
+    }
+
+    public void finishCapture(UnitTeam newTeam) {
+        structure.setTeam(newTeam);
+        capturing = false;
+    }
+
     @Override
     public void render(Graphics2D g) {
         if (unit != null)
@@ -60,6 +99,8 @@ public class TutorialMapTile implements Renderable, Deletable {
             GameRenderer.renderOffset(renderPos, g, () -> FOW_RENDERER.render(g));
         }
         GameRenderer.renderOffset(centeredRenderPos, g, () -> {
+            if (structure != null)
+                structure.renderer.render(g, TILE_SIZE);
             if (terrainRenderer != null) {
                 GameRenderer.renderTransformed(g, () -> {
                     g.rotate(TutorialMapElement.DEG_30);
@@ -70,6 +111,20 @@ public class TutorialMapTile implements Renderable, Deletable {
         if (fow) {
             FOW_RENDERER.setColor(FOW_COLOUR);
             GameRenderer.renderOffset(renderPos, g, () -> FOW_RENDERER.render(g));
+        }
+    }
+
+    public void renderCaptureBar(Graphics2D g) {
+        if (!fow && structure != null && capturing)
+            Tile.renderCaptureBar(renderPos, captureBar, g);
+    }
+
+    public void reset() {
+        if (captureBar != null)
+            captureBar.setFill(0);
+        capturing = false;
+        if (structure != null) {
+            structure.setTeam(initialStructureTeam);
         }
     }
 

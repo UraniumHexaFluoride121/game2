@@ -6,15 +6,15 @@ import foundation.input.InputType;
 import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.ObjPos;
 import level.PlayerTeam;
+import level.TeamData;
 import render.*;
-import render.UIColourTheme;
 import render.types.box.UIBox;
+import render.types.input.UIEnumSelector;
+import render.types.input.button.UIButton;
+import render.types.input.button.UIShapeButton;
 import render.types.text.AbstractUITooltip;
 import render.types.text.UITextDisplayBox;
 import render.types.text.UITextLabel;
-import render.types.input.button.UIButton;
-import render.types.input.UIEnumSelector;
-import render.types.input.button.UIShapeButton;
 import unit.UnitTeam;
 
 import java.awt.geom.AffineTransform;
@@ -57,20 +57,14 @@ public class UIPlayerBoxes extends AbstractRenderElement implements RegisteredBu
         };
     }
 
-    public HashMap<UnitTeam, PlayerTeam> getTeams() {
-        HashMap<UnitTeam, PlayerTeam> teamMap = new HashMap<>();
+    public HashMap<UnitTeam, TeamData> getTeams() {
+        HashMap<UnitTeam, TeamData> teamMap = new HashMap<>();
         boxes.forEach(b -> {
-            teamMap.put(UnitTeam.ORDERED_TEAMS[b.index], b.playerTeamSelector.getValue());
+            teamMap.put(UnitTeam.ORDERED_TEAMS[b.index],
+                    new TeamData(b.isBot, b.playerTeamSelector.getValue())
+            );
         });
         return teamMap;
-    }
-
-    public HashMap<UnitTeam, Boolean> getBots() {
-        HashMap<UnitTeam, Boolean> botMap = new HashMap<>();
-        boxes.forEach(b -> {
-            botMap.put(UnitTeam.ORDERED_TEAMS[b.index], b.isBot);
-        });
-        return botMap;
     }
 
     public void setPlayerCount(int count) {

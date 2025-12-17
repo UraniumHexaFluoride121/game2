@@ -7,7 +7,7 @@ import level.structure.StructureType;
 import level.tile.AbstractTileSelector;
 import level.tile.Tile;
 import level.tile.TileType;
-import unit.stats.modifiers.MovementModifier;
+import unit.stats.modifiers.groups.MovementModifier;
 import unit.type.UnitType;
 
 public class EditorTileSelector extends AbstractTileSelector<LevelEditor> {
@@ -26,7 +26,7 @@ public class EditorTileSelector extends AbstractTileSelector<LevelEditor> {
             UnitType u = level.levelRenderer.getEditingUnitType();
             if (u != null) {
                 if (t.type != TileType.ASTEROIDS || !u.modifiers.contains(MovementModifier.NO_ASTEROID_FIELDS))
-                    level.unitData[t.pos.x][t.pos.y] = new EditorUnitData(u.getInternalName(), level.levelRenderer.editingTeam.unitTeam, getTile(t.pos).renderPos);
+                    level.unitData[t.pos.x][t.pos.y] = new EditorUnitData(u, level.levelRenderer.editingTeam.unitTeam, getTile(t.pos).renderPos);
                 level.onMapChanged();
             } else if (level.levelRenderer.removeUnit()) {
                 level.unitData[t.pos.x][t.pos.y] = new EditorUnitData(null, null, null);

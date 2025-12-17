@@ -35,7 +35,6 @@ public class SaveManager<T extends LoadedFromSave> {
     }
 
     public void loadSavesExternal() {
-        ResourceLocation resource = new ResourceLocation(saveFileName);
         try {
             FileInputStream file = new FileInputStream(saveFileName);
             ObjectInputStream reader = new ObjectInputStream(file);

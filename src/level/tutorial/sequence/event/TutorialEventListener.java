@@ -25,4 +25,8 @@ public interface TutorialEventListener extends Predicate<TutorialEvent>, Deletab
     default void delete() {
 
     }
+
+    default void init() {
+
+    }
 }

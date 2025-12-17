@@ -74,13 +74,14 @@ public class EditableTextRenderer extends TextRenderer implements ButtonInputRec
     }
 
     @Override
-    public void updateText(String text) {
+    public EditableTextRenderer updateText(String text) {
         super.updateText(text);
         if (text == null)
             s = new StringBuilder();
         else
             s = new StringBuilder(text);
         caretUpdate = true;
+        return this;
     }
 
     private void updateCaret(Graphics2D g) {

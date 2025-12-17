@@ -140,6 +140,10 @@ public class Tile implements Writable {
         }
         if (isFoW || !hasStructure())
             return;
+        renderCaptureBar(renderPos, captureBar, g);
+    }
+
+    public static void renderCaptureBar(ObjPos renderPos, UIHitPointBar captureBar, Graphics2D g) {
         GameRenderer.renderOffset(renderPos.x - TILE_SIZE * 0.5f / 2, renderPos.y + TILE_SIZE * 0.7f, g, () -> {
             captureBar.render(g);
             g.translate(TILE_SIZE * 0.32f, -TILE_SIZE * 0.06f);
@@ -182,7 +186,11 @@ public class Tile implements Writable {
 
     public void setStructure(Structure structure) {
         this.structure = structure;
-        captureBar = new UIHitPointBar(
+        captureBar = newCaptureBar(structure);
+    }
+
+    public static UIHitPointBar newCaptureBar(Structure structure) {
+        return new UIHitPointBar(
                 TILE_SIZE * 0.02f, TILE_SIZE * 0.35f, TILE_SIZE * 0.1f, TILE_SIZE * 0.02f,
                 structure.type.captureSteps, UIColourTheme.GRAYED_OUT).setRounding(TILE_SIZE * 0.1f * 0.75f);
     }

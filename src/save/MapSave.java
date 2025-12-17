@@ -87,7 +87,7 @@ public class MapSave implements Serializable, LoadedFromSave, TileMapDisplayable
                 EditorUnitData u = unitData[x][y];
                 u.load();
                 if (u.type() != null)
-                    level.addUnit(new Unit(u.unitType, u.team(), new Point(x, y), level));
+                    level.addUnit(new Unit(u.type, u.team(), new Point(x, y), level), true);
             }
         }
         level.setBasePositions(basePositions);

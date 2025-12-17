@@ -4,20 +4,21 @@ import foundation.Deletable;
 import render.GameRenderer;
 import render.HorizontalAlign;
 import render.Renderable;
+import render.types.text.TextObject;
 import render.types.text.TextRenderer;
 
 import java.awt.*;
 import java.util.function.Consumer;
 
 public class TutorialMapText implements Renderable, Deletable {
-    private final TextRenderer text;
+    private final TextObject text;
     private Consumer<TutorialMapText> onReset;
     private Consumer<TutorialMapText> onRender;
     private TutorialMapElement map;
     private boolean visible = true;
     private final float x, y;
 
-    public TutorialMapText(TutorialMapElement map, float x, float y, TextRenderer text, Consumer<TutorialMapText> onReset, Consumer<TutorialMapText> onRender) {
+    public TutorialMapText(TutorialMapElement map, float x, float y, TextObject text, Consumer<TutorialMapText> onReset, Consumer<TutorialMapText> onRender) {
         this.text = text;
         this.onReset = onReset == null ? TutorialMapText::doNothing : onReset;
         this.onRender = onRender == null ? TutorialMapText::doNothing : onRender;
@@ -28,10 +29,6 @@ public class TutorialMapText implements Renderable, Deletable {
 
     public TutorialMapText(TutorialMapElement map, float x, float y, String text, HorizontalAlign align, Consumer<TutorialMapText> onReset, Consumer<TutorialMapText> onRender) {
         this(map, x, y, new TextRenderer(text, 0.7f).setTextAlign(align).setBold(true), onReset, onRender);
-    }
-
-    public TextRenderer getText() {
-        return text;
     }
 
     public void setVisible(boolean visible) {

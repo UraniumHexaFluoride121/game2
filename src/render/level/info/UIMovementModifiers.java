@@ -13,8 +13,8 @@ import render.types.container.LevelUIContainer;
 import render.types.container.UIElementScrollSurface;
 import render.types.text.*;
 import unit.Unit;
-import unit.stats.Modifier;
-import unit.stats.ModifierCategory;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.ModifierCategory;
 import unit.weapon.WeaponEffectiveness;
 
 import java.awt.*;
@@ -22,8 +22,16 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static render.types.text.TextRenderable.*;
+import static unit.stats.modifiers.types.ModifierCategory.*;
 
 public class UIMovementModifiers extends LevelUIContainer<Level> {
+    public static final ModifierCategory[] tileMovementModifierCategories = {
+            MOVEMENT_COST_ALL,
+            MOVEMENT_COST_EMPTY,
+            MOVEMENT_COST_NEBULA,
+            MOVEMENT_COST_DENSE_NEBULA,
+            MOVEMENT_COST_ASTEROIDS
+    };
     private Point end = null, prev = null;
     private UIElementScrollSurface<UIDisplayBoxRenderElement> scrollSurface;
     private UIDisplayBoxRenderElement result;
@@ -48,7 +56,7 @@ public class UIMovementModifiers extends LevelUIContainer<Level> {
                     }, costModifier.translate(0, 6.8f), costText.translate(0, 7.5f)
             ).setZOrder(-10);
             scrollSurface = new UIElementScrollSurface<UIDisplayBoxRenderElement>(r, b, RenderOrder.LEVEL_UI,
-                    -10, 2 + 1.5f, 20, 3, false, count -> (count + 1) * 0.4f) {
+                    -10, 2 + 1.5f, 20, 3.2f, false, count -> count * 0.4f) {
                 @Override
                 public boolean posInside(ObjPos pos, InputType type) {
                     return type instanceof ScrollInputType;
@@ -93,16 +101,10 @@ public class UIMovementModifiers extends LevelUIContainer<Level> {
                 e.box.addText(0.6f, HorizontalAlign.LEFT, m.name());
                 e.box.getText(0, 0).setTextColour(colour.borderColour);
                 StringBuilder effect = new StringBuilder();
-                if (m.hasCategory(ModifierCategory.MOVEMENT_COST_ALL))
-                    effect.append(Modifier.percentMultiplicative(m.effect(ModifierCategory.MOVEMENT_COST_ALL))).append(MOVE_ICON.display).append(" (All)\n");
-                if (m.hasCategory(ModifierCategory.MOVEMENT_COST_EMPTY))
-                    effect.append(Modifier.percentMultiplicative(m.effect(ModifierCategory.MOVEMENT_COST_EMPTY))).append(MOVE_ICON.display).append(" (Empty)\n");
-                if (m.hasCategory(ModifierCategory.MOVEMENT_COST_NEBULA))
-                    effect.append(Modifier.percentMultiplicative(m.effect(ModifierCategory.MOVEMENT_COST_NEBULA))).append(MOVE_ICON.display).append(" (Nebula)\n");
-                if (m.hasCategory(ModifierCategory.MOVEMENT_COST_DENSE_NEBULA))
-                    effect.append(Modifier.percentMultiplicative(m.effect(ModifierCategory.MOVEMENT_COST_DENSE_NEBULA))).append(MOVE_ICON.display).append(" (Dense Nebula)\n");
-                if (m.hasCategory(ModifierCategory.MOVEMENT_COST_ASTEROIDS))
-                    effect.append(Modifier.percentMultiplicative(m.effect(ModifierCategory.MOVEMENT_COST_ASTEROIDS))).append(MOVE_ICON.display).append(" (Asteroids)\n");
+                for (ModifierCategory cat : tileMovementModifierCategories) {
+                    if (m.hasCategory(cat))
+                        effect.append(StyleElement.removeStyle(m.effectDescriptionValue(cat))).append(" ").append(cat.getShortenedName()).append("\n");
+                }
                 if (!effect.isEmpty()) {
                     effect.deleteCharAt(effect.length() - 1);
                     e.box.addText(0.6f, HorizontalAlign.RIGHT, 1, effect.toString());
@@ -111,7 +113,7 @@ public class UIMovementModifiers extends LevelUIContainer<Level> {
                 e.box.getTextElement(0, 0).setAlign(effect.isEmpty() ? HorizontalAlign.CENTER : HorizontalAlign.LEFT);
                 e.box.attemptUpdate(g);
                 height.updateAndGet(v -> v + e.box.height + 0.4f);
-                e.translate(0, -height.get());
+                e.translate(0, -height.get() + 0.2f);
                 return e;
             });
         });

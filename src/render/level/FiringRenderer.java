@@ -13,6 +13,7 @@ import render.UIColourTheme;
 import render.types.UIHitPointBar;
 import unit.Unit;
 import unit.type.UnitType;
+import unit.weapon.DamageHandler;
 import unit.weapon.Projectile;
 import unit.weapon.ProjectileSpawner;
 import unit.weapon.WeaponInstance;
@@ -38,6 +39,7 @@ public class FiringRenderer extends AbstractRenderElement {
     private boolean firingLeft = false, firingRight = false, finished = false, leftHit = false, rightHit = false, rightShieldStarted = false, leftShieldStarted = false;
     private Level level;
     private LerpAnimation overlayTimer = new LerpAnimation(1);
+    private DamageHandler handler;
 
     public FiringRenderer(RenderRegister<OrderedRenderable> register, RenderOrder order, Level level) {
         super(register, order);
@@ -150,7 +152,7 @@ public class FiringRenderer extends AbstractRenderElement {
                     rightImage = null;
                     leftUnitRenderer = null;
                     rightUnitRenderer = null;
-                    level.levelRenderer.endFiring(attackingUnit, defendingUnit);
+                    level.levelRenderer.endFiring(attackingUnit, defendingUnit, handler);
                     leftUnit = null;
                     rightUnit = null;
                     defendingUnit = null;
@@ -268,7 +270,8 @@ public class FiringRenderer extends AbstractRenderElement {
 
     private float leftShieldBarTime = 0, rightShieldBarTime = 0;
 
-    public void start(Unit attacking, Unit defending, WeaponInstance weaponA, WeaponInstance weaponB) {
+    public void start(Unit attacking, Unit defending, WeaponInstance weaponA, WeaponInstance weaponB, DamageHandler handler) {
+        this.handler = handler;
         attackingUnit = attacking;
         defendingUnit = defending;
         boolean aIsLeft;
@@ -293,11 +296,11 @@ public class FiringRenderer extends AbstractRenderElement {
         leftUnitRenderer = new UnitRenderer[leftUnitCount];
         rightUnitRenderer = new UnitRenderer[rightUnitCount];
         for (int i = 0; i < leftUnitCount; i++) {
-            ImageCounter image = new CachedImageCounter(leftUnit.data.type.firingSequenceLeft.get(leftUnit.data.team));
+            ImageCounter image = new CachedImageCounter(leftUnit.data.type.getFiringImage(leftUnit.data.team, true, leftUnit.data.stealthMode));
             leftUnitRenderer[i] = new UnitRenderer(image, leftWeapon, leftUnit.getFireAnimState(leftWeapon), leftProjectiles, i >= leftUnitCountRemaining, leftUnit == attackingUnit, leftPositions[i].x, leftPositions[i].y, leftUnit.data.type);
         }
         for (int i = 0; i < rightUnitCount; i++) {
-            ImageCounter image = new CachedImageCounter(rightUnit.data.type.firingSequenceRight.get(rightUnit.data.team));
+            ImageCounter image = new CachedImageCounter(rightUnit.data.type.getFiringImage(rightUnit.data.team, false, rightUnit.data.stealthMode));
             rightUnitRenderer[i] = new UnitRenderer(image, rightWeapon, rightUnit.getFireAnimState(rightWeapon), rightProjectiles, i >= rightUnitCountRemaining, rightUnit == attackingUnit, rightPositions[i].x, rightPositions[i].y, rightUnit.data.type);
         }
         leftImage = level.getTile(leftUnit.data.pos).type.firingTexturesLeft.getRandomImage();
@@ -340,6 +343,7 @@ public class FiringRenderer extends AbstractRenderElement {
         leftImage = null;
         rightImage = null;
         level = null;
+        handler = null;
     }
 
     public static Supplier<ObjPos[]> THREE_UNITS = () -> new ObjPos[]{

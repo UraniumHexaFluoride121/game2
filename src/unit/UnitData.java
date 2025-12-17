@@ -9,7 +9,6 @@ import render.anim.timer.SineAnimation;
 import save.LoadedFromSave;
 import unit.action.Action;
 import unit.stats.StatManager;
-import unit.stats.UnitStatManager;
 import unit.type.UnitType;
 
 import java.awt.*;
@@ -20,21 +19,18 @@ import java.util.function.BiConsumer;
 public class UnitData implements Writable, Serializable, LoadedFromSave {
     @Serial
     private static final long serialVersionUID = 1L;
-    public transient UnitType type;
-    public final String typeName;
+    public final UnitType type;
     public final UnitTeam team;
     public Point pos;
     public int captureProgress = -1;
     public boolean stealthMode = false, mining = false, visibleInStealthMode = true;
     public int ammo;
-    public transient HashSet<Action> performedActions = new HashSet<>();
-    public final HashSet<String> performedActionNames = new HashSet<>();
+    public final HashSet<Action> performedActions = new HashSet<>();
     public float hitPoints, shieldHP, lowestHP;
     public float renderHP, shieldRenderHP;
 
     public UnitData(UnitType type, UnitTeam team, Point pos) {
         this.type = type;
-        typeName = type.getInternalName();
         this.team = team;
         this.pos = pos;
     }
@@ -59,7 +55,6 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
     public UnitData(DataInputStream reader) throws IOException {
         pos = PacketReceiver.readPoint(reader);
         type = UnitType.read(reader);
-        typeName = type.getInternalName();
         team = PacketReceiver.readEnum(UnitTeam.class, reader);
         renderHP = reader.readFloat();
         hitPoints = renderHP;
@@ -67,9 +62,8 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         shieldHP = shieldRenderHP;
         lowestHP = reader.readFloat();
         captureProgress = reader.readInt();
-        PacketReceiver.readCollection(performedActions, () -> Action.getByName(reader.readUTF()), reader);
+        PacketReceiver.readCollection(performedActions, () -> Action.valueOf(reader.readUTF()), reader);
         ammo = reader.readInt();
-        performedActions.forEach(a -> performedActionNames.add(a.getInternalName()));
         stealthMode = reader.readBoolean();
         mining = reader.readBoolean();
     }
@@ -80,7 +74,6 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
 
     private UnitData(UnitData other) {
         type = other.type;
-        typeName = other.typeName;
         team = other.team;
         pos = other.pos;
         captureProgress = other.captureProgress;
@@ -88,8 +81,7 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
         mining = other.mining;
         visibleInStealthMode = other.visibleInStealthMode;
         ammo = other.ammo;
-        performedActions = new HashSet<>(other.performedActions);
-        performedActionNames.addAll(other.performedActionNames);
+        performedActions.addAll(other.performedActions);
         hitPoints = other.hitPoints;
         shieldHP = other.shieldHP;
         lowestHP = other.lowestHP;
@@ -103,12 +95,10 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
 
     public void addPerformedAction(Action action) {
         performedActions.add(action);
-        performedActionNames.add(action.getInternalName());
     }
 
     public void clearPerformedActions() {
         performedActions.clear();
-        performedActionNames.clear();
     }
 
     public void setShieldHP(float newHP, float max, BiConsumer<Float, Boolean> addDamageUI) {
@@ -170,8 +160,6 @@ public class UnitData implements Writable, Serializable, LoadedFromSave {
 
     @Override
     public void load() {
-        performedActions = new HashSet<>();
-        performedActionNames.forEach(n -> performedActions.add(Action.getByName(n)));
-        type = UnitType.getTypeByName(typeName);
+
     }
 }

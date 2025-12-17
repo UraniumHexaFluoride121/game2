@@ -1,34 +1,55 @@
 package unit;
 
-import foundation.NamedEnum;
 import render.types.text.TextRenderable;
-import unit.weapon.DamageType;
+import unit.stats.Article;
+import unit.stats.NameArticle;
+import unit.weapon.DamageClass;
 
-public enum ShipClass implements NamedEnum {
-    FIGHTER("Fighter", TextRenderable.FIGHTER_ICON),
-    CORVETTE("Corvette", TextRenderable.CORVETTE_ICON),
-    CRUISER("Cruiser", TextRenderable.CRUISER_ICON),
-    CAPITAL_SHIP("Capital Ship", TextRenderable.CAPITAL_SHIP_ICON);
+public enum ShipClass implements NameArticle {
+    FIGHTER("Fighter", "Fighters", "Fighter-Class", "Fighter-Class", Article.A, TextRenderable.FIGHTER_ICON),
+    CORVETTE("Corvette", "Corvettes", "Corvette-Class", "Corvette-Class", Article.A, TextRenderable.CORVETTE_ICON),
+    CRUISER("Cruiser", "Cruisers", "Cruiser-Class", "Cruiser-Class", Article.A, TextRenderable.CRUISER_ICON);
 
-    private final String name;
+    private final String name, pluralName, className, classNamePlural;
+    private final Article article;
     public final TextRenderable icon;
 
-    ShipClass(String name, TextRenderable icon) {
+    ShipClass(String name, String pluralName, String className, String classNamePlural, Article article, TextRenderable icon) {
         this.name = name;
+        this.pluralName = pluralName;
+        this.className = className;
+        this.classNamePlural = classNamePlural;
+        this.article = article;
         this.icon = icon;
     }
 
-    public DamageType getDamageType() {
+    public DamageClass getDamageType() {
         return switch (this) {
-            case FIGHTER -> DamageType.FIGHTER;
-            case CORVETTE -> DamageType.CORVETTE;
-            case CRUISER -> DamageType.CRUISER;
-            case CAPITAL_SHIP -> DamageType.CAPITAL_SHIP;
+            case FIGHTER -> DamageClass.FIGHTER;
+            case CORVETTE -> DamageClass.CORVETTE;
+            case CRUISER -> DamageClass.CRUISER;
         };
     }
 
     @Override
     public String getName() {
         return name;
+    }
+
+    public String getPluralName() {
+        return pluralName;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public String getClassNamePlural() {
+        return classNamePlural;
+    }
+
+    @Override
+    public Article getArticleEnum() {
+        return article;
     }
 }

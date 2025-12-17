@@ -15,6 +15,13 @@ public abstract class BoxElement implements Deletable {
         rightMargin = initialMargin;
     }
 
+    public void setMargin(float margin) {
+        leftMargin = margin;
+        rightMargin = margin;
+    }
+
+    public abstract boolean maxWidth();
+
     public void setWidth(float width) {
 
     }

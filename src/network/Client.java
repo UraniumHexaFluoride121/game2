@@ -4,14 +4,14 @@ import foundation.Deletable;
 import foundation.MainPanel;
 import level.GameplaySettings;
 import level.Level;
-import level.PlayerTeam;
+import level.TeamData;
 import level.structure.Structure;
 import level.structure.StructureType;
 import level.tile.Tile;
 import level.tile.TileData;
 import render.anim.unit.AnimTilePath;
-import unit.UnitData;
 import unit.Unit;
+import unit.UnitData;
 import unit.UnitTeam;
 import unit.action.Action;
 import unit.type.UnitType;
@@ -132,10 +132,7 @@ public class Client implements Deletable {
                 MainPanel.titleScreen.updateColourSelectorVisibility();
             }
             case JOIN_REQUEST_ACCEPTED -> {
-                HashMap<UnitTeam, PlayerTeam> playerTeams = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> PacketReceiver.readEnum(PlayerTeam.class, reader), reader);
-                HashMap<UnitTeam, PlayerTeam> initialPlayerTeams = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> PacketReceiver.readEnum(PlayerTeam.class, reader), reader);
-                HashMap<UnitTeam, Float> destroyedUnitsDamage = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readFloat, reader);
-                HashMap<UnitTeam, Integer> destroyedUnitsByTeam = PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), reader::readInt, reader);
+                HashMap<UnitTeam, TeamData> teamData = readTeamData(reader);
                 long seed = reader.readLong();
                 float botDifficulty = reader.readFloat();
                 int width = reader.readInt(), height = reader.readInt();
@@ -157,11 +154,8 @@ public class Client implements Deletable {
                     }
                 }
                 MainPanel.addTask(() -> {
-                    MainPanel.startNewLevel(() -> {
-                        Level l = new Level(playerTeams, seed, width, height, bots, gameplaySettings, NetworkState.CLIENT, botDifficulty);
-                        l.initialPlayerTeams = initialPlayerTeams;
-                        l.destroyedUnitsDamage = destroyedUnitsDamage;
-                        l.destroyedUnitsByTeam = destroyedUnitsByTeam;
+                    MainPanel.startNewLevel(null, () -> {
+                        Level l = new Level(teamData, seed, width, height, gameplaySettings, NetworkState.CLIENT, botDifficulty);
                         l.clientSetThisTeam(team);
                         HashMap<UnitTeam, Point> basePositions = new HashMap<>();
                         for (int x = 0; x < width; x++) {
@@ -404,7 +398,7 @@ public class Client implements Deletable {
                     return;
                 MainPanel.addTask(() -> {
                     Level l = MainPanel.getActiveLevel();
-                    l.botHandlerMap.get(l.getActiveTeam()).selectTileClient(pos);
+                    l.teamData.get(l.getActiveTeam()).botHandler.selectTileClient(pos);
                 });
             }
         }
@@ -496,6 +490,10 @@ public class Client implements Deletable {
         queuePacket(new PacketWriter(PacketType.CLIENT_REQUEST_STEALTH, w -> {
             PacketWriter.writePoint(unit.data.pos, w);
         }));
+    }
+
+    public HashMap<UnitTeam, TeamData> readTeamData(DataInputStream reader) throws IOException {
+        return PacketReceiver.readMap(new HashMap<>(), () -> PacketReceiver.readEnum(UnitTeam.class, reader), () -> new TeamData(reader), reader);
     }
 
     public AtomicBoolean close = new AtomicBoolean(false);

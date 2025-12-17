@@ -41,18 +41,21 @@ public class GameEndScreen extends LevelUIContainer<Level> {
         Renderable titleScreenImage = Renderable.renderImage(new ResourceLocation("title_screen.png"), false, true, 60, true);
         addRenderables((r, b) -> {
             PlayerTeam surviving = level.survivingPlayerTeam();
+            PlayerTeam thisTeam = level.teamData.get(level.getThisTeam()).playerTeam;
             new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
                     titleScreenImage,
                     new UITextLabel(30, 3, false).setTextLeftBold().setLeftOffset(1)
-                            .updateTextLeft(level.initialPlayerTeams.get(level.getThisTeam()) == surviving ?
+                            .updateTextLeft(thisTeam == surviving ?
                                     "Victory" : "Defeat").translate(2, Renderable.top() - 4),
                     new UITextLabel(12, 1.5f, false).setTextCenterBold()
                             .updateTextCenter("Team " + surviving.getName() + " wins").translate(3, Renderable.top() - 6)
             );
-            new UIScoreBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, Renderable.right() - 26, Renderable.top() - 16, surviving, level);
+            UIScoreBox score = new UIScoreBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, Renderable.right() - 26, Renderable.top() - 16, surviving, level);
+            if (MainPanel.spState != null && surviving == thisTeam)
+                MainPanel.spState.stars += score.totalScore;
             int i = 0;
             for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
-                if (level.initialPlayerTeams.containsKey(team) && level.initialPlayerTeams.get(team) == surviving) {
+                if (level.teamData.containsKey(team) && level.teamData.get(team).playerTeam == surviving) {
                     new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
                             new UITextLabel(8, 1f, false).setTextCenterBold().setLabelColour(team.uiColour)
                                     .updateTextCenter(team.getName()).translate(4.5f, Renderable.top() - 7.5f - i * 1.2f)

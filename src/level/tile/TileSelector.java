@@ -50,6 +50,7 @@ public class TileSelector extends AbstractTileSelector<Level> {
         }
         if (TutorialManager.tileNotSelectable(tile.pos))
             return;
+        level.levelRenderer.uiUnitInfo.onTileSelected();
         super.select(tile);
         level.levelRenderer.tileInfo.setTile(tile);
         level.levelRenderer.tileInfo.setEnabled(true);

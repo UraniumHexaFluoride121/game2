@@ -2,16 +2,20 @@ package unit.type;
 
 import foundation.math.ObjPos;
 import level.energy.EnergyManager;
+import level.tile.TileType;
 import render.level.FiringRenderer;
+import render.save.SerializationProxy;
 import unit.ShipClass;
 import unit.action.Action;
-import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
-import unit.stats.Modifier;
-import unit.stats.modifiers.MovementModifier;
-import unit.weapon.*;
+import unit.stats.modifiers.groups.MovementModifier;
+import unit.stats.modifiers.types.Modifier;
+import unit.weapon.ProjectileType;
+import unit.weapon.WeaponTemplate;
 
+import java.io.ObjectStreamException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -19,21 +23,17 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static unit.info.AttributeData.*;
-import static unit.stats.modifiers.WeaponDamageModifier.*;
-import static unit.stats.modifiers.WeaponDamageModifier.STRENGTH_1;
-import static unit.stats.modifiers.WeaponDamageModifier.STRENGTH_2;
+import static unit.stats.modifiers.groups.WeaponDamageModifier.*;
 
 public class CruiserType extends UnitType {
-    public static final CruiserType BATTLECRUISER = new CruiserType("battlecruiser", "Battlecruiser", 14, 4f, 3f, new Action[]{
+    public static final CruiserType BATTLECRUISER = new CruiserType("battlecruiser", "Battlecruiser", 135, 14, 4f, 3f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 25, 1, 1, 4, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAILGUN);
         w
-                .classModifier(ShipClass.FIGHTER, WEAKNESS_1)
-                .classModifier(ShipClass.CORVETTE, STRENGTH_1)
-                .classModifier(ShipClass.CRUISER, STRENGTH_2)
-                .classModifier(ShipClass.CAPITAL_SHIP, NORMAL_STRENGTH);
+                .classModifier(ShipClass.FIGHTER, WEAPON_WEAKNESS)
+                .classModifier(ShipClass.CORVETTE, WEAPON_WEAKNESS)
+                .classModifier(ShipClass.CRUISER, WEAPON_STRENGTH);
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
@@ -43,28 +43,23 @@ public class CruiserType extends UnitType {
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 10);
-    }, new AttributeData[]{
-            ANTI_CORVETTE, ANTI_CRUISER,
-            NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_FIGHTER
-    }, FiringRenderer.TWO_UNITS, "The base variant of the cruiser-class. Comes with strong armour and a powerful armour-piercing railgun. This railgun performs " +
-            "well against armoured units, especially other cruiser-class units."),
+    }, FiringRenderer.TWO_UNITS, "The base variant of the " + ShipClass.CRUISER.getClassName().toLowerCase() + ". Comes with strong armour and a powerful armour-piercing railgun. This railgun performs " +
+            "well against armoured units, especially other " + ShipClass.CRUISER.getClassName().toLowerCase() + " units."),
 
-    LIGHT_CRUISER = new CruiserType("light_cruiser", "Light Cruiser", 12, 4.3f, 3f, new Action[]{
+    LIGHT_CRUISER = new CruiserType("light_cruiser", "Light Cruiser", 160, 12, 4.3f, 3f, new Action[]{
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
     }, 1, 25, 1, 1, 4, list -> {
         WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BATTLECRUISER_CANNON);
         w1
                 .classModifier(ShipClass.FIGHTER, NORMAL_STRENGTH)
-                .classModifier(ShipClass.CORVETTE, STRENGTH_2)
-                .classModifier(ShipClass.CRUISER, NORMAL_STRENGTH)
-                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_2);
+                .classModifier(ShipClass.CORVETTE, WEAPON_STRENGTH)
+                .classModifier(ShipClass.CRUISER, NORMAL_STRENGTH);
         list.add(w1);
         WeaponTemplate w2 = new WeaponTemplate(ProjectileType.BATTLECRUISER_PLASMA);
         w2
-                .classModifier(ShipClass.FIGHTER, STRENGTH_2)
+                .classModifier(ShipClass.FIGHTER, WEAPON_STRENGTH)
                 .classModifier(ShipClass.CORVETTE, NORMAL_STRENGTH)
-                .classModifier(ShipClass.CRUISER, WEAKNESS_2)
-                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_3);
+                .classModifier(ShipClass.CRUISER, WEAPON_WEAKNESS);
         list.add(w2);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
@@ -75,14 +70,11 @@ public class CruiserType extends UnitType {
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 10);
         map.put(Action.SHIELD_REGEN, 6);
-    }, new AttributeData[]{
-            ANTI_CORVETTE, ANTI_FIGHTER, HAS_SHIELD,
-            NO_ASTEROID_FIELD, INEFFECTIVE_AGAINST_LARGE
-    }, FiringRenderer.TWO_UNITS_BACK, "This heavily armed cruiser comes equipped with multiple weapons systems that makes " +
-            "it effective for destroying both fighter-class and corvette-class units. It also features a shield system which improves its defensive capabilities.")
+    }, FiringRenderer.TWO_UNITS_BACK, "This heavily armed " + ShipClass.CRUISER.getName().toLowerCase() + " comes equipped with multiple weapons systems that makes " +
+            "it effective for destroying both " + ShipClass.FIGHTER.getClassName().toLowerCase() + " and " + ShipClass.CRUISER.getClassName().toLowerCase() + " units. It also features a shield system which improves its defensive capabilities.")
             .modify(u -> u.addShield(2, 1f, 33)),
 
-    MINER = new CruiserType("miner", "Mining Unit", 6, 4.5f, 2.8f, new Action[]{
+    MINER = new CruiserType("miner", "Mining Unit", 15, 6, 4.5f, 2.8f, new Action[]{
             Action.MOVE, Action.MINE
     }, 1, 32, 1, 1, 0, list -> {
     }, map -> {
@@ -91,12 +83,9 @@ public class CruiserType extends UnitType {
         map.put(UnitCharacteristic.VIEW_RANGE, UnitCharacteristicValue.LOW_MODERATE);
     }, (map, perTurnMap) -> {
         perTurnMap.put(Action.MINE, -12);
-    }, new AttributeData[]{
-            MINING, QUICK_ASTEROID_FIELD,
-            NO_WEAPON, LOW_HP
     }, FiringRenderer.ONE_UNIT, "While it doesn't have any weapons, this unit plays a crucial role in any successful fleet operations. " +
-            "When placed on an asteroid field, using the Mine action will begin extracting " + EnergyManager.displayName + " over several turns, increasing income, until " +
-            "the asteroid field is depleted. Lacks the level of armour plating seen on other cruisers, which has the side effect of reducing " + EnergyManager.displayName + " cost when moving.") {
+            "When placed on " + TileType.ASTEROIDS.getNameArticle().toLowerCase() + ", using the Mine action will begin extracting " + EnergyManager.displayName + " over several turns, increasing income, until " +
+            "the " + TileType.ASTEROIDS.getName().toLowerCase() + " is depleted. Lacks the level of armour plating seen on other " + ShipClass.CRUISER.getPluralName().toLowerCase() + ", which has the side effect of reducing " + EnergyManager.displayName + " cost when moving.") {
         @Override
         public float movementCostMultiplier() {
             return 1;
@@ -109,8 +98,8 @@ public class CruiserType extends UnitType {
         }
     };
 
-    CruiserType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, minRange, maxRange, damage, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
+    CruiserType(String name, String displayName, int value, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, value, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, minRange, maxRange, damage, weaponGenerator, unitCharacteristicSetter, actionCostSetter, firingPositions, description);
     }
 
     @Override
@@ -132,5 +121,10 @@ public class CruiserType extends UnitType {
     public CruiserType modify(Consumer<UnitType> action) {
         super.modify(action);
         return this;
+    }
+
+    @Serial
+    private Object writeReplace() throws ObjectStreamException {
+        return new SerializationProxy<>(UnitType.class, this);
     }
 }

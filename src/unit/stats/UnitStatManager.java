@@ -1,17 +1,53 @@
 package unit.stats;
 
+import foundation.math.MathUtil;
 import level.tile.TileModifier;
 import level.tile.TileSet;
 import render.level.tile.TilePath;
 import unit.Unit;
 import unit.UnitData;
+import unit.action.Action;
 import unit.bot.VisibilityData;
+import unit.stats.attribute.UnitAttribute;
+import unit.stats.modifiers.groups.CardModifiers;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.ModifierCategory;
+import unit.stats.modifiers.types.SingleModifier;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Optional;
 
 public class UnitStatManager extends StatManager<Unit> {
     public UnitStatManager() {
         super();
+    }
+
+    @Override
+    public ArrayList<Modifier> getMovementModifiers() {
+        ArrayList<Modifier> modifiers = super.getMovementModifiers();
+        float cardModifier = u.fromTeamData(d -> d.getCardUnitModifier(ModifierCategory.MOVEMENT_COST_ALL, u, Float::sum));
+        if (!MathUtil.equal(cardModifier, 1, 0.001f))
+            modifiers.add(new SingleModifier(cardModifier, "Card Modifiers", "The combined " + ModifierCategory.MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " modifier from all applicable cards.",
+                    Modifier::percentMultiplicative, ModifierCategory.MOVEMENT_COST_ALL)
+                    .setListAndMainColour(Modifier.listColourFromEffectPercentMultiplicative(cardModifier, false))
+            );
+        return modifiers;
+    }
+
+    @Override
+    public float attackDamage() {
+        return super.attackDamage() * u.fromTeamData(d -> d.getCardUnitModifier(ModifierCategory.DAMAGE, u, Float::sum));
+    }
+
+    @Override
+    public float maxHP() {
+        return super.maxHP() + u.fromTeamData(d -> Math.round(d.getCardUnitModifier(ModifierCategory.HP, u, Float::sum)));
+    }
+
+    @Override
+    public int ammoCapacity() {
+        return super.ammoCapacity() + u.fromTeamData(d -> Math.round(d.getCardUnitModifier(ModifierCategory.AMMO_CAPACITY, u, Float::sum)));
     }
 
     @Override
@@ -51,5 +87,32 @@ public class UnitStatManager extends StatManager<Unit> {
         } else
             tiles.addAll(tilesInFiringRange(data));
         return tiles;
+    }
+
+    @Override
+    public Optional<Integer> getActionCost(Action action) {
+        return super.getActionCost(action)
+                .map(c -> u.fromTeamData(d ->
+                        Math.max(
+                                (int) Math.round(Math.ceil(c * CardModifiers.MAX_ACTION_COST_REDUCTION)),
+                                Math.round(c + d.getCardActionModifier(ModifierCategory.ACTION_COST, u, action, Float::sum)))
+                        )
+                );
+    }
+
+    @Override
+    public Optional<Integer> getPerTurnActionCost(Action action) {
+        return super.getPerTurnActionCost(action)
+                .map(c -> u.fromTeamData(d ->
+                                Math.max(
+                                        (int) Math.round(Math.ceil(c * CardModifiers.MAX_ACTION_COST_REDUCTION)),
+                                        Math.round(c + d.getCardActionModifier(ModifierCategory.ACTION_COST_PER_TURN, u, action, Float::sum)))
+                        )
+                );
+    }
+
+    @Override
+    public boolean hasUnitAttribute(UnitAttribute a) {
+        return super.hasUnitAttribute(a) || u.fromTeamData(d -> d.getCardUnitModifier(UnitAttribute.getCategory(a), u, Float::max) != 0);
     }
 }

@@ -8,14 +8,13 @@ import level.tile.TileModifier;
 import level.tile.TileSet;
 import level.tile.TileType;
 import mainScreen.StructureGenerationPreset;
+import singleplayer.UnitLoadout;
 import unit.Unit;
 import unit.UnitTeam;
 import unit.type.UnitType;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 
 public class TeamSpawner {
@@ -72,6 +71,19 @@ public class TeamSpawner {
 
     private HashMap<UnitTeam, ArrayList<UnitType>> units;
     private StructureGenerationPreset structures;
+
+    public static TeamSpawner fromLoadouts(HashMap<UnitTeam, UnitLoadout> loadouts, StructureGenerationPreset structures) {
+        HashMap<UnitTeam, ArrayList<UnitType>> units = new HashMap<>();
+        for (Map.Entry<UnitTeam, UnitLoadout> entry : loadouts.entrySet()) {
+            units.put(entry.getKey(), new ArrayList<>());
+            for (UnitLoadout.UnitElement unitCount : entry.getValue().unitCounts) {
+                for (int i = 0; i < unitCount.count; i++) {
+                    units.get(entry.getKey()).add(unitCount.type);
+                }
+            }
+        }
+        return new TeamSpawner(units, structures);
+    }
 
     public TeamSpawner(HashMap<UnitTeam, ArrayList<UnitType>> units, StructureGenerationPreset structures) {
         this.units = units;
@@ -189,7 +201,7 @@ public class TeamSpawner {
             UnitTeam team = UnitTeam.ORDERED_TEAMS[i];
             ArrayList<Point> spawnPoints = level.random.randomise(unitPositions.get(team), RandomType.TEAM_SPAWNING);
             for (int j = 0; j < spawnPoints.size(); j++) {
-                level.addUnit(new Unit(units.get(team).get(j), team, spawnPoints.get(j), level));
+                level.addUnit(new Unit(units.get(team).get(j), team, spawnPoints.get(j), level), true);
             }
             level.setBasePositions(basePositionsByTeam);
         }

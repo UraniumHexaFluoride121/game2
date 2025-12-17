@@ -1,28 +1,25 @@
 package unit.type;
 
 import foundation.MainPanel;
-import foundation.NamedEnum;
 import foundation.math.ObjPos;
 import render.Renderable;
+import render.save.SerializedByProxy;
 import render.texture.*;
 import unit.ShipClass;
 import unit.UnitPose;
 import unit.UnitTeam;
 import unit.action.Action;
-import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
-import unit.stats.Modifier;
+import unit.stats.Article;
+import unit.stats.attribute.UnitAttribute;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.NameArticle;
 import unit.weapon.WeaponTemplate;
 
 import java.awt.image.BufferedImage;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.io.*;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -32,48 +29,56 @@ import static unit.type.CorvetteType.*;
 import static unit.type.CruiserType.*;
 import static unit.type.FighterType.*;
 
-public abstract class UnitType implements NamedEnum {
-    private final HashMap<UnitTeam, HashMap<UnitPose, Renderable>> tileRenderers = new HashMap<>();
-    private final HashMap<UnitTeam, HashMap<UnitPose, BufferedImage>> images = new HashMap<>();
+public abstract class UnitType implements NameArticle, SerializedByProxy, Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    public boolean canCapture = true;
+    private transient final HashMap<UnitTeam, HashMap<UnitPose, Renderable>> tileRenderers = new HashMap<>();
+    private transient final HashMap<UnitTeam, HashMap<UnitPose, Renderable>> stealthTileRenderers = new HashMap<>();
+    private transient final HashMap<UnitTeam, HashMap<UnitPose, BufferedImage>> images = new HashMap<>();
+    private transient final HashMap<UnitTeam, HashMap<UnitPose, BufferedImage>> stealthImages = new HashMap<>();
+
+    public transient boolean canCapture = true;
     private final String name, displayName;
-    public final String description;
-    public final ShipClass shipClass;
-    public final float hitPoints, maxMovement, maxViewRange;
+    private transient Article article = Article.A;
+    public transient final String description;
+    public transient final ShipClass shipClass;
+    public transient final int value;
+    public transient final float hitPoints, maxMovement, maxViewRange;
 
-    public final Action[] actions;
-    public final int firingAnimFrames;
-    public float shieldHP = 0, shieldRegen = 0, firingAnimShieldWidth = 0;
-    public float repair = 0;
-    public final float firingAnimUnitWidth;
+    public transient UnitAttribute[] attributes = new UnitAttribute[0];
+    public transient final Action[] actions;
+    public transient final int firingAnimFrames;
+    public transient float shieldHP = 0, shieldRegen = 0, firingAnimShieldWidth = 0;
+    public transient float repair = 0;
+    public transient final float firingAnimUnitWidth;
 
-    public int ammoCapacity = 0;
-    public final int minRange, maxRange;
-    public final float damage;
-    public final ArrayList<WeaponTemplate> weapons = new ArrayList<>();
-    public final ArrayList<Modifier> modifiers = new ArrayList<>();
-    private final Consumer<ArrayList<WeaponTemplate>> weaponGenerator;
+    public transient int ammoCapacity = 0;
+    public transient final int minRange, maxRange;
+    public transient final float damage;
+    public transient final ArrayList<WeaponTemplate> weapons = new ArrayList<>();
+    public transient final ArrayList<Modifier> modifiers = new ArrayList<>();
+    private transient final Consumer<ArrayList<WeaponTemplate>> weaponGenerator;
 
-    public final TreeMap<UnitCharacteristic, UnitCharacteristicValue> unitCharacteristics = new TreeMap<>();
-    public final AttributeData[] infoAttributes;
+    public transient final TreeMap<UnitCharacteristic, UnitCharacteristicValue> unitCharacteristics = new TreeMap<>();
 
-    public final Supplier<ObjPos[]> firingPositions;
+    public transient final Supplier<ObjPos[]> firingPositions;
 
-    public final HashMap<UnitTeam, ImageSequence> firingSequenceLeft = new HashMap<>();
-    public final HashMap<UnitTeam, ImageSequence> firingSequenceRight = new HashMap<>();
-    private final HashMap<Action, Integer> actionCost = new HashMap<>(), perTurnActionCost = new HashMap<>();
+    public transient final HashMap<UnitTeam, ImageSequence> firingSequenceLeft = new HashMap<>();
+    public transient final HashMap<UnitTeam, ImageSequence> firingSequenceRight = new HashMap<>();
+    public transient final HashMap<UnitTeam, ImageSequence> firingSequenceLeftStealth = new HashMap<>();
+    public transient final HashMap<UnitTeam, ImageSequence> firingSequenceRightStealth = new HashMap<>();
+    private transient final HashMap<Action, Integer> actionCost = new HashMap<>(), perTurnActionCost = new HashMap<>();
 
-    public ImageRenderer shieldRenderer = null;
+    public transient ImageRenderer shieldRenderer = null;
 
-    public static final UnitType[] ORDERED_UNIT_TYPES = new UnitType[]{
-            INTERCEPTOR, BOMBER, SCOUT, FRIGATE, DEFENDER, ARTILLERY, SUPPLY, BATTLECRUISER, LIGHT_CRUISER, MINER
-    };
+    public static UnitType[] ORDERED_UNIT_TYPES;
 
-    UnitType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
+    UnitType(String name, String displayName, int value, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, Supplier<ObjPos[]> firingPositions, String description) {
         this.name = name;
         this.displayName = displayName;
         this.description = description;
+        this.value = value;
         this.hitPoints = hitPoints;
         this.maxMovement = maxMovement;
         this.maxViewRange = maxViewRange;
@@ -84,12 +89,17 @@ public abstract class UnitType implements NamedEnum {
         this.maxRange = maxRange;
         this.damage = damage;
         this.weaponGenerator = weaponGenerator;
-        this.infoAttributes = infoAttributes;
         this.firingPositions = firingPositions;
         shipClass = getShipClass();
         actionCostSetter.accept(actionCost, perTurnActionCost);
         unitCharacteristicSetter.accept(unitCharacteristics);
         addModifiers(modifiers);
+    }
+
+    public static void orderTypes() {
+        ORDERED_UNIT_TYPES = new UnitType[]{
+                INTERCEPTOR, BOMBER, SCOUT, FRIGATE, DEFENDER, ARTILLERY, SUPPLY, BATTLECRUISER, LIGHT_CRUISER, MINER
+        };
     }
 
     private void init() {
@@ -107,6 +117,22 @@ public abstract class UnitType implements NamedEnum {
             firingSequenceLeft.put(team, new AsyncImageSequence("ships/" + name + "/" + team.s + "/firing_left", firingAnimFrames, true));
             firingSequenceRight.put(team, new AsyncImageSequence("ships/" + name + "/" + team.s + "/firing_right", firingAnimFrames, true));
         }
+        if (canPerformAction(Action.STEALTH)) {
+            for (UnitTeam team : UnitTeam.values()) {
+                stealthTileRenderers.put(team, new HashMap<>());
+                stealthImages.put(team, new HashMap<>());
+                for (UnitPose pose : UnitPose.values()) {
+                    if (!pose.load)
+                        continue;
+                    ResourceLocation resource = new ResourceLocation("ships/" + name + "/" + team.s + "/" + pose.s + "_stealth.png");
+                    BufferedImage image = AssetManager.getImage(resource, true);
+                    stealthTileRenderers.get(team).put(pose, Renderable.renderImage(image, false, true, TILE_SIZE));
+                    stealthImages.get(team).put(pose, image);
+                }
+                firingSequenceLeftStealth.put(team, new AsyncImageSequence("ships/" + name + "/" + team.s + "/firing_left_stealth", firingAnimFrames, true));
+                firingSequenceRightStealth.put(team, new AsyncImageSequence("ships/" + name + "/" + team.s + "/firing_right_stealth", firingAnimFrames, true));
+            }
+        }
     }
 
     public UnitType addShield(float shieldHP, float shieldRegen, float firingAnimShieldWidth) {
@@ -117,15 +143,22 @@ public abstract class UnitType implements NamedEnum {
         return this;
     }
 
-    public Renderable tileRenderer(UnitTeam team, UnitPose pose) {
-        return tileRenderers.get(team).get(pose);
+    public Renderable tileRenderer(UnitTeam team, UnitPose pose, boolean stealth) {
+        return (stealth ? stealthTileRenderers : tileRenderers).get(team).get(pose);
     }
 
-    public BufferedImage getImage(UnitTeam team, UnitPose pose) {
-        return images.get(team).get(pose);
+    public BufferedImage getImage(UnitTeam team, UnitPose pose, boolean stealth) {
+        return (stealth ? stealthImages : images).get(team).get(pose);
     }
 
-    public static UnitType getTypeByName(String name) {
+    public ImageSequence getFiringImage(UnitTeam team, boolean left, boolean stealth) {
+        return (left ?
+                (stealth ? firingSequenceLeftStealth : firingSequenceLeft) :
+                (stealth ? firingSequenceRightStealth : firingSequenceRight)
+        ).get(team);
+    }
+
+    public static UnitType valueOf(String name) {
         for (UnitType type : ORDERED_UNIT_TYPES) {
             if (type.name.equals(name))
                 return type;
@@ -134,7 +167,7 @@ public abstract class UnitType implements NamedEnum {
     }
 
     public static UnitType read(DataInputStream reader) throws IOException {
-        return getTypeByName(reader.readUTF());
+        return valueOf(reader.readUTF());
     }
 
     public void write(DataOutputStream writer) throws IOException {
@@ -178,26 +211,37 @@ public abstract class UnitType implements NamedEnum {
 
     public abstract float movementCostMultiplier();
 
-    public UnitType noCapture() {
+    protected UnitType noCapture() {
         canCapture = false;
         return this;
     }
 
-    public UnitType setRepair(float repair) {
+    protected UnitType useArticleAn() {
+        article = Article.AN;
+        return this;
+    }
+
+    protected UnitType setRepair(float repair) {
         this.repair = repair;
         return this;
     }
 
-    public UnitType modify(Consumer<UnitType> action) {
+    protected UnitType setAttributes(UnitAttribute... attributes) {
+        this.attributes = attributes;
+        return this;
+    }
+
+    protected UnitType modify(Consumer<UnitType> action) {
         action.accept(this);
         return this;
     }
 
-    public UnitType setAmmoCapacity(int ammoCapacity) {
+    protected UnitType setAmmoCapacity(int ammoCapacity) {
         this.ammoCapacity = ammoCapacity;
         return this;
     }
 
+    @Override
     public String getInternalName() {
         return name;
     }
@@ -219,5 +263,10 @@ public abstract class UnitType implements NamedEnum {
 
     public String getPluralName() {
         return getName().replace(" Unit", "") + " Units";
+    }
+
+    @Override
+    public Article getArticleEnum() {
+        return article;
     }
 }

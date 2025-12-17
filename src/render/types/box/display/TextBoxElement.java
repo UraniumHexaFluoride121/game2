@@ -26,7 +26,7 @@ public class TextBoxElement extends BoxElement {
         return this;
     }
 
-    public TextBoxElement dynamicWidth(boolean dynamicWidth) {
+    public TextBoxElement setMaxWidth(boolean dynamicWidth) {
         this.dynamicWidth = dynamicWidth;
         return this;
     }
@@ -39,6 +39,11 @@ public class TextBoxElement extends BoxElement {
     @Override
     public float height() {
         return (text.rows() - 0.15f) * text.textSize;
+    }
+
+    @Override
+    public boolean maxWidth() {
+        return dynamicWidth;
     }
 
     @Override

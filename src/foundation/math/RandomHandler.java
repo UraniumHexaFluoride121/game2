@@ -43,6 +43,10 @@ public class RandomHandler {
         return array[(int) (array.length * generateFloat(type))];
     }
 
+    public static <T> T randomFromArray(T[] array) {
+        return array[(int) (array.length * Math.random())];
+    }
+
     public <T> T[] randomise(T[] array, RandomType type) {
         return randomise(array, getDoubleSupplier(type));
     }
@@ -55,11 +59,15 @@ public class RandomHandler {
         return array;
     }
 
+    public static  <T> ArrayList<T> randomise(ArrayList<T> array, Supplier<Double> random) {
+        ArrayList<T> list = new ArrayList<>(array);
+        array.replaceAll(_ -> list.remove((int) (random.get() * list.size())));
+        return array;
+    }
+
     public <T> ArrayList<T> randomise(ArrayList<T> array, RandomType type) {
         ArrayList<T> list = new ArrayList<>(array);
-        for (int i = 0; i < array.size(); i++) {
-            array.set(i, list.remove((int) (generateFloat(type) * list.size())));
-        }
+        array.replaceAll(_ -> list.remove((int) (generateFloat(type) * list.size())));
         return array;
     }
 

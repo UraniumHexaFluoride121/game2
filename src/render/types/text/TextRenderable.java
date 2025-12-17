@@ -11,25 +11,32 @@ import unit.action.ActionShapes;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public enum TextRenderable {
     ENERGY(image("icons/energy.png", 26, 37)),
     STAR(fillShape(starShape(5, 0.15f, 0.35f), true, false, 20, 25)),
 
-    DAMAGE_ICON(drawShape(damageShape(), Renderable.sharpCornerStroke(2f), true, false, 25, 28)),
-    SHIELD_ICON(fillShape(shieldShape(), true, false, 25, 28)),
+    //actions
     SHIELD_REGEN_ICON(fillShape(shieldRegenShape(), true, false, 25, 28)),
     MOVE_ICON(drawShape(moveShape(), Renderable.roundedStroke(3f), true, false, 25, 28)),
     RANGE_ICON(fillShape(rangeShape(), true, false, 35, 28)),
-    AMMO_ICON(fillShape(ammoShape(), true, false, 25, 28)),
     HP_ICON(drawShape(hitPointShape(), Renderable.roundedStroke(2.5f), true, false, 25, 28)),
     REPAIR_ICON(fillShape(repairShape(0.15f), true, false, 25, 28)),
     RESUPPLY_ICON(fillShape(resupplyShape(0.15f), true, false, 25, 28)),
     STEALTH_ICON(fillShape(stealthShape(), true, false, 25, 36)),
-    ENERGY_ICON(fillShape(antimatterShape(), true, false, 25, 28)),
     CAPTURE_ICON(fillShape(captureShape(), true, false, 25, 28)),
+
+    //stats
+    DAMAGE_ICON(drawShape(damageShape(), Renderable.sharpCornerStroke(2f), true, false, 25, 28)),
+    SHIELD_ICON(fillShape(shieldShape(), true, false, 25, 28)),
+    ENERGY_ICON(fillShape(antimatterShape(), true, false, 25, 28)),
+    AMMO_ICON(fillShape(ammoShape(), true, false, 25, 28)),
     VIEW_RANGE_ICON(drawShape(viewRangeShape(), Renderable.roundedStroke(3.5f), true, false, 25, 28)),
+
+    //attributes
+    DEFENCE_NETWORK_ICON(fillShape(defenceNetworkShape(), true, false, 25, 28)),
 
     FIGHTER_ICON(fillShape(fighterIcon(), true, false, 30, 18)),
     CORVETTE_ICON(fillShape(corvetteIcon(), true, false, 30, 18)),
@@ -191,23 +198,52 @@ public enum TextRenderable {
     private static Path2D.Float hitPointShape() {
         float size = 0.3f;
         Path2D.Float path = new Path2D.Float();
-        path.moveTo(Math.cos(Math.toRadians(30 + 60 * 0)) * size, Math.sin(Math.toRadians(30 + 60 * 0)) * size);
-        path.lineTo(Math.cos(Math.toRadians(30 + 60 * 1)) * size, Math.sin(Math.toRadians(30 + 60 * 1)) * size);
-        path.lineTo(Math.cos(Math.toRadians(30 + 60 * 2)) * size, Math.sin(Math.toRadians(30 + 60 * 2)) * size);
-        path.lineTo(Math.cos(Math.toRadians(30 + 60 * 3)) * size, Math.sin(Math.toRadians(30 + 60 * 3)) * size);
-        path.lineTo(Math.cos(Math.toRadians(30 + 60 * 4)) * size, Math.sin(Math.toRadians(30 + 60 * 4)) * size);
-        path.lineTo(Math.cos(Math.toRadians(30 + 60 * 5)) * size, Math.sin(Math.toRadians(30 + 60 * 5)) * size);
+        ObjPos[] positions = new ObjPos[6];
+        for (int i = 0; i < 6; i++) {
+            positions[i] = hexagonPos(i, size);
+        }
+        lines(path, positions);
         path.closePath();
-        path.moveTo(Math.cos(Math.toRadians(30 + 60 * 0)) * size, Math.sin(Math.toRadians(30 + 60 * 0)) * size);
-        path.lineTo(0, 0);
-        path.closePath();
-        path.moveTo(Math.cos(Math.toRadians(30 + 60 * 2)) * size, Math.sin(Math.toRadians(30 + 60 * 2)) * size);
-        path.lineTo(0, 0);
-        path.closePath();
-        path.moveTo(Math.cos(Math.toRadians(30 + 60 * 4)) * size, Math.sin(Math.toRadians(30 + 60 * 4)) * size);
-        path.lineTo(0, 0);
-        path.closePath();
+        for (int i = 0; i < 6; i += 2) {
+            lines(path, positions[i], ObjPos.ORIGIN);
+        }
         return path;
+    }
+
+    private static Shape defenceNetworkShape() {
+        float size = 0.3f, diameter = 0.18f;
+        Path2D.Float path = new Path2D.Float();
+        ObjPos[] positions = new ObjPos[6];
+        for (int i = 0; i < 6; i++) {
+            positions[i] = hexagonPos(i, size);
+        }
+        lines(path, positions);
+        path.closePath();
+        Area outline = new Area(Renderable.outlineShape(path, 0.06f));
+        for (ObjPos pos : positions) {
+            ObjPos dotPos = pos.copy().multiply(0.95f);
+            outline.add(new Area(new Ellipse2D.Float(dotPos.x - diameter / 2, dotPos.y - diameter / 2, diameter, diameter)));
+        }
+        return outline;
+    }
+
+    private static ObjPos hexagonPos(int index, float size) {
+        return new ObjPos(Math.cos(Math.toRadians(30 + 60 * index)) * size, Math.sin(Math.toRadians(30 + 60 * index)) * size);
+    }
+
+    private static void path(BiConsumer<Float, Float> op, ObjPos pos) {
+        op.accept(pos.x, pos.y);
+    }
+
+    private static BiConsumer<Float, Float> lineOp(Path2D.Float path, int index) {
+        return index == 0 ? path::moveTo : path::lineTo;
+    }
+
+    private static void lines(Path2D.Float path, ObjPos... positions) {
+        for (int i = 0; i < positions.length; i++) {
+            path(lineOp(path, i), positions[i]);
+        }
+        path.closePath();
     }
 
     private static Shape viewRangeShape() {

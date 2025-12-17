@@ -30,6 +30,11 @@ public class HPBarBoxElement extends BoxElement {
     }
 
     @Override
+    public boolean maxWidth() {
+        return false;
+    }
+
+    @Override
     public void setWidth(float width) {
         bar.setWidth(width);
     }

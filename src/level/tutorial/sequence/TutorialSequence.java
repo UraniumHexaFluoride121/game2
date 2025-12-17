@@ -45,4 +45,8 @@ public class TutorialSequence implements SequenceHolder {
         if (getActiveSequenceElement() instanceof EventConsumer c)
             c.accept(e);
     }
+
+    public boolean isEmpty() {
+        return sequence.length == 0;
+    }
 }

@@ -7,6 +7,7 @@ import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import foundation.tick.Tickable;
 import level.Level;
+import level.TeamData;
 import level.structure.StructureType;
 import level.tile.*;
 import level.tutorial.TutorialManager;
@@ -29,17 +30,19 @@ import render.types.text.DynamicTextRenderer;
 import unit.action.Action;
 import unit.action.ActionSelector;
 import unit.bot.VisibilityData;
-import unit.stats.Modifier;
-import unit.stats.ModifierCategory;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.ModifierCategory;
 import unit.stats.UnitStatManager;
-import unit.stats.modifiers.WeaponDamageModifier;
+import unit.stats.modifiers.groups.WeaponDamageModifier;
 import unit.type.UnitType;
+import unit.weapon.DamageHandler;
 import unit.weapon.FiringData;
 import unit.weapon.WeaponInstance;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.function.Function;
 
 import static level.tile.Tile.*;
 import static unit.action.Action.*;
@@ -65,9 +68,9 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
 
     public Unit(UnitType type, UnitTeam team, Point pos, Level level) {
         super(new UnitData(type, team, pos), new UnitStatManager());
+        this.level = level;
         stats.init(this);
         data.init(stats);
-        this.level = level;
         stealthTransparencyAnim = new LerpAnimation(1).finish();
         selectableTiles = new TileSet(level.tilesX, level.tilesY);
         level.buttonRegister.register(actionUI);
@@ -116,6 +119,8 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
     private final SineAnimation targetAnim = new SineAnimation(2, 90);
 
     private boolean exploding = false;
+    private Point prevTarget = null;
+    private LerpAnimation targetUpdateTimer = new LerpAnimation(1);
 
     public synchronized void renderActionAboveUnits(Graphics2D g) {
         if (level == null || !renderVisible()) return;
@@ -124,14 +129,24 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
             if (level.getActiveAction() == FIRE) {
                 Tile tile = selector().mouseOverTile;
                 if (tile != null && selectableTiles.contains(tile.pos)) {
-                    renderTarget(g, targetAnim, tile.renderPosCentered);
                     if (!level.levelRenderer.isFiring()) {
-                        Unit unit = level.getUnit(tile.pos);
-                        level.levelRenderer.damageUI.show(this, unit);
-                        level.levelRenderer.damageModifiers.show(tile.pos, this, unit, g);
+                        if (targetUpdateTimer.finished() || !tile.pos.equals(prevTarget)) {
+                            if (!tile.pos.equals(prevTarget))
+                                targetAnim.startTimer();
+                            Unit unit = level.getUnit(tile.pos);
+                            level.levelRenderer.damageUI.update(this, unit);
+                            level.levelRenderer.damageModifiers.update(tile.pos, this, unit, g);
+                            prevTarget = tile.pos;
+                            targetUpdateTimer.startTimer();
+                        } else {
+                            level.levelRenderer.damageUI.show();
+                            level.levelRenderer.damageModifiers.show();
+                        }
                     }
+                    renderTarget(g, targetAnim, tile.renderPosCentered);
                 } else
-                    targetAnim.startTimer();
+                    prevTarget = null;
+
             }
         }
         animHandler.render(g, AnimType.ABOVE_UNIT);
@@ -510,29 +525,29 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
 
     public void attack(Unit other) {
         FiringResult result = getFiringResult(other);
-        result.firingData().realiseDamage();
+        result.firingData().realiseEffects(this::getUnit);
         if (renderVisible() && other.renderVisible() && level.gameplaySettings.showFiringAnim) {
             animHandler.registerAnim(new AttackArrow(getCenter(), other.getCenter()), () -> {
-                level.levelRenderer.beginFiring(this, other, result.thisWeapon(), result.otherWeapon());
+                level.levelRenderer.beginFiring(this, other, result.thisWeapon(), result.otherWeapon(), result.firingData().handler);
             });
         } else if (other.renderVisible()) {
             AttackArrow.createAttackArrow(getCenter(), level.getTile(other.data.pos).renderPosCentered,
-                    other.data.shieldRenderHP > 0, renderVisible(), animHandler, other.animHandler, () -> postFiringOther(other));
+                    other.data.shieldRenderHP > 0, renderVisible(), animHandler, other.animHandler, () -> postFiringOther(other, result.firingData().handler));
             animHandler.animBlock(0.7f, level);
             other.tileFlash(ATTACK_TILE_FLASH);
         } else {
-            postFiringOther(other);
+            postFiringOther(other, result.firingData().handler);
         }
         if (other.renderVisible())
             other.cameraTo(data.team);
     }
 
     @Override
-    public void postFiring(UnitLike<?> other, boolean isThisAttacking) {
+    public void postFiring(UnitLike<?> other, DamageHandler handler, boolean isThisAttacking) {
         if (data.renderHP != data.hitPoints) {
             decrementCapture();
         }
-        super.postFiring(other, isThisAttacking);
+        super.postFiring(other, handler, isThisAttacking);
         if (!isThisAttacking)
             TutorialManager.acceptEvent(new EventActionComplete(level, FIRE));
     }
@@ -542,11 +557,11 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
         if (destroyedBy != null) {
             if (level.networkState != NetworkState.CLIENT) {
                 for (UnitTeam t : UnitTeam.ORDERED_TEAMS) {
-                    if (level.samePlayerTeam(destroyedBy.data.team, t) && level.bots.get(t))
-                        level.botHandlerMap.get(t).incrementDestroyedUnits();
+                    if (level.samePlayerTeam(destroyedBy.data.team, t) && level.teamData.get(t).bot)
+                        level.teamData.get(t).botHandler.incrementDestroyedUnits();
                 }
             }
-            level.destroyedUnitsByTeam.put(destroyedBy.data.team, level.destroyedUnitsByTeam.get(destroyedBy.data.team) + 1);
+            level.teamData.get(destroyedBy.data.team).destroyedEnemiesCount++;
         }
         if (renderVisible()) {
             UnitExplosion anim = new UnitExplosion(getCenter(), level);
@@ -559,7 +574,14 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
         } else {
             level.qRemoveUnit(this);
         }
-        level.destroyedUnitsDamage.put(data.team, level.destroyedUnitsDamage.get(data.team) + stats.maxHP());
+        level.teamData.get(data.team).destroyedUnitsHP += stats.maxHP();
+    }
+
+    @Override
+    public UnitLike<?> getUnit(Point pos) {
+        if (!level.tileSelector.validCoordinate(pos))
+            return null;
+        return level.getUnit(pos);
     }
 
     public Color getWeaponEffectivenessAgainst(Unit other) {
@@ -840,25 +862,17 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
             return 0;
         final float[] v = {0};
         weapons.forEach(w -> {
-            v[0] = Math.max(v[0], stats.baseDamage() * Modifier.multiplicativeEffect(ModifierCategory.DAMAGE, w.template.getModifiers(shipClass)));
+            v[0] = Math.max(v[0], stats.attackDamage() * Modifier.multiplicativeEffect(ModifierCategory.DAMAGE, w.template.getModifiers(shipClass)));
         });
         return v[0];
     }
 
     @Override
     public FiringData getCurrentFiringData(UnitLike<?> otherUnit) {
-        return new FiringData(this, otherUnit, p -> level.getTile(p).type);
+        return new FiringData(this, otherUnit, p -> level.getTile(p).type, level);
     }
 
-    public String getActionCostText(Action a) {
-        if (a == MOVE) {
-            return stats.moveEnergyCost(stats.moveCost(TileType.EMPTY)) + " - " + stats.moveEnergyCost(stats.maxMovement());
-        }
-        return String.valueOf(stats.getActionCost(a).orElse(0));
-    }
-
-    public String getPerTurnActionCostText(Action a) {
-        int v = stats.getPerTurnActionCost(a).orElse(0);
-        return String.valueOf(v < 0 ? "+" + v : v);
+    public <R> R fromTeamData(Function<TeamData, R> get) {
+        return get.apply(level.teamData.get(data.team));
     }
 }

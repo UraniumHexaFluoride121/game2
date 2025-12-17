@@ -4,8 +4,9 @@ import level.tutorial.sequence.SequenceHolder;
 import level.tutorial.sequence.TutorialSequence;
 import level.tutorial.sequence.event.EventConsumer;
 import level.tutorial.sequence.event.TutorialEvent;
+import level.tutorial.sequence.event.TutorialEventListener;
 
-public class SubSequence implements TutorialSequenceElement, EventConsumer, SequenceHolder {
+public class SubSequence implements EventConsumer, SequenceHolder {
     private final TutorialSequence tutorialSequence = new TutorialSequence();
 
     public static SubSequence sequence(TutorialSequenceElement... sequence) {
@@ -14,6 +15,11 @@ public class SubSequence implements TutorialSequenceElement, EventConsumer, Sequ
 
     private SubSequence(TutorialSequenceElement... sequence) {
         tutorialSequence.setSequence(sequence);
+    }
+
+    @Override
+    public TutorialEventListener[] getListeners() {
+        return new TutorialEventListener[0];
     }
 
     @Override

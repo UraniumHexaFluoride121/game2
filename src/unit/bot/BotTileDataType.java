@@ -10,15 +10,13 @@ public enum BotTileDataType {
     SCOUT_NEEDED,
     ENEMY_FIGHTERS_DAMAGE,
     ENEMY_CORVETTES_DAMAGE,
-    ENEMY_CRUISERS_DAMAGE,
-    ENEMY_CAPITAL_SHIPS_DAMAGE;
+    ENEMY_CRUISERS_DAMAGE;
 
     public static BotTileDataType enemyDamageTypeFromClass(ShipClass shipClass) {
         return switch (shipClass) {
             case FIGHTER -> ENEMY_FIGHTERS_DAMAGE;
             case CORVETTE -> ENEMY_CORVETTES_DAMAGE;
             case CRUISER -> ENEMY_CRUISERS_DAMAGE;
-            case CAPITAL_SHIP -> ENEMY_CAPITAL_SHIPS_DAMAGE;
         };
     }
 }

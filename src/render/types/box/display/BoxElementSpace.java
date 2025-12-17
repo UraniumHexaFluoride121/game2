@@ -16,6 +16,11 @@ public class BoxElementSpace extends BoxElement {
     }
 
     @Override
+    public boolean maxWidth() {
+        return false;
+    }
+
+    @Override
     public float width() {
         return 0;
     }

@@ -8,13 +8,13 @@ import render.types.container.UIElementScrollSurface;
 import render.types.text.MultiLineTextBox;
 import render.types.box.UIDisplayBoxRenderElement;
 import render.types.text.UITextLabel;
-import unit.stats.Modifier;
+import unit.stats.modifiers.types.Modifier;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static unit.stats.ModifierCategory.*;
+import static unit.stats.modifiers.types.ModifierCategory.*;
 
 public class MovementModifierInfo extends InfoScreen {
     public UIElementScrollSurface<UIDisplayBoxRenderElement> scrollSurface;
@@ -33,7 +33,7 @@ public class MovementModifierInfo extends InfoScreen {
                     new MultiLineTextBox(1, 21.5f, 22, 0.6f, HorizontalAlign.LEFT)
                             .updateText("These are the movement modifiers currently in effect for this unit, which include " + MOVEMENT_COST_DISPLAY.getName().toLowerCase() +
                                     " modifiers, as well as any other special modifiers. Units have a max " + MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + " (not affected by modifiers), " +
-                                    "and each tile the unit moves over has a " + MOVEMENT_COST_DISPLAY.getName().toLowerCase() + ". The unit can move to a tile as long as the total cost of all " +
+                                    "and each tile the unit moves over has " + MOVEMENT_COST_DISPLAY.getNameArticle().toLowerCase() + ". The unit can move to a tile as long as the total cost of all " +
                                     "the tiles along the unit's path is lower than its max " + MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + ".\n\n" +
                                     "Each tile type has a different " + MOVEMENT_COST_DISPLAY.getName().toLowerCase() + ", which can be influenced by modifiers. Certain modifiers " +
                                     "affect the " + MOVEMENT_COST_DISPLAY.getName().toLowerCase() + " of specific tile types, while others affect all tile types. Modifier effects " +

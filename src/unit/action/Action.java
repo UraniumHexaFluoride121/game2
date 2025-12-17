@@ -5,11 +5,16 @@ import foundation.math.HitBox;
 import level.energy.EnergyManager;
 import render.GameRenderer;
 import render.Renderable;
+import render.UIColourTheme;
+import render.save.SerializationProxy;
+import render.save.SerializedByProxy;
 import render.types.text.StyleElement;
 import render.types.text.TextRenderable;
-import unit.stats.ColouredName;
+import unit.stats.ColouredIconName;
 
 import java.awt.*;
+import java.io.ObjectStreamException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +23,9 @@ import java.util.function.Consumer;
 import static render.Renderable.*;
 import static unit.action.ActionColour.*;
 
-public class Action implements ColouredName, Serializable {
+public class Action implements ColouredIconName, SerializedByProxy, Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private static final HashMap<String, Action> names = new HashMap<>();
 
     public static final float ACTION_BUTTON_SIZE = 2f;
@@ -121,13 +128,14 @@ public class Action implements ColouredName, Serializable {
             }, "Resupply the ammunition of an allied unit. You must be adjacent to the unit that needs resupplying.", -5);
 
     private final String name, displayName, textIcon;
-    private final StyleElement textColour;
-    private final ActionColour colour, unusableColour;
-    public final Color tileColour;
-    private final Renderable iconImageRenderer;
-    private final boolean scaled;
-    public final String infoText;
-    private final int order;
+    private transient final StyleElement textColour;
+    private transient final ActionColour colour, unusableColour;
+    public transient final Color tileColour;
+    public transient final UIColourTheme colourTheme;
+    private transient final Renderable iconImageRenderer;
+    private transient final boolean scaled;
+    public transient final String infoText;
+    private transient final int order;
 
     public static final HitBox buttonBox = new HitBox(ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, -ACTION_BUTTON_SIZE / 2, ACTION_BUTTON_SIZE / 2);
 
@@ -144,6 +152,7 @@ public class Action implements ColouredName, Serializable {
         this.tileColour = tileColour;
         this.scaled = scaled;
         this.iconImageRenderer = iconImageRenderer;
+        colourTheme = UIColourTheme.createBoxTheme(textColour);
     }
 
     public void render(Graphics2D g, ActionData data) {
@@ -203,7 +212,7 @@ public class Action implements ColouredName, Serializable {
         };
     }
 
-    public static Action getByName(String name) {
+    public static Action valueOf(String name) {
         for (Map.Entry<String, Action> entry : names.entrySet()) {
             if (entry.getKey().equals(name))
                 return entry.getValue();
@@ -242,6 +251,7 @@ public class Action implements ColouredName, Serializable {
         return displayName;
     }
 
+    @Override
     public String getInternalName() {
         return name;
     }
@@ -251,11 +261,13 @@ public class Action implements ColouredName, Serializable {
         return textColour.display;
     }
 
-    public String colouredIconName(StyleElement end, boolean lowerCase) {
-        String s = (lowerCase ? getName().toLowerCase() : getName()) + textIcon;
-        if (end == null)
-            return colour() + s;
-        else
-            return colour() + s + end.display;
+    @Serial
+    private Object writeReplace() throws ObjectStreamException {
+        return new SerializationProxy<>(Action.class, this);
+    }
+
+    @Override
+    public String getIcon() {
+        return textIcon;
     }
 }

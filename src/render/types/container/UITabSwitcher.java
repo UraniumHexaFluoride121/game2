@@ -1,15 +1,16 @@
 package render.types.container;
 
 import foundation.Deletable;
-import foundation.input.*;
-import foundation.math.ObjPos;
+import foundation.input.ButtonClickHandler;
+import foundation.input.ButtonRegister;
+import foundation.input.InputType;
+import foundation.input.RegisteredButtonInputReceiver;
 import foundation.math.HitBox;
+import foundation.math.ObjPos;
 import render.*;
 import render.level.tile.RenderElement;
-import render.types.text.TextRenderer;
-import render.HorizontalAlign;
-import render.UIColourTheme;
 import render.types.box.UIBox;
+import render.types.text.TextRenderer;
 import render.types.text.UITextLabel;
 
 import java.awt.*;
@@ -20,7 +21,6 @@ import java.util.function.BiConsumer;
 public class UITabSwitcher extends UIContainer {
     public final float x, y, height, width;
     private final UIBox box;
-    private ButtonRegister buttonRegister;
 
     public int selectedTab = 0;
 
@@ -33,7 +33,6 @@ public class UITabSwitcher extends UIContainer {
         this.y = y;
         this.height = height;
         this.width = width;
-        this.buttonRegister = buttonRegister;
         if (buttonRegister != null) {
             buttonRegister.register(this);
         }
@@ -116,13 +115,15 @@ public class UITabSwitcher extends UIContainer {
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (!isEnabled() || tabs.isEmpty())
             return;
-        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, true, blocked);
+        blocking = internal.acceptInput(pos.copy().subtract(x, y), type, true, blocked);
+        blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, true, blocking);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (!isEnabled() || tabs.isEmpty())
             return;
+        blocking = internal.acceptInput(pos.copy().subtract(x, y), type, false, blocked);
         blocking = tabs.get(selectedTab).internal.acceptInput(pos.copy().subtract(x, y), type, false, blocked);
     }
 
@@ -158,8 +159,7 @@ public class UITabSwitcher extends UIContainer {
             this.index = index;
             renderer = new GameRenderer(new AffineTransform(), null);
             internal = new ButtonRegister();
-            if (parent.buttonRegister != null)
-                parent.buttonRegister.register(this);
+            parent.internal.register(this);
             clickHandler = new ButtonClickHandler(InputType.MOUSE_LEFT, true, () -> {
                 boolean runOnNewTabSelected = parent.selectedTab != index && parent.onNewTabSelected != null;
 
@@ -172,7 +172,7 @@ public class UITabSwitcher extends UIContainer {
                 if (runOnNewTabSelected)
                     parent.onNewTabSelected.run();
             }).noDeselect();
-            hitBox = HitBox.createFromOriginAndSize(x + parent.x, y + parent.y, width, height);
+            hitBox = HitBox.createFromOriginAndSize(x, y, width, height);
             box = new UIBox(width, height, 0.4f, UIBox.BoxShape.RECTANGLE_TOP_CORNERS_CUT).setClickHandler(clickHandler).setColourTheme(UIColourTheme.GREEN_SELECTED_TAB);
             text = new TextRenderer(s, textSize, UITextLabel.TEXT_COLOUR).setTextAlign(HorizontalAlign.CENTER).setBold(true);
         }
@@ -223,8 +223,7 @@ public class UITabSwitcher extends UIContainer {
         public void delete() {
             clickHandler.delete();
             box.setClickHandler(null);
-            if (parent.buttonRegister != null)
-                parent.buttonRegister.remove(this);
+            parent.internal.remove(this);
             renderer.delete();
             internal.delete();
         }

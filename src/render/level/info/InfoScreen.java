@@ -12,9 +12,11 @@ import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
 import render.types.input.button.UIButton;
 
+import java.awt.*;
 import java.util.function.UnaryOperator;
 
 public class InfoScreen extends LevelUIContainer<Level> {
+    public static final Color FULL_SCREEN_MENU_BACKGROUND_COLOUR = new Color(0, 0, 0, 208);
     protected final float width, height;
     protected boolean backInCorner;
 
@@ -25,7 +27,7 @@ public class InfoScreen extends LevelUIContainer<Level> {
         this.height = height;
         this.backInCorner = backInCorner;
         addRenderables((r, b) -> {
-            new UIFullScreenColour(r, RenderOrder.INFO_SCREEN_BACKGROUND, UnitInfoScreen.FULL_SCREEN_MENU_BACKGROUND_COLOUR)
+            new UIFullScreenColour(r, RenderOrder.INFO_SCREEN_BACKGROUND, FULL_SCREEN_MENU_BACKGROUND_COLOUR)
                     .setZOrder(-100).translate(-(Renderable.right() / 2 - width / 2), -(Renderable.top() / 2 - height / 2));
             if (backInCorner)
                 new UIButton(r, b, RenderOrder.INFO_SCREEN,

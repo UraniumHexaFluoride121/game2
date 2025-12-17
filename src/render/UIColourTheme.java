@@ -1,6 +1,7 @@
 package render;
 
 import foundation.math.MathUtil;
+import render.types.text.StyleElement;
 
 import java.awt.*;
 import java.util.function.UnaryOperator;
@@ -62,6 +63,9 @@ public class UIColourTheme {
     );
     public static UIColourTheme DEEP_GREEN = new UIColourTheme(
             new Color(106, 220, 68), new Color(92, 193, 58, 144)
+    );
+    public static UIColourTheme DEEP_PURPLE = new UIColourTheme(
+            new Color(134, 49, 213), new Color(128, 58, 193, 144)
     );
     public static UIColourTheme DEEP_YELLOW = new UIColourTheme(
             new Color(220, 185, 68), new Color(193, 171, 58, 144)
@@ -148,6 +152,18 @@ public class UIColourTheme {
                 borderColourSelected, modifier.apply(backgroundColourSelected));
     }
 
+    public static UIColourTheme createBoxTheme(StyleElement styleElement) {
+        return createBoxTheme(styleElement.colour);
+    }
+
+    public static UIColourTheme createBoxTheme(Color colour) {
+        return createBoxTheme(new UIColourTheme(colour, UIColourTheme.darken(colour, 0.87f)));
+    }
+
+    public static UIColourTheme createBoxTheme(UIColourTheme theme) {
+        return theme.backgroundModifier(c -> UIColourTheme.setAlpha(c, 0.3f));
+    }
+
     public static Color applyAlpha(Color c, float alpha) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.clamp((int) (c.getAlpha() * alpha), 0, 255));
     }
@@ -158,6 +174,10 @@ public class UIColourTheme {
 
     public static Color darken(Color c, float brightness) {
         return new Color((int) (c.getRed() * brightness), (int) (c.getGreen() * brightness), (int) (c.getBlue() * brightness), c.getAlpha());
+    }
+
+    public static Color pow(Color c, float exp) {
+        return new Color((float) Math.pow(c.getRed() / 255f, exp), (float) Math.pow(c.getGreen() / 255f, exp), (float) Math.pow(c.getBlue() / 255f, exp), c.getAlpha() / 255f);
     }
 
     public static Color lerp(Color a, Color b, float t) {

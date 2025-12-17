@@ -9,6 +9,7 @@ import level.tutorial.sequence.SequenceHolder;
 import level.tutorial.sequence.TutorialSequence;
 import level.tutorial.sequence.event.EventConsumer;
 import level.tutorial.sequence.event.TutorialEvent;
+import level.tutorial.sequence.event.TutorialEventListener;
 import render.RenderOrder;
 import render.UIColourTheme;
 import render.HorizontalAlign;
@@ -16,7 +17,7 @@ import render.types.box.UIDisplayBoxRenderElement;
 
 import java.util.function.Supplier;
 
-public class SequenceTextBox implements TutorialSequenceElement, EventConsumer, SequenceHolder {
+public class SequenceTextBox implements EventConsumer, SequenceHolder {
     private UIDisplayBoxRenderElement textBox;
     private Supplier<UIDisplayBoxRenderElement> textBoxSupplier;
     private final TutorialSequence tutorialSequence = new TutorialSequence();
@@ -40,6 +41,11 @@ public class SequenceTextBox implements TutorialSequenceElement, EventConsumer, 
             element.box.setHorizontalAlign(HorizontalAlign.CENTER);
             return element;
         };
+    }
+
+    @Override
+    public TutorialEventListener[] getListeners() {
+        return new TutorialEventListener[0];
     }
 
     @Override

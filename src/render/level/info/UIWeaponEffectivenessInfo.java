@@ -9,8 +9,9 @@ import render.anim.timer.PowAnimation;
 import render.types.box.UIDisplayBox;
 import render.types.box.UIDisplayBoxRenderElement;
 import render.types.container.LevelUIContainer;
-import unit.stats.Modifier;
-import unit.stats.modifiers.WeaponDamageModifier;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.ModifierCategory;
+import unit.stats.modifiers.groups.WeaponDamageModifier;
 import unit.weapon.WeaponEffectiveness;
 
 import java.awt.*;
@@ -25,14 +26,14 @@ public class UIWeaponEffectivenessInfo extends LevelUIContainer<Level> {
         addRenderables((r, b) -> {
             displayBox = new UIDisplayBoxRenderElement(r, RenderOrder.LEVEL_UI, 0, 0, 20, -1, box -> box.setColourTheme(WeaponEffectiveness.BOX_GRAY), false);
             displayBox.box.setHorizontalAlign(HorizontalAlign.CENTER)
-                    .addText(0.8f, HorizontalAlign.CENTER, "Weapon effectiveness colour coding:")
+                    .addText(0.8f, HorizontalAlign.CENTER, ModifierCategory.WEAPON_EFFECTIVENESS.getNameFirstUpper() + " colour coding:")
                     .addSpace(0.3f, 0)
-                    .addBox(newBox(WeaponDamageModifier.NORMAL_STRENGTH, "Normal Weapon Strength"), HorizontalAlign.LEFT, 0, false)
+                    .addBox(newBox(WeaponDamageModifier.NORMAL_STRENGTH, WeaponDamageModifier.NORMAL_STRENGTH.name()), HorizontalAlign.LEFT, 0, false)
                     .addSpace(0.3f, 0)
-                    .addBox(newBox(WeaponDamageModifier.STRENGTH_1, "Weapon Strength I - III"), HorizontalAlign.LEFT, 0, false)
+                    .addBox(newBox(WeaponDamageModifier.WEAPON_STRENGTH, WeaponDamageModifier.WEAPON_STRENGTH.name()), HorizontalAlign.LEFT, 0, false)
                     .addBox(newBox(null, "Unable to Attack"), HorizontalAlign.RIGHT, 1, false)
                     .addSpace(0.3f, 1)
-                    .addBox(newBox(WeaponDamageModifier.WEAKNESS_1, "Weapon Weakness I - III"), HorizontalAlign.RIGHT, 1, false)
+                    .addBox(newBox(WeaponDamageModifier.WEAPON_WEAKNESS, WeaponDamageModifier.WEAPON_WEAKNESS.name()), HorizontalAlign.RIGHT, 1, false)
                     .addBox(new UIDisplayBox(0, 2, 20, -1, box -> box.setColourTheme(WeaponEffectiveness.BOX_GRAY), true)
                             .addText(0.6f, HorizontalAlign.CENTER, "Press middle mouse to show / hide colour coding"), HorizontalAlign.CENTER, 2, false)
                     .setColumnVerticalAlign(1, VerticalAlign.BOTTOM).setColumnVerticalAlign(2, VerticalAlign.TOP);
@@ -58,7 +59,7 @@ public class UIWeaponEffectivenessInfo extends LevelUIContainer<Level> {
 
     private static UIDisplayBox newBox(Modifier m, String s) {
         return new UIDisplayBox(0, 0, 9.5f, -1, box -> box.setColourTheme(
-                Modifier.createBackgroundTheme(WeaponDamageModifier.getDamageModifierColour(m))), false)
+                UIColourTheme.createBoxTheme(WeaponDamageModifier.getDamageModifierColour(m))), false)
                 .addText(0.6f, HorizontalAlign.LEFT, s);
     }
 }

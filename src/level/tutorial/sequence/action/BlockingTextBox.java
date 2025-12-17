@@ -16,7 +16,7 @@ import render.types.box.UIDisplayBoxRenderElement;
 
 import java.util.function.Supplier;
 
-public class BlockingTextBox implements TutorialSequenceElement, EventConsumer {
+public class BlockingTextBox implements EventConsumer {
     private UIDisplayBoxRenderElement textBox;
     private Supplier<UIDisplayBoxRenderElement> textBoxSupplier;
     private TutorialEventListener[] eventListener;
@@ -44,7 +44,13 @@ public class BlockingTextBox implements TutorialSequenceElement, EventConsumer {
     }
 
     @Override
+    public TutorialEventListener[] getListeners() {
+        return eventListener;
+    }
+
+    @Override
     public void start() {
+        EventConsumer.super.start();
         textBox = textBoxSupplier.get();
     }
 

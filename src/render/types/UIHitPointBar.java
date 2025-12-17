@@ -171,7 +171,11 @@ public class UIHitPointBar implements Renderable {
     }
 
     public float getRenderFill() {
-        return fillAnimation == null ? this.fill : MathUtil.lerp(this.fill, fillTo, fillAnimation.normalisedProgress());
+        return fillAnimation == null ? fill : MathUtil.lerp(fill, fillTo, fillAnimation.normalisedProgress());
+    }
+
+    public float getFill() {
+        return fill;
     }
 
     public float getTotalBarWidth() {

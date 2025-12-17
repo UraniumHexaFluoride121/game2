@@ -1,5 +1,6 @@
-package unit.stats;
+package unit.stats.modifiers.types;
 
+import foundation.math.MathUtil;
 import render.GameRenderer;
 import render.HorizontalAlign;
 import render.RenderOrder;
@@ -9,29 +10,18 @@ import render.types.box.UIDisplayBoxRenderElement;
 import render.types.text.StyleElement;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 public interface Modifier extends Comparable<Modifier> {
-    UIColourTheme RED_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_RED);
-    UIColourTheme BLUE_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_LIGHT_BLUE);
-    UIColourTheme SHIELD_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_SHIELD_HP);
-    UIColourTheme DAMAGE_BACKGROUND = createBackgroundTheme(new UIColourTheme(
-            new Color(213, 99, 99), new Color(193, 90, 90)
-    ));
-    UIColourTheme INCOMING_DAMAGE_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_INCOMING_DAMAGE);
-    UIColourTheme MOVEMENT_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_MOVEMENT_SPEED);
-    UIColourTheme RESUPPLY_BACKGROUND = createBackgroundTheme(StyleElement.RESUPPLY);
-    UIColourTheme MINING_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_MINING);
-    UIColourTheme VIEW_RANGE_BACKGROUND = createBackgroundTheme(StyleElement.MODIFIER_VIEW_RANGE);
-    UIColourTheme YELLOW_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_YELLOW);
-    UIColourTheme GREEN_BACKGROUND = createBackgroundTheme(UIColourTheme.DEEP_GREEN);
-
-
-    UIColourTheme RED_DAMAGE_BOX = new UIColourTheme(
-            new Color(213, 99, 99), new Color(60, 25, 25, 239)
-    );
+    UIColourTheme RED = UIColourTheme.DEEP_RED;
+    UIColourTheme BLUE = UIColourTheme.DEEP_LIGHT_BLUE;
+    UIColourTheme YELLOW = UIColourTheme.DEEP_YELLOW;
+    UIColourTheme GREEN = UIColourTheme.DEEP_GREEN;
 
     float effect(ModifierCategory category);
 
@@ -39,13 +29,15 @@ public interface Modifier extends Comparable<Modifier> {
 
     void forEachCategory(BiConsumer<ModifierCategory, Float> action);
 
+    ArrayList<ModifierCategory> categories();
+
     String name();
 
     String description();
 
-    String effectDescription();
+    String effectDescription(ModifierCategory category);
 
-    String effectDescriptionValue();
+    String effectDescriptionValue(ModifierCategory category);
 
     UIColourTheme colour();
 
@@ -62,9 +54,18 @@ public interface Modifier extends Comparable<Modifier> {
         b.box.addSpace(0.5f, 0);
         b.box.addText(0.8f, HorizontalAlign.CENTER, "Modifier Effects:");
         b.box.addSpace(0.3f, 0);
-        UIDisplayBox effectsBox = new UIDisplayBox(0, 0, 16, -1, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX), false);
-        effectsBox.addText(0.7f, HorizontalAlign.LEFT, effectDescription());
-        effectsBox.addText(0.7f, HorizontalAlign.RIGHT, 1, effectDescriptionValue());
+        UIDisplayBox effectsBox = new UIDisplayBox(0, 0, 16, -1, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK), false);
+        AtomicBoolean first = new AtomicBoolean(true);
+        forEachCategory((cat, effect) -> {
+            if (!first.get()) {
+                effectsBox.addSpace(0.2f, 0);
+                effectsBox.addSpace(0.2f, 1);
+                first.set(false);
+            }
+            effectsBox.addText(0.7f, HorizontalAlign.LEFT, "\n" + effectDescription(cat));
+            if (effectDescriptionValue(cat) != null)
+                effectsBox.addText(0.7f, HorizontalAlign.RIGHT, 1, "\n" + effectDescriptionValue(cat));
+        });
         b.box.addBox(effectsBox, HorizontalAlign.CENTER, 0, false);
         return b;
     }
@@ -86,15 +87,33 @@ public interface Modifier extends Comparable<Modifier> {
         return (effect >= 1 ? "+" : "") + Math.round((effect - 1) * 100) + "%";
     }
 
-    static UIColourTheme createBackgroundTheme(Color colour) {
-        return createBackgroundTheme(new UIColourTheme(colour, UIColourTheme.darken(colour, 0.87f)));
+    static String percentAdditive(float effect) {
+        return (effect >= 0 ? "+" : "") + Math.round(effect * 100) + "%";
+    }
+
+    static String signedAdditive(float effect) {
+        return (effect >= 1 ? "+" : "") + MathUtil.floatToString(effect);
+    }
+
+    static Function<Float, String> string(String s) {
+        return effect -> s;
     }
 
     static UIColourTheme createBackgroundTheme(StyleElement styleElement) {
         return createBackgroundTheme(styleElement.colour);
     }
 
+    static UIColourTheme createBackgroundTheme(Color colour) {
+        return createBackgroundTheme(new UIColourTheme(colour, UIColourTheme.darken(colour, 0.87f)));
+    }
+
     static UIColourTheme createBackgroundTheme(UIColourTheme theme) {
-        return theme.backgroundModifier(c -> UIColourTheme.applyAlpha(c, 0.3f));
+        return theme.backgroundModifier(c -> UIColourTheme.setAlpha(c, 0.18f));
+    }
+
+    static UIColourTheme listColourFromEffectPercentMultiplicative(float effect, boolean positive) {
+        if (MathUtil.equal(effect, 1, 0.01f))
+            return BLUE;
+        return (effect < 1) == positive ? RED : GREEN;
     }
 }

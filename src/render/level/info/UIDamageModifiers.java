@@ -9,11 +9,13 @@ import render.level.tile.RenderElement;
 import render.types.box.UIBox;
 import render.types.container.LevelUIContainer;
 import render.types.container.UIElementScrollSurface;
+import render.types.text.StyleElement;
 import render.types.text.TextRenderer;
 import render.types.box.UIDisplayBoxRenderElement;
 import render.types.text.UITextLabel;
 import unit.Unit;
-import unit.stats.Modifier;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.ModifierCategory;
 import unit.weapon.FiringData;
 import unit.weapon.WeaponEffectiveness;
 import unit.weapon.WeaponInstance;
@@ -24,9 +26,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static render.types.text.StyleElement.*;
 import static render.types.text.TextRenderable.*;
-import static unit.stats.ModifierCategory.*;
+import static unit.stats.modifiers.types.ModifierCategory.*;
 
 public class UIDamageModifiers extends LevelUIContainer<Level> {
+    public static final ModifierCategory[] damageModifierCategories = {
+            DAMAGE,
+            SHIELD_DAMAGE,
+            INCOMING_DAMAGE,
+            INCOMING_SHIELD_DAMAGE
+    };
     private Point tile = null, prev = null;
     private UIElementScrollSurface<UIDisplayBoxRenderElement> scrollSurface;
     private UIDisplayBoxRenderElement totalDamage, enemyInfo;
@@ -85,17 +93,19 @@ public class UIDamageModifiers extends LevelUIContainer<Level> {
         return super.isEnabled() && prev != null;
     }
 
-    public void show(Point tile, Unit thisUnit, Unit otherUnit, Graphics2D g) {
+    public void show() {
+        tile = prev;
+    }
+
+    public void update(Point tile, Unit thisUnit, Unit otherUnit, Graphics2D g) {
         this.tile = tile;
-        if (tile.equals(prev))
-            return;
         scrollSurface.clear();
         FiringData firingData = thisUnit.getCurrentFiringData(otherUnit);
         AtomicReference<Float> height = new AtomicReference<>(0f);
         WeaponInstance weapon = firingData.getBestWeaponAgainst(false);
         float unitDamageMultiplier = firingData.unitDamageMultiplier();
-        float initialDamage = thisUnit.stats.baseDamage();
-        float damage = weapon.getDamageAgainst(firingData);
+        float initialDamage = thisUnit.stats.attackDamage();
+        float damage = firingData.displayDamage(weapon).amount;
         float multiplier = damage / (initialDamage * unitDamageMultiplier);
         ArrayList<FiringData.DamageModifier> modifiers = firingData.damageModifiers(weapon);
         level.levelRenderer.damageModifierInfo.update(modifiers, g);
@@ -108,14 +118,10 @@ public class UIDamageModifiers extends LevelUIContainer<Level> {
                 e.box.addText(0.6f, HorizontalAlign.LEFT, m.modifier().name());
                 e.box.getText(0, 0).setTextColour(colour.borderColour);
                 StringBuilder effect = new StringBuilder();
-                if (m.modifier().hasCategory(DAMAGE))
-                    effect.append(Modifier.percentMultiplicative(m.modifier().effect(DAMAGE))).append(DAMAGE_ICON.display).append("\n");
-                if (m.modifier().hasCategory(SHIELD_DAMAGE))
-                    effect.append(Modifier.percentMultiplicative(m.modifier().effect(SHIELD_DAMAGE))).append("\n");
-                if (m.modifier().hasCategory(INCOMING_DAMAGE))
-                    effect.append(Modifier.percentMultiplicative(m.modifier().effect(INCOMING_DAMAGE))).append(DAMAGE_ICON.display).append("\n");
-                if (m.modifier().hasCategory(INCOMING_SHIELD_DAMAGE))
-                    effect.append(Modifier.percentMultiplicative(m.modifier().effect(INCOMING_SHIELD_DAMAGE))).append("\n");
+                for (ModifierCategory cat : damageModifierCategories) {
+                    if (m.modifier().hasCategory(cat))
+                        effect.append(StyleElement.removeStyle(m.modifier().effectDescriptionValue(cat))).append("\n");
+                }
                 if (!effect.isEmpty()) {
                     effect.deleteCharAt(effect.length() - 1);
                     e.box.addText(0.6f, HorizontalAlign.RIGHT, 1, effect.toString());

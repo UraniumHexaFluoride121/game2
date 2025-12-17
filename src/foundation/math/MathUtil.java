@@ -129,6 +129,10 @@ public abstract class MathUtil {
         }
     }
 
+    public static String firstUpper(String s) {
+        return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+    }
+
     public static String floatToString(float v) {
         int r = 1;
         int i = 0;

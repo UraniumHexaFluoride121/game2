@@ -11,7 +11,7 @@ import java.awt.*;
 
 public class UIDamage extends AbstractRenderElement {
     private final UITextLabel label = new UITextLabel(7, 1, false);
-    private ObjPos offset;
+    private ObjPos offset, prevOffset;
 
     public UIDamage(RenderRegister<OrderedRenderable> register, RenderOrder order) {
         super(register, order);
@@ -28,8 +28,13 @@ public class UIDamage extends AbstractRenderElement {
         };
     }
 
-    public void show(Unit thisUnit, Unit targetUnit) {
+    public void update(Unit thisUnit, Unit targetUnit) {
         offset = Tile.getRenderPos(targetUnit.data.pos);
+        prevOffset = offset;
         label.updateTextRight(MathUtil.floatToString(thisUnit.getCurrentFiringData(targetUnit).getDamageAgainst(), 1));
+    }
+
+    public void show() {
+        offset = prevOffset;
     }
 }

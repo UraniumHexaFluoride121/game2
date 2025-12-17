@@ -3,16 +3,20 @@ package unit.type;
 import foundation.math.ObjPos;
 import level.energy.EnergyManager;
 import render.level.FiringRenderer;
+import render.save.SerializationProxy;
 import unit.ShipClass;
 import unit.action.Action;
-import unit.info.AttributeData;
 import unit.info.UnitCharacteristic;
 import unit.info.UnitCharacteristicValue;
-import unit.stats.Modifier;
-import unit.stats.ModifierCategory;
-import unit.stats.modifiers.MovementModifier;
-import unit.weapon.*;
+import unit.stats.attribute.UnitAttribute;
+import unit.stats.modifiers.groups.MovementModifier;
+import unit.stats.modifiers.types.Modifier;
+import unit.stats.modifiers.types.ModifierCategory;
+import unit.weapon.ProjectileType;
+import unit.weapon.WeaponTemplate;
 
+import java.io.ObjectStreamException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -20,21 +24,17 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static unit.info.AttributeData.*;
-import static unit.stats.modifiers.WeaponDamageModifier.*;
-import static unit.stats.modifiers.WeaponDamageModifier.WEAKNESS_2;
-import static unit.stats.modifiers.WeaponDamageModifier.WEAKNESS_3;
+import static unit.stats.modifiers.groups.WeaponDamageModifier.*;
 
 public class CorvetteType extends UnitType {
-    public static final CorvetteType FRIGATE = new CorvetteType("frigate", "Frigate", 10, 5f, 3.5f, new Action[]{
+    public static final CorvetteType FRIGATE = new CorvetteType("frigate", "Frigate", 110, 10, 5f, 3.5f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 17, 1, 1, 3.5f, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CORVETTE_CANNON);
         w
-                .classModifier(ShipClass.FIGHTER, WEAKNESS_1)
-                .classModifier(ShipClass.CORVETTE, STRENGTH_3)
-                .classModifier(ShipClass.CRUISER, STRENGTH_1)
-                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_1);
+                .classModifier(ShipClass.FIGHTER, WEAPON_WEAKNESS)
+                .classModifier(ShipClass.CORVETTE, WEAPON_STRENGTH)
+                .classModifier(ShipClass.CRUISER, WEAPON_STRENGTH);
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.MODERATE);
@@ -44,21 +44,16 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.LOW);
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 10);
-    }, new AttributeData[]{
-            ANTI_CORVETTE, BALANCED,
-            SLOW_ASTEROID_FIELD, CARRIER_LOADING,
-            INEFFECTIVE_AGAINST_FIGHTER, INEFFECTIVE_AGAINST_SHIELDS
-    }, FiringRenderer.THREE_UNITS, "Standard corvette-class unit with moderate speed and armour. Excellent for destroying other corvette-class units."),
+    }, FiringRenderer.THREE_UNITS, "Standard " + ShipClass.CORVETTE.getClassName().toLowerCase() + " unit with moderate speed and armour. Excellent for destroying other corvette-class units."),
 
-    DEFENDER = new CorvetteType("defender", "Defender", 8, 4.5f, 2.5f, new Action[]{
+    DEFENDER = new CorvetteType("defender", "Defender", 140, 8, 4.5f, 2.5f, new Action[]{
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
     }, 1, 22, 1, 1, 4, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.DEFENDER_PLASMA);
         w
-                .classModifier(ShipClass.FIGHTER, STRENGTH_3)
-                .classModifier(ShipClass.CORVETTE, STRENGTH_1)
-                .classModifier(ShipClass.CRUISER, WEAKNESS_2)
-                .classModifier(ShipClass.CAPITAL_SHIP, WEAKNESS_3);
+                .classModifier(ShipClass.FIGHTER, WEAPON_STRENGTH)
+                .classModifier(ShipClass.CORVETTE, NORMAL_STRENGTH)
+                .classModifier(ShipClass.CRUISER, WEAPON_WEAKNESS);
         list.add(w);
     }, map -> {
         map.put(UnitCharacteristic.DEFENCE, UnitCharacteristicValue.GOOD_HIGH);
@@ -71,23 +66,19 @@ public class CorvetteType extends UnitType {
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 12);
         map.put(Action.SHIELD_REGEN, 8);
-    }, new AttributeData[]{
-            ANTI_FIGHTER, ANTI_SHIELD, HAS_SHIELD,
-            SLOW_ASTEROID_FIELD, CARRIER_LOADING,
-            INEFFECTIVE_AGAINST_LARGE, LOW_VIEW_RANGE
-    }, FiringRenderer.TWO_UNITS, "This unit is primarily designed to support larger units in destroying fighter-class enemies using high-power plasma guns. " +
+    }, FiringRenderer.TWO_UNITS, "This unit is primarily designed to support larger units in destroying " + ShipClass.FIGHTER.getClassNamePlural().toLowerCase() + " enemies using high-power plasma guns. " +
             "Features an advanced shield system with decent durability, but has reduced view range and " + ModifierCategory.MOVEMENT_SPEED_DISPLAY.getName().toLowerCase() + ".")
-            .addShield(3, 1.5f, 27),
+            .addShield(3, 1.5f, 27)
+            .modify(u -> u.setAttributes(UnitAttribute.DEFENCE_NETWORK)),
 
-    ARTILLERY = new CorvetteType("artillery", "Artillery", 8, 4.5f, 3.5f, new Action[]{
+    ARTILLERY = new CorvetteType("artillery", "Artillery", 130, 8, 4.5f, 3.5f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 16, 2, 3, 3.5f, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.ARTILLERY_MISSILE);
         w
-                .classModifier(ShipClass.FIGHTER, WEAKNESS_2)
+                .classModifier(ShipClass.FIGHTER, WEAPON_WEAKNESS)
                 .classModifier(ShipClass.CORVETTE, NORMAL_STRENGTH)
-                .classModifier(ShipClass.CRUISER, STRENGTH_1)
-                .classModifier(ShipClass.CAPITAL_SHIP, STRENGTH_2);
+                .classModifier(ShipClass.CRUISER, WEAPON_STRENGTH);
         w.noCounterattack();
         list.add(w);
     }, map -> {
@@ -98,16 +89,12 @@ public class CorvetteType extends UnitType {
         map.put(UnitCharacteristic.FIRING_RANGE, UnitCharacteristicValue.GOOD);
     }, (map, perTurnMap) -> {
         map.put(Action.FIRE, 12);
-    }, new AttributeData[]{
-            ANTI_CAPITAL_SHIP, RANGED_WEAPON,
-            SLOW_ASTEROID_FIELD, CARRIER_LOADING,
-            INEFFECTIVE_AGAINST_SMALL, LIMITED_AMMO
     }, FiringRenderer.THREE_UNITS, "This unit serves as a medium-range missile platform, with limited ammo capacity. " +
             "As a ranged unit, it doesn't receive counterattacks, while also not being able to counterattack enemies when attacked. It also " +
             "has reduced armour, and in general, should not be used on the frontline without support.")
-            .modify(u -> u.setAmmoCapacity(3)),
+            .modify(u -> u.setAmmoCapacity(3).useArticleAn()),
 
-    SUPPLY = new CorvetteType("supply", "Supply Unit", 10, 5.5f, 3.5f, new Action[]{
+    SUPPLY = new CorvetteType("supply", "Supply Unit", 100, 10, 5.5f, 3.5f, new Action[]{
             Action.MOVE, Action.REPAIR, Action.RESUPPLY
     }, 1, 22, 1, 1, 0, list -> {
     }, map -> {
@@ -118,17 +105,13 @@ public class CorvetteType extends UnitType {
     }, (map, perTurnMap) -> {
         map.put(Action.REPAIR, 12);
         map.put(Action.RESUPPLY, 8);
-    }, new AttributeData[]{
-            AttributeData.SUPPLY, REPAIR,
-            SLOW_ASTEROID_FIELD, CARRIER_LOADING,
-            NO_WEAPON
     }, FiringRenderer.TWO_UNITS, "This unit's primary goal is to support other units with its repair and resupply actions. " +
             "Having one of these is almost a necessity when operating units with limited ammo, and its repair action, although it costs quite a bit of " + EnergyManager.displayName + ", " +
             "can be a useful asset in many situations. Keep in mind that this unit does not feature any kind of weaponry to defend itself with.")
             .modify(u -> u.setRepair(3));
 
-    CorvetteType(String name, String displayName, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, AttributeData[] infoAttributes, Supplier<ObjPos[]> firingPositions, String description) {
-        super(name, displayName, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, minRange, maxRange, damage, weaponGenerator, unitCharacteristicSetter, actionCostSetter, infoAttributes, firingPositions, description);
+    CorvetteType(String name, String displayName, int value, float hitPoints, float maxMovement, float maxViewRange, Action[] actions, int firingAnimFrames, float firingAnimUnitWidth, int minRange, int maxRange, float damage, Consumer<ArrayList<WeaponTemplate>> weaponGenerator, Consumer<TreeMap<UnitCharacteristic, UnitCharacteristicValue>> unitCharacteristicSetter, BiConsumer<HashMap<Action, Integer>, HashMap<Action, Integer>> actionCostSetter, Supplier<ObjPos[]> firingPositions, String description) {
+        super(name, displayName, value, hitPoints, maxMovement, maxViewRange, actions, firingAnimFrames, firingAnimUnitWidth, minRange, maxRange, damage, weaponGenerator, unitCharacteristicSetter, actionCostSetter, firingPositions, description);
     }
 
     @Override
@@ -166,5 +149,10 @@ public class CorvetteType extends UnitType {
     public CorvetteType modify(Consumer<UnitType> action) {
         super.modify(action);
         return this;
+    }
+
+    @Serial
+    private Object writeReplace() throws ObjectStreamException {
+        return new SerializationProxy<>(UnitType.class, this);
     }
 }

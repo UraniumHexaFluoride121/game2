@@ -15,16 +15,18 @@ import render.types.text.UITextLabel;
 import static render.types.text.TextRenderable.*;
 
 public class UIScoreBox extends UIContainer {
+    public int damageScore, turnScore, unitsDestroyedScore, totalScore;
     public UIScoreBox(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, RenderOrder order, float x, float y, PlayerTeam team, Level level) {
         super(register, buttonRegister, order, x, y);
         addRenderables((r, b) -> {
-            int damageScore = (int) level.getPlayerTeamScore(level::getDamageScore, team, false);
-            int turnScore = (int) level.getPlayerTeamScore(level::getTurnScore, team, false);
-            int unitsDestroyedScore = (int) level.getPlayerTeamScore(level::getUnitsDestroyedScore, team, false);
+            damageScore = (int) level.getPlayerTeamScore(level::getDamageScore, team, false);
+            turnScore = (int) level.getPlayerTeamScore(level::getTurnScore, team, false);
+            unitsDestroyedScore = (int) level.getPlayerTeamScore(level::getUnitsDestroyedScore, team, false);
+            totalScore = damageScore + turnScore + unitsDestroyedScore + 100;
             new RenderElement(r, RenderOrder.INFO_SCREEN,
                     new UIBox(22, 8).setColourTheme(UIColourTheme.LIGHT_BLUE_BOX_DARK),
                     new UITextLabel(12, 1f, false)
-                            .setTextLeftBold().updateTextLeft("Team Victory:")
+                            .setTextLeftBold().updateTextLeft("Team " + team.getName() + " Victory:")
                             .translate(1, 6.5f),
                     new UITextLabel(6, 1f, false)
                             .setTextRightBold().updateTextRight(Level.VICTORY_SCORE + " " + STAR.display)

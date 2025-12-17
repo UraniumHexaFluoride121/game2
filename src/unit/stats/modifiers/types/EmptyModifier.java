@@ -1,39 +1,51 @@
-package unit.stats;
+package unit.stats.modifiers.types;
 
 import render.UIColourTheme;
 
+import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
-public class SingleModifier implements Modifier {
-    private final float effect;
+public class EmptyModifier implements Modifier {
     private final String name, description, effectDescription, effectDescriptionValue;
-    private final ModifierCategory category;
-    public final UIColourTheme colour, listColour;
+    private UIColourTheme colour, listColour;
 
-    public SingleModifier(float effect, String name, String description, String effectDescription, String effectDescriptionValue, ModifierCategory category, UIColourTheme colour, UIColourTheme listColour) {
-        this.effect = effect;
+    public EmptyModifier(String name, String description, String effectDescription, UIColourTheme colour) {
         this.name = name;
         this.description = description;
         this.effectDescription = effectDescription;
-        this.effectDescriptionValue = effectDescriptionValue;
-        this.category = category;
         this.colour = Modifier.createBackgroundTheme(colour);
-        this.listColour = listColour;
+        listColour = Modifier.createBackgroundTheme(colour);
+        effectDescriptionValue = null;
+    }
+
+    public EmptyModifier setColour(UIColourTheme colour) {
+        this.colour = Modifier.createBackgroundTheme(colour);
+        return this;
+    }
+
+    public EmptyModifier setListColour(UIColourTheme colour) {
+        listColour = Modifier.createBackgroundTheme(colour);
+        return this;
     }
 
     @Override
     public float effect(ModifierCategory category) {
-        return category == this.category ? effect : category.defaultEffect;
+        throw new IllegalArgumentException();
     }
 
     @Override
     public boolean hasCategory(ModifierCategory category) {
-        return category == this.category;
+        return false;
     }
 
     @Override
     public void forEachCategory(BiConsumer<ModifierCategory, Float> action) {
-        action.accept(category, effect);
+
+    }
+
+    @Override
+    public ArrayList<ModifierCategory> categories() {
+        return new ArrayList<>();
     }
 
     @Override
@@ -47,12 +59,12 @@ public class SingleModifier implements Modifier {
     }
 
     @Override
-    public String effectDescription() {
+    public String effectDescription(ModifierCategory category) {
         return effectDescription;
     }
 
     @Override
-    public String effectDescriptionValue() {
+    public String effectDescriptionValue(ModifierCategory category) {
         return effectDescriptionValue;
     }
 

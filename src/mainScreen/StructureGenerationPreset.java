@@ -2,10 +2,14 @@ package mainScreen;
 
 import level.structure.StructureType;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class StructureGenerationPreset {
+public class StructureGenerationPreset implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     public HashMap<StructureType, Integer> neutralMap = new HashMap<>();
     public HashMap<StructureType, Integer> capturedMap = new HashMap<>();
 
@@ -18,6 +22,16 @@ public class StructureGenerationPreset {
     public StructureGenerationPreset add(StructureType type, int neutral, int captured) {
         neutralMap.put(type, neutral);
         capturedMap.put(type, captured);
+        return this;
+    }
+
+    public StructureGenerationPreset incrementNeutral(StructureType type, int count) {
+        neutralMap.put(type, neutralMap.getOrDefault(type, 0) + count);
+        return this;
+    }
+
+    public StructureGenerationPreset incrementCaptured(StructureType type, int count) {
+        capturedMap.put(type, capturedMap.getOrDefault(type, 0) + count);
         return this;
     }
 

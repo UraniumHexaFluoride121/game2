@@ -3,6 +3,7 @@ package render.types.box.display.tutorial;
 import foundation.input.ButtonClickHandler;
 import foundation.input.InputType;
 import foundation.math.HitBox;
+import foundation.math.MathUtil;
 import foundation.math.ObjPos;
 import level.tile.AbstractTileSelector;
 import level.tile.TileSet;
@@ -15,6 +16,7 @@ import render.anim.sequence.AnimSequence;
 import render.anim.sequence.AnimValue;
 import render.anim.sequence.KeyframeFunction;
 import render.anim.timer.DeltaTime;
+import render.anim.timer.LerpAnimation;
 import render.anim.timer.SineAnimation;
 import render.anim.unit.AnimHandler;
 import render.anim.unit.AnimType;
@@ -25,6 +27,7 @@ import render.particle.Particle;
 import render.particle.ParticleBehaviour;
 import render.particle.ParticleEmitter;
 import render.types.box.UIBox;
+import render.types.box.UIDisplayBox;
 import render.types.box.display.BoxElement;
 import unit.Unit;
 import unit.UnitTeam;
@@ -59,6 +62,8 @@ public class TutorialMapElement extends BoxElement {
     public final float width, height, size, lifetime;
     public boolean enabled = true;
     private final UIBox box;
+    private final UIDisplayBox popupBox;
+    private final AnimSequence popupSequence = new AnimSequence().addKeyframe(0, 0, KeyframeFunction.lerp());
     private final HashSet<TutorialMapTile> tiles = new HashSet<>();
     private final HashMap<Integer, HashMap<Integer, TutorialMapTile>> coordinateTiles = new HashMap<>();
     private Particle mouseParticle = null;
@@ -72,7 +77,9 @@ public class TutorialMapElement extends BoxElement {
     private Runnable onResetTask = null;
     private ArrayList<TutorialMapText> textRenderers = new ArrayList<>();
     private boolean useTargetSelector = false;
+
     private final SineAnimation targetAnim = new SineAnimation(2, 90);
+    private final LerpAnimation time;
 
     public final HashSet<TutorialMapUnit> allUnits = new HashSet<>();
 
@@ -85,7 +92,10 @@ public class TutorialMapElement extends BoxElement {
         this.align = align;
         this.width = width;
         this.height = height;
+        time = new LerpAnimation(lifetime);
         box = new UIBox(width, height).setColourTheme(THEME).setCorner(1.2f);
+        popupBox = new UIDisplayBox(0, 0, width / 2, 1, box -> box.setColourTheme(UIColourTheme.LIGHT_BLUE_BOX), true)
+                .addText(0.7f, HorizontalAlign.CENTER, null);
         size = tileSize;
         hexagonRenderer = new HexagonRenderer(TILE_SIZE, false, 0.2f, BORDER_COLOUR).rotate(TILE_SIZE);
         selectedRenderer = new HexagonRenderer(TILE_SIZE, false, 0.25f, SELECTED_COLOUR).rotate(TILE_SIZE);
@@ -118,9 +128,9 @@ public class TutorialMapElement extends BoxElement {
     public void addMouseParticle(TutorialMouseKeyframe... keyframes) {
         AnimSequence x = newSequence(), y = newSequence();
         ArrayList<Float> clickTimes = new ArrayList<>();
-        TutorialMouseKeyframe prev = null;
+        ObjPos prev = null;
         for (TutorialMouseKeyframe keyframe : keyframes) {
-            ObjPos pos = keyframe.pos == null ? prev.pos : keyframe.pos;
+            ObjPos pos = keyframe.pos == null ? prev : keyframe.pos;
             x.addKeyframe(keyframe.time, pos.x, keyframe.typeX);
             y.addKeyframe(keyframe.time, pos.y, keyframe.typeY);
             if (keyframe.click) {
@@ -129,7 +139,8 @@ public class TutorialMapElement extends BoxElement {
                 if (keyframe.onClick != null)
                     actions.put(keyframe.onClick, clickTime);
             }
-            prev = keyframe;
+            if (keyframe.pos != null)
+                prev = keyframe.pos;
         }
         addMouseParticle(x, y, clickTimes.toArray(new Float[0]));
     }
@@ -153,6 +164,16 @@ public class TutorialMapElement extends BoxElement {
             mouseParticle = particle;
             mousePointer.addParticle(particle);
         }, 0f);
+    }
+
+    public void addPopup(float time, float duration, String text) {
+        popupSequence.addKeyframe(time, 0, KeyframeFunction.lerp())
+                .addKeyframe(time + 0.5f, 1, KeyframeFunction.lerp())
+                .addKeyframe(time + 0.5f + duration, 1, KeyframeFunction.lerp())
+                .addKeyframe(time + 0.5f + duration + 0.5f, 0, KeyframeFunction.lerp());
+        actions.put(() -> {
+            popupBox.setText(text);
+        }, time);
     }
 
     public void enableFoW(UnitTeam team) {
@@ -186,7 +207,7 @@ public class TutorialMapElement extends BoxElement {
         selectedTile = new Point(x, y);
         TutorialMapTile tile = getTile(x, y);
         if (tile.unit != null)
-            actionSelector.setUnit(tile.unit);
+            actionSelector.setUnit(tile.unit, tile.structure != null && tile.structure.team != tile.unit.data.team);
         return this;
     }
 
@@ -285,6 +306,23 @@ public class TutorialMapElement extends BoxElement {
         return this;
     }
 
+    public TutorialMapElement capture(int x, int y) {
+        return capture(new Point(x, y));
+    }
+
+    public TutorialMapElement capture() {
+        return capture(selectedTile);
+    }
+
+    public TutorialMapElement capture(Point pos) {
+        TutorialMapTile tile = getTile(pos);
+        if (!tile.capturing)
+            tile.startCapture(tile.unit.data.team);
+        tile.incrementProgress();
+        deselectTile();
+        return this;
+    }
+
     public TutorialMapElement attackUnit(int fromX, int fromY, int toX, int toY) {
         clearHexagonBorder();
         useTargetSelector = false;
@@ -292,8 +330,8 @@ public class TutorialMapElement extends BoxElement {
         if (u1 == null || u2 == null) return this;
         FiringData firingData = u1.getFiringResult(u2).firingData();
         AttackArrow.createAttackArrow(getCenteredRenderPos(fromX, fromY), getCenteredRenderPos(toX, toY), u2.data.shieldRenderHP > 0, true, animHandler, animHandler, () -> {
-            firingData.realiseDamage();
-            u1.postFiringOther(u2);
+            firingData.realiseEffects(p -> getTile(p).unit);
+            u1.postFiringOther(u2, firingData.handler);
         });
         return this;
     }
@@ -404,21 +442,20 @@ public class TutorialMapElement extends BoxElement {
                     tilePath.render(g);
                 animHandler.render(g, AnimType.BELOW_UNIT);
                 tiles.forEach(t -> t.render(g));
+                tiles.forEach(t -> t.renderCaptureBar(g));
                 animHandler.render(g, AnimType.ABOVE_UNIT);
                 TutorialMapTile hoverTile = null;
                 if (mouseParticle != null) {
                     ObjPos pos = mouseParticle.offset;
-                    for (TutorialMapTile tile : tiles) {
-                        if (tile.hexagonShape.contains(pos.x, pos.y)) {
-                            if (hexagonBorderPoints == null || hexagonBorderPoints.contains(tile.pos)) {
-                                hoverTile = tile;
-                                if (!useTargetSelector)
-                                    renderTile(g, hoverRenderer, TILE_SIZE, tile.renderPos);
-                            }
-                            if (tilePath != null)
-                                tilePath.setShortestPath(tile.pos, this::getTileCost);
-                            break;
+                    TutorialMapTile tile = hexagon(pos);
+                    if (tile != null) {
+                        if (hexagonBorderPoints == null || hexagonBorderPoints.contains(tile.pos)) {
+                            hoverTile = tile;
+                            if (!useTargetSelector)
+                                renderTile(g, hoverRenderer, TILE_SIZE, tile.renderPos);
                         }
+                        if (tilePath != null)
+                            tilePath.setShortestPath(tile.pos, this::getTileCost);
                     }
                     actionSelector.buttonPressed(pos, actionSelector.posInside(pos, InputType.MOUSE_OVER), false, InputType.MOUSE_OVER);
                 }
@@ -442,6 +479,17 @@ public class TutorialMapElement extends BoxElement {
                 mousePointer.render(g);
             });
             textRenderers.forEach(t -> t.render(g));
+            if (popupSequence.keyframeCount() != 1 &&
+                    !MathUtil.equal(popupSequence.getValue(time.timeElapsed()), 0, 0.01f)) {
+                Shape clip = g.getClip();
+                GameRenderer.renderScaled(1f / SCALING, g, () -> {
+                    g.clip(box.getShape());
+                });
+                GameRenderer.renderOffset(width / 2 - (popupBox.width / 2), MathUtil.lerp(-1.2f, 1, popupSequence.getValue(time.timeElapsed())), g, () -> {
+                    popupBox.render(g);
+                });
+                g.setClip(clip);
+            }
         });
     }
 
@@ -453,6 +501,7 @@ public class TutorialMapElement extends BoxElement {
     private void reset() {
         useTargetSelector = false;
         targetAnim.startTimer();
+        time.startTimer();
         setHoverColour(MOUSE_OVER_COLOUR);
         selectedTile = null;
         actionSelector.reset();
@@ -462,10 +511,16 @@ public class TutorialMapElement extends BoxElement {
         actions.forEach((r, t) -> animHandler.tasks.addTask(t, r));
         allUnits.forEach(TutorialMapUnit::reset);
         textRenderers.forEach(TutorialMapText::reset);
+        tiles.forEach(TutorialMapTile::reset);
         if (onResetTask != null)
             onResetTask.run();
         if (fow)
             calculateFoW(fowTeam);
+    }
+
+    @Override
+    public boolean maxWidth() {
+        return false;
     }
 
     @Override
@@ -484,6 +539,14 @@ public class TutorialMapElement extends BoxElement {
         onResetTask = null;
         textRenderers.forEach(TutorialMapText::delete);
         textRenderers.clear();
+    }
+
+    public TutorialMapTile hexagon(ObjPos pos) {
+        for (TutorialMapTile tile : tiles) {
+            if (tile.hexagonShape.contains(pos.x, pos.y))
+                return tile;
+        }
+        return null;
     }
 
     public static ObjPos getRenderPos(Point pos) {

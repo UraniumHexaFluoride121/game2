@@ -15,44 +15,41 @@ import java.util.Objects;
 
 import static level.tile.Tile.*;
 
-public final class EditorUnitData implements Renderable, Serializable, LoadedFromSave {
+public class EditorUnitData implements Renderable, Serializable, LoadedFromSave {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final String type;
     private final UnitTeam team;
     public final ObjPos renderPos;
 
-    public transient UnitType unitType;
+    public final UnitType type;
     private transient SineAnimation idleAnimX, idleAnimY;
 
-    public EditorUnitData(String type, UnitTeam team, ObjPos renderPos) {
+    public EditorUnitData(UnitType type, UnitTeam team, ObjPos renderPos) {
         this.type = type;
         this.team = team;
         this.renderPos = renderPos;
         if (type == null)
             return;
-        unitType = UnitType.getTypeByName(type);
-        idleAnimX = new SineAnimation((5f + (float) Math.random()) * unitType.getBobbingRate(), (float) Math.random() * 360);
-        idleAnimY = new SineAnimation((7f + (float) Math.random()) * unitType.getBobbingRate(), (float) Math.random() * 360);
+        idleAnimX = new SineAnimation((5f + (float) Math.random()) * type.getBobbingRate(), (float) Math.random() * 360);
+        idleAnimY = new SineAnimation((7f + (float) Math.random()) * type.getBobbingRate(), (float) Math.random() * 360);
     }
 
     @Override
     public void render(Graphics2D g) {
         g.translate(-TILE_SIZE / 2, 0);
-        g.translate(idleAnimX.normalisedProgress() / 6 * unitType.getBobbingAmount(), idleAnimY.normalisedProgress() / 4 * unitType.getBobbingAmount());
-        unitType.tileRenderer(team, UnitPose.FORWARD).render(g);
+        g.translate(idleAnimX.normalisedProgress() / 6 * type.getBobbingAmount(), idleAnimY.normalisedProgress() / 4 * type.getBobbingAmount());
+        type.tileRenderer(team, UnitPose.FORWARD, false).render(g);
     }
 
     @Override
     public void load() {
         if (type == null)
             return;
-        unitType = UnitType.getTypeByName(type);
-        idleAnimX = new SineAnimation((5f + (float) Math.random()) * unitType.getBobbingRate(), (float) Math.random() * 360);
-        idleAnimY = new SineAnimation((7f + (float) Math.random()) * unitType.getBobbingRate(), (float) Math.random() * 360);
+        idleAnimX = new SineAnimation((5f + (float) Math.random()) * type.getBobbingRate(), (float) Math.random() * 360);
+        idleAnimY = new SineAnimation((7f + (float) Math.random()) * type.getBobbingRate(), (float) Math.random() * 360);
     }
 
-    public String type() {
+    public UnitType type() {
         return type;
     }
 

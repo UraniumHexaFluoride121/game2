@@ -28,8 +28,10 @@ import render.HorizontalAlign;
 import render.types.text.TextRenderer;
 import render.types.text.UITextLabel;
 import save.GameSave;
+import save.LoadedFromSave;
 import save.MapSave;
 import save.SaveManager;
+import singleplayer.SingleplayerState;
 import unit.bot.BotTileDataType;
 import unit.type.UnitType;
 
@@ -51,7 +53,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public static final BotTileDataType BOT_DEBUG_RENDER = null;
     public static final boolean BOT_DEBUG_RENDER_UNIT = true;
 
-    public static final SaveManager<GameSave> levelSaves = new SaveManager<>("saves.sav");
+    public static final SaveManager<LoadedFromSave> levelSaves = new SaveManager<>("saves.sav");
     public static final SaveManager<MapSave> mapSaves = new SaveManager<>("custom-maps.sav");
     public static final SaveManager<MapSave> tutorialMaps = new SaveManager<>("tutorial/tutorial-maps.sav");
 
@@ -65,6 +67,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public static Client client = null;
 
     public static AbstractLevel<?, ?> activeLevel;
+    public static SingleplayerState spState = null;
     public static TitleScreen titleScreen;
 
     public static InputReceiver activeInputReceiver = null;
@@ -84,6 +87,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     public static final ArrayList<Renderable> generatedTooltipRenderers = new ArrayList<>();
 
     public void init() {
+        UnitType.orderTypes();
         new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BACKGROUND, LOAD_SCREEN_IMAGE);
         Renderable loadBarTransformed = loadBar.translate(Renderable.right() / 2 - 8, 0.5f);
         new RenderElement(loadRenderer, RenderOrder.TITLE_SCREEN_BUTTONS, loadText.translate(Renderable.right() / 2, 2),
@@ -132,14 +136,38 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         loadBar.setFill(progress);
     }
 
-    public static void startNewLevel(TutorialLevel tutorialLevel, Supplier<AbstractLevel<?, ?>> levelCreator) {
+    public static void startTutorialLevel(TutorialLevel tutorialLevel, Supplier<AbstractLevel<?, ?>> levelCreator) {
+        MainPanel.spState = null;
         TutorialManager.startTutorial(tutorialLevel);
         createLevel(levelCreator);
     }
 
-    public static void startNewLevel(Supplier<AbstractLevel<?, ?>> levelCreator) {
+    public static void startNewLevel(SingleplayerState spState, Supplier<AbstractLevel<?, ?>> levelCreator) {
+        MainPanel.spState = spState;
         TutorialManager.endTutorial();
         createLevel(levelCreator);
+    }
+
+    public static void startNewLevel(SingleplayerState spState, Supplier<Level> levelCreator, Consumer<Level> onLevelCreated) {
+        MainPanel.spState = spState;
+        TutorialManager.endTutorial();
+        Level.EXECUTOR.submit(() -> {
+            fadeScreen.setReversed(false);
+            activeInputReceiver = null;
+            Level level = levelCreator.get();
+            level.init();
+            activeLevel = level;
+            activeInputReceiver = level.levelRenderer;
+            while (!level.rendered) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(3);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            fadeScreen.setReversed(true);
+            onLevelCreated.accept(level);
+        });
     }
 
     private static void createLevel(Supplier<AbstractLevel<?, ?>> levelCreator) {
@@ -159,27 +187,6 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
             }
             fadeScreen.setReversed(true);
         }).start();
-    }
-
-    public static void startNewLevel(Supplier<Level> levelCreator, Consumer<Level> onLevelCreated) {
-        TutorialManager.endTutorial();
-        Level.EXECUTOR.submit(() -> {
-            fadeScreen.setReversed(false);
-            activeInputReceiver = null;
-            Level level = levelCreator.get();
-            level.init();
-            activeLevel = level;
-            activeInputReceiver = level.levelRenderer;
-            while (!level.rendered) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(3);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            fadeScreen.setReversed(true);
-            onLevelCreated.accept(level);
-        });
     }
 
     public static void removeClient() {

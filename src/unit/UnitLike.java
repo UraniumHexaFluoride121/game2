@@ -2,6 +2,7 @@ package unit;
 
 import foundation.math.MathUtil;
 import foundation.math.ObjPos;
+import level.TeamData;
 import render.GameRenderer;
 import render.HorizontalAlign;
 import render.anim.timer.LerpAnimation;
@@ -10,12 +11,16 @@ import render.level.ui.UnitTextUI;
 import render.types.text.DynamicTextRenderer;
 import unit.action.ActionShapes;
 import unit.stats.StatManager;
+import unit.type.UnitType;
+import unit.weapon.DamageHandler;
 import unit.weapon.FiringData;
 import unit.weapon.WeaponInstance;
 import unit.weapon.WeaponTemplate;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static level.tile.Tile.*;
 import static unit.action.Action.*;
@@ -82,7 +87,7 @@ public abstract class UnitLike<T extends StatManager<?>> {
     }
 
     public void renderUnitPose(Graphics2D g, UnitPose pose, UnitData data) {
-        data.type.tileRenderer(data.team, pose).render(g);
+        data.type.tileRenderer(data.team, pose, data.stealthMode && (stealthTransparencyAnim == null || stealthTransparencyAnim.finished())).render(g);
         if (data.shieldRenderHP > 0)
             data.type.shieldRenderer.render(g, TILE_SIZE);
     }
@@ -136,12 +141,16 @@ public abstract class UnitLike<T extends StatManager<?>> {
         return result;
     }
 
-    public void postFiringOther(UnitLike<?> other) {
-        postFiring(other, true);
-        other.postFiring(this, false);
+    public void postFiringOther(UnitLike<?> other, DamageHandler handler) {
+        postFiring(other, handler, true);
+        other.postFiring(this, handler, false);
     }
 
-    public void postFiring(UnitLike<?> other, boolean isThisAttacking) {
+    public void postFiring(UnitLike<?> other, DamageHandler handler, boolean isThisAttacking) {
+        handler.applyDamage(this::getUnit);
+    }
+
+    public void applyDamage(DamageHandler handler) {
         if (renderVisible()) {
             data.setShieldHP(data.shieldHP, stats.maxShieldHP(), this::addDamageUI);
             data.setHP(data.hitPoints, stats.maxHP(), this::addDamageUI);
@@ -151,7 +160,7 @@ public abstract class UnitLike<T extends StatManager<?>> {
             data.lowestHP = Math.min(data.lowestHP, data.renderHP);
         }
         if (data.hitPoints <= 0)
-            onDestroyed(other);
+            onDestroyed(getUnit(handler.get(data.pos).destroyedBy));
     }
 
     public abstract void onDestroyed(UnitLike<?> destroyedBy);
@@ -170,6 +179,8 @@ public abstract class UnitLike<T extends StatManager<?>> {
     public void renderDamageUIs(Graphics2D g) {
         damageUIs.removeIf(e -> e.render(g));
     }
+
+    public abstract UnitLike<?> getUnit(Point pos);
 
     public record FiringResult(FiringData firingData, WeaponInstance thisWeapon, WeaponInstance otherWeapon) {
     }

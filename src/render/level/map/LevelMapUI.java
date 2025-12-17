@@ -99,7 +99,7 @@ public class LevelMapUI extends LevelUIContainer<AbstractLevel<?, ?>> {
                             }
                         }
                     }
-                    if (type == InputType.MOUSE_RIGHT || type == InputType.ESCAPE)
+                    if (type == InputType.MOUSE_RIGHT || type == InputType.ESCAPE || type.c == 'm')
                         setEnabled(false);
                 }
 

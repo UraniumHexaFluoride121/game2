@@ -9,6 +9,7 @@ import render.GameRenderer;
 import render.HorizontalAlign;
 import render.Renderable;
 import render.VerticalAlign;
+import render.texture.ImageRenderer;
 import render.types.UIHitPointBar;
 import render.types.box.display.*;
 import render.types.box.display.tutorial.TutorialMapElement;
@@ -83,6 +84,10 @@ public class UIDisplayBox implements Renderable, Deletable {
         return enabled;
     }
 
+    public int getLastIndex(int column) {
+        return columns.get(column).elements.size() - 1;
+    }
+
     public UIDisplayBox addOnUpdate(Runnable onUpdate) {
         this.onUpdate.add(onUpdate);
         return this;
@@ -95,6 +100,68 @@ public class UIDisplayBox implements Renderable, Deletable {
     public UIDisplayBox addText(float textSize, HorizontalAlign align, int columnIndex, String s) {
         updateColumnCount(columnIndex);
         elements(columnIndex).add(new TextBoxElement(widthMargin, originalWidth - widthMargin * 2, textSize, align, s, updateSize, false));
+        return this;
+    }
+
+    public DisplayBoxParagraph addParagraph(String header, String text) {
+        return new DisplayBoxParagraph(header, text, this);
+    }
+
+    public DisplayBoxParagraph addParagraph(DisplayBoxParagraph paragraph) {
+        int c = paragraph.column;
+        if (paragraph.topSpacing != 0) {
+            addSpace(paragraph.topSpacing, c);
+            paragraph.elementCount++;
+        }
+        if (paragraph.header != null) {
+            addText(paragraph.headerSize, HorizontalAlign.LEFT, c, paragraph.header);
+            if (paragraph.dynamicWidth)
+                getTextElement(getLastIndex(c), c).setMaxWidth(true);
+            addSpace(0.3f, c);
+            paragraph.elementCount += 2;
+        }
+        addText(0.7f, HorizontalAlign.LEFT, c, paragraph.text);
+        if (paragraph.dynamicWidth)
+            getTextElement(getLastIndex(c), c).setMaxWidth(true);
+        paragraph.elementCount++;
+        if (paragraph.bottomSpacing != 0) {
+            addSpace(paragraph.bottomSpacing, c);
+            paragraph.elementCount++;
+        }
+        paragraph.firstElementIndex = getLastIndex(c) - paragraph.elementCount + 1;
+        return paragraph;
+    }
+
+    public UIDisplayBox addRenderable(int columnIndex, float width, float height, HorizontalAlign align, Renderable renderable) {
+        updateColumnCount(columnIndex);
+        RenderableElement e = new RenderableElement(widthMargin, width, height, align, renderable);
+        elements(columnIndex).add(e);
+        if (e.maxWidth)
+            e.setWidth(width - e.rightMargin - e.leftMargin);
+        return this;
+    }
+
+    public UIDisplayBox addElement(int columnIndex, BoxElement e) {
+        updateColumnCount(columnIndex);
+        if (e.leftMargin == -1 && e.rightMargin == -1)
+            e.setMargin(widthMargin);
+        elements(columnIndex).add(e);
+        if (e.maxWidth())
+            e.setWidth(width - e.rightMargin - e.leftMargin);
+        return this;
+    }
+
+    public UIDisplayBox addImage(int columnIndex, float width, float height, float renderWidth, HorizontalAlign align, ImageRenderer image) {
+        updateColumnCount(columnIndex);
+        ImageElement e = new ImageElement(widthMargin, width, height, renderWidth, align, image);
+        elements(columnIndex).add(e);
+        if (e.maxWidth)
+            e.setWidth(width - e.rightMargin - e.leftMargin);
+        return this;
+    }
+
+    public UIDisplayBox setImage(int index, int columnIndex, ImageRenderer image) {
+        ((ImageElement) element(columnIndex, index)).image = image;
         return this;
     }
 
@@ -132,6 +199,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public UIDisplayBox setColumnTopMarginToElement(int columnIndex, int otherColumn, int element, VerticalAlign otherAlign) {
+        updateColumnCount(columnIndex);
         addOnUpdate(() -> {
             float newMargin = height - getColumnYOffset(otherColumn) + element(otherColumn, element).height() * otherAlign.ordinal() / 2;
             for (int i = 0; i < element; i++) {
@@ -148,6 +216,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public UIDisplayBox setColumnBottomMarginToElement(int columnIndex, int otherColumn, int element, VerticalAlign otherAlign) {
+        updateColumnCount(columnIndex);
         addOnUpdate(() -> {
             float newMargin = getColumnYOffset(otherColumn) + element(otherColumn, element).height() * (1 - otherAlign.ordinal() / 2f);
             for (int i = 0; i <= element; i++) {
@@ -164,11 +233,13 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public UIDisplayBox setColumnTopMargin(float margin, int columnIndex) {
+        updateColumnCount(columnIndex);
         columns.get(columnIndex).topMargin = margin + widthMargin;
         return this;
     }
 
     public UIDisplayBox setColumnBottomMargin(float margin, int columnIndex) {
+        updateColumnCount(columnIndex);
         columns.get(columnIndex).bottomMargin = margin + widthMargin;
         return this;
     }
@@ -215,6 +286,10 @@ public class UIDisplayBox implements Renderable, Deletable {
         e.rightMargin = margin + widthMargin;
         updateElementWidth(e);
         return this;
+    }
+
+    public float columnHeight(int columnIndex) {
+        return columns.get(columnIndex).height;
     }
 
     private void updateColumnCount(int lastIndex) {
@@ -271,6 +346,7 @@ public class UIDisplayBox implements Renderable, Deletable {
     }
 
     public UIDisplayBox setColumnVerticalAlign(int index, VerticalAlign align) {
+        updateColumnCount(index);
         columns.get(index).align = align;
         updateSize.run();
         return this;
