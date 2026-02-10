@@ -87,10 +87,6 @@ public final class FiringData {
             otherUnit.data.ammo = otherData.ammo;
     }
 
-    public void applyEffects(Function<Point, UnitLike<?>> getUnit) {
-
-    }
-
     public FiringData setThisPos(Point pos) {
         handler.move(thisData.pos, pos);
         thisData.pos = pos;
@@ -123,6 +119,15 @@ public final class FiringData {
             otherUnit.stats.acceptDamage(handler, damage);
         }
         return bestWeapon;
+    }
+
+    public void consumeAmmo() {
+        if (thisUnit.stats.consumesAmmo())
+            thisData.ammo--;
+    }
+
+    public boolean otherAlive() {
+        return handler.get(otherData.pos).alive();
     }
 
     public float getDamageAgainst() {

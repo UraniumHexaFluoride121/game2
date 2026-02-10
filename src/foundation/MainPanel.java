@@ -19,6 +19,7 @@ import render.Renderable;
 import render.UIColourTheme;
 import render.anim.timer.AnimationTimer;
 import render.anim.timer.LerpAnimation;
+import render.level.CardSelectScreen;
 import render.level.tile.RenderElement;
 import render.texture.BackgroundTexture;
 import render.texture.ImageSequenceGroup;
@@ -403,6 +404,10 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
     @Override
     public void delete() {
         removeTickable();
+    }
+
+    public static boolean isSingleplayer() {
+        return spState != null;
     }
 
     private record TimedTaskEntry(AnimationTimer timer, Runnable task) {

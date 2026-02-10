@@ -14,6 +14,6 @@ public class WeightedSelector<T> {
     }
 
     public T get() {
-        return map.ceilingEntry((float) Math.random()).getValue();
+        return map.ceilingEntry((float) Math.random() * map.lastKey()).getValue();
     }
 }

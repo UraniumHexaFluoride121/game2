@@ -19,7 +19,7 @@ public class TaskQueue implements Tickable, Deletable {
         tasks.addAll(tasksQ);
         tasksQ.clear();
         tasks.forEach(Runnable::run);
-        tasksQ.clear();
+        tasks.clear();
     }
 
     @Override

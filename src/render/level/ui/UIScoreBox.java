@@ -33,7 +33,7 @@ public class UIScoreBox extends UIContainer {
                             .translate(14, 6.5f),
                     new UITextLabel(12, 1f, false)
                             .setTextLeftBold().updateTextLeft("Remaining HP:")
-                            .setTextRightBold().updateTextRight((int) (level.getPlayerTeamScore(level::getTotalRemainingHP, team, true)) + " / " + (int) (level.getPlayerTeamScore(level::getTotalMaxHP, team, true)))
+                            .setTextRightBold().updateTextRight((int) Math.ceil(level.getPlayerTeamScore(level::getTotalRemainingHP, team, true)) + " / " + (int) Math.ceil(level.getPlayerTeamScore(level::getTotalMaxHP, team, true)))
                             .translate(1, 6.5f - 1 * 1.5f),
                     new UITextLabel(6, 1f, false)
                             .setTextRightBold().updateTextRight(damageScore + " / " + Level.DAMAGE_SCORE_MAX + " " + STAR.display)

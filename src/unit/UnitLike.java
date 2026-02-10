@@ -33,6 +33,7 @@ public abstract class UnitLike<T extends StatManager<?>> {
     public final ArrayList<WeaponInstance> weapons = new ArrayList<>();
     protected final ArrayList<UnitTextUI> damageUIs = new ArrayList<>();
     public T stats;
+    public boolean destroyed = false;
 
     public UnitLike(UnitData data, T stats) {
         this.data = data;
@@ -131,8 +132,9 @@ public abstract class UnitLike<T extends StatManager<?>> {
     public FiringResult getFiringResult(UnitLike<?> other) {
         FiringData firingData = getCurrentFiringData(other);
         WeaponInstance thisWeapon = firingData.getBestWeaponAgainst(true);
+        firingData.consumeAmmo();
         WeaponInstance otherWeapon;
-        if (firingData.otherData.hitPoints > 0 && thisWeapon.template.counterattack) {
+        if (firingData.otherAlive() && thisWeapon.template.counterattack) {
             otherWeapon = FiringData.reverse(firingData).getBestWeaponAgainst(true);
         } else {
             otherWeapon = null;
@@ -144,11 +146,10 @@ public abstract class UnitLike<T extends StatManager<?>> {
     public void postFiringOther(UnitLike<?> other, DamageHandler handler) {
         postFiring(other, handler, true);
         other.postFiring(this, handler, false);
-    }
-
-    public void postFiring(UnitLike<?> other, DamageHandler handler, boolean isThisAttacking) {
         handler.applyDamage(this::getUnit);
     }
+
+    public abstract void postFiring(UnitLike<?> other, DamageHandler handler, boolean isThisAttacking);
 
     public void applyDamage(DamageHandler handler) {
         if (renderVisible()) {
@@ -166,7 +167,7 @@ public abstract class UnitLike<T extends StatManager<?>> {
     public abstract void onDestroyed(UnitLike<?> destroyedBy);
 
     public void addDamageUI(float value, boolean shield) {
-        if (value == 0 || !renderVisible())
+        if (MathUtil.equal(value, 0, 0.001f) || !renderVisible())
             return;
         ObjPos pos = getRenderPos();
         damageUIs.add(new UnitDamageNumberUI(value, pos.x + (shield ? -TILE_SIZE * 0.2f : TILE_SIZE * 0.2f), pos.y, value > 0 ? 1 : -0.7f, shield, infoUITime()));

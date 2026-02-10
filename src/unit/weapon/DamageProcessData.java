@@ -55,7 +55,7 @@ public class DamageProcessData {
         } else
             shieldDamage = 0;
         float hullDamage = amount * damage.hullMultiplier;
-        return damage.remaining(Math.min(shieldHP, shieldDamage) + Math.min(hitPoints, hullDamage));
+        return damage.remaining(Math.min(shieldHP, shieldDamage) + hullDamage);
     }
 
     private static float newDamageLeft(float damageLeft, float damageDealt, float maxAvailable) {

@@ -9,10 +9,7 @@ import level.tutorial.TutorialElement;
 import level.tutorial.TutorialManager;
 import level.tutorial.sequence.event.EventAnim;
 import render.*;
-import render.level.FiringRenderer;
-import render.level.GameEndScreen;
-import render.level.LocalNextPlayerScreen;
-import render.level.PauseMenu;
+import render.level.*;
 import render.level.info.*;
 import render.level.map.LevelMapUI;
 import render.level.tile.RenderElement;
@@ -62,6 +59,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
     public PauseMenu pauseMenu;
     public LevelMapUI mapUI;
     public GameEndScreen endScreen;
+    public CardSelectScreen cardSelectScreen;
     public LocalNextPlayerScreen nextPlayerScreen;
 
     @Override
@@ -69,7 +67,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         super.createRenderers();
         if (MainPanel.BOT_DEBUG_RENDER != null) {
             new RenderElement(mainRenderer, RenderOrder.TILE_HIGHLIGHT, g -> {
-                if (level.teamData.get(level.getActiveTeam()).bot) {
+                if (level.getTeamData().get(level.getActiveTeam()).bot) {
                     if (MainPanel.BOT_DEBUG_RENDER_UNIT) {
                         if (level.getActiveTeamData().botHandler.unitDebugData != null)
                             level.getActiveTeamData().botHandler.unitDebugData.render(g);
@@ -163,6 +161,9 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         endScreen = new GameEndScreen(levelUIRenderer, level.buttonRegister, level);
         endScreen.setEnabled(false);
 
+        cardSelectScreen = new CardSelectScreen(levelUIRenderer, level.buttonRegister, level);
+        cardSelectScreen.setEnabled(false);
+
         nextPlayerScreen = new LocalNextPlayerScreen(levelUIRenderer, level.buttonRegister, level);
         nextPlayerScreen.setEnabled(false);
 
@@ -220,7 +221,7 @@ public class LevelRenderer extends AbstractLevelRenderer<Level> {
         super.acceptReleased(type);
     }
 
-    public final HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
+    public HashMap<UnitTeam, ObjPos> lastCameraPos = new HashMap<>();
 
     public void setLastCameraPos(UnitTeam team) {
         if (team == null)

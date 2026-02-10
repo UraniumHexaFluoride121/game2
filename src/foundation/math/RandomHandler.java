@@ -47,6 +47,10 @@ public class RandomHandler {
         return array[(int) (array.length * Math.random())];
     }
 
+    public static <T> T randomFromArray(List<T> array) {
+        return array.get((int) (array.size() * Math.random()));
+    }
+
     public <T> T[] randomise(T[] array, RandomType type) {
         return randomise(array, getDoubleSupplier(type));
     }
@@ -59,7 +63,7 @@ public class RandomHandler {
         return array;
     }
 
-    public static  <T> ArrayList<T> randomise(ArrayList<T> array, Supplier<Double> random) {
+    public static <T> ArrayList<T> randomise(ArrayList<T> array, Supplier<Double> random) {
         ArrayList<T> list = new ArrayList<>(array);
         array.replaceAll(_ -> list.remove((int) (random.get() * list.size())));
         return array;

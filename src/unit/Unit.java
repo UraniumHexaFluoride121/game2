@@ -547,34 +547,37 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
         if (data.renderHP != data.hitPoints) {
             decrementCapture();
         }
-        super.postFiring(other, handler, isThisAttacking);
         if (!isThisAttacking)
             TutorialManager.acceptEvent(new EventActionComplete(level, FIRE));
     }
 
     @Override
     public void onDestroyed(UnitLike<?> destroyedBy) { //destroyedBy is null if not destroyed by a unit
+        if (destroyed)
+            return;
+        destroyed = true;
         if (destroyedBy != null) {
             if (level.networkState != NetworkState.CLIENT) {
                 for (UnitTeam t : UnitTeam.ORDERED_TEAMS) {
-                    if (level.samePlayerTeam(destroyedBy.data.team, t) && level.teamData.get(t).bot)
-                        level.teamData.get(t).botHandler.incrementDestroyedUnits();
+                    if (level.samePlayerTeam(destroyedBy.data.team, t) && level.getTeamData().get(t).bot)
+                        level.getTeamData().get(t).botHandler.incrementDestroyedUnits();
                 }
             }
-            level.teamData.get(destroyedBy.data.team).destroyedEnemiesCount++;
+            level.getTeamData().get(destroyedBy.data.team).destroyedEnemiesCount++;
         }
         if (renderVisible()) {
             UnitExplosion anim = new UnitExplosion(getCenter(), level);
             animHandler.registerAnim(anim);
             exploding = true;
+            Level finalLevel = level;
             level.levelRenderer.registerTimerBlock(anim, () -> {
-                level.qRemoveUnit(this);
+                finalLevel.qRemoveUnit(this);
             });
             level.levelRenderer.enableCameraShake(new ObjPos(0.2f, 0.2f));
         } else {
             level.qRemoveUnit(this);
         }
-        level.teamData.get(data.team).destroyedUnitsHP += stats.maxHP();
+        level.getTeamData().get(data.team).destroyedUnitsHP += stats.maxHP();
     }
 
     @Override
@@ -873,6 +876,6 @@ public class Unit extends UnitLike<UnitStatManager> implements Deletable, Tickab
     }
 
     public <R> R fromTeamData(Function<TeamData, R> get) {
-        return get.apply(level.teamData.get(data.team));
+        return get.apply(level.getTeamData().get(data.team));
     }
 }

@@ -56,13 +56,17 @@ public class UIContainer extends AbstractRenderElement implements RegisteredButt
     @Override
     public void buttonPressed(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (isEnabled())
-            blocking = internal.acceptInput(pos.copy().subtract(x, y), type, true, blocked);
+            blocking = internal.acceptInput(getModifiedPos(pos), type, true, blocked);
     }
 
     @Override
     public void buttonReleased(ObjPos pos, boolean inside, boolean blocked, InputType type) {
         if (isEnabled())
-            blocking = internal.acceptInput(pos.copy().subtract(x, y), type, false, blocked);
+            blocking = internal.acceptInput(getModifiedPos(pos), type, false, blocked);
+    }
+
+    protected ObjPos getModifiedPos(ObjPos pos) {
+        return pos.copy().subtract(x, y);
     }
 
     @Override

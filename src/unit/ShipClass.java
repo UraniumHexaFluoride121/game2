@@ -1,20 +1,22 @@
 package unit;
 
+import foundation.IInternalName;
 import render.types.text.TextRenderable;
 import unit.stats.Article;
 import unit.stats.NameArticle;
 import unit.weapon.DamageClass;
 
-public enum ShipClass implements NameArticle {
-    FIGHTER("Fighter", "Fighters", "Fighter-Class", "Fighter-Class", Article.A, TextRenderable.FIGHTER_ICON),
-    CORVETTE("Corvette", "Corvettes", "Corvette-Class", "Corvette-Class", Article.A, TextRenderable.CORVETTE_ICON),
-    CRUISER("Cruiser", "Cruisers", "Cruiser-Class", "Cruiser-Class", Article.A, TextRenderable.CRUISER_ICON);
+public enum ShipClass implements NameArticle, IInternalName {
+    FIGHTER("FIGHTER", "Fighter", "Fighters", "Fighter-Class", "Fighter-Class", Article.A, TextRenderable.FIGHTER_ICON),
+    CORVETTE("CORVETTE", "Corvette", "Corvettes", "Corvette-Class", "Corvette-Class", Article.A, TextRenderable.CORVETTE_ICON),
+    CRUISER("CRUISER", "Cruiser", "Cruisers", "Cruiser-Class", "Cruiser-Class", Article.A, TextRenderable.CRUISER_ICON);
 
-    private final String name, pluralName, className, classNamePlural;
+    private final String internalName, name, pluralName, className, classNamePlural;
     private final Article article;
     public final TextRenderable icon;
 
-    ShipClass(String name, String pluralName, String className, String classNamePlural, Article article, TextRenderable icon) {
+    ShipClass(String internalName, String name, String pluralName, String className, String classNamePlural, Article article, TextRenderable icon) {
+        this.internalName = internalName;
         this.name = name;
         this.pluralName = pluralName;
         this.className = className;
@@ -34,6 +36,11 @@ public enum ShipClass implements NameArticle {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getInternalName() {
+        return internalName;
     }
 
     public String getPluralName() {

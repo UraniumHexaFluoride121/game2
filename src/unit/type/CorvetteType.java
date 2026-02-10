@@ -48,7 +48,7 @@ public class CorvetteType extends UnitType {
 
     DEFENDER = new CorvetteType("defender", "Defender", 140, 8, 4.5f, 2.5f, new Action[]{
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
-    }, 1, 22, 1, 1, 4, list -> {
+    }, 1, 22, 1, 1, 2, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.DEFENDER_PLASMA);
         w
                 .classModifier(ShipClass.FIGHTER, WEAPON_STRENGTH)
@@ -71,7 +71,7 @@ public class CorvetteType extends UnitType {
             .addShield(3, 1.5f, 27)
             .modify(u -> u.setAttributes(UnitAttribute.DEFENCE_NETWORK)),
 
-    ARTILLERY = new CorvetteType("artillery", "Artillery", 130, 8, 4.5f, 3.5f, new Action[]{
+    ARTILLERY = new CorvetteType("artillery", "Artillery", 130, 8, 4f, 3.5f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 16, 2, 3, 3.5f, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.ARTILLERY_MISSILE);
@@ -94,7 +94,7 @@ public class CorvetteType extends UnitType {
             "has reduced armour, and in general, should not be used on the frontline without support.")
             .modify(u -> u.setAmmoCapacity(3).useArticleAn()),
 
-    SUPPLY = new CorvetteType("supply", "Supply Unit", 100, 10, 5.5f, 3.5f, new Action[]{
+    SUPPLY = new CorvetteType("supply", "Supply Unit", 100, 10, 5f, 3.5f, new Action[]{
             Action.MOVE, Action.REPAIR, Action.RESUPPLY
     }, 1, 22, 1, 1, 0, list -> {
     }, map -> {

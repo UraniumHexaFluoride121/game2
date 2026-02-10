@@ -141,6 +141,15 @@ public class GameRenderer implements RenderRegister<OrderedRenderable>, Deletabl
         g.setTransform(prev);
     }
 
+    public static void renderScaledOrigin(float scale, float x, float y, Graphics2D g, Runnable render) {
+        AffineTransform prev = g.getTransform();
+        g.translate(x, y);
+        g.scale(scale, scale);
+        g.translate(-x, -y);
+        render.run();
+        g.setTransform(prev);
+    }
+
     public static void renderScaled(float sx, float sy, Graphics2D g, Runnable render) {
         AffineTransform prev = g.getTransform();
         g.scale(sx, sy);

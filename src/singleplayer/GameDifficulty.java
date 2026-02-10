@@ -4,9 +4,9 @@ import foundation.NamedEnum;
 import unit.bot.BotDifficulty;
 
 public enum GameDifficulty implements NamedEnum {
-    EASY("Easy", BotDifficulty.EASY, 250),
-    MEDIUM("Normal", BotDifficulty.MEDIUM, 300),
-    HARD("Hard", BotDifficulty.HARD, 350);
+    EASY("Easy", BotDifficulty.EASY, 260),
+    MEDIUM("Normal", BotDifficulty.MEDIUM, 280),
+    HARD("Hard", BotDifficulty.HARD, 300);
 
     public final String displayName;
     public final BotDifficulty botDifficulty;

@@ -39,7 +39,7 @@ public class LocalNextPlayerScreen extends LevelUIContainer<Level> {
     }
 
     public void enable(UnitTeam nextTeam) {
-        boolean bot = level.teamData.get(nextTeam).bot;
+        boolean bot = level.getTeamData().get(nextTeam).bot;
         this.bot = bot;
         if (timer.reversed()) {
             timer.setReversed(false);

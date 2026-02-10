@@ -67,7 +67,8 @@ public class BotHandler implements Deletable, Tickable {
             }
         }
         long teamUnitCount = level.unitSet.stream().filter(u -> u.data.team == team).count();
-        float m = Math.max(MathUtil.lerp(15, 0, teamUnitCount / (level.levelRenderer.energyManager.incomeMap.get(team) / 12f)), 0);
+        float modifier = getModifier(teamUnitCount, 12);
+        float m = MathUtil.lerp(100, 0, modifier);
         VisibilityData visibility = level.getVisibilityData(team);
         int energyAvailable = level.levelRenderer.energyManager.availableMap.get(team);
         AtomicReference<Action> action = new AtomicReference<>(), secondaryAction = new AtomicReference<>();
@@ -88,7 +89,7 @@ public class BotHandler implements Deletable, Tickable {
                 float v = (d.get(p) - current) / (energyCost + 2 + costModifier(m, u)) * (float) Math.pow(u.data.hitPoints / u.stats.maxHP(), 0.5f);
                 if (t.hasStructure() && t.structure.canBeCaptured && !level.samePlayerTeam(t.structure.team, team)) {
                     if (u.data.type.canPerformAction(Action.CAPTURE))
-                        v += 2;
+                        v += modifier > 0.8f ? 2 : 0;
                     else
                         v -= 12;
                 }
@@ -123,7 +124,7 @@ public class BotHandler implements Deletable, Tickable {
                         float damageDealt = firingData.displayDamage(thisWeapon).amount;
                         FiringData reverse = FiringData.reverse(firingData);
                         WeaponInstance otherWeapon = reverse.getBestWeaponAgainst(true);
-                        if (firingData.otherData.hitPoints > 0 && otherWeapon != null && otherWeapon.template.counterattack) {
+                        if (firingData.otherAlive() && otherWeapon != null && otherWeapon.template.counterattack) {
                             damageDealt -= firingData.displayDamage(otherWeapon).amount;
                         }
                         v = noise() * (d.get(p) - current + damageDealt * 30) / (energyCost + 2 + costModifier(m, u) + u.stats.getActionCost(Action.FIRE).orElse(0));
@@ -190,7 +191,7 @@ public class BotHandler implements Deletable, Tickable {
                 float damageDealt = firingData.displayDamage(thisWeapon).amount;
                 FiringData reverse = FiringData.reverse(firingData);
                 WeaponInstance otherWeapon = reverse.getBestWeaponAgainst(true);
-                if (firingData.otherData.hitPoints > 0 && otherWeapon != null && otherWeapon.template.counterattack) {
+                if (firingData.otherAlive() && otherWeapon != null && otherWeapon.template.counterattack) {
                     damageDealt -= firingData.displayDamage(otherWeapon).amount;
                 }
                 Tile t = level.getTile(firingTile);
@@ -298,7 +299,9 @@ public class BotHandler implements Deletable, Tickable {
                     enemyCount++;
             }
             float v;
-            if (u.data.stealthMode) {
+            if (teamUnitCount < 4) {
+                v = u.data.stealthMode ? 50 : -50;
+            } else if (u.data.stealthMode) {
                 v = noise() * 0.3f * (3 * enemyCount + 10 * (float) Math.log((float) (data.enemiesDestroyed + 1) / (level.initialPlayerCount() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5) * (float) Math.log(u.stats.getPerTurnActionCost(Action.STEALTH).orElse(1) + 1 + costModifier(m, u));
             } else
                 v = noise() * (28 - 4 * enemyCount - 5 * (float) Math.log((float) (data.enemiesDestroyed + 1) / (level.initialPlayerCount() - 1))) / (u.stats.getActionCost(Action.STEALTH).orElse(0) + 5 * u.stats.getPerTurnActionCost(Action.STEALTH).orElse(0) + 1 + costModifier(m, u));
@@ -310,6 +313,18 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
         return executeMove(new BotActionData(action.get(), secondaryAction.get(), target.get(), secondaryTarget.get(), unit.get(), value.get()));
+    }
+
+    private float getModifier(float expectedCostPerUnit) {
+        long teamUnitCount = level.unitSet.stream().filter(u -> u.data.team == team).count();
+        return getModifier(teamUnitCount, expectedCostPerUnit);
+    }
+
+    //Returns 1 when the bot doesn't have enough income to sustain all it's units.
+    //Once the bot starts to have excess income, the return value goes toward 0.
+    //Should never reach 0 as the bot will always have at least one unit, lowest expected is about 1 / (40 / expectedCostPerUnit)
+    private float getModifier(long teamUnitCount, float expectedCostPerUnit) {
+        return Math.clamp(teamUnitCount / (level.levelRenderer.energyManager.incomeMap.get(team) / expectedCostPerUnit), 0, 1);
     }
 
     public boolean executeMove(BotActionData d) {
@@ -448,6 +463,7 @@ public class BotHandler implements Deletable, Tickable {
             data(type).resetTiles();
         }
         thisTeamUnits = new HashSet<>();
+        float modifier = getModifier(7);
         level.unitSet.forEach(u -> {
             if (u.data.team == team) {
                 thisTeamUnits.add(u);
@@ -461,11 +477,11 @@ public class BotHandler implements Deletable, Tickable {
             }
         });
 
-        level.teamData.forEach((t, data) -> {
+        level.getTeamData().forEach((t, data) -> {
             Point pos = data.basePos;
             if (!level.samePlayerTeam(t, team)) {
                 data(ENEMY_UNIT_POSITIONS)
-                        .addValue(pos, 25, r -> (float) Math.pow(100f - 4 * r, 0.7f) * 3);
+                        .addValue(pos, 25, r -> (float) Math.pow(100f - 4 * r, 0.7f) * 2);
                 data(ENEMY_UNIT_POSITIONS)
                         .addPointValue(pos, 5);
             } else {
@@ -482,7 +498,7 @@ public class BotHandler implements Deletable, Tickable {
                 data(ENEMY_UNIT_POSITIONS)
                         .addValue(t.pos, 6, r -> (float) Math.pow(26f - 4 * r, 0.7f) * 0.75f);
                 data(ENEMY_UNIT_POSITIONS)
-                        .addPointValue(t.pos, 3);
+                        .addPointValue(t.pos, 3 * modifier);
             }
         });
         level.unitSet.forEach(u -> {
@@ -506,19 +522,19 @@ public class BotHandler implements Deletable, Tickable {
             BotTileData d = new BotTileData(level);
 
             if (unit.data.type.canPerformAction(Action.FIRE))
-                d.add(data(ALLIED_UNITS_NEEDED), 1);
+                d.add(data(ALLIED_UNITS_NEEDED), 1.2f / (0.2f + modifier));
             else if (unit.data.type.canPerformAction(Action.MINE)) {
                 d.add(data(ASTEROID_FIELDS), 3f);
                 d.add(data(ENEMY_UNIT_POSITIONS), -0.1f);
-                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -1f);
+                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -1f * modifier);
             } else {
                 d.add(data(ALLIED_UNITS), 2);
-                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -0.5f);
+                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -0.5f * modifier);
             }
             if (unit.data.stealthMode)
                 d.add(data(SCOUT_NEEDED), 1);
             else
-                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -1f);
+                d.add(data(enemyDamageTypeFromClass(unit.data.type.shipClass)), -1f * modifier);
             unitMoveData.put(unit, d);
         }
     }

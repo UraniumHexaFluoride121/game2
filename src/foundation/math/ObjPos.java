@@ -303,9 +303,9 @@ public class ObjPos implements Serializable {
 
     public ObjPos snapErrorToZero(float epsilon) {
         if (Math.abs(x) < epsilon)
-            x = epsilon;
+            x = 0;
         if (Math.abs(y) < epsilon)
-            y = epsilon;
+            y = 0;
         return this;
     }
 
@@ -444,6 +444,7 @@ public class ObjPos implements Serializable {
     }
 
     public ObjPos scale(float scale, ObjPos center) {
+        add(center);
         multiply(scale);
         subtract(center.multiply(scale));
         return this;

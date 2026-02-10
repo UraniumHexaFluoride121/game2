@@ -377,7 +377,9 @@ public class TitleScreen implements Renderable, InputReceiver {
                         loadoutDisplay.addRenderables((r3, b3) -> {
                             if (cardRenderer != null)
                                 cardRenderer.delete();
-                            cardRenderer = selectedLoadout.card.createRenderElement(r3, b3, RenderOrder.TITLE_SCREEN_BUTTONS, -Card.WIDTH - 1, 0.5f);
+                            cardRenderer = selectedLoadout.card.createRenderElement(r3, b3, RenderOrder.TITLE_SCREEN_BUTTONS, -Card.WIDTH - 1, 0.5f, handler -> {
+                            }, box -> {
+                            });
                         });
                     }).noDeselect();
                     return button;

@@ -26,7 +26,7 @@ import static unit.stats.modifiers.groups.WeaponDamageModifier.*;
 
 public class FighterType extends UnitType {
     public static final FighterType
-            INTERCEPTOR = new FighterType("interceptor", "Interceptor", 80, 8, 7f, 3.8f, new Action[]{
+            INTERCEPTOR = new FighterType("interceptor", "Interceptor", 80, 8, 6f, 3.8f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 15, 1, 1, 3, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.FIGHTER_PLASMA);
@@ -48,7 +48,7 @@ public class FighterType extends UnitType {
             "It is, however, mostly useless for destroying larger units.")
             .modify(UnitType::useArticleAn),
 
-    BOMBER = new FighterType("bomber", "Bomber", 90, 7, 6f, 3f, new Action[]{
+    BOMBER = new FighterType("bomber", "Bomber", 90, 7, 5.5f, 3f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 3, 15, 1, 1, 5.5f, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.BOMBER_MISSILE).runAnim();
@@ -70,7 +70,7 @@ public class FighterType extends UnitType {
             "it has less view distance and is more vulnerable than the regular " + INTERCEPTOR.getName() + ".")
             .modify(u -> u.setAmmoCapacity(1)), //Change unit description if ammo capacity is changed
 
-    SCOUT = new FighterType("scout", "Scout", 70, 5, 8f, 5f, new Action[]{
+    SCOUT = new FighterType("scout", "Scout", 70, 5, 7f, 5f, new Action[]{
             Action.FIRE, Action.MOVE, Action.STEALTH
     }, 1, 15, 1, 1, 2, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.SCOUT_PLASMA);

@@ -35,6 +35,7 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
     public final GameplaySettings gameplaySettings;
     public final ObjPos tileBound;
     private final TileDisplayInfo[][] displayInfo;
+    private HashMap<UnitTeam, ObjPos> lastCameraPos;
 
     public GameSave(Level level, String name) {
         this.name = name;
@@ -60,16 +61,18 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
             throw new RuntimeException(e);
         }
         turn = level.getTurn();
-        teamData = new HashMap<>(level.teamData);
+        teamData = new HashMap<>(level.getTeamData());
         teamData.replaceAll((team, data) -> data.copy());
         level.unitSet.forEach(u -> unitData.add(u.data.copy()));
         activeTeam = level.getActiveTeam();
+        level.levelRenderer.setLastCameraPos(activeTeam);
+        lastCameraPos = new HashMap<>(level.levelRenderer.lastCameraPos);
         availableMap = new HashMap<>(level.levelRenderer.energyManager.availableMap);
         gameplaySettings = level.gameplaySettings;
     }
 
     public void loadLevel(Level level) {
-        level.teamData.forEach((team, data) -> data.load());
+        level.getTeamData().forEach((team, data) -> data.load());
         level.setTurn(activeTeam, turn, false);
         ByteArrayInputStream byteInput = new ByteArrayInputStream(tiles);
         DataInputStream tileReader = new DataInputStream(byteInput);
@@ -109,6 +112,8 @@ public class GameSave implements Serializable, LoadedFromSave, TileMapDisplayabl
             }
         }
         level.setBasePositions(basePositions);
+        level.levelRenderer.lastCameraPos = new HashMap<>(lastCameraPos);
+        level.levelRenderer.useLastCameraPos(activeTeam, true);
         unitData.forEach(d -> {
             d.copy().getUnit(level, false);
         });

@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 import static unit.stats.modifiers.groups.WeaponDamageModifier.*;
 
 public class CruiserType extends UnitType {
-    public static final CruiserType BATTLECRUISER = new CruiserType("battlecruiser", "Battlecruiser", 135, 14, 4f, 3f, new Action[]{
+    public static final CruiserType BATTLECRUISER = new CruiserType("battlecruiser", "Battlecruiser", 135, 14, 3.5f, 3f, new Action[]{
             Action.FIRE, Action.MOVE
     }, 1, 25, 1, 1, 4, list -> {
         WeaponTemplate w = new WeaponTemplate(ProjectileType.CRUISER_RAILGUN);
@@ -46,7 +46,7 @@ public class CruiserType extends UnitType {
     }, FiringRenderer.TWO_UNITS, "The base variant of the " + ShipClass.CRUISER.getClassName().toLowerCase() + ". Comes with strong armour and a powerful armour-piercing railgun. This railgun performs " +
             "well against armoured units, especially other " + ShipClass.CRUISER.getClassName().toLowerCase() + " units."),
 
-    LIGHT_CRUISER = new CruiserType("light_cruiser", "Light Cruiser", 160, 12, 4.3f, 3f, new Action[]{
+    LIGHT_CRUISER = new CruiserType("light_cruiser", "Light Cruiser", 160, 12, 4f, 3f, new Action[]{
             Action.FIRE, Action.MOVE, Action.SHIELD_REGEN
     }, 1, 25, 1, 1, 4, list -> {
         WeaponTemplate w1 = new WeaponTemplate(ProjectileType.BATTLECRUISER_CANNON);

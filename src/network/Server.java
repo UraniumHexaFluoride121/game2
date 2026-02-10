@@ -262,7 +262,7 @@ public class Server implements Deletable {
             queuePacket(new PacketWriter(PacketType.TEAMS_AVAILABLE, w -> {
                 PacketWriter.writeMap(server.teamClientIDs, k -> PacketWriter.writeEnum(k, w), w::writeInt, w);
                 HashMap<UnitTeam, Boolean> bots = new HashMap<>();
-                server.level.teamData.forEach((team, data) -> {
+                server.level.getTeamData().forEach((team, data) -> {
                     bots.put(team, data.bot);
                 });
                 PacketWriter.writeMap(bots, k -> PacketWriter.writeEnum(k, w), w::writeBoolean, w);
@@ -296,7 +296,7 @@ public class Server implements Deletable {
         }
 
         private void writeTeamData(DataOutputStream w) throws IOException {
-            PacketWriter.writeMap(server.level.teamData, k -> PacketWriter.writeEnum(k, w), v -> v.write(w), w);
+            PacketWriter.writeMap(server.level.getTeamData(), k -> PacketWriter.writeEnum(k, w), v -> v.write(w), w);
         }
 
         public synchronized void queuePacket(PacketWriter packet) {
@@ -330,7 +330,7 @@ public class Server implements Deletable {
                 case JOIN_REQUEST -> {
                     UnitTeam requestedTeam = PacketReceiver.readEnum(UnitTeam.class, reader);
                     MainPanel.addTask(() -> {
-                        if (server.teamClientIDs.containsKey(requestedTeam) || server.level.teamData.get(requestedTeam).bot) {
+                        if (server.teamClientIDs.containsKey(requestedTeam) || server.level.getTeamData().get(requestedTeam).bot) {
                             queueTeamsAvailablePacket();
                         } else {
                             server.teamClientIDs.put(requestedTeam, clientID);

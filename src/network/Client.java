@@ -398,7 +398,7 @@ public class Client implements Deletable {
                     return;
                 MainPanel.addTask(() -> {
                     Level l = MainPanel.getActiveLevel();
-                    l.teamData.get(l.getActiveTeam()).botHandler.selectTileClient(pos);
+                    l.getTeamData().get(l.getActiveTeam()).botHandler.selectTileClient(pos);
                 });
             }
         }

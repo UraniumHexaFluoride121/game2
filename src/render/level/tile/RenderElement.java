@@ -2,6 +2,7 @@ package render.level.tile;
 
 import render.*;
 
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.function.Consumer;
 
@@ -13,6 +14,7 @@ public class RenderElement extends AbstractRenderElement {
                 return;
             for (Renderable r : renderables) {
                 r.render(g);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             }
         };
     }

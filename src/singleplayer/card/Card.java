@@ -13,13 +13,17 @@ import render.types.text.AbstractUITooltip;
 
 import java.awt.*;
 import java.io.*;
+import java.util.function.Consumer;
 
 public class Card implements Serializable, Writable {
     @Serial
     private static final long serialVersionUID = 1L;
     public static final float WIDTH = 12, HEIGHT = 14;
-    public static UIColourTheme BOX = UIColourTheme.useSameColourForAllStates(
+    public static UIColourTheme BOX = new UIColourTheme(
             new Color(151, 151, 151), new Color(32, 32, 32)
+    );
+    public static UIColourTheme SELECTED_BOX = new UIColourTheme(
+            new Color(120, 218, 94), new Color(25, 32, 23)
     );
 
     public final CardType type;
@@ -53,12 +57,14 @@ public class Card implements Serializable, Writable {
                 box -> box.setColourTheme(BOX).setCorner(0.8f), false);
     }
 
-    public UIContainer createRenderElement(GameRenderer r, ButtonRegister b, RenderOrder order, float x, float y) {
+    public UIContainer createRenderElement(GameRenderer r, ButtonRegister b, RenderOrder order, float x, float y, Consumer<UIDisplayBoxButtonHandler> buttonConsumer, Consumer<UIDisplayBox> boxConsumer) {
         return new UIContainer(r, b, order, x, y)
                 .addRenderables((r2, b2) -> {
                     UIDisplayBox displayBox = emptyBox();
                     UIDisplayBoxButtonHandler buttonHandler = new UIDisplayBoxButtonHandler(r2, b2, order, displayBox);
                     new RenderElement(r2, order, createRenderer(displayBox, buttonHandler));
+                    buttonConsumer.accept(buttonHandler);
+                    boxConsumer.accept(displayBox);
                 });
     }
 
@@ -67,7 +73,7 @@ public class Card implements Serializable, Writable {
         int length = reader.readInt();
         attributes = new CardAttribute[length];
         for (int i = 0; i < length; i++) {
-            attributes[i] = PacketReceiver.readEnum(CardAttribute.class, reader);
+            attributes[i] = CardAttribute.read(reader);
         }
     }
 
@@ -76,7 +82,7 @@ public class Card implements Serializable, Writable {
         PacketWriter.writeEnum(type, w);
         w.writeInt(attributes.length);
         for (CardAttribute attribute : attributes) {
-            PacketWriter.writeEnum(attribute, w);
+            attribute.write(w);
         }
     }
 }

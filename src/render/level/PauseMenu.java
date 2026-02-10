@@ -67,8 +67,8 @@ public class PauseMenu extends LevelUIContainer<Level> {
                 saveButton = new UIButton(r2, b2, RenderOrder.PAUSE_MENU, (15 - 8) / 2f + 2, 17.3f, 8, 1.2f, 1, false)
                         .setText("Save").setBold().setColourTheme(UIColourTheme.GRAYED_OUT).setClickEnabled(false).setOnClick(() -> {
                             String name = saveFileNameBox.getText();
-                            if (MainPanel.spState != null)
-                                MainPanel.levelSaves.addSave(MainPanel.spState.copy().save(level, name), name);
+                            if (MainPanel.isSingleplayer())
+                                MainPanel.levelSaves.addSave(MainPanel.spState.save(level, name), name);
                             else
                                 MainPanel.levelSaves.addSave(new GameSave(level, name), name);
                             saveButton.setColourTheme(UIColourTheme.DEEP_GREEN).setText("Saved!").setClickEnabled(false);

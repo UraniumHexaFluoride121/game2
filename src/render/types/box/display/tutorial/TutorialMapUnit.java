@@ -13,6 +13,7 @@ import unit.UnitPose;
 import unit.UnitTeam;
 import unit.stats.StatManager;
 import unit.type.UnitType;
+import unit.weapon.DamageHandler;
 import unit.weapon.FiringData;
 
 import java.awt.*;
@@ -160,6 +161,11 @@ public class TutorialMapUnit extends UnitLike<StatManager<TutorialMapUnit>> impl
     @Override
     public FiringData getCurrentFiringData(UnitLike<?> otherUnit) {
         return new FiringData(this, otherUnit, p -> map.getTile(p).type, null);
+    }
+
+    @Override
+    public void postFiring(UnitLike<?> other, DamageHandler handler, boolean isThisAttacking) {
+
     }
 
     @Override

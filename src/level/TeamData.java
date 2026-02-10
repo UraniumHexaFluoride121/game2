@@ -4,6 +4,7 @@ import network.PacketReceiver;
 import network.PacketWriter;
 import network.Writable;
 import save.LoadedFromSave;
+import singleplayer.card.AttributeHandler;
 import singleplayer.card.Card;
 import singleplayer.card.CardAttribute;
 import unit.Unit;
@@ -18,7 +19,9 @@ import java.awt.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 
 public class TeamData implements Serializable, Writable, LoadedFromSave {
     @Serial
@@ -38,11 +41,23 @@ public class TeamData implements Serializable, Writable, LoadedFromSave {
 
     public Point basePos = null;
 
-    public ArrayList<Card> cards = new ArrayList<>();
+    private final ArrayList<Card> cards = new ArrayList<>();
+    public transient AttributeHandler attributeHandler = new AttributeHandler();
 
     public TeamData(boolean bot, PlayerTeam playerTeam) {
         this.bot = bot;
         this.playerTeam = playerTeam;
+    }
+
+    public void addCard(Card card) {
+        cards.add(card);
+        attributeHandler.addCard(card);
+    }
+
+    public void forEachCard(Consumer<Card> consumer) {
+        for (Card card : cards) {
+            consumer.accept(card);
+        }
     }
 
     public float getCardModifierValue(ModifierCategory category, BinaryOperator<Float> combine) {
@@ -86,6 +101,17 @@ public class TeamData implements Serializable, Writable, LoadedFromSave {
         return v;
     }
 
+    public HashMap<CardAttribute, Integer> getAttributeCounts() {
+        HashMap<CardAttribute, Integer> map = new HashMap<>();
+        for (Card card : cards) {
+            for (CardAttribute attribute : card.attributes) {
+                map.putIfAbsent(attribute, 0);
+                map.compute(attribute, (k, v) -> v + 1);
+            }
+        }
+        return map;
+    }
+
     public TeamData(DataInputStream reader) throws IOException {
         bot = reader.readBoolean();
         playerTeam = PacketReceiver.readEnum(PlayerTeam.class, reader);
@@ -97,6 +123,8 @@ public class TeamData implements Serializable, Writable, LoadedFromSave {
         if (reader.readBoolean())
             botHandlerData = new BotHandlerData(reader);
         PacketReceiver.readCollection(cards, () -> new Card(reader), reader);
+        attributeHandler = new AttributeHandler();
+        cards.forEach(attributeHandler::addCard);
     }
 
     public TeamData copy() {
@@ -107,7 +135,7 @@ public class TeamData implements Serializable, Writable, LoadedFromSave {
         d.destroyedEnemiesCount = destroyedEnemiesCount;
         d.basePos = basePos;
         d.botHandlerData = botHandlerData.copy();
-        d.cards = new ArrayList<>(cards);
+        cards.forEach(d::addCard);
         return d;
     }
 
@@ -126,8 +154,14 @@ public class TeamData implements Serializable, Writable, LoadedFromSave {
         PacketWriter.writeCollection(cards, c -> c.write(w), w);
     }
 
+    private transient boolean loaded = false;
+
     @Override
     public void load() {
-
+        if (loaded)
+            return;
+        loaded = true;
+        attributeHandler = new AttributeHandler();
+        cards.forEach(attributeHandler::addCard);
     }
 }

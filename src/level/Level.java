@@ -46,7 +46,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
 
     private Unit[][] unitGrid;
     public final HashSet<Unit> unitSet = new HashSet<>();
-    public final HashMap<UnitTeam, TeamData> teamData;
+    private HashMap<UnitTeam, TeamData> teamData = new HashMap<>();
     public final GameplaySettings gameplaySettings;
 
     public final NetworkState networkState;
@@ -63,7 +63,8 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             thisTeam = UnitTeam.ORDERED_TEAMS[0];
         }
         unitGrid = new Unit[tilesX][];
-        this.teamData = teamData;
+        if (!MainPanel.isSingleplayer())
+            this.teamData = teamData;
         activeTeam = getFirstTeam();
         lastActiveNonBot = activeTeam;
         tileSelector = new TileSelector(this);
@@ -76,7 +77,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         }
         levelRenderer = new LevelRenderer(this);
         levelRenderer.createRenderers();
-        teamData.forEach((team, data) -> {
+        getTeamData().forEach((team, data) -> {
             if (data.bot) {
                 data.botHandler = new BotHandler(this, team);
             }
@@ -96,9 +97,9 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
 
     public void setBasePositions(HashMap<UnitTeam, Point> basePositions) {
         basePositions.forEach(((team, p) -> {
-            teamData.get(team).basePos = p;
+            getTeamData().get(team).basePos = p;
         }));
-        teamData.values().forEach(data -> getTile(data.basePos).removeStructure());
+        getTeamData().values().forEach(data -> getTile(data.basePos).removeStructure());
         basePositions.forEach(((team, p) -> {
             Tile tile = getTile(p);
             tile.setStructure(StructureType.BASE, team);
@@ -133,7 +134,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             unitSet.add(unit);
             unitGrid[unit.data.pos.x][unit.data.pos.y] = unit;
             if (addToInitialCount)
-                teamData.get(unit.data.team).unitCount++;
+                getTeamData().get(unit.data.team).unitCount++;
         } else
             unit.delete();
         updateFoW();
@@ -171,8 +172,8 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             updateSelectedUnit();
         }
         HashSet<UnitTeam> removeTeams = new HashSet<>();
-        for (UnitTeam team : teamData.keySet()) {
-            if (!teamData.get(team).alive)
+        for (UnitTeam team : getTeamData().keySet()) {
+            if (!getTeamData().get(team).alive)
                 continue;
             boolean hasUnit = false;
             for (Unit unit : unitSet) {
@@ -231,7 +232,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public TeamData getActiveTeamData() {
-        return teamData.get(activeTeam);
+        return getTeamData().get(activeTeam);
     }
 
     public boolean hasActiveAction() {
@@ -262,7 +263,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
             if (showNextPlayerScreen()) {
                 UnitTeam nextTeam = getNextTeam(activeTeam);
                 levelRenderer.nextPlayerScreen.enable(nextTeam);
-                if (!teamData.get(nextTeam).bot)
+                if (!getTeamData().get(nextTeam).bot)
                     return;
             }
         }
@@ -390,21 +391,21 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public boolean samePlayerTeam(Unit a, Unit b) {
-        return Objects.equals(teamData.get(a.data.team).playerTeam, teamData.get(b.data.team).playerTeam);
+        return Objects.equals(getTeamData().get(a.data.team).playerTeam, getTeamData().get(b.data.team).playerTeam);
     }
 
     public boolean samePlayerTeam(UnitTeam a, UnitTeam b) {
         if (a == null || b == null)
             return a == b;
-        if (!teamData.containsKey(a) || !teamData.containsKey(b))
+        if (!getTeamData().containsKey(a) || !getTeamData().containsKey(b))
             return false;
-        return Objects.equals(teamData.get(a).playerTeam, teamData.get(b).playerTeam);
+        return Objects.equals(getTeamData().get(a).playerTeam, getTeamData().get(b).playerTeam);
     }
 
     public UnitTeam getNextTeam(UnitTeam from) {
         for (int i = 1; i <= UnitTeam.values().length; i++) {
             UnitTeam next = UnitTeam.ORDERED_TEAMS[(from.order + i) % UnitTeam.ORDERED_TEAMS.length];
-            if (teamData.containsKey(next))
+            if (getTeamData().containsKey(next))
                 return next;
         }
         return null;
@@ -422,12 +423,12 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public int playerCount() {
-        return Math.toIntExact(teamData.values().stream().filter(data -> data.alive).count());
+        return Math.toIntExact(getTeamData().values().stream().filter(data -> data.alive).count());
     }
 
     public int realPlayerCount() {
         int count = 0;
-        for (TeamData data : teamData.values()) {
+        for (TeamData data : getTeamData().values()) {
             if (!data.bot && data.alive)
                 count++;
         }
@@ -435,13 +436,13 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public int initialPlayerCount() {
-        return teamData.size();
+        return getTeamData().size();
     }
 
     public void removePlayer(UnitTeam team) {
         if (activeTeam == team && networkState != NetworkState.CLIENT)
             preEndTurn();
-        TeamData data = teamData.get(team);
+        TeamData data = getTeamData().get(team);
         if (!data.alive)
             return;
         levelRenderer.onTeamEliminated.start(team.getName() + " Eliminated!", team);
@@ -481,7 +482,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public PlayerTeam survivingPlayerTeam() {
-        HashSet<PlayerTeam> teams = new HashSet<>(teamData.values().stream().filter(data -> data.alive).map(data -> data.playerTeam).toList());
+        HashSet<PlayerTeam> teams = new HashSet<>(getTeamData().values().stream().filter(data -> data.alive).map(data -> data.playerTeam).toList());
         if (teams.size() != 1)
             throw new RuntimeException("More than one surviving PlayerTeam");
         for (PlayerTeam team : teams) {
@@ -553,7 +554,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public boolean isThisPlayerAlive() {
-        return teamData.get(getThisTeam()).alive;
+        return getTeamData().get(getThisTeam()).alive;
     }
 
     public static final int VICTORY_SCORE = 100, DAMAGE_SCORE_MAX = 30, TURN_SCORE_MAX = 30, UNITS_DESTROYED_SCORE_MAX = 30;
@@ -568,7 +569,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public float getTotalMaxHP(UnitTeam team) {
-        return teamData.get(team).destroyedUnitsHP + unitSet.stream().filter(u -> u.data.team == team).map(u -> u.stats.maxHP()).reduce(Float::sum).get();
+        return getTeamData().get(team).destroyedUnitsHP + unitSet.stream().filter(u -> u.data.team == team).map(u -> u.stats.maxHP()).reduce(Float::sum).get();
     }
 
     public float getTurnScore(UnitTeam team) {
@@ -576,12 +577,12 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public int getUnitsDestroyedByTeam(UnitTeam team) {
-        return teamData.get(team).destroyedEnemiesCount;
+        return getTeamData().get(team).destroyedEnemiesCount;
     }
 
     public int getTotalEnemies(UnitTeam team) {
         AtomicInteger count = new AtomicInteger();
-        teamData.forEach((otherTeam, data) -> {
+        getTeamData().forEach((otherTeam, data) -> {
             if (!samePlayerTeam(team, otherTeam))
                 count.addAndGet(data.unitCount);
         });
@@ -595,7 +596,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     public float getPlayerTeamScore(Function<UnitTeam, Float> scoreFunction, PlayerTeam pTeam, boolean total) {
         AtomicReference<Float> score = new AtomicReference<>(0f);
         AtomicInteger count = new AtomicInteger();
-        teamData.forEach((t, d) -> {
+        getTeamData().forEach((t, d) -> {
             if (d.playerTeam != pTeam)
                 return;
             score.updateAndGet(v -> v + scoreFunction.apply(t));
@@ -607,7 +608,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     public int getPlayerTeamScoreInt(Function<UnitTeam, Integer> scoreFunction, PlayerTeam pTeam, boolean total) {
         AtomicReference<Integer> score = new AtomicReference<>(0);
         AtomicInteger count = new AtomicInteger();
-        teamData.forEach((t, d) -> {
+        getTeamData().forEach((t, d) -> {
             if (d.playerTeam != pTeam)
                 return;
             score.updateAndGet(v -> v + scoreFunction.apply(t));
@@ -635,5 +636,9 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
 
     public int getTurn() {
         return turn;
+    }
+
+    public HashMap<UnitTeam, TeamData> getTeamData() {
+        return MainPanel.isSingleplayer() ? MainPanel.spState.teamData : teamData;
     }
 }

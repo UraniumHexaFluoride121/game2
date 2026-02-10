@@ -289,10 +289,10 @@ public class FiringRenderer extends AbstractRenderElement {
         rightShieldBarTime = (rightUnit.data.shieldRenderHP - rightUnit.data.shieldHP) / (rightUnit.data.renderHP - rightUnit.data.hitPoints + rightUnit.data.shieldRenderHP - rightUnit.data.shieldHP);
         ObjPos[] leftPositions = leftUnit.data.type.firingPositions.get();
         ObjPos[] rightPositions = rightUnit.data.type.firingPositions.get();
-        int leftUnitCount = (int) Math.ceil((leftUnit.data.renderHP / leftUnit.data.type.hitPoints) * leftPositions.length);
-        int rightUnitCount = (int) Math.ceil((rightUnit.data.renderHP / rightUnit.data.type.hitPoints) * rightPositions.length);
-        int leftUnitCountRemaining = (int) Math.ceil((leftUnit.data.hitPoints / leftUnit.data.type.hitPoints) * leftPositions.length);
-        int rightUnitCountRemaining = (int) Math.ceil((rightUnit.data.hitPoints / rightUnit.data.type.hitPoints) * rightPositions.length);
+        int leftUnitCount = (int) Math.ceil((leftUnit.data.renderHP / leftUnit.stats.maxHP()) * leftPositions.length);
+        int rightUnitCount = (int) Math.ceil((rightUnit.data.renderHP / rightUnit.stats.maxHP()) * rightPositions.length);
+        int leftUnitCountRemaining = (int) Math.ceil((leftUnit.data.hitPoints / leftUnit.stats.maxHP()) * leftPositions.length);
+        int rightUnitCountRemaining = (int) Math.ceil((rightUnit.data.hitPoints / rightUnit.stats.maxHP()) * rightPositions.length);
         leftUnitRenderer = new UnitRenderer[leftUnitCount];
         rightUnitRenderer = new UnitRenderer[rightUnitCount];
         for (int i = 0; i < leftUnitCount; i++) {

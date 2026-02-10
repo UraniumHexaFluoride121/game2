@@ -17,6 +17,7 @@ public class UIDisplayBoxButtonHandler extends AbstractRenderElement implements 
     private ButtonRegister buttonRegister;
     private UIDisplayBox displayBox;
     private final ArrayList<DisplayBoxElement> elements = new ArrayList<>();
+    private boolean ignoreBlocking = false;
 
     public UIDisplayBoxButtonHandler(RenderRegister<OrderedRenderable> renderer, ButtonRegister buttonRegister, RenderOrder order, UIDisplayBox displayBox) {
         super(renderer, order);
@@ -127,7 +128,7 @@ public class UIDisplayBoxButtonHandler extends AbstractRenderElement implements 
                 if (e.box == null)
                     continue;
                 boolean insideBox = inside && e.box.isPositionInside(pos);
-                e.getClickHandler().buttonPressed(pos, insideBox, blocked, type);
+                e.getClickHandler().buttonPressed(pos, insideBox, blocked && !  ignoreBlocking, type);
                 if (insideBox && (type == InputType.MOUSE_OVER || type == e.clickHandler.clickInput))
                     blocked = true;
             }
@@ -148,6 +149,11 @@ public class UIDisplayBoxButtonHandler extends AbstractRenderElement implements 
             }
             blocking = blocked;
         }
+    }
+
+    public UIDisplayBoxButtonHandler setIgnoreBlocking(boolean ignoreBlocking) {
+        this.ignoreBlocking = ignoreBlocking;
+        return this;
     }
 
     @Override

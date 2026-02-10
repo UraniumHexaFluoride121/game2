@@ -46,6 +46,7 @@ public class SaveManager<T extends LoadedFromSave> {
             reader.close();
         } catch (IOException | ClassNotFoundException | RuntimeException e) {
             gameSaves = new TreeMap<>();
+            throw new RuntimeException(e);
         }
     }
 

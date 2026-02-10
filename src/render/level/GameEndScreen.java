@@ -13,8 +13,8 @@ import render.level.tile.RenderElement;
 import render.level.ui.UIScoreBox;
 import render.texture.ResourceLocation;
 import render.types.container.LevelUIContainer;
-import render.types.input.button.UIButton;
 import render.types.container.UIContainer;
+import render.types.input.button.UIButton;
 import render.types.text.UITextLabel;
 import unit.UnitTeam;
 
@@ -25,7 +25,7 @@ public class GameEndScreen extends LevelUIContainer<Level> {
     public GameEndScreen(RenderRegister<OrderedRenderable> register, ButtonRegister buttonRegister, Level level) {
         super(register, buttonRegister, RenderOrder.END_SCREEN, 0, 0, level);
         addRenderables((r, b) -> {
-            new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
+            new RenderElement(r, RenderOrder.TITLE_SCREEN_OVERLAY,
                     g -> {
                         if (!renderablesAdded && overlayTimer.normalisedProgress() > 0.5f) {
                             createScreen();
@@ -41,7 +41,7 @@ public class GameEndScreen extends LevelUIContainer<Level> {
         Renderable titleScreenImage = Renderable.renderImage(new ResourceLocation("title_screen.png"), false, true, 60, true);
         addRenderables((r, b) -> {
             PlayerTeam surviving = level.survivingPlayerTeam();
-            PlayerTeam thisTeam = level.teamData.get(level.getThisTeam()).playerTeam;
+            PlayerTeam thisTeam = level.getTeamData().get(level.getThisTeam()).playerTeam;
             new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
                     titleScreenImage,
                     new UITextLabel(30, 3, false).setTextLeftBold().setLeftOffset(1)
@@ -51,11 +51,11 @@ public class GameEndScreen extends LevelUIContainer<Level> {
                             .updateTextCenter("Team " + surviving.getName() + " wins").translate(3, Renderable.top() - 6)
             );
             UIScoreBox score = new UIScoreBox(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, Renderable.right() - 26, Renderable.top() - 16, surviving, level);
-            if (MainPanel.spState != null && surviving == thisTeam)
+            if (MainPanel.isSingleplayer() && surviving == thisTeam)
                 MainPanel.spState.stars += score.totalScore;
             int i = 0;
             for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
-                if (level.teamData.containsKey(team) && level.teamData.get(team).playerTeam == surviving) {
+                if (level.getTeamData().containsKey(team) && level.getTeamData().get(team).playerTeam == surviving) {
                     new RenderElement(r, RenderOrder.TITLE_SCREEN_BACKGROUND,
                             new UITextLabel(8, 1f, false).setTextCenterBold().setLabelColour(team.uiColour)
                                     .updateTextCenter(team.getName()).translate(4.5f, Renderable.top() - 7.5f - i * 1.2f)
@@ -64,7 +64,14 @@ public class GameEndScreen extends LevelUIContainer<Level> {
                 }
             }
             new UIButton(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, Renderable.right() / 2 - 5, 2, 10, 2, 1.5f, false)
-                    .setText("Main Menu").setBold().setOnClick(() -> MainPanel.addTask(MainPanel::toTitleScreen));
+                    .setText(MainPanel.isSingleplayer() ? "Continue" : "Main Menu").setBold().setOnClick(() -> {
+                        if (MainPanel.isSingleplayer()) {
+                            level.levelRenderer.cardSelectScreen.setEnabled(true);
+                            MainPanel.addTimedTask(new LerpAnimation(0.5f), () -> setEnabled(false));
+                            overlayTimer.startTimer();
+                        } else
+                            MainPanel.addTask(MainPanel::toTitleScreen);
+                    });
         });
     }
 

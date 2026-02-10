@@ -201,9 +201,9 @@ public class EnergyManager extends LevelUIContainer<Level> implements Writable {
             }
         }
         for (UnitTeam team : UnitTeam.ORDERED_TEAMS) {
-            if (!level.teamData.containsKey(team))
+            if (!level.getTeamData().containsKey(team))
                 continue;
-            int income = Math.round(level.teamData.get(team).getCardModifierValue(ModifierCategory.INCOME, Float::sum));
+            int income = Math.round(level.getTeamData().get(team).getCardModifierValue(ModifierCategory.INCOME, Float::sum));
             if (income != 0) {
                 incomeList.add(new LineItemData("Cards", income, -1));
                 incomeMap.compute(team, (t, i) -> i + income);
