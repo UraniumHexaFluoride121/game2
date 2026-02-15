@@ -40,7 +40,7 @@ public abstract class CardModifiers {
         return level -> new SingleUnitModifier(
                 1, attribute.getName(),
                 "Your " + type.getPluralName() + " now have " + attribute.colouredIconName(StyleElement.NO_COLOUR, false) + ".\n\nEffects:\n" +
-                attribute.description,
+                        attribute.description,
                 Modifier.string("+ " + attribute.getName()), UnitAttribute.getCategory(attribute), shipTypeAppend(type), UnitDependent.unitType(type)
         );
     }
@@ -124,6 +124,13 @@ public abstract class CardModifiers {
         return level -> new SingleUnitModifier(amount, "Enlarged Ammo Storage",
                 "Increases the the " + ModifierCategory.AMMO_CAPACITY.getName().toLowerCase() + " for all " + type.getPluralName().toLowerCase() + ".",
                 Modifier::signedAdditive, ModifierCategory.AMMO_CAPACITY, shipTypeAppend(type), UnitDependent.unitType(type)
+        );
+    }
+
+    public static Function<Integer, UnitAdditionModifier> extraUnit(UnitType type) {
+        return level -> new UnitAdditionModifier("Fleet Expansion - " + type.getName(),
+                "Adds an additional " + type.getName() + " to your fleet.",
+                "+1 " + type.getName(), type
         );
     }
 

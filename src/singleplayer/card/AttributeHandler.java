@@ -20,7 +20,9 @@ public class AttributeHandler {
         for (UnitType value : UnitType.ORDERED_UNIT_TYPES) {
             groups.put(new Object[]{value}, new AttributeGroup(10, 10));
             groups.put(new Object[]{value, AttributeProperty.UNIQUE}, new AttributeGroup(Integer.MAX_VALUE, 3));
+            groups.put(new Object[]{value, AttributeProperty.ADD_UNIT}, new AttributeGroup(5, Integer.MAX_VALUE));
         }
+        groups.put(new Object[]{AttributeProperty.ADD_UNIT}, new AttributeGroup(15, Integer.MAX_VALUE));
         groups.put(new Object[]{AttributeProperty.ACTION_COST}, new AttributeGroup(10, 10));
         groups.put(new Object[]{AttributeProperty.DEFENCE}, new AttributeGroup(30, 20));
         groups.put(new Object[]{AttributeProperty.OFFENCE}, new AttributeGroup(30, 20));

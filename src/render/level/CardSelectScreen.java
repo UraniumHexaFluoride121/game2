@@ -77,6 +77,18 @@ public class CardSelectScreen extends LevelUIContainer<Level> {
                     .extend()
             );
         }
+        for (UnitType type : UnitType.ORDERED_UNIT_TYPES) {
+            cardCategories.add(8f / UnitType.ORDERED_UNIT_TYPES.length + (float) Math.sqrt(unitCounts.getOrDefault(type, 0)) / 3, new CardGenerationGroup(CardType.FLEET_CARD)
+                    .step(0.5f, 1)
+                    .add(1, type, AttributeProperty.ADD_UNIT)
+                    .extend()
+                    .step(1, 2)
+                    .add(1, type)
+                    .add(0.5f, type.shipClass)
+                    .add(0.1f, AttributeProperty.INCOME)
+                    .extend()
+            );
+        }
         for (Map.Entry<ShipClass, Integer> entry : classCounts.entrySet()) {
             cardCategories.add((float) Math.sqrt(entry.getValue()) / 1.5f, new CardGenerationGroup(CardType.UPGRADE_CARD)
                     .step(0.5f, 1)
@@ -102,7 +114,7 @@ public class CardSelectScreen extends LevelUIContainer<Level> {
                 .add(0.1f, AttributeProperty.INCOME)
                 .extend()
         );
-        cardCategories.add((float) Math.pow(unitCount, 0.7f), new CardGenerationGroup(CardType.UPGRADE_CARD)
+        cardCategories.add((float) Math.pow(unitCount, 0.7f), new CardGenerationGroup(CardType.UTILITY_CARD)
                 .step(1, 4)
                 .add(1, AttributeProperty.INCOME)
                 .extend()

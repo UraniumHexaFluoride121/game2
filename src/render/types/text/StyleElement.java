@@ -9,12 +9,14 @@ public enum StyleElement {
     MODIFIER_GRAY(TextStyle::setColour, new Color(140, 140, 140)),
     MODIFIER_BLUE(TextStyle::setColour, new Color(51, 151, 211)),
 
+
     ENERGY_COST_GREEN(TextStyle::setColour, new Color(105, 214, 87)),
     ENERGY_COST_RED(TextStyle::setColour, new Color(214, 83, 83)),
     ENERGY_DISPLAY(TextStyle::setColour, new Color(134, 49, 213)),
 
     ATTRIBUTE_DEFENCE_NETWORK(TextStyle::setColour, new Color(83, 135, 84)),
 
+    MODIFIER_ADD_UNIT(TextStyle::setColour, new Color(51, 151, 211)),
     MODIFIER_RESUPPLY(TextStyle::setColour, new Color(161, 101, 37)),
     MODIFIER_VIEW_RANGE(TextStyle::setColour, new Color(45, 218, 152)),
     MODIFIER_FIRING_RANGE(TextStyle::setColour, new Color(228, 108, 67)),

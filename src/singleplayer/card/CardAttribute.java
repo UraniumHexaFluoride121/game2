@@ -7,13 +7,17 @@ import render.UIColourTheme;
 import render.VerticalAlign;
 import render.save.SerializationProxy;
 import render.save.SerializedByProxy;
+import render.texture.ImageRenderer;
 import render.types.box.UIDisplayBox;
 import render.types.text.StyleElement;
 import unit.ShipClass;
+import unit.UnitPose;
+import unit.UnitTeam;
 import unit.action.Action;
 import unit.stats.attribute.UnitAttribute;
 import unit.stats.modifiers.groups.CardModifiers;
 import unit.stats.modifiers.types.CardModifier;
+import unit.stats.modifiers.types.UnitAdditionModifier;
 import unit.type.CorvetteType;
 import unit.type.FighterType;
 import unit.type.UnitType;
@@ -23,7 +27,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 public class CardAttribute implements SerializedByProxy, Serializable, Writable {
     public static final HashMap<String, CardAttribute> values = new HashMap<>();
@@ -88,6 +91,12 @@ public class CardAttribute implements SerializedByProxy, Serializable, Writable 
                         .constantProperty(3, type, AttributeProperty.UNIQUE)
                         .generate();
             }
+            add(CardModifiers.extraUnit(type),
+                    type, "UNIT_ADD")
+                    .level(1, type.value, 5)
+                    .constantProperty(1, AttributeProperty.ADD_UNIT)
+                    .constantProperty(1, type, AttributeProperty.ADD_UNIT)
+                    .generate();
             //Type HP
             add(CardModifiers.typeHP(type),
                     type, "HP")
@@ -139,7 +148,10 @@ public class CardAttribute implements SerializedByProxy, Serializable, Writable 
     }
 
     public void addRenderer(UIDisplayBox cardBox) {
+        float size = Card.WIDTH * 0.3f;
         float height = 1.3f + modifier.categories().size() * 0.6f;
+        if (modifier instanceof UnitAdditionModifier)
+            height += size;
         UIDisplayBox box = new UIDisplayBox(0, 0, Card.WIDTH - 1, height, b -> b.setColourTheme(modifier.listColour()), false);
         box.addText(0.6f, HorizontalAlign.LEFT, modifier.name());
         box.addSpace(0.3f, 0);
@@ -154,6 +166,19 @@ public class CardAttribute implements SerializedByProxy, Serializable, Writable 
             box.addText(0.6f, HorizontalAlign.RIGHT, 1, condition == null ? null : StyleElement.getStyles(value)[0] + condition);
             box.addSpace(0.2f, 1);
         });
+        int columnIndex = 1;
+        if (modifier instanceof UnitAdditionModifier u) {
+            UnitType[] units = u.units;
+            for (int i = 0; i < units.length; i++) {
+                columnIndex++;
+                UnitType unit = units[i];
+                box.addImage(columnIndex, size, size, Card.WIDTH * 0.5f, HorizontalAlign.CENTER,
+                        ImageRenderer.renderImageCentered(unit.getImage(UnitTeam.BLUE, UnitPose.INFO, false), true));
+                box.setElementRightMargin((units.length - 1) * size * 0.3f, 0, 0);
+                box.setElementLeftMargin(i * size * 0.3f, 0, 0);
+                box.setColumnTopMarginToElement(columnIndex, 0, box.getLastIndex(0), VerticalAlign.BOTTOM);
+            }
+        }
         box.setColumnTopMarginToElement(1, 0, lastIndex, VerticalAlign.BOTTOM);
         cardBox.addBox(box, HorizontalAlign.CENTER, 0, false);
     }
@@ -182,11 +207,7 @@ public class CardAttribute implements SerializedByProxy, Serializable, Writable 
 
     public static CardAttribute valueOf(int level, Object... base) {
         String name = getName(base) + "_" + level;
-        CardAttribute attribute = values.get(name);
-        if (attribute == null) {
-            throw new IllegalArgumentException("Card Attribute not found: " + name);
-        }
-        return attribute;
+        return valueOf(name);
     }
 
     private static CardAttributeFactory add(Function<Integer, ? extends CardModifier> modifier, Object... base) {
@@ -207,22 +228,6 @@ public class CardAttribute implements SerializedByProxy, Serializable, Writable 
             }
         }
         return s.toString();
-    }
-
-    private static UnaryOperator<Integer> constInt(int v) {
-        return i -> v;
-    }
-
-    private static UnaryOperator<Integer> scaledInt(int... v) {
-        return i -> v[i];
-    }
-
-    private static Function<Integer, Float> constFloat(float v) {
-        return i -> v;
-    }
-
-    private static Function<Integer, Float> scaledFloat(float... v) {
-        return i -> v[i];
     }
 
     @Override

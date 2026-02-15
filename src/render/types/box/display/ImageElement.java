@@ -46,7 +46,11 @@ public class ImageElement extends BoxElement {
     }
 
     private float xOffset() {
-        return width() / 2;
+        return switch (align) {
+            case LEFT -> width() / 2;
+            case CENTER -> 0;
+            case RIGHT -> -width() / 2;
+        };
     }
 
     private float yOffset() {

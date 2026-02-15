@@ -70,10 +70,6 @@ public class CardGenerationGroup {
      */
     public AttributeGroup next(AttributeHandler handler) {
         while (true) {
-            System.out.println("next");
-            System.out.println(index);
-            System.out.println(count);
-            System.out.println(elements);
             if (index >= elements.size()) {
                 return null;
             }

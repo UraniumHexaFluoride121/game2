@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     public static final int MIN_WIDTH = 8, MAX_WIDTH = 45, MIN_HEIGHT = 6, MAX_HEIGHT = 25;
@@ -561,7 +562,7 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
 
     public float getDamageScore(UnitTeam team) {
         float percentage = getTotalRemainingHP(team) / getTotalMaxHP(team);
-        return Math.clamp((float) (1.4f * Math.pow(percentage, 0.8f) * DAMAGE_SCORE_MAX), 0, DAMAGE_SCORE_MAX);
+        return Math.clamp((float) (1.2f * Math.pow(percentage, 0.8f) * DAMAGE_SCORE_MAX), 0, DAMAGE_SCORE_MAX);
     }
 
     public float getTotalRemainingHP(UnitTeam team) {
@@ -573,7 +574,14 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
     }
 
     public float getTurnScore(UnitTeam team) {
-        return Math.clamp((float) (Math.sqrt(tilesX * tilesY) / 5 * (1 - Math.pow(turn / 50f, 0.1f * initialPlayerCount()))) * TURN_SCORE_MAX, 0, TURN_SCORE_MAX);
+        float res = Math.clamp((float)
+                        (4 * (1 - Math.pow((turn - Math.sqrt(tilesX + tilesY) + 4) / 20f, 0.1f * Math.sqrt(initialPlayerCount()))) *
+                                Math.log10(getUnitsPerTeam() + 2) * TURN_SCORE_MAX),
+                0, TURN_SCORE_MAX
+        );
+        if (!Float.isFinite(res))
+            return TURN_SCORE_MAX;
+        return res;
     }
 
     public int getUnitsDestroyedByTeam(UnitTeam team) {
@@ -587,6 +595,12 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
                 count.addAndGet(data.unitCount);
         });
         return count.get();
+    }
+
+    public float getUnitsPerTeam() {
+        AtomicInteger count = new AtomicInteger();
+        getTeamData().forEach((team, data) -> count.addAndGet(data.unitCount));
+        return (float) count.get() / getTeamData().values().stream().map(data -> data.playerTeam).collect(Collectors.toSet()).size();
     }
 
     public float getUnitsDestroyedScore(UnitTeam team) {
