@@ -17,7 +17,10 @@ import render.types.container.LevelUIContainer;
 import render.types.container.UIContainer;
 import render.types.text.TextRenderable;
 import render.types.text.UITextDisplayBox;
-import singleplayer.card.*;
+import singleplayer.card.AttributeProperty;
+import singleplayer.card.Card;
+import singleplayer.card.CardGenerationGroup;
+import singleplayer.card.CardType;
 import unit.ShipClass;
 import unit.Unit;
 import unit.UnitTeam;
@@ -26,7 +29,6 @@ import unit.type.UnitType;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 public class CardSelectScreen extends LevelUIContainer<Level> {
@@ -161,10 +163,11 @@ public class CardSelectScreen extends LevelUIContainer<Level> {
         return isEnabled();
     }
 
-    private static class CardSelectItem extends UIContainer {
+    private class CardSelectItem extends UIContainer {
         public Card card;
         public int index;
         public PowAnimation timer = new PowAnimation(0.2f, 2);
+        public LerpAnimation illegalSelectionTimer = new LerpAnimation(0.4f).finish();
         public boolean selected = false;
         public UIDisplayBox displayBox;
 
@@ -180,9 +183,20 @@ public class CardSelectScreen extends LevelUIContainer<Level> {
             addRenderables((r, b) -> {
                 card.createRenderElement(r, b, RenderOrder.TITLE_SCREEN_BUTTONS, -Card.WIDTH / 2, -Card.HEIGHT / 2, handler -> {
                     handler.add(false).setOnClick(() -> {
+                        illegalSelectionTimer.finish();
+                        if (!selected) {
+                            int c = 0;
+                            for (CardSelectItem cardSelectItem : cards) {
+                                if (cardSelectItem.selected || cardSelectItem == this)
+                                    c += cardSelectItem.card.cost();
+                            }
+                            if (c > MainPanel.spState.stars) {
+                                illegalSelectionTimer.startTimer();
+                                return;
+                            }
+                        }
                         timer.setReversed(selected);
                         selected = !selected;
-                        displayBox.modifyBox(box -> box.setColourTheme(selected ? Card.SELECTED_BOX : Card.BOX));
                     });
                     handler.setIgnoreBlocking(true);
                 }, box -> {
@@ -194,6 +208,10 @@ public class CardSelectScreen extends LevelUIContainer<Level> {
         @Override
         public void render(Graphics2D g) {
             GameRenderer.renderScaledOrigin(getScale(), x, y, g, () -> {
+                if (!illegalSelectionTimer.finished()) {
+                    displayBox.modifyBox(box -> box.setColourTheme(UIColourTheme.lerp(Card.BOX, Card.ILLEGAL_SELECTED_BOX, illegalSelectionTimer.triangleProgress())));
+                } else
+                    displayBox.modifyBox(box -> box.setColourTheme(selected ? Card.SELECTED_BOX : Card.BOX));
                 super.render(g);
             });
         }

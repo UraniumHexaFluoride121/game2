@@ -25,6 +25,9 @@ public class Card implements Serializable, Writable {
     public static UIColourTheme SELECTED_BOX = new UIColourTheme(
             new Color(120, 218, 94), new Color(25, 32, 23)
     );
+    public static UIColourTheme ILLEGAL_SELECTED_BOX = new UIColourTheme(
+            new Color(221, 73, 73), new Color(32, 23, 23)
+    );
 
     public final CardType type;
     public final CardAttribute[] attributes;
@@ -66,6 +69,14 @@ public class Card implements Serializable, Writable {
                     buttonConsumer.accept(buttonHandler);
                     boxConsumer.accept(displayBox);
                 });
+    }
+
+    public int cost() {
+        int c = 0;
+        for (CardAttribute attribute : attributes) {
+            c += attribute.cost;
+        }
+        return c;
     }
 
     public Card(DataInputStream reader) throws IOException {

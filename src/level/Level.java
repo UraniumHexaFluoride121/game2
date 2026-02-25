@@ -607,28 +607,16 @@ public class Level extends AbstractLevel<LevelRenderer, TileSelector> {
         return Math.clamp((float) (getUnitsDestroyedByTeam(team) / getTotalEnemies(team)) * UNITS_DESTROYED_SCORE_MAX * 1.1f, 0, UNITS_DESTROYED_SCORE_MAX);
     }
 
-    public float getPlayerTeamScore(Function<UnitTeam, Float> scoreFunction, PlayerTeam pTeam, boolean total) {
-        AtomicReference<Float> score = new AtomicReference<>(0f);
+    public float getPlayerTeamScore(Function<UnitTeam, ? extends Number> scoreFunction, PlayerTeam pTeam, boolean total) {
+        AtomicReference<Double> score = new AtomicReference<>(0d);
         AtomicInteger count = new AtomicInteger();
         getTeamData().forEach((t, d) -> {
             if (d.playerTeam != pTeam)
                 return;
-            score.updateAndGet(v -> v + scoreFunction.apply(t));
+            score.updateAndGet(v -> v + scoreFunction.apply(t).doubleValue());
             count.getAndIncrement();
         });
-        return total ? score.get() : score.get() / count.get();
-    }
-
-    public int getPlayerTeamScoreInt(Function<UnitTeam, Integer> scoreFunction, PlayerTeam pTeam, boolean total) {
-        AtomicReference<Integer> score = new AtomicReference<>(0);
-        AtomicInteger count = new AtomicInteger();
-        getTeamData().forEach((t, d) -> {
-            if (d.playerTeam != pTeam)
-                return;
-            score.updateAndGet(v -> v + scoreFunction.apply(t));
-            count.getAndIncrement();
-        });
-        return total ? score.get() : score.get() / count.get();
+        return (float) (total ? score.get() : score.get() / count.get());
     }
 
     @Override

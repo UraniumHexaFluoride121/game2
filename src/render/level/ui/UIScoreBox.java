@@ -47,7 +47,7 @@ public class UIScoreBox extends UIContainer {
                             .translate(14, 6.5f - 2 * 1.5f),
                     new UITextLabel(12, 1f, false)
                             .setTextLeftBold().updateTextLeft("Units Destroyed:")
-                            .setTextRightBold().updateTextRight(String.valueOf(level.getPlayerTeamScoreInt(level::getUnitsDestroyedByTeam, team, true)))
+                            .setTextRightBold().updateTextRight(String.valueOf(Math.round(level.getPlayerTeamScore(level::getUnitsDestroyedByTeam, team, true))))
                             .translate(1, 6.5f - 3 * 1.5f),
                     new UITextLabel(6, 1f, false)
                             .setTextRightBold().updateTextRight(unitsDestroyedScore + " / " + Level.UNITS_DESTROYED_SCORE_MAX + " " + STAR.display)

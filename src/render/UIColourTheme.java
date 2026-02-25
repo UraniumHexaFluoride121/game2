@@ -152,6 +152,15 @@ public class UIColourTheme {
                 borderColourSelected, modifier.apply(backgroundColourSelected));
     }
 
+    public static UIColourTheme lerp(UIColourTheme a, UIColourTheme b, float t) {
+        return new UIColourTheme(
+                lerp(a.borderColour, b.borderColour, t), lerp(a.backgroundColour, b.backgroundColour, t),
+                lerp(a.borderColourHover, b.borderColourHover, t), lerp(a.backgroundColourHover, b.backgroundColourHover, t),
+                lerp(a.borderColourPressed, b.borderColourPressed, t), lerp(a.backgroundColourPressed, b.backgroundColourPressed, t),
+                lerp(a.borderColourSelected, b.borderColourSelected, t), lerp(a.backgroundColourPressed, b.backgroundColourPressed, t)
+        );
+    }
+
     public static UIColourTheme createBoxTheme(StyleElement styleElement) {
         return createBoxTheme(styleElement.colour);
     }
