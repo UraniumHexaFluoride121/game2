@@ -4,10 +4,11 @@ import foundation.Deletable;
 import foundation.input.ButtonClickHandler;
 import foundation.math.HitBox;
 import render.HorizontalAlign;
+import render.Renderable;
 
 import java.awt.*;
 
-public abstract class BoxElement implements Deletable {
+public abstract class BoxElement implements Deletable, Renderable {
     public float leftMargin, rightMargin;
 
     public BoxElement(float initialMargin) {
@@ -40,8 +41,6 @@ public abstract class BoxElement implements Deletable {
     public abstract float height();
 
     public abstract HorizontalAlign align();
-
-    public abstract void render(Graphics2D g);
 
     public abstract boolean isEnabled();
 
