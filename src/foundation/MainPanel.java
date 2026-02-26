@@ -228,7 +228,7 @@ public class MainPanel extends JFrame implements KeyListener, MouseListener, Mou
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
-        Point p = getMousePosition();
+        Point p = MouseInfo.getPointerInfo().getLocation();
         if (p != null)
             lastUIMousePos = new ObjPos(p).subtract(INSETS_OFFSET).scaleToBlocks().flipY().addY(MainPanel.BLOCK_DIMENSIONS.y);
 

@@ -323,7 +323,7 @@ public abstract class AbstractLevelRenderer<T extends AbstractLevel<?, ?>> imple
             if (!runningAnim())
                 cameraVelocityVector.lerpTo(ObjPos.ORIGIN, 4, deltaTime);
         }
-        Point p = Main.window.getMousePosition();
+        Point p = MouseInfo.getPointerInfo().getLocation();
         if (p != null) {
             ObjPos mousePos = new ObjPos(p).subtract(MainPanel.INSETS_OFFSET);
             ObjPos cameraTransformedPos = transformMousePosToCamera(p);

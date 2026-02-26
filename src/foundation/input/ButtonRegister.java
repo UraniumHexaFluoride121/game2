@@ -42,14 +42,14 @@ public class ButtonRegister implements IButtonRegister, Deletable {
     }
 
     public void input(boolean pressed, InputType type, Function<Point, ObjPos> mousePositionTransformer) {
-        Point p = Main.window.getMousePosition();
+        Point p = MouseInfo.getPointerInfo().getLocation();
         if (p != null) {
             acceptInput(mousePositionTransformer.apply(p), type, pressed, false);
         }
     }
 
     public void input(boolean pressed, InputType type) {
-        Point p = Main.window.getMousePosition();
+        Point p = MouseInfo.getPointerInfo().getLocation();
         if (p != null) {
             ObjPos pos = new ObjPos(p);
             pos.subtract(MainPanel.INSETS_OFFSET);
