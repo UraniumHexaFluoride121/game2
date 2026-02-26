@@ -46,20 +46,14 @@ public class SaveManager<T extends LoadedFromSave> {
             reader.close();
         } catch (IOException | ClassNotFoundException | RuntimeException e) {
             gameSaves = new TreeMap<>();
-            throw new RuntimeException(e);
         }
     }
 
     public void loadSavesInternal() {
         ResourceLocation resource = new ResourceLocation(saveFileName);
         try {
-            InputStream inputStream = AssetManager.class.getResourceAsStream(resource.getPath("../assets/"));
-            if (inputStream == null) {
-                //When packaged as a jar file, the assets path cannot be accessed the same way
-                inputStream = AssetManager.class.getResourceAsStream(resource.getPath("/"));
-            }
-            if (inputStream == null)
-                throw new RuntimeException("Unable to load image with path " + resource.relativePath);
+
+            InputStream inputStream = AssetManager.getResource(resource);
             ObjectInputStream reader = new ObjectInputStream(inputStream);
             Object o = reader.readObject();
             if (!(o instanceof TreeMap))
